@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero do Líder (desktop) — 10 formas de mostrar a foto inteira</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0f0f11;font-family:'Archivo',sans-serif;color:#eee;padding:26px 22px 120px;
+    --accent:#F0C84A;--accent2:#c9a84a;--accentSoft:#cbb88a;--card:#1a1a1f;--line:#2a2a32;--dim:#9a9aa2;
+    --heroA:#2c2611;--heroB:#17170f;--heroLine:#4a3f1f;}
+  header.pg{max-width:1180px;margin:0 auto 26px;}
+  header.pg h1{font-size:24px;font-weight:900;}
+  header.pg h1 span{color:var(--accent);}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:8px;line-height:1.6;max-width:940px;}
+  header.pg p b{color:var(--accent);}
+
+  .pick{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#16140a;border-top:2px solid var(--accent);
+    padding:13px 22px;display:flex;align-items:center;gap:14px;justify-content:center;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+  .pick b{color:var(--accent);font-size:15px;}
+  .pick.empty{color:#8f8f98;background:#161618;border-top-color:var(--line);font-size:13px;}
+
+  .opt{max-width:1180px;margin:0 auto 40px;}
+  .opt-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+  .opt-num{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#22314f,var(--accent));
+    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;flex:none;}
+  .opt-meta{flex:1;min-width:0;}
+  .opt-t{font-size:16px;font-weight:900;}
+  .opt-d{font-size:12.5px;color:#9a9a9a;margin-top:2px;}
+  .opt-pick{border:1px solid var(--heroLine);background:#2a2410;color:var(--accent);font-family:'Archivo';font-weight:800;
+    font-size:13px;padding:10px 18px;border-radius:10px;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .opt-pick:hover{background:var(--accent);color:#1a1500;}
+  .opt.chosen .opt-pick{background:#9fe6aa;border-color:#9fe6aa;color:#0c1a0f;}
+  .opt.chosen .stage{outline:2px solid #9fe6aa;outline-offset:3px;}
+
+  .stage{background:#0c0c0e;border:1px solid #26262c;border-radius:16px;overflow:hidden;}
+  .winbar{display:flex;align-items:center;gap:7px;padding:9px 13px;background:#161618;border-bottom:1px solid #26262c;}
+  .winbar i{width:11px;height:11px;border-radius:50%;background:#3a3a44;display:inline-block;}
+  .winbar i:nth-child(1){background:#e0708a;} .winbar i:nth-child(2){background:#d6b24a;} .winbar i:nth-child(3){background:#7fc081;}
+  .winbar .url{margin-left:10px;font-size:11px;color:#6f6f78;}
+  .panel{padding:22px;}
+
+  .h-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .h-tit{font-size:18px;font-weight:900;color:#f0e6c8;}
+  .h-tit em{font-style:normal;color:var(--accent);}
+  .h-badge{background:var(--card);color:var(--accent);border:1px solid var(--heroLine);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:800;white-space:nowrap;}
+
+  .hl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--accentSoft);font-weight:800;}
+  .hn{font-size:24px;font-weight:900;}
+  .hp{font-size:38px;font-weight:900;color:var(--accent);line-height:1.05;}
+  .hf{font-size:14px;color:var(--accentSoft);font-weight:800;margin-top:2px;}
+
+  /* base do hero */
+  .hero{position:relative;border:1px solid var(--heroLine);border-radius:16px;overflow:hidden;}
+  .hero .ph{display:block;}
+
+  /* 1 — Contain (letterbox) */
+  .h1{height:330px;background:#0b0b0d;}
+  .h1 .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .h1 .ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,8,10,.85),rgba(8,8,10,.1) 55%);}
+  .h1 .ct{position:absolute;left:24px;bottom:22px;z-index:2;}
+
+  /* 2/3 — Split (foto inteira de um lado, dados do outro) */
+  .hsplit{display:grid;grid-template-columns:320px 1fr;min-height:360px;background:linear-gradient(120deg,var(--heroA),var(--heroB));}
+  .hsplit.inv{grid-template-columns:1fr 320px;}
+  .hsplit .hph{background:#0b0b0d;display:flex;align-items:center;justify-content:center;}
+  .hsplit .hph .ph{width:100%;height:100%;max-height:360px;object-fit:contain;}
+  .hsplit .hinfo{padding:28px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+  .hsplit.inv .hph{order:2;} .hsplit.inv .hinfo{order:1;text-align:right;align-items:flex-end;}
+  .hsplit .hp{font-size:46px;}
+
+  /* 4 — Retrato centralizado + texto abaixo */
+  .h4{padding:24px;text-align:center;background:linear-gradient(180deg,var(--heroA),var(--heroB));}
+  .h4 .ph{height:360px;width:auto;max-width:100%;object-fit:contain;border-radius:12px;margin:0 auto 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .h4 .ct{display:flex;flex-direction:column;align-items:center;gap:3px;}
+
+  /* 5 — Moldura (foto inteira emoldurada) + texto ao lado */
+  .h5{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px;align-items:center;background:linear-gradient(120deg,var(--heroA),var(--heroB));}
+  .h5 .frame{padding:8px;background:#15130c;border:1px solid var(--heroLine);border-radius:14px;box-shadow:0 0 0 3px #0b0b0d,0 12px 32px rgba(0,0,0,.55);}
+  .h5 .frame .ph{width:100%;height:auto;max-height:360px;object-fit:contain;border-radius:8px;}
+  .h5 .hp{font-size:48px;}
+
+  /* 6 — Cinematográfica (foto inteira centralizada, faixa de texto na base) */
+  .h6{height:380px;background:radial-gradient(120% 120% at 50% 0%,#23314c 0%,#0b0b0d 60%);}
+  .h6 .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .h6 .ov{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(transparent,rgba(8,8,10,.92));}
+  .h6 .ct{position:absolute;left:0;right:0;bottom:20px;text-align:center;z-index:2;}
+
+  /* 7 — Foto inteira sobre fundo desfocado (estilo capa) */
+  .h7{height:380px;}
+  .h7 .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(26px) brightness(.45) saturate(1.2);transform:scale(1.2);}
+  .h7 .fg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;}
+  .h7 .ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,8,10,.55),transparent 45%);z-index:1;}
+  .h7 .ct{position:absolute;left:24px;bottom:22px;z-index:2;}
+
+  /* 8 — Foto inteira + KPIs ao lado */
+  .h8{display:grid;grid-template-columns:300px 1fr;min-height:360px;background:linear-gradient(120deg,var(--heroA),var(--heroB));}
+  .h8 .hph{background:#0b0b0d;display:flex;align-items:center;justify-content:center;}
+  .h8 .hph .ph{width:100%;height:100%;max-height:360px;object-fit:contain;}
+  .h8 .hbody{padding:24px;display:flex;flex-direction:column;justify-content:center;gap:14px;}
+  .h8 .kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .h8 .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;text-align:center;}
+  .h8 .kpi b{display:block;font-size:20px;font-weight:900;color:var(--accent);}
+  .h8 .kpi span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;}
+
+  /* 9 — Foto inteira + faixa translúcida na base (largura toda) */
+  .h9{height:380px;background:#0b0b0d;}
+  .h9 .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .h9 .strip{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;
+    gap:14px;padding:16px 24px;background:rgba(10,10,12,.72);backdrop-filter:blur(6px);border-top:1px solid var(--heroLine);}
+
+  /* 10 — Pódio (líder com foto inteira no centro) */
+  .h10{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;align-items:end;padding:22px;background:linear-gradient(180deg,var(--heroA),var(--heroB));}
+  .pod{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px 10px;text-align:center;}
+  .pod.p1{border-color:var(--accent2);background:#15130c;padding:0;overflow:hidden;}
+  .pod.p1 .ph{width:100%;height:300px;object-fit:contain;background:#0b0b0d;}
+  .pod.p1 .p1b{padding:12px 8px;}
+  .pod .medal{font-size:26px;}
+  .pod .av{width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#15151a;}
+  .pod .pn{font-size:13px;font-weight:800;margin-top:8px;}
+  .pod .pp{font-size:20px;font-weight:900;color:var(--accent);}
+  .pod.p1 .pp{font-size:26px;}
+  .pod .pf{font-size:10.5px;color:var(--accentSoft);font-weight:700;}
+
+  /* KPIs de contexto abaixo do hero */
+  .ctx{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;}
+  .ctx .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;text-align:center;}
+  .ctx .kpi b{display:block;font-size:19px;font-weight:900;color:var(--accent);}
+  .ctx .kpi span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;}
+
+  @media (max-width:760px){ .hsplit,.h5,.h8{grid-template-columns:1fr;} .h10{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>Hero do <span>Líder</span> no desktop — 10 formas de mostrar a foto <span>inteira</span></h1>
+  <p>Hoje o destaque do líder usa <b>recorte (cover)</b> e corta a foto. Abaixo, 10 jeitos de exibir a imagem <b>por completo</b> no desktop. A foto é um <b>retrato de exemplo (3:4)</b> — no app entra a foto real do consultor. Clique em <b>“Escolher esta”</b> e me diga o número.</p>
+</header>
+
+<div id="opts"></div>
+<div class="pick empty" id="pickbar">Nenhuma opção escolhida — clique em “Escolher esta” na que você preferir.</div>
+
+<script>
+window.addEventListener('error',function(e){
+  var w=document.getElementById('opts'); if(!w) return;
+  w.innerHTML='<div style="max-width:1180px;margin:0 auto;background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4;font-size:14px">'
+    +'<b style="color:#ff8a8a">JS ERROR:</b> '+(e.message||'')+' — linha '+e.lineno+'</div>'+w.innerHTML;
+});
+</script>
+<script>
+const MES='Junho/2026';
+const LIDER={nome:'Gabriela Jesus', pct:'187,1%', fat:'R$ 425.786,00'};
+const BATERAM=2, MEDIA='185,8%', FATUN='R$ 1.428.042,00';
+
+/* retrato de exemplo 3:4 (placeholder de pessoa) */
+const SVG="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'>"
+ +"<defs><linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3b4a68'/><stop offset='1' stop-color='#161c2a'/></linearGradient></defs>"
+ +"<rect width='300' height='400' fill='url(#b)'/>"
+ +"<path d='M55 400 Q55 285 150 272 Q245 285 245 400 Z' fill='#46506a'/>"
+ +"<ellipse cx='150' cy='150' rx='92' ry='108' fill='#241d1a'/>"
+ +"<ellipse cx='150' cy='162' rx='66' ry='80' fill='#d8ac86'/>"
+ +"<path d='M64 138 Q150 36 236 138 Q244 104 150 72 Q56 104 64 138 Z' fill='#241d1a'/>"
+ +"<ellipse cx='124' cy='150' rx='6' ry='8' fill='#33272233'/><ellipse cx='176' cy='150' rx='6' ry='8' fill='#33272233'/>"
+ +"<text x='150' y='392' font-family='Archivo,sans-serif' font-size='12' fill='#ffffff77' text-anchor='middle'>FOTO DO LÍDER (exemplo 3:4)</text></svg>";
+const FOTO="data:image/svg+xml;utf8,"+encodeURIComponent(SVG);
+
+const txt=(big)=>`<div class="hl">⭐ Líder do mês</div><div class="hn">${LIDER.nome}</div><div class="hp">${LIDER.pct}</div><div class="hf">${LIDER.fat}</div>`;
+const cab=()=>`<div class="h-top"><div class="h-tit">Meta Master · <em>${MES}</em></div><span class="h-badge">${BATERAM} bateram 🏆</span></div>`;
+const ctx=()=>`<div class="ctx"><div class="kpi"><b>${BATERAM}</b><span>Bateram 🏆</span></div><div class="kpi"><b>${MEDIA}</b><span>Média</span></div><div class="kpi"><b>${FATUN}</b><span>Faturado unidade</span></div></div>`;
+const img=(cls)=>`<img class="ph ${cls||''}" src="${FOTO}" alt="">`;
+
+const OPTS=[
+ {t:'Contain (letterbox)', d:'Foto inteira dentro da faixa larga; laterais escuras e texto sobreposto à esquerda.',
+   body:()=>cab()+`<div class="hero h1">${img()}<div class="ov"></div><div class="ct">${txt()}</div></div>`+ctx()},
+ {t:'Dividido — foto à esquerda', d:'Foto retrato completa à esquerda; nome, % e faturado num painel à direita.',
+   body:()=>cab()+`<div class="hero hsplit"><div class="hph">${img()}</div><div class="hinfo">${txt(1)}</div></div>`+ctx()},
+ {t:'Dividido — foto à direita', d:'Igual ao anterior, espelhado: dados à esquerda, foto à direita.',
+   body:()=>cab()+`<div class="hero hsplit inv"><div class="hph">${img()}</div><div class="hinfo">${txt(1)}</div></div>`+ctx()},
+ {t:'Retrato centralizado', d:'Foto inteira no centro com sombra; nome e % logo abaixo, centralizados.',
+   body:()=>cab()+`<div class="hero h4">${img()}<div class="ct">${txt()}</div></div>`+ctx()},
+ {t:'Moldura + texto ao lado', d:'Foto emoldurada (estilo quadro) à esquerda; dados grandes à direita.',
+   body:()=>cab()+`<div class="hero h5"><div class="frame">${img()}</div><div>${txt(1)}</div></div>`+ctx()},
+ {t:'Cinematográfica', d:'Foto inteira centralizada sobre fundo degradê; faixa de texto na base.',
+   body:()=>cab()+`<div class="hero h6">${img()}<div class="ov"></div><div class="ct">${txt()}</div></div>`+ctx()},
+ {t:'Capa (fundo desfocado)', d:'Foto inteira à frente; ao fundo, a mesma foto borrada preenche a faixa (estilo capa de álbum).',
+   body:()=>cab()+`<div class="hero h7">${img('bg')}${img('fg')}<div class="ov"></div><div class="ct">${txt()}</div></div>`+ctx()},
+ {t:'Foto + KPIs ao lado', d:'Foto inteira à esquerda; à direita os KPIs (Bateram/Média/Faturado) já integrados.',
+   body:()=>cab()+`<div class="hero h8"><div class="hph">${img()}</div><div class="hbody">${txt(1)}<div class="kpis"><div class="kpi"><b>${BATERAM}</b><span>Bateram</span></div><div class="kpi"><b>${MEDIA}</b><span>Média</span></div><div class="kpi"><b>${FATUN}</b><span>Faturado</span></div></div></div></div>`},
+ {t:'Faixa translúcida na base', d:'Foto inteira ocupando o bloco; barra de vidro fosco na base com nome, % e faturado.',
+   body:()=>cab()+`<div class="hero h9">${img()}<div class="strip"><div><div class="hl">⭐ Líder do mês</div><div class="hn">${LIDER.nome}</div></div><div style="text-align:right"><div class="hp" style="font-size:30px">${LIDER.pct}</div><div class="hf">${LIDER.fat}</div></div></div></div>`+ctx()},
+ {t:'Pódio (líder com foto inteira)', d:'Top 3: líder no centro com a foto completa; 2º e 3º com avatares de inicial.',
+   body:()=>cab()+`<div class="hero h10">
+     <div class="pod"><div class="medal">🥈</div><span class="av" style="background:#61afef">N</span><div class="pn">Natalia Lima</div><div class="pp">184,5%</div><div class="pf">R$ 419.906,00</div></div>
+     <div class="pod p1">${img()}<div class="p1b"><div class="medal">🥇</div><div class="pn">${LIDER.nome}</div><div class="pp">${LIDER.pct}</div><div class="pf">${LIDER.fat}</div></div></div>
+     <div class="pod"><div class="medal">🥉</div><span class="av" style="background:#98c379">C</span><div class="pn">Carla Mendes</div><div class="pp">88,2%</div><div class="pf">R$ 198.300,00</div></div>
+   </div>`},
+];
+
+const wrap=document.getElementById('opts');
+try{
+  wrap.innerHTML=OPTS.map((o,i)=>`
+   <div class="opt" id="opt${i+1}">
+     <div class="opt-head"><div class="opt-num">${i+1}</div>
+       <div class="opt-meta"><div class="opt-t">${o.t}</div><div class="opt-d">${o.d}</div></div>
+       <button class="opt-pick" onclick="escolher(${i+1})">Escolher esta</button></div>
+     <div class="stage">
+       <div class="winbar"><i></i><i></i><i></i><span class="url">localhost:8765 · Meta Master · aba Card</span></div>
+       <div class="panel">${o.body()}</div>
+     </div>
+   </div>`).join('');
+}catch(err){
+  wrap.innerHTML='<div style="max-width:1180px;margin:0 auto;background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4">'
+    +'<b style="color:#ff8a8a">Erro:</b> '+String(err&&err.stack||err)+'</div>';
+}
+
+function escolher(n){
+  document.querySelectorAll('.opt').forEach(e=>e.classList.remove('chosen'));
+  document.getElementById('opt'+n).classList.add('chosen');
+  const b=document.getElementById('pickbar');
+  b.className='pick'; b.innerHTML=`Você escolheu a <b>Opção ${n} — ${OPTS[n-1].t}</b>. Me diga esse número no chat para eu aplicar no hero do líder.`;
+}
+</script>
+</body>
+</html>

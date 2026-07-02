@@ -758,17 +758,44 @@
   /* ── Render Metas — cards com 3 tiers ────────────────── */
   function _npRenderMetasV2(todas){
     var grid=document.getElementById('npMetasGrid');if(!grid) return;
+    /* Mês sem vendas: invalidar o cache de linhas (senão o sort/toggle
+       Card-Lista repinta a tabela do MÊS ANTERIOR sob o rótulo novo) e
+       só mostrar vazio se também não houver METAS configuradas no mês —
+       com metas cadastradas a lista renderiza normalmente com 0%. */
     if(_npVendasTurma.length===0&&Object.keys(_npVendasAvulso||{}).length===0){
-      grid.innerHTML='<div class="np-empty">Nenhum dado para este mês.</div>';return;
+      var _temMetaMes=Object.values(window._npGoals||{}).some(function(g){
+        return g&&(+(g.metaMinima||0)>0||+(g.metaBasica||g.metaValor||0)>0||+(g.metaMaster||0)>0);
+      });
+      if(!_temMetaMes){
+        window._npMetasRows=null;
+        grid.innerHTML='<div class="np-empty">Nenhum dado para este mês.</div>';return;
+      }
     }
-    /* Fonte ÚNICA da grid Metas: usuários cadastrados em Gestão de Usuários
-       (window._npUsuarios) com perfil='consultor'. Não considera vendas do mês
-       nem metas avulsas — quem não está em Gestão de Usuários não aparece. */
+    /* Fonte da grid Metas: UNIÃO de 3 origens (dedup case-insensitive):
+       1) usuários da Gestão de Usuários com perfil='consultor'
+       2) quem tem META configurada no mês (pipelineGoals) — ex.: consultor
+          sem conta em usuarios/ mas com meta lançada não pode sumir da lista
+       3) quem tem VENDA no mês (ranking)
+       Antes era só (1): NATALIA/JULIANA sumiram da grid ao perderem a conta
+       em usuarios/, mesmo com meta e faturamento no mês. */
     var _usuariosGU=(window._npUsuarios&&typeof window._npUsuarios==='object')?window._npUsuarios:{};
-    var _cons=[];
+    var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
+    var _consSet={};
+    function _addCons(nome){
+      if(!nome) return;
+      var k=String(nome).toUpperCase().trim();
+      if(!k) return;
+      if(!_consSet[k]) _consSet[k]=String(nome).trim();
+    }
     Object.values(_usuariosGU).forEach(function(u){
-      if(u&&u.perfil==='consultor'&&u.nome) _cons.push(u.nome);
+      if(u&&u.perfil==='consultor'&&u.nome) _addCons(u.nome);
     });
+    Object.entries(window._npGoals||{}).forEach(function(e){
+      var g=e[1]||{};
+      if(+(g.metaMinima||0)>0||+(g.metaBasica||g.metaValor||0)>0||+(g.metaMaster||0)>0) _addCons(e[0]);
+    });
+    ranking.forEach(function(r){ if(r&&r.pago>0) _addCons(r.nome); });
+    var _cons=Object.values(_consSet);
     _cons.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
     /* Para consultor logado: mostra só o card dele */
     var _sessMv=(typeof _getSessao==='function')?_getSessao():null;
@@ -780,7 +807,6 @@
       if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor cadastrado em Gestão de Usuários.</div>';return;}
     }
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
-    var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
     /* Helpers de semana (expostos por 11-pipeline-comercial.js) */
     var SEMU = window._npSemUtil || null;
     var semanas = SEMU ? SEMU.semanas() : [];

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Master — +10 layouts mobile (tudo escondido, foto embaixo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#2b2b2b;--pnl:#1f1f1f;--pnl2:#191919;--line:#3a3a3a;--line2:#2e2e2e;--ouro:#F0C84A;--txt:#eee;--mut:#9a9a9a;
+    --foto:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='bg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23ece6da'/><stop offset='1' stop-color='%23b4bec8'/></linearGradient></defs><rect width='200' height='260' fill='url(%23bg)'/><path d='M16 260 C28 198 60 178 100 178 C140 178 172 198 184 260 Z' fill='%231b1b1d'/><path d='M52 120 C52 58 148 58 148 120 L152 220 C152 220 128 174 100 174 C72 174 48 220 48 220 Z' fill='%23241813'/><rect x='86' y='150' width='28' height='40' rx='12' fill='%23c2916c'/><ellipse cx='100' cy='120' rx='40' ry='50' fill='%23d8aa86'/><path d='M60 120 C56 80 144 80 140 120 C140 96 120 86 100 86 C80 86 60 96 60 120 Z' fill='%232c1a12'/><path d='M60 112 C48 144 52 196 56 214 L68 208 C60 172 62 136 72 118 Z' fill='%23241813'/><path d='M140 112 C152 144 148 196 144 214 L132 208 C140 172 138 136 128 118 Z' fill='%23241813'/><path d='M77 112 q11 -6 21 -1' stroke='%233a2a22' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M102 111 q11 -5 21 1' stroke='%233a2a22' stroke-width='3' fill='none' stroke-linecap='round'/><ellipse cx='86' cy='123' rx='6' ry='4' fill='%23fff'/><circle cx='86' cy='123' r='3' fill='%233a241a'/><ellipse cx='114' cy='123' rx='6' ry='4' fill='%23fff'/><circle cx='114' cy='123' r='3' fill='%233a241a'/><path d='M100 127 l-3 12 q3 3 7 0' stroke='%23b58866' stroke-width='2' fill='none' stroke-linecap='round'/><path d='M89 149 q11 8 22 0 q-11 5 -22 0' fill='%23a85b53'/></svg>");
+  }
+  body{background:#202022;font-family:'Archivo',sans-serif;color:var(--txt);padding:28px 20px 80px;}
+  header.pg{max-width:1340px;margin:0 auto 26px;}
+  header.pg h1{font-size:23px;font-weight:900;letter-spacing:.3px;}
+  header.pg p{color:var(--mut);font-size:13.5px;margin-top:7px;line-height:1.55;max-width:880px;}
+  header.pg p b{color:var(--ouro);}
+  header.pg .tagline{margin-top:10px;font-size:12px;color:#cbb88a;background:#231f10;border:1px solid #4a3f1f;border-radius:8px;padding:8px 12px;display:inline-block;}
+
+  .grid{max-width:1340px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:32px 24px;}
+  .item{display:flex;flex-direction:column;gap:11px;}
+  .cap{font-size:13px;color:var(--mut);line-height:1.45;}
+  .cap b{color:var(--ouro);font-size:14px;display:block;margin-bottom:2px;letter-spacing:.3px;}
+  .cap b span{color:#6a6a6a;font-weight:700;}
+
+  .phone{width:298px;height:610px;margin:0 auto;background:#0c0c0c;border:9px solid #000;border-radius:34px;
+    box-shadow:0 14px 40px rgba(0,0,0,.55),inset 0 0 0 2px #232323;overflow:hidden;position:relative;}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:86px;height:17px;background:#000;border-radius:0 0 12px 12px;z-index:60;}
+  .scr{position:absolute;inset:0;background:var(--bg);overflow:hidden;}
+  .pad{padding:33px 12px 16px;min-height:100%;display:flex;flex-direction:column;}
+  .spacer{flex:1;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .tab{flex:1;background:var(--pnl);border:1px solid var(--line);color:#bbb;font-weight:800;font-size:11px;padding:8px 4px;border-radius:9px;text-align:center;}
+  .tab.on{background:var(--ouro);color:#111;border-color:var(--ouro);}
+
+  /* card com FOTO */
+  .cardwrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .cardreal{position:relative;aspect-ratio:9/16;background:url('modelo.jpg') center/cover no-repeat;border-radius:9px;overflow:hidden;border:1px solid #000;box-shadow:0 10px 28px rgba(0,0,0,.5);}
+  .cardreal .pf{position:absolute;left:17.7%;top:25.6%;width:64.9%;height:44.9%;border-radius:7%;background:#cfcfcf var(--foto) center/cover;}
+  .cardreal .nm{position:absolute;left:0;right:0;top:70.5%;text-align:center;color:#fff;font-weight:900;letter-spacing:1px;text-shadow:0 2px 6px rgba(0,0,0,.5);}
+  .lbl{font-size:9px;color:#777;}
+
+  /* peças de UI */
+  .inp{width:100%;background:#111;border:1px solid #444;border-radius:8px;padding:9px 11px;font-size:12px;color:#fff;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .inp .car{margin-left:auto;color:var(--ouro);font-size:10px;}
+  .btn{width:100%;padding:11px;border:none;border-radius:9px;font-weight:900;font-size:12.5px;letter-spacing:.4px;font-family:'Archivo';}
+  .b-ouro{background:var(--ouro);color:#111;}
+  .b-sec{background:#2c2c2c;color:#eee;border:1px solid #4a4a4a;}
+  .b-gh{background:transparent;border:1px solid #4a4a4a;color:#cfcfcf;}
+
+  .fab{position:absolute;width:54px;height:54px;border-radius:50%;background:var(--ouro);color:#111;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.6);z-index:50;}
+  .fab.br{right:14px;bottom:16px;}
+  .fabmenu{position:absolute;right:16px;bottom:80px;display:flex;flex-direction:column;gap:8px;z-index:50;}
+  .fabmenu .mi{background:#1f1f1f;border:1px solid var(--line);color:#eee;font-size:10.5px;font-weight:800;padding:8px 12px;border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.5);white-space:nowrap;text-align:right;}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--pnl);border:1px solid var(--line);color:#e7e7ea;font-weight:800;font-size:11.5px;padding:8px 14px;border-radius:22px;}
+  .pill .ic{font-size:13px;}
+
+  .dock{display:flex;gap:8px;background:#161616;border:1px solid var(--line);border-radius:14px;padding:8px;}
+  .dock .d{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#cfcfcf;font-size:8.5px;font-weight:700;padding:5px 0;border-radius:9px;}
+  .dock .d .ic{font-size:18px;}
+  .dock .d.on{background:#241f10;color:var(--ouro);}
+
+  .handlebar{display:flex;flex-direction:column;align-items:center;gap:4px;background:#1a1a1a;border:1px solid var(--line);border-radius:12px;padding:9px;color:#9a9a9a;font-size:10px;font-weight:700;}
+  .handlebar .grip{width:40px;height:4px;border-radius:3px;background:#555;}
+
+  .topbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .topbar .t{font-size:12px;font-weight:800;color:#e7e7ea;}
+  .icobtn{width:36px;height:36px;border-radius:9px;background:var(--pnl);border:1px solid var(--line);color:#e7e7ea;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pnl);border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:8px 12px 14px;z-index:45;box-shadow:0 -10px 30px rgba(0,0,0,.5);}
+  .sheet .handle{width:42px;height:4px;background:#555;border-radius:3px;margin:2px auto 10px;}
+  .sheet .row{display:flex;align-items:center;gap:9px;padding:9px 2px;border-bottom:1px solid #262626;font-size:12px;font-weight:700;color:#ddd;}
+  .sheet .row:last-child{border-bottom:none;}
+  .sheet .row .ch{margin-left:auto;color:#777;}
+
+  .note{font-size:8.5px;color:#777;text-align:center;margin-top:6px;}
+  .drawer{position:absolute;top:0;right:0;bottom:0;width:74%;background:var(--pnl);border-left:1px solid var(--line);z-index:55;padding:34px 12px 12px;box-shadow:-12px 0 30px rgba(0,0,0,.5);}
+  .drawer .row{display:flex;align-items:center;gap:9px;padding:11px 2px;border-bottom:1px solid #262626;font-size:12px;font-weight:700;color:#ddd;}
+  .drawer .row .ch{margin-left:auto;color:#777;}
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:54;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>🏆 Meta Master — +10 layouts mobile · “tudo escondido + foto embaixo”</h1>
+  <p>Tela no mínimo absoluto: <b>todos os controles ocultos</b> atrás de um único ponto de acesso, e a <b>foto/card protagonista na parte de baixo</b>. Agora com um <b>retrato real</b> no preview.</p>
+  <div class="tagline">📷 A foto mostrada é só um exemplo — no app entra a foto do consultor que você publicou.</div>
+</header>
+
+<div class="grid">
+
+  <!-- 11 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="inp">Natalia Cunha <span class="car">▾</span></div>
+      <button class="btn b-gh" style="margin-top:9px">⚙ Abrir controles</button>
+      <div class="spacer"></div>
+      <div class="cardwrap"><span class="lbl">prévia</span>
+        <div class="cardreal" style="width:165px"><div class="pf"></div><div class="nm" style="font-size:15px">NATALIA CUNHA</div></div></div>
+    </div></div></div>
+    <div class="cap"><b>11 · Card protagonista <span>(1 botão)</span></b>Só o seletor de consultor + “⚙ Abrir controles”. Todo o resto (ajustes, ações, histórico) abre num painel. Foto grande embaixo.</div>
+  </div>
+
+  <!-- 12 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:185px"><div class="pf"></div><div class="nm" style="font-size:16px">NATALIA CUNHA</div></div></div>
+      <div class="spacer"></div>
+      <div class="fabmenu"><div class="mi">👤 Trocar consultor</div><div class="mi">⚙ Ajustes</div><div class="mi">⬇ Baixar PNG</div><div class="mi">⋯ Mais ações</div></div>
+      <div class="fab br">⚙</div>
+    </div></div></div>
+    <div class="cap"><b>12 · Só a foto + FAB <span>(menu único)</span></b>A tela é praticamente só o card centralizado. Um botão flutuante “⚙” abre tudo. O máximo de limpeza.</div>
+  </div>
+
+  <!-- 13 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:175px"><div class="pf"></div><div class="nm" style="font-size:15px">NATALIA CUNHA</div></div></div>
+      <div style="height:10px"></div>
+      <button class="btn b-ouro">⬇ BAIXAR PNG</button>
+      <button class="btn b-gh" style="margin-top:8px">✎ Editar card</button>
+    </div></div></div>
+    <div class="cap"><b>13 · Foto + 2 botões <span>(Baixar / Editar)</span></b>Embaixo só “Baixar PNG” e “✎ Editar card” (abre tudo). Direto ao ponto: ver e baixar.</div>
+  </div>
+
+  <!-- 14 -->
+  <div class="item">
+    <div class="phone"><div class="scr">
+      <div class="pad">
+        <div class="topbar"><div class="tabs" style="flex:1;margin:0"><div class="tab on">🏆 Card</div><div class="tab">📊</div><div class="tab">📋</div></div><div class="icobtn">☰</div></div>
+        <div class="spacer"></div>
+        <div class="cardwrap">
+          <div class="cardreal" style="width:185px"><div class="pf"></div><div class="nm" style="font-size:16px">NATALIA CUNHA</div></div></div>
+        <div class="spacer"></div>
+      </div>
+      <div class="scrim"></div>
+      <div class="drawer">
+        <div class="row">👤 Consultor &amp; foto <span class="ch">›</span></div>
+        <div class="row">🖼 Enquadrar foto <span class="ch">›</span></div>
+        <div class="row">🎨 Cor da foto <span class="ch">›</span></div>
+        <div class="row">🔤 Nome <span class="ch">›</span></div>
+        <div class="row">🏷 Selo de dados <span class="ch">›</span></div>
+        <div class="row">📐 Formato <span class="ch">›</span></div>
+        <div class="row">⋯ Mais ações <span class="ch">›</span></div>
+        <div class="row">📜 Histórico <span class="ch">›</span></div>
+      </div>
+    </div></div>
+    <div class="cap"><b>14 · Menu lateral (☰) <span>(drawer)</span></b>Tela só com o card. O “☰” abre uma gaveta lateral com tudo. Clássico e escalável.</div>
+  </div>
+
+  <!-- 15 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:175px"><div class="pf"></div><div class="nm" style="font-size:15px">NATALIA CUNHA</div></div></div>
+      <div class="spacer"></div>
+      <div class="dock">
+        <div class="d on"><span class="ic">👤</span>Consultor</div>
+        <div class="d"><span class="ic">⚙</span>Ajustes</div>
+        <div class="d"><span class="ic">⋯</span>Ações</div>
+        <div class="d"><span class="ic">⬇</span>Baixar</div>
+      </div>
+    </div></div></div>
+    <div class="cap"><b>15 · Dock de ícones <span>(barra inferior)</span></b>Card no meio; barra com 4 ícones embaixo (Consultor/Ajustes/Ações/Baixar) — cada um abre seu painel. Tudo oculto, tudo a 1 toque.</div>
+  </div>
+
+  <!-- 16 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="inp">⚙ Mostrar controles <span class="car">▾</span></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:180px"><div class="pf"></div><div class="nm" style="font-size:16px">NATALIA CUNHA</div></div></div>
+    </div></div></div>
+    <div class="cap"><b>16 · Gaveta única no topo <span>(▾ mostrar tudo)</span></b>Uma só barra “⚙ Mostrar controles” fechada; expande a lista inteira para baixo. Card grande embaixo.</div>
+  </div>
+
+  <!-- 17 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="topbar"><div class="pill" style="flex:1"><span class="ic">🏆</span> Natalia Cunha <span class="car" style="margin-left:auto;color:var(--ouro);font-size:10px">▾</span></div><div class="icobtn">⚙</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:185px"><div class="pf"></div><div class="nm" style="font-size:16px">NATALIA CUNHA</div></div></div>
+      <div class="spacer"></div>
+      <button class="btn b-ouro">⬇ BAIXAR PNG</button>
+    </div></div></div>
+    <div class="cap"><b>17 · Pílula do consultor + ⚙ <span>(enxuto)</span></b>Topo: nome do consultor (troca) + ícone “⚙” (abre tudo). Card embaixo e Baixar fixo no rodapé.</div>
+  </div>
+
+  <!-- 18 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:200px"><div class="pf"></div><div class="nm" style="font-size:17px">NATALIA CUNHA</div></div></div>
+      <div class="spacer"></div>
+      <div style="position:absolute;right:14px;bottom:78px" class="fab">✎</div>
+      <div style="position:absolute;right:14px;bottom:16px" class="fab">⬇</div>
+    </div></div></div>
+    <div class="cap"><b>18 · Modo apresentação <span>(2 FABs)</span></b>Quase só o card, bem grande. Dois botões flutuantes: “✎” (editar tudo) e “⬇” (baixar). Visual de vitrine.</div>
+  </div>
+
+  <!-- 19 -->
+  <div class="item">
+    <div class="phone"><div class="scr">
+      <div class="pad">
+        <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+        <div class="spacer"></div>
+        <div class="cardwrap">
+          <div class="cardreal" style="width:160px"><div class="pf"></div><div class="nm" style="font-size:14px">NATALIA CUNHA</div></div></div>
+        <div class="spacer"></div>
+      </div>
+      <div class="sheet"><div class="handle"></div>
+        <div class="row">👤 Consultor &amp; foto <span class="ch">›</span></div>
+        <div class="row">⚙ Ajustes (foto, cor, nome, selo, formato) <span class="ch">›</span></div>
+        <div class="row">⋯ Mais ações <span class="ch">›</span></div>
+        <div class="row">📜 Histórico de batedores <span class="ch">›</span></div>
+      </div>
+    </div></div>
+    <div class="cap"><b>19 · Bottom sheet recolhido <span>(deslize)</span></b>Card acima; na base, uma aba que sobe revelando a lista (Consultor / Ajustes / Ações / Histórico). Tudo oculto até puxar.</div>
+  </div>
+
+  <!-- 20 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="spacer"></div>
+      <div class="cardwrap">
+        <div class="cardreal" style="width:175px"><div class="pf"></div><div class="nm" style="font-size:15px">NATALIA CUNHA</div></div></div>
+      <div style="height:12px"></div>
+      <div class="handlebar"><div class="grip"></div>⌃ deslize para editar</div>
+    </div></div></div>
+    <div class="cap"><b>20 · Puxador sob a foto <span>(swipe up)</span></b>Card embaixo e, logo abaixo, um “puxador” discreto. Deslizou → abre o painel com tudo. Mínimo de elementos na tela.</div>
+  </div>
+
+</div>
+</body>
+</html>

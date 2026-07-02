@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Previews — Faturamento na barra (2 batedores)</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ouro:#F0C84A;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#2b2b2b;font-family:'Archivo',sans-serif;color:#eee;padding:30px;max-width:920px;margin:0 auto;}
+  h1{font-size:20px;margin-bottom:4px;}
+  .hint{color:#9a9a9a;font-size:13px;margin-bottom:24px;}
+  .opt{margin-bottom:22px;}
+  .opt .num{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ouro);font-weight:800;margin-bottom:6px;}
+  .opt .desc{font-size:11px;color:#888;margin-top:6px;}
+
+  .bar{background:#161616;border:1px solid #333;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:14px;}
+  .left{flex:1;font-size:12px;color:#bbb;line-height:1.5;}
+  .left b{color:var(--ouro);}
+  .left .sub{color:#666;font-size:11px;}
+  .vdiv{width:1px;align-self:stretch;background:#333;}
+  .right{display:flex;}
+
+  /* 1 - lista: nome pequeno + valor dourado */
+  .r1{flex-direction:column;gap:6px;align-items:flex-end;}
+  .r1 .it{text-align:right;}
+  .r1 .nm{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;}
+  .r1 .vl{font-size:19px;font-weight:900;color:var(--ouro);line-height:1;}
+
+  /* 2 - pills empilhadas */
+  .r2{flex-direction:column;gap:7px;align-items:flex-end;}
+  .r2 .pill{background:var(--ouro);color:#111;font-weight:800;font-size:13px;padding:6px 13px;border-radius:30px;white-space:nowrap;}
+
+  /* 3 - nome + valor + % */
+  .r3{flex-direction:column;gap:7px;align-items:flex-end;}
+  .r3 .it{display:flex;align-items:baseline;gap:8px;}
+  .r3 .nm{font-size:11px;color:#aaa;}
+  .r3 .vl{font-size:17px;font-weight:900;color:var(--ouro);}
+  .r3 .pc{font-size:10px;color:#9fd07a;font-weight:700;}
+
+  /* 4 - cards trofeu empilhados */
+  .r4{flex-direction:column;gap:6px;}
+  .r4 .box{display:flex;align-items:center;gap:9px;background:#1f1a0c;border:1px solid #6b5612;border-radius:9px;padding:5px 12px;}
+  .r4 .tro{font-size:16px;}
+  .r4 .nm{font-size:10px;color:#a98;text-transform:uppercase;letter-spacing:.5px;}
+  .r4 .vl{font-size:16px;font-weight:900;color:var(--ouro);line-height:1;}
+
+  /* 5 - donut pequeno + nome + valor */
+  .r5{flex-direction:column;gap:7px;}
+  .r5 .it{display:flex;align-items:center;gap:9px;}
+  .donut{width:34px;height:34px;border-radius:50%;background:conic-gradient(var(--ouro) 0 100%,#333 0);display:flex;align-items:center;justify-content:center;flex:none;}
+  .donut .in{width:24px;height:24px;border-radius:50%;background:#161616;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:var(--ouro);}
+  .r5 .nm{font-size:10px;color:#999;}
+  .r5 .vl{font-size:16px;font-weight:900;color:#fff;}
+
+  /* 6 - tabela Nome | Realizado */
+  .r6{flex-direction:column;gap:4px;}
+  .r6 .hd{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#777;display:flex;justify-content:space-between;gap:18px;}
+  .r6 .it{display:flex;justify-content:space-between;gap:18px;align-items:baseline;}
+  .r6 .nm{font-size:11px;color:#ccc;}
+  .r6 .vl{font-size:16px;font-weight:900;color:var(--ouro);}
+
+  /* 7 - por pessoa: Faturado | % */
+  .r7{flex-direction:column;gap:8px;}
+  .r7 .it{display:flex;align-items:center;gap:0;}
+  .r7 .nm{font-size:10px;color:#aaa;width:62px;text-align:right;padding-right:10px;}
+  .stat{padding:0 12px;text-align:center;}
+  .stat .lab{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;}
+  .stat .val{font-size:14px;font-weight:900;color:var(--ouro);}
+  .stat .val.b{color:#9fd07a;}
+
+  /* 8 - caixas gradiente empilhadas */
+  .r8{flex-direction:column;gap:6px;}
+  .r8 .box{background:linear-gradient(135deg,#F0C84A,#caa12f);color:#111;border-radius:8px;padding:5px 14px;display:flex;align-items:baseline;gap:10px;justify-content:flex-end;min-width:230px;}
+  .r8 .nm{font-size:10px;font-weight:800;opacity:.85;text-transform:uppercase;}
+  .r8 .vl{font-size:17px;font-weight:900;}
+
+  /* 9 - dois numeros lado a lado, nome em cima */
+  .r9{gap:18px;}
+  .r9 .it{text-align:center;}
+  .r9 .nm{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;}
+  .r9 .vl{font-size:22px;font-weight:900;color:var(--ouro);line-height:1;}
+
+  /* 10 - nome + valor + barra */
+  .r10{flex-direction:column;gap:9px;min-width:210px;}
+  .r10 .it{width:200px;}
+  .r10 .top{display:flex;justify-content:space-between;align-items:baseline;}
+  .r10 .nm{font-size:10px;color:#aaa;}
+  .r10 .vl{font-size:15px;font-weight:900;color:var(--ouro);}
+  .r10 .track{height:6px;background:#333;border-radius:4px;margin-top:4px;overflow:hidden;}
+  .r10 .fill{height:100%;background:var(--ouro);border-radius:4px;}
+</style>
+</head>
+<body>
+  <h1>Faturamento na barra — 10 opções · <span style="color:#F0C84A">2 batedores</span> 🏆</h1>
+  <div class="hint">Exemplo: <b>Gabriela Jesus</b> R$ 300.801 (132%) e <b>Natalia Cunha</b> R$ 270.915 (119%). Diga o número da que prefere.</div>
+
+  <!-- 1 -->
+  <div class="opt"><div class="num">Opção 1 — lista (nome + valor)</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r1">
+        <div class="it"><div class="nm">Gabriela Jesus</div><div class="vl">R$ 300.801</div></div>
+        <div class="it"><div class="nm">Natalia Cunha</div><div class="vl">R$ 270.915</div></div>
+      </div>
+    </div>
+    <div class="desc">Cada batedor numa linha, valor dourado. Cresce bem com 1, 2 ou 3 pessoas.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="opt"><div class="num">Opção 2 — selos (pills)</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="right r2">
+        <div class="pill">Gabriela · R$ 300.801</div>
+        <div class="pill">Natalia · R$ 270.915</div>
+      </div>
+    </div>
+    <div class="desc">Etiquetas douradas, bem destacadas.</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="opt"><div class="num">Opção 3 — nome + valor + % da Master</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r3">
+        <div class="it"><span class="nm">Gabriela</span><span class="vl">R$ 300.801</span><span class="pc">132%</span></div>
+        <div class="it"><span class="nm">Natalia</span><span class="vl">R$ 270.915</span><span class="pc">119%</span></div>
+      </div>
+    </div>
+    <div class="desc">Mostra valor e superação da meta de cada um.</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="opt"><div class="num">Opção 4 — cards com troféu</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b></div>
+      <div class="right r4">
+        <div class="box"><div class="tro">🏆</div><div><div class="nm">Gabriela</div><div class="vl">R$ 300.801</div></div></div>
+        <div class="box"><div class="tro">🏆</div><div><div class="nm">Natalia</div><div class="vl">R$ 270.915</div></div></div>
+      </div>
+    </div>
+    <div class="desc">Temático de premiação, um card por pessoa.</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="opt"><div class="num">Opção 5 — anel de % + valor</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r5">
+        <div class="it"><div class="donut"><div class="in">132%</div></div><div><div class="nm">Gabriela</div><div class="vl">R$ 300.801</div></div></div>
+        <div class="it"><div class="donut"><div class="in">119%</div></div><div><div class="nm">Natalia</div><div class="vl">R$ 270.915</div></div></div>
+      </div>
+    </div>
+    <div class="desc">Visual de dashboard, anel mostra o atingimento.</div>
+  </div>
+
+  <!-- 6 -->
+  <div class="opt"><div class="num">Opção 6 — tabela (Nome | Realizado)</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r6">
+        <div class="hd"><span>Consultor</span><span>Realizado</span></div>
+        <div class="it"><span class="nm">Gabriela Jesus</span><span class="vl">R$ 300.801</span></div>
+        <div class="it"><span class="nm">Natalia Cunha</span><span class="vl">R$ 270.915</span></div>
+      </div>
+    </div>
+    <div class="desc">Sóbrio e corporativo, formato de tabelinha.</div>
+  </div>
+
+  <!-- 7 -->
+  <div class="opt"><div class="num">Opção 7 — por pessoa: Faturado | %</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b></div>
+      <div class="vdiv"></div>
+      <div class="right r7">
+        <div class="it"><div class="nm">Gabriela</div><div class="stat"><div class="lab">Faturado</div><div class="val">R$ 300.801</div></div><div class="vdiv"></div><div class="stat"><div class="lab">Master</div><div class="val b">132%</div></div></div>
+        <div class="it"><div class="nm">Natalia</div><div class="stat"><div class="lab">Faturado</div><div class="val">R$ 270.915</div></div><div class="vdiv"></div><div class="stat"><div class="lab">Master</div><div class="val b">119%</div></div></div>
+      </div>
+    </div>
+    <div class="desc">Dois indicadores por pessoa.</div>
+  </div>
+
+  <!-- 8 -->
+  <div class="opt"><div class="num">Opção 8 — caixas gradiente douradas</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="right r8">
+        <div class="box"><span class="nm">Gabriela</span><span class="vl">R$ 300.801</span></div>
+        <div class="box"><span class="nm">Natalia</span><span class="vl">R$ 270.915</span></div>
+      </div>
+    </div>
+    <div class="desc">Blocos sólidos dourados, bem chamativos.</div>
+  </div>
+
+  <!-- 9 -->
+  <div class="opt"><div class="num">Opção 9 — números lado a lado</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 bateram a Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r9">
+        <div class="it"><div class="nm">Gabriela</div><div class="vl">R$ 300.801</div></div>
+        <div class="vdiv"></div>
+        <div class="it"><div class="nm">Natalia</div><div class="vl">R$ 270.915</div></div>
+      </div>
+    </div>
+    <div class="desc">Números grandes, lado a lado. Bom para exatamente 2.</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="opt"><div class="num">Opção 10 — valor + barra de progresso</div>
+    <div class="bar">
+      <div class="left">Competência <b>Junho/2026</b><br><span class="sub">🏆 2 bateram a Meta Master</span></div>
+      <div class="vdiv"></div>
+      <div class="right r10">
+        <div class="it"><div class="top"><span class="nm">Gabriela</span><span class="vl">R$ 300.801</span></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
+        <div class="it"><div class="top"><span class="nm">Natalia</span><span class="vl">R$ 270.915</span></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
+      </div>
+    </div>
+    <div class="desc">Valor com barrinha cheia (meta superada) por pessoa.</div>
+  </div>
+
+</body>
+</html>

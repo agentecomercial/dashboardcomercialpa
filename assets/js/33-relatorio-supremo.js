@@ -194,13 +194,15 @@
   }
 
   function _bEntradas(itens){
-    var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), true);
+    // Filtro = quem pagou entrada (it.entrada>0); valor exibido = TOTAL do produto (it.valor).
+    // Ordena por valor total para casar com o número mostrado quando _ordenarValor está ligado.
+    var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), false);
     if(!ents.length) return SEP_LIN+'\n💵 ENTRADAS RECEBIDAS (0)\n'+SEP_LIN+'\nNenhuma entrada registrada.\n';
     var linhas = ents.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
       // Entrada também respeita: PIX/Débito/Transferência sem "Nx"
       var pgto = (_exibir.forma && it.formaPagamento) ? (' · '+it.formaPagamento) : '';
-      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.entrada),13)+pgto+_sufConsultor(it);
+      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+pgto+_sufConsultor(it);
     });
     return [
       SEP_LIN,
@@ -892,9 +894,10 @@
         // ENTRADAS — TODAS as entradas registradas (incluindo as de subs já pagos
         // para manter rastreabilidade histórica dos pagamentos parcelados)
         if(_sel.entradas){
-          var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), true);
+          // Filtro = quem pagou entrada; valor exibido = TOTAL do produto (usaEntrada:false).
+          var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), false);
           _drawH2('Entradas Recebidas ('+ents.length+')');
-          if(ents.length) _tabelaItens(ents, {usaEntrada:true});
+          if(ents.length) _tabelaItens(ents, {usaEntrada:false});
           else _drawKv('Nenhuma entrada registrada.', '—');
         }
 
@@ -1008,7 +1011,7 @@
           doc.setFontSize(7);
           doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
           doc.text(
-            'FEBRACIS · CONFIDENCIAL · ' + (t.nome||'') + ' · Pág. ' + pg + '/' + totalPgs,
+            'CONFIDENCIAL · ' + (t.nome||'') + ' · Pág. ' + pg + '/' + totalPgs,
             pageW/2, pageH - 7,
             {align:'center'}
           );

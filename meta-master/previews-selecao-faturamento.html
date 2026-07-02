@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecionar avatares (segurar) + somar faturamento — 10 opções</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#202022;font-family:'Archivo',sans-serif;color:#eee;padding:28px 20px 80px;}
+  header.pg{max-width:1340px;margin:0 auto 26px;}
+  header.pg h1{font-size:23px;font-weight:900;}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:7px;line-height:1.55;max-width:900px;}
+  header.pg p b{color:#F0C84A;}
+  header.pg .tag{margin-top:10px;font-size:12px;color:#9fe6aa;background:#16241a;border:1px solid #2f5a36;border-radius:8px;padding:8px 12px;display:inline-block;}
+
+  .grid{max-width:1340px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(312px,1fr));gap:30px 24px;}
+  .item{display:flex;flex-direction:column;gap:11px;}
+  .cap{font-size:13px;color:#9a9a9a;line-height:1.45;}
+  .cap b{color:#F0C84A;font-size:14px;display:block;margin-bottom:2px;}
+
+  .phone{width:308px;height:624px;margin:0 auto;background:#0c0c0c;border:9px solid #000;border-radius:34px;
+    box-shadow:0 14px 40px rgba(0,0,0,.55),inset 0 0 0 2px #232323;overflow:hidden;position:relative;}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:86px;height:17px;background:#000;border-radius:0 0 12px 12px;z-index:60;}
+  .scr{position:absolute;inset:0;background:#1c1c20;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#444 transparent;}
+  .scr::-webkit-scrollbar{width:5px;}.scr::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+  .pad{padding:34px 12px 16px;position:relative;min-height:100%;}
+  .hub-sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;margin:0 0 10px;}
+
+  /* ranking base */
+  .hub-av{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;color:#15151a;font-weight:800;font-size:16px;flex:none;}
+  .hub-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid #2a2a32;border-radius:12px;background:#1a1a1f;margin-bottom:8px;transition:.12s;}
+  .hub-row.bat{border-color:#5a4a1e;background:linear-gradient(90deg,#221d0e,#1a1a1f);}
+  .hub-pos{width:15px;text-align:center;font-weight:900;color:#6f6f78;font-size:13px;flex:none;}
+  .hub-mid{flex:1;min-width:0;}
+  .hub-rn{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hub-bar{height:6px;border-radius:5px;background:#2a2a32;overflow:hidden;margin-top:6px;}
+  .hub-bar>i{display:block;height:100%;background:linear-gradient(90deg,#c9a84a,#F0C84A);}
+  .hub-right{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto;}
+  .hub-fatbig{font-size:14px;font-weight:900;color:#F0C84A;white-space:nowrap;}
+  .hub-pctsm{font-size:10px;font-weight:800;color:#cbb88a;}
+
+  /* === estado SELECIONADO === */
+  .hub-av.sel{box-shadow:0 0 0 3px #1c1c20,0 0 0 6px #9fe6aa;}
+  .hub-av .ck{position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:#9fe6aa;color:#0c1a0f;font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid #1c1c20;}
+  .hub-av.sel .ck{display:flex;}
+  .hub-row.selrow{border-color:#2f5a36;background:linear-gradient(90deg,#12241a,#1a1a1f);}
+  .dim-when-sel{opacity:.4;}
+
+  .btn{border:none;border-radius:9px;font-weight:900;font-family:'Archivo';cursor:pointer;}
+  .b-ouro{background:#F0C84A;color:#1a1500;}
+  .b-gh{background:transparent;border:1px solid #4a4a4a;color:#cfcfcf;}
+  .b-verde{background:#1f5a31;color:#dffbe6;}
+
+  .hint{font-size:10px;color:#7f7f88;text-align:center;margin:2px 0 12px;}
+  .hint b{color:#9fe6aa;}
+
+  /* 1 barra topo sticky */
+  .seltop{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:9px;background:#16241a;border:1px solid #2f5a36;border-radius:12px;padding:9px 12px;margin-bottom:11px;}
+  .seltop .n{width:24px;height:24px;border-radius:50%;background:#9fe6aa;color:#0c1a0f;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .seltop .lab{font-size:9px;color:#9fcf9f;text-transform:uppercase;letter-spacing:.4px;}
+  .seltop .val{font-size:16px;font-weight:900;color:#9fe6aa;}
+  .seltop .x{margin-left:auto;color:#9fcf9f;font-size:14px;font-weight:900;}
+
+  /* 2 pílula flutuante rodapé */
+  .selfab{position:absolute;left:12px;right:12px;bottom:14px;z-index:30;display:flex;align-items:center;gap:10px;background:#16241a;border:1px solid #2f5a36;border-radius:30px;padding:11px 16px;box-shadow:0 8px 24px rgba(0,0,0,.55);}
+  .selfab .val{font-size:17px;font-weight:900;color:#9fe6aa;}
+  .selfab .sub{font-size:10px;color:#9fcf9f;}
+  .selfab .go{margin-left:auto;background:#9fe6aa;color:#0c1a0f;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:900;}
+
+  /* 3 card total grande */
+  .selcard{background:linear-gradient(135deg,#16241a,#10180f);border:1px solid #2f5a36;border-radius:14px;padding:14px;margin-bottom:13px;}
+  .selcard .t{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9fcf9f;font-weight:800;}
+  .selcard .big{font-size:26px;font-weight:900;color:#9fe6aa;line-height:1.15;margin:3px 0;}
+  .selcard .kpis{display:flex;gap:8px;margin-top:8px;}
+  .selcard .kpi{flex:1;background:#0e1710;border:1px solid #244a2c;border-radius:9px;padding:7px;text-align:center;}
+  .selcard .kpi b{display:block;font-size:14px;color:#dffbe6;font-weight:900;}
+  .selcard .kpi span{font-size:8px;color:#7faf86;text-transform:uppercase;letter-spacing:.4px;}
+
+  /* 4 chip no header */
+  .sechip{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;}
+  .sechip .lab{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;}
+  .sechip .v{font-size:12px;font-weight:900;color:#9fe6aa;background:#16241a;border:1px solid #2f5a36;border-radius:20px;padding:4px 11px;}
+
+  /* 5 linha total no fim */
+  .seltot{display:flex;align-items:center;gap:10px;padding:11px;border:1px dashed #2f5a36;border-radius:12px;background:#10180f;margin-top:4px;}
+  .seltot .lab{font-size:11px;color:#9fcf9f;font-weight:800;text-transform:uppercase;letter-spacing:.4px;}
+  .seltot .val{margin-left:auto;font-size:17px;font-weight:900;color:#9fe6aa;}
+
+  /* 6 total central display */
+  .seldisp{position:absolute;left:50%;top:46%;transform:transl(-50%,-50%);transform:translateX(-50%);z-index:30;background:rgba(8,12,9,.92);border:1px solid #2f5a36;border-radius:16px;padding:16px 22px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.6);}
+  .seldisp .t{font-size:10px;color:#9fcf9f;text-transform:uppercase;letter-spacing:.5px;}
+  .seldisp .big{font-size:28px;font-weight:900;color:#9fe6aa;}
+  .seldisp .sub{font-size:11px;color:#9fcf9f;margin-top:2px;}
+
+  /* 7 barra vs meta */
+  .selmeta{background:#10180f;border:1px solid #2f5a36;border-radius:12px;padding:12px;margin-bottom:12px;}
+  .selmeta .row{display:flex;align-items:baseline;justify-content:space-between;}
+  .selmeta .val{font-size:18px;font-weight:900;color:#9fe6aa;}
+  .selmeta .meta{font-size:10px;color:#9fcf9f;}
+  .selmeta .track{height:9px;border-radius:6px;background:#24332a;overflow:hidden;margin-top:8px;}
+  .selmeta .track>i{display:block;height:100%;background:linear-gradient(90deg,#5fa86f,#9fe6aa);}
+
+  /* 9 esmaece nao selecionados (usa .dim-when-sel) */
+  .barbottom{position:sticky;bottom:0;background:#16241a;border-top:1px solid #2f5a36;margin:8px -12px -16px;padding:10px 12px;display:flex;align-items:center;gap:10px;z-index:20;}
+  .barbottom .val{font-size:16px;font-weight:900;color:#9fe6aa;}
+  .barbottom .sub{font-size:9px;color:#9fcf9f;text-transform:uppercase;}
+  .barbottom .act{margin-left:auto;display:flex;gap:6px;}
+  .barbottom .act .b{font-size:10px;font-weight:800;padding:7px 10px;border-radius:8px;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>👥 Selecionar avatares (segurar) + somar faturamento — 10 opções</h1>
+  <p>Você <b>segura</b> um avatar para entrar em seleção, toca em outros para marcar/desmarcar, e o app <b>soma o faturamento</b> dos selecionados. Abaixo, 10 jeitos de mostrar essa soma. Estado de exemplo: <b>Gabriela + Natalia</b> selecionadas = <b>R$ 772.701</b>.</p>
+  <div class="tag">✓ Avatar selecionado = anel verde + check. A soma atualiza a cada toque.</div>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+  const D=[
+    {nome:'Gabriela Jesus', ini:'G', cor:'#e0a96d', pct:187.1, fat:415792, bateu:true},
+    {nome:'Natalia Cunha',  ini:'N', cor:'#61afef', pct:184.5, fat:356909, bateu:true},
+    {nome:'Karla Oliveira', ini:'K', cor:'#98c379', pct:5.1,   fat:2396,   bateu:false},
+    {nome:'Artur Borges',   ini:'A', cor:'#c678dd', pct:null,  fat:8589,   bateu:false},
+    {nome:'Filipe Frazão',  ini:'F', cor:'#56b6c2', pct:null,  fat:1997,   bateu:false},
+    {nome:'Ana Francisco',  ini:'A', cor:'#d19a66', pct:null,  fat:0,      bateu:false},
+  ];
+  const SEL=[0,1];                       // selecionados de exemplo
+  const isSel = k => SEL.indexOf(k)>=0;
+  const soma = SEL.reduce((s,k)=>s+D[k].fat,0);
+  const metaUnid = 1366000;              // meta master da unidade (exemplo) p/ a barra
+  const full = v => 'R$ '+(+v||0).toLocaleString('pt-BR');
+  const pctTxt = p => (p===null||isNaN(p))?'—':(String(p).replace('.',',')+'%');
+  const av = (c,k,extraDim) => '<span class="hub-av'+(isSel(k)?' sel':'')+'" style="background:'+c.cor+'">'+c.ini+'<span class="ck">✓</span></span>';
+
+  function rows(opt){
+    let h='';
+    D.forEach((c,k)=>{
+      const dim = opt.dimOthers && !isSel(k) ? ' dim-when-sel' : '';
+      const selrow = opt.rowHi && isSel(k) ? ' selrow' : '';
+      h+='<div class="hub-row'+(c.bateu?' bat':'')+selrow+dim+'">'
+        +'<span class="hub-pos">'+(k+1)+'</span>'+av(c,k)
+        +'<div class="hub-mid"><div class="hub-rn">'+c.nome+(c.bateu?' 🏆':'')+'</div><div class="hub-bar"><i style="width:'+Math.min(100,c.pct||0)+'%"></i></div></div>'
+        +'<div class="hub-right"><span class="hub-fatbig">'+full(c.fat)+'</span><span class="hub-pctsm">'+pctTxt(c.pct)+'</span></div>'
+        +'</div>';
+    });
+    return h;
+  }
+
+  const V=[
+   {t:'1 · Barra fixa no topo', s:'Ao selecionar, aparece uma barra verde grudada no topo com a contagem e a soma (+ limpar).',
+    top:'<div class="seltop"><span class="n">2</span><div><div class="lab">Selecionados</div><div class="val">'+full(soma)+'</div></div><span class="x">✕ limpar</span></div>'},
+
+   {t:'2 · Pílula flutuante (rodapé)', s:'Soma numa pílula flutuante na base; botão de ação (ex.: gerar/comparar).',
+    fab:'<div class="selfab"><div><div class="sub">2 selecionados</div><div class="val">'+full(soma)+'</div></div><span class="go">Usar →</span></div>'},
+
+   {t:'3 · Card de total (acima)', s:'Bloco verde grande com a soma + KPIs (qtd e média da Master).',
+    top:'<div class="selcard"><div class="t">Faturamento selecionado</div><div class="big">'+full(soma)+'</div><div class="kpis"><div class="kpi"><b>2</b><span>Selecionados</span></div><div class="kpi"><b>185,8%</b><span>Média master</span></div></div></div>'},
+
+   {t:'4 · Chip no cabeçalho', s:'Discreto: a soma vira um chip ao lado do título "Ranking da Master".',
+    head:'<div class="sechip"><span class="lab">Ranking da Master</span><span class="v">2 · '+full(soma)+'</span></div>', noSec:true},
+
+   {t:'5 · Linha de total no fim', s:'Igual ao TOTAL de uma tabela: uma linha somando só os selecionados, no fim.',
+    bottomIn:'<div class="seltot"><span class="lab">Total selecionados (2)</span><span class="val">'+full(soma)+'</span></div>'},
+
+   {t:'6 · Total central (display)', s:'Um visor central tipo calculadora aparece sobre o ranking enquanto seleciona.',
+    over:'<div class="seldisp"><div class="t">Soma selecionados</div><div class="big">'+full(soma)+'</div><div class="sub">2 consultores</div></div>'},
+
+   {t:'7 · Soma vs meta da unidade', s:'Mostra a soma e o quanto ela representa da Meta Master da unidade (barra).',
+    top:'<div class="selmeta"><div class="row"><span class="val">'+full(soma)+'</span><span class="meta">de '+full(metaUnid)+' (meta)</span></div><div class="track"><i style="width:'+Math.round(soma/metaUnid*100)+'%"></i></div></div>'},
+
+   {t:'8 · Esmaecer não selecionados', s:'Os selecionados ganham destaque (linha verde) e o resto esmaece; soma fixa no rodapé.',
+    dimOthers:true, rowHi:true,
+    barbottom:'<div class="barbottom"><div><div class="sub">2 selecionados</div><div class="val">'+full(soma)+'</div></div><div class="act"><span class="b b-gh">Limpar</span><span class="b b-ouro">Usar</span></div></div>'},
+
+   {t:'9 · Barra inferior com ações', s:'Barra fixa no rodapé com soma + Limpar + Copiar/Usar (modo seleção clássico).',
+    barbottom:'<div class="barbottom"><div><div class="sub">Soma (2)</div><div class="val">'+full(soma)+'</div></div><div class="act"><span class="b b-gh">Limpar</span><span class="b b-verde">Copiar</span></div></div>'},
+
+   {t:'10 · Linha verde só selecionados', s:'Sem barra extra: as linhas selecionadas ficam verdes e mostram a soma acumulada na 1ª.',
+    rowHi:true, accumTop:true},
+  ];
+
+  const grid=document.getElementById('grid');
+  V.forEach(v=>{
+    let inner='';
+    if(!v.noSec && !v.head) inner+='<div class="hub-sec">Ranking da Master</div>';
+    if(v.head) inner+=v.head;
+    inner+='<div class="hint">Segure um avatar para <b>selecionar</b></div>';
+    if(v.top) inner+=v.top;
+    if(v.accumTop) inner+='<div class="seltop"><span class="n">2</span><div><div class="lab">Soma acumulada</div><div class="val">'+full(soma)+'</div></div></div>';
+    inner+=rows(v);
+    if(v.bottomIn) inner+=v.bottomIn;
+    let extra=(v.fab||'')+(v.over||'')+(v.barbottom||'');
+    const item=document.createElement('div'); item.className='item';
+    item.innerHTML='<div class="phone"><div class="scr"><div class="pad">'+inner+'</div>'+extra+'</div></div>'
+      +'<div class="cap"><b>'+v.t+'</b>'+v.s+'</div>';
+    grid.appendChild(item);
+  });
+</script>
+</body>
+</html>

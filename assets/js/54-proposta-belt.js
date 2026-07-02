@@ -271,32 +271,62 @@
   /* Consome um AOA já pronto (compatibilidade) */
   function _consumir(aoa){ _processar([], '(única)', aoa); }
 
-  /* ── Entrada por LINK (Google Sheets publicado ou URL de CSV) ── */
-  function _googleSheetCsv(url){
-    var m = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    if(!m) return null;
+  /* ── Entrada por LINK (Google Sheets compartilhado/publicado ou URL de CSV) ── */
+  /* Gera uma LISTA de URLs de CSV para tentar em ordem (cada tipo de link tem
+     endpoints diferentes; testamos até um responder). */
+  function _googleSheetCsvUrls(url){
     var gid = '0';
     var g = url.match(/[#&?]gid=(\d+)/);
     if(g) gid = g[1];
-    return 'https://docs.google.com/spreadsheets/d/' + m[1] + '/export?format=csv&gid=' + gid;
+    // já é um link de CSV/export/gviz/pub? usa direto
+    if(/output=csv|format=csv|tqx=out:csv/i.test(url)) return [url];
+    // "Publicar na web": /spreadsheets/d/e/<token>/...  (token começa com 2PACX)
+    var e = url.match(/\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/);
+    if(e){
+      var t = e[1];
+      return [
+        'https://docs.google.com/spreadsheets/d/e/' + t + '/pub?output=csv&gid=' + gid,
+        'https://docs.google.com/spreadsheets/d/e/' + t + '/pub?output=csv'
+      ];
+    }
+    // Link normal de compartilhamento: /spreadsheets/d/<id>/edit...
+    var m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if(m){
+      var id = m[1];
+      return [
+        'https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv&gid=' + gid,
+        'https://docs.google.com/spreadsheets/d/' + id + '/export?format=csv&gid=' + gid
+      ];
+    }
+    return [url]; // não é Google Sheets: tenta como URL de CSV cru
   }
   function _beltLerLink(){
     var inp = document.getElementById('beltLink');
     var url = inp ? inp.value.trim() : '';
     if(!url){ _setStatus('Cole o link da planilha primeiro.', true); return; }
     _setStatus('Lendo link…', false);
-    var csvUrl = _googleSheetCsv(url) || url;
-    fetch(csvUrl)
-      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-      .then(function(text){
-        return _ensureXLSX().then(function(){
-          var wb = XLSX.read(text, { type:'string' });
-          _consumirWB(wb);
-        });
-      })
-      .catch(function(e){
-        _setStatus('Não consegui ler o link: ' + (e.message||e) + '.<br>A planilha precisa estar pública (Arquivo → Compartilhar → Publicar na web).', true);
-      });
+    var urls = _googleSheetCsvUrls(url);
+    var ultimoErro = '';
+    (function tentar(i){
+      if(i >= urls.length){
+        _setStatus('Não consegui ler o link (' + (ultimoErro||'falhou') + ').<br>' +
+          'Use <b>Arquivo → Compartilhar → Qualquer pessoa com o link (Leitor)</b> ' +
+          'OU <b>Arquivo → Compartilhar → Publicar na web → CSV</b> e cole o link gerado.', true);
+        return;
+      }
+      fetch(urls[i])
+        .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function(text){
+          var t = (text||'').trim();
+          // se vier página HTML (login/erro) em vez de CSV, tenta o próximo endpoint
+          if(/^<!DOCTYPE|^<html/i.test(t)) throw new Error('planilha não pública');
+          return _ensureXLSX().then(function(){
+            var wb = XLSX.read(text, { type:'string' });
+            _consumirWB(wb);
+          });
+        })
+        .catch(function(e){ ultimoErro = (e && e.message) || e; tentar(i+1); });
+    })(0);
   }
 
   /* ─────────────────────────────────────────────────────────────────

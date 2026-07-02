@@ -409,7 +409,8 @@ function _montarGrid(membros,usuarios){
     var FECHA='window._fecharUrDd&&window._fecharUrDd();';
     var ddItems='';
     if(!temLogin){
-      ddItems='<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'" onclick="'+FECHA+'_abrirConfigurarAcesso(this.dataset.uid,this.dataset.nome,this.dataset.perfil)">⚙️ Configurar acesso</button>';
+      ddItems='<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'" onclick="'+FECHA+'_abrirConfigurarAcesso(this.dataset.uid,this.dataset.nome,this.dataset.perfil)">⚙️ Configurar acesso</button>'
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'" data-ativo="'+(ativo?'true':'false')+'" onclick="'+FECHA+'_toggleAtivo(this.dataset.uid,this.dataset.ativo!==&quot;true&quot;,this.dataset.nome,this.dataset.perfil)">'+(ativo?'⏸ Pausar usuário':'▶ Reativar usuário')+'</button>';
     } else {
       ddItems='<button class="ur-dd-item" data-uid="'+uid+'" onclick="'+FECHA+'_abrirEditarAcesso(this.dataset.uid)">✏️ Editar</button>'
         +'<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(nomeU)+'" onclick="'+FECHA+'_abrirAlterarSenhaUsuario(this.dataset.uid,this.dataset.nome)">🔑 Alterar senha</button>'
@@ -447,8 +448,22 @@ function _montarGrid(membros,usuarios){
   }
 
   // ── Busca + Recentes ──────────────────────────────────────────
-  var recentes=_getUsuariosRecentes();
+  var recentes=_getUsuariosRecentes().filter(function(r){
+    var u=usuarios&&usuarios[r.uid];
+    return !(u&&u.ativo===false); // pausado não aparece no acesso rápido
+  });
   var html='';
+
+  /* Pausados (ativo===false) saem das seções normais e vão para a seção
+     "⏸ Pausados" no fim do painel — somem do resto do app, mas continuam
+     reativáveis por aqui. */
+  var _pausados=[];
+  function _soAtivos(lista){
+    return lista.filter(function(entry){
+      if(entry&&entry[1]&&entry[1].ativo===false){ _pausados.push(entry); return false; }
+      return true;
+    });
+  }
 
   // Barra de busca (span grid-column:1/-1)
   html+='<div style="grid-column:1/-1;margin-bottom:8px;">'
@@ -493,8 +508,8 @@ function _montarGrid(membros,usuarios){
      Membro de turma sem cadastro em `usuarios/` (ou recém-excluído)
      NÃO deve aparecer no painel de gestão — `encontrar()` decide. */
   if(membros.adms&&membros.adms.length){
-    var admsValidos=membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});})
-      .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean);
+    var admsValidos=_soAtivos(membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});})
+      .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean));
     if(admsValidos.length){
       html+=_secaoHeader('ADM', admsValidos.length, 'adm');
       admsValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
@@ -514,7 +529,7 @@ function _montarGrid(membros,usuarios){
   /* Lista de cards é envolvida em .ur-secao-lista que vira rolável a partir
      do 5º item (CSS define max-height ≈ 4 cards). Header fica fora para
      que o sticky continue funcionando no scroll global do modal. */
-  var consValidos=membros.consultores.map(function(nome){return _resolverMembro(nome,'consultor');});
+  var consValidos=_soAtivos(membros.consultores.map(function(nome){return _resolverMembro(nome,'consultor');}));
   html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
   if(consValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
@@ -524,7 +539,7 @@ function _montarGrid(membros,usuarios){
     html+='</div>';
   }
 
-  var treinValidos=membros.treinadores.map(function(nome){return _resolverMembro(nome,'treinador');});
+  var treinValidos=_soAtivos(membros.treinadores.map(function(nome){return _resolverMembro(nome,'treinador');}));
   html+=_secaoHeader('Treinadores', treinValidos.length, 'treinador');
   if(treinValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
@@ -541,9 +556,10 @@ function _montarGrid(membros,usuarios){
   (membros.adms||[]).forEach(function(n){ var e=encontrar(n,'adm'); if(e) jaRenderizados[e[0]]=1; });
   consValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   treinValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
-  var outros=Object.entries(usuarios||{}).filter(function(e){
+  _pausados.forEach(function(e){ jaRenderizados[e[0]]=1; });
+  var outros=_soAtivos(Object.entries(usuarios||{}).filter(function(e){
     return e[1]&&!jaRenderizados[e[0]];
-  }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+  }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});}));
   // garantir nome placeholder para exibição
   outros.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
   if(outros.length){
@@ -554,6 +570,21 @@ function _montarGrid(membros,usuarios){
   /* (Seção "Aguardando configuração" removida — membros da turma sem conta
      agora aparecem nas próprias seções Consultores/Treinadores com dot
      "sem acesso", via _resolverMembro acima.) */
+
+  /* ── Seção PAUSADOS ──
+     Único lugar do app onde usuários pausados aparecem — para poder
+     reativar (⋯ → Reativar usuário) ou excluir. */
+  if(_pausados.length){
+    _pausados.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
+    _pausados.sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+    html+='<div class="ur-secao-header">'
+      +'<div class="ur-secao-titulo" style="color:var(--red);">⏸ Pausados<span class="ur-secao-count">'+_pausados.length+'</span></div>'
+      +'<span style="font-size:10.5px;color:var(--muted);">ocultos de todo o aplicativo</span>'
+      +'</div>';
+    html+='<div class="ur-secao-lista" style="opacity:.65;">';
+    _pausados.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+    html+='</div>';
+  }
 
   grid.innerHTML=html;
 
@@ -673,6 +704,8 @@ function _abrirConfigurarAcesso(uid,nome,perfil){
   document.getElementById('novoUsuarioPerfil').value=perfil;
   var _localU=_getUsuariosLocal();
   document.getElementById('novoUsuarioWhatsapp').value=(_localU[uid]&&_localU[uid].whatsapp)||'';
+  var _chkP=document.getElementById('novoUsuarioPausado');
+  if(_chkP) _chkP.checked=!!(_localU[uid]&&_localU[uid].ativo===false);
   var loginSugerido=nome.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g,'');
   document.getElementById('novoUsuarioLogin').value=loginSugerido;
   document.getElementById('novoUsuarioSenha').value='';
@@ -696,6 +729,8 @@ function _abrirEditarAcesso(uid){
     document.getElementById('novoUsuarioPerfil').value=u.perfil||'treinador';
     document.getElementById('novoUsuarioLogin').value=u.login||'';
     document.getElementById('novoUsuarioSenha').value='';
+    var _chkP=document.getElementById('novoUsuarioPausado');
+    if(_chkP) _chkP.checked=(u.ativo===false);
     document.getElementById('campoVinculo').style.display='none';
     document.getElementById('novoUsuarioOverlay').classList.add('open');
   }
@@ -743,38 +778,54 @@ function _toggleCongelado(uid,novoEstado){
   }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 
-function _toggleAtivo(uid,novoEstado){
-  var msg=novoEstado?'Reativar acesso?':'Desativar acesso? O usuario nao conseguira mais logar.';
-  if(!confirm(msg)) return;
-  window._fbSave('usuarios/'+uid+'/ativo',novoEstado).then(function(){
-    _renderUsuariosGrid();
-    // ── PROPAGAÇÃO IMEDIATA ──
-    // Atualiza cache de pausados e remove/recoloca dos selects da turma ativa.
-    try {
-      window._fbGet && window._fbGet('usuarios').then(function(us){
-        var blqSet = new Set();
-        Object.values(us||{}).forEach(function(u){
-          if(u && u.nome && u.ativo === false){
-            blqSet.add(String(u.nome).toUpperCase().trim());
-          }
-        });
-        window._pausadosNomesSet = blqSet;
-        window._bloqueadosNomesSet = blqSet;
-        // Remove imediatamente dos arrays globais
-        if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
-          allConsultors = allConsultors.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
-          window.allConsultors = allConsultors;
+/* ── PROPAGAÇÃO IMEDIATA de pausados ──
+   Atualiza cache de pausados e remove dos selects/arrays da turma ativa.
+   Usada pelo _toggleAtivo E pelo salvarUsuario (checkbox Pausado do modal). */
+function _propagarPausados(){
+  try {
+    window._fbGet && window._fbGet('usuarios').then(function(us){
+      var blqSet = new Set();
+      Object.values(us||{}).forEach(function(u){
+        if(u && u.nome && u.ativo === false){
+          blqSet.add(String(u.nome).toUpperCase().trim());
         }
-        if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
-          allTrainers = allTrainers.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
-          window.allTrainers = allTrainers;
-        }
-        // Re-render dos selects/filtros
-        if(typeof buildSelects==='function')    buildSelects();
-        if(typeof buildFilterBtns==='function') buildFilterBtns();
-        if(typeof renderAll==='function')       renderAll();
       });
-    } catch(e){}
+      window._pausadosNomesSet = blqSet;
+      window._bloqueadosNomesSet = blqSet;
+      // Remove imediatamente dos arrays globais
+      if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
+        allConsultors = allConsultors.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
+        window.allConsultors = allConsultors;
+      }
+      if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
+        allTrainers = allTrainers.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
+        window.allTrainers = allTrainers;
+      }
+      // Re-render dos selects/filtros
+      if(typeof buildSelects==='function')    buildSelects();
+      if(typeof buildFilterBtns==='function') buildFilterBtns();
+      if(typeof renderAll==='function')       renderAll();
+    });
+  } catch(e){}
+}
+
+function _toggleAtivo(uid,novoEstado,nome,perfil){
+  var msg=novoEstado
+    ?'Reativar este usuário?\n\nEle voltará a aparecer no aplicativo e poderá logar.'
+    :'PAUSAR este usuário?\n\nEle não conseguirá logar e SOME de todos os locais do aplicativo\n(selects, cards, rankings). Para reativar, use a seção "Pausados"\nno fim da Gestão de Usuários.';
+  if(!confirm(msg)) return;
+  /* Membro da turma sem conta em usuarios/: grava nome+perfil junto com o
+     ativo, senão o registro fica sem nome e o filtro global (que casa por
+     nome) não enxerga o pausado. Para conta existente o merge é inócuo. */
+  var op = (nome && window._fbUpdate)
+    ? window._fbUpdate('usuarios/'+uid,{nome:nome,perfil:perfil||'consultor',ativo:novoEstado})
+    : window._fbSave('usuarios/'+uid+'/ativo',novoEstado);
+  op.then(function(){
+    _renderUsuariosGrid();
+    _propagarPausados();
+    if(typeof _showToast==='function'){
+      _showToast(novoEstado?'▶ Usuário reativado':'⏸ Usuário pausado — some de todo o app','var(--blue)');
+    }
   }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 
@@ -824,9 +875,13 @@ async function salvarUsuario(){
   var isNovo = !uid || !local[uid];
   if(!uid) uid = (perfil==='consultor'?'consultor_':'treinador_')+_normalizeUid(nome);
   var jaExiste = local[uid];
+  /* Checkbox "Pausado" do modal: ativo = !pausado. Antes gravava ativo:true
+     fixo, o que REATIVAVA silenciosamente um usuário pausado ao editar. */
+  var _pausadoChk = document.getElementById('novoUsuarioPausado');
+  var _ficaPausado = !!(_pausadoChk && _pausadoChk.checked);
   var dados = {
     nome:nome, login:login, senha:senha, perfil:perfil,
-    ativo:true, vinculo:nome, whatsapp:whatsapp,
+    ativo:!_ficaPausado, vinculo:nome, whatsapp:whatsapp,
     primeiroAcesso: isNovo ? true : (jaExiste&&jaExiste.primeiroAcesso)||false,
     updatedAt: Date.now()
   };
@@ -866,7 +921,8 @@ async function salvarUsuario(){
   window._autoAcessoEmAndamento = null;
   document.getElementById('novoUsuarioOverlay').classList.remove('open');
   _renderUsuariosGrid();
-  _showToast('✅ '+(isNovo?'Acesso criado':'Acesso atualizado')+' para '+nome+'!'+(salvoNoFirebase?' ☁️':''),'var(--accent)');
+  _propagarPausados();
+  _showToast('✅ '+(isNovo?'Acesso criado':'Acesso atualizado')+' para '+nome+'!'+(_ficaPausado?' (⏸ pausado)':'')+(salvoNoFirebase?' ☁️':''),'var(--accent)');
   /* Encadeia próximo pendente de auto-criação (caso o adm tenha adicionado vários
      consultores/treinadores em lote via "🧙 Novos Membros"). */
   if(typeof window._autoAcessoProxPendente === 'function'){
@@ -875,7 +931,11 @@ async function salvarUsuario(){
 }
 
 function abrirEditarUsuario(uid){_abrirEditarAcesso(uid);}
-function abrirNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.add('open');}
+function abrirNovoUsuario(){
+  var _chkP=document.getElementById('novoUsuarioPausado');
+  if(_chkP) _chkP.checked=false;
+  document.getElementById('novoUsuarioOverlay').classList.add('open');
+}
 function fecharNovoUsuario(){
   document.getElementById('novoUsuarioOverlay').classList.remove('open');
   /* Se foi aberto pelo fluxo auto-acesso e o adm fechou SEM salvar,

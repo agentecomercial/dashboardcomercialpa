@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seletor de datas por clique — preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0f0f11;font-family:'Archivo',sans-serif;color:#eee;padding:26px 22px 80px;
+    --accent:#F0C84A;--accent2:#c9a84a;--card:#1a1a1f;--line:#2a2a32;--dim:#9a9aa2;--panel:#15151b;}
+  header.pg{max-width:900px;margin:0 auto 22px;}
+  header.pg h1{font-size:23px;font-weight:900;} header.pg h1 span{color:var(--accent);}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:8px;line-height:1.6;max-width:760px;}
+  header.pg p b{color:var(--accent);}
+
+  .demo{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:20px;}
+  .cmd{background:#161618;border:1px solid #26262c;border-radius:14px;padding:20px;}
+  .cmd h2{font-size:14px;font-weight:900;color:#f0e6c8;margin-bottom:4px;}
+  .cmd .sub{font-size:12px;color:#9a9a9a;margin-bottom:14px;}
+  .fld-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8f8f98;font-weight:800;margin-bottom:6px;}
+  .fld{display:inline-flex;align-items:center;gap:10px;background:#1a1a1f;border:1px solid #3a3a3a;border-radius:10px;
+    padding:11px 15px;cursor:pointer;font-weight:700;font-size:13.5px;min-width:260px;transition:.12s;}
+  .fld:hover{border-color:var(--accent2);}
+  .fld .cal{font-size:16px;} .fld .val{color:var(--accent);} .fld .ph{color:#8f8f98;font-weight:600;}
+  .fld .car{margin-left:auto;color:#8f8f98;}
+  .result{margin-top:12px;font-size:12.5px;color:#9fe6aa;}
+  .result code{background:#16241a;border:1px solid #2f5a36;color:#9fe6aa;padding:2px 7px;border-radius:6px;}
+
+  /* ===== date picker ===== */
+  .dp-wrap{position:relative;}
+  .dp{position:absolute;z-index:50;margin-top:8px;width:340px;background:var(--panel);border:1px solid #33333e;border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6);overflow:hidden;}
+  .dp-tabs{display:flex;border-bottom:1px solid #2a2a32;}
+  .dp-tab{flex:1;text-align:center;padding:11px 4px;font-size:11px;font-weight:800;letter-spacing:.5px;color:#8f8f98;cursor:pointer;transition:.12s;border-bottom:2px solid transparent;}
+  .dp-tab:hover{color:#ccc;}
+  .dp-tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+  .dp-body{padding:14px;}
+  .dp-calhead,.dp-yhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .dp-calhead span,.dp-yhead span{font-size:15px;font-weight:900;color:#f0e6c8;}
+  .dp-nav{background:#22222b;border:1px solid #33333e;color:#e8e8ee;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;}
+  .dp-nav:hover{background:#2c2c37;}
+  .dp-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .dp-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .dp-cell{background:#20202a;border:1px solid #2e2e3a;color:#dcdce4;font-family:'Archivo';font-weight:800;font-size:13px;
+    padding:12px 4px;border-radius:9px;cursor:pointer;transition:.1s;}
+  .dp-cell:hover{background:#2a2a36;border-color:#44445a;}
+  .dp-cell.on{background:var(--accent);border-color:var(--accent2);color:#1a1500;}
+  .dp-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:5px;}
+  .dp-dow span{text-align:center;font-size:9.5px;font-weight:800;color:#7f7f8a;}
+  .dp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .dp-day{background:transparent;border:1px solid transparent;color:#dcdce4;font-family:'Archivo';font-weight:700;font-size:12px;
+    height:32px;border-radius:8px;cursor:pointer;}
+  .dp-day:hover{background:#2a2a36;}
+  .dp-day.empty{background:transparent;border:none;cursor:default;}
+  .dp-day.sel{background:var(--accent);color:#1a1500;font-weight:900;}
+  .dp-day.inr{background:#3a3320;color:#f0e6c8;}
+  .dp-atalhos{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .dp-atalho{background:#20202a;border:1px solid #2e2e3a;color:#cfcfd8;font-family:'Archivo';font-weight:700;font-size:11px;padding:6px 11px;border-radius:16px;cursor:pointer;}
+  .dp-atalho:hover{background:#2a2a36;color:#fff;}
+  .dp-secg{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#7f7f8a;font-weight:800;margin:6px 0 8px;}
+  .dp-foot{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid #2a2a32;background:#131319;}
+  .dp-sel{flex:1;min-width:0;font-size:11.5px;color:#9a9aa2;}
+  .dp-sel b{color:var(--accent);}
+  .dp-btn{border:none;border-radius:8px;padding:9px 16px;font-family:'Archivo';font-weight:800;font-size:12px;cursor:pointer;}
+  .dp-btn.ghost{background:#26262e;color:#cfcfd8;} .dp-btn.ok{background:var(--accent);color:#1a1500;}
+  .dp-btn.ok:disabled{opacity:.45;cursor:default;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>Seletor de datas <span>por clique</span> — preview</h1>
+  <p>Componente único com abas <b>Ano · Mês · Dia · Período</b>, tudo no clique (sem digitar), para substituir os campos de data de todos os comandos. Cada comando mostra só as abas que fazem sentido. Este é um <b>preview</b> — nada é aplicado ainda. Teste abrindo os campos abaixo. Cada aba guarda seu <b>próprio período</b> (a aba <b>Leads</b> é independente da aba Card e dos Comandos).</p>
+</header>
+
+<div class="demo">
+  <div class="cmd">
+    <h2>📊 Relatório de Faturamento</h2>
+    <div class="sub">Campo de <b>período</b> — abas Mês / Dia / Período (intervalo).</div>
+    <div class="fld-lbl">Período</div>
+    <div class="dp-wrap">
+      <div class="fld" id="fldA" onclick="dpOpen('A',['mes','dia','periodo'])"><span class="cal">📅</span><span class="val" id="valA"><span class="ph">Clique para escolher…</span></span><span class="car">▾</span></div>
+      <div id="dpA"></div>
+    </div>
+    <div class="result" id="resA"></div>
+  </div>
+
+  <div class="cmd">
+    <h2>🏆 Meta Master (aba Card)</h2>
+    <div class="sub">Trabalha por <b>mês</b> — abas Ano / Mês.</div>
+    <div class="fld-lbl">Competência</div>
+    <div class="dp-wrap">
+      <div class="fld" id="fldB" onclick="dpOpen('B',['ano','mes'])"><span class="cal">📅</span><span class="val" id="valB"><span class="ph">Clique para escolher…</span></span><span class="car">▾</span></div>
+      <div id="dpB"></div>
+    </div>
+    <div class="result" id="resB"></div>
+  </div>
+
+  <div class="cmd" style="border-color:#2f5a36">
+    <h2>📊 Leads por Consultor (aba Leads)</h2>
+    <div class="sub">Tem período <b style="color:#9fe6aa">próprio e independente</b> das outras abas — escolher o mês/período aqui <b>não</b> muda a aba Card nem os Comandos.</div>
+    <div class="fld-lbl">Período da aba Leads</div>
+    <div class="dp-wrap">
+      <div class="fld" id="fldC" onclick="dpOpen('C',['mes','periodo'])"><span class="cal">📅</span><span class="val" id="valC"><span class="ph">Clique para escolher…</span></span><span class="car">▾</span></div>
+      <div id="dpC"></div>
+    </div>
+    <div class="result" id="resC"></div>
+  </div>
+</div>
+
+<script>
+const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const MESF=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DOW=['DOM','SEG','TER','QUA','QUI','SEX','SAB'];
+const pad=n=>String(n).padStart(2,'0');
+const today=new Date();
+const fmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fmtBR=k=>{const a=k.split('-');return a[2]+'/'+a[1]+'/'+a[0];};
+
+let DP=null; // estado do picker aberto
+function dpOpen(host,tabs){
+  if(DP && DP.host===host){ dpClose(); return; }
+  DP={host, tabs, mode:tabs[0],
+    year:today.getFullYear(), yearBase:today.getFullYear()-5,
+    selYear:null, selMonth:null, selDay:null, rIni:null, rFim:null,
+    dayCur:{y:today.getFullYear(),m:today.getMonth()+1},
+    iniCur:{y:today.getFullYear(),m:today.getMonth()+1},
+    fimCur:{y:today.getFullYear(),m:today.getMonth()+1}};
+  renderDP();
+}
+function dpClose(){ if(DP){ const el=document.getElementById('dp'+DP.host); if(el) el.innerHTML=''; } DP=null; }
+function dpMode(m){ DP.mode=m; renderDP(); }
+function shift(c,d){ let m=c.m+d,y=c.y; while(m<1){m+=12;y--;} while(m>12){m-=12;y++;} c.m=m;c.y=y; }
+
+/* navegações */
+function dpYearBase(d){ DP.yearBase+=d; renderDP(); }
+function dpMonthYear(d){ DP.year+=d; renderDP(); }
+function dpDayNav(d){ shift(DP.dayCur,d); renderDP(); }
+function dpIniNav(d){ shift(DP.iniCur,d); renderDP(); }
+function dpFimNav(d){ shift(DP.fimCur,d); renderDP(); }
+/* seleções */
+function dpPickYear(y){ DP.selYear=y; DP.year=y; renderDP(); }
+function dpPickMonth(m){ DP.selMonth={y:DP.year,m}; renderDP(); }
+function dpPickDay(y,m,d){ DP.selDay=y+'-'+pad(m)+'-'+pad(d); renderDP(); }
+function dpPickRange(y,m,d){ const k=y+'-'+pad(m)+'-'+pad(d);
+  if(!DP.rIni || (DP.rIni&&DP.rFim)){ DP.rIni=k; DP.rFim=null; }
+  else { if(k<DP.rIni){ DP.rFim=DP.rIni; DP.rIni=k; } else DP.rFim=k; }
+  renderDP();
+}
+function dpAtalho(tipo){
+  const t=new Date(today); let a,b;
+  if(tipo==='semana'){ const dow=t.getDay(); a=new Date(t); a.setDate(t.getDate()-dow); b=new Date(a); b.setDate(a.getDate()+6); }
+  else if(tipo==='mes'){ a=new Date(t.getFullYear(),t.getMonth(),1); b=new Date(t.getFullYear(),t.getMonth()+1,0); }
+  else if(tipo==='tri'){ const q=Math.floor(t.getMonth()/3); a=new Date(t.getFullYear(),q*3,1); b=new Date(t.getFullYear(),q*3+3,0); }
+  else if(tipo==='ano'){ a=new Date(t.getFullYear(),0,1); b=new Date(t.getFullYear(),11,31); }
+  else if(tipo==='30'){ b=new Date(t); a=new Date(t); a.setDate(t.getDate()-29); }
+  else if(tipo==='90'){ b=new Date(t); a=new Date(t); a.setDate(t.getDate()-89); }
+  DP.rIni=fmt(a); DP.rFim=fmt(b);
+  DP.iniCur={y:a.getFullYear(),m:a.getMonth()+1}; DP.fimCur={y:b.getFullYear(),m:b.getMonth()+1};
+  renderDP();
+}
+
+function cal(cur,navP,navN,onDay,selKey,rng){
+  const first=new Date(cur.y,cur.m-1,1).getDay(), days=new Date(cur.y,cur.m,0).getDate();
+  let h='<div class="dp-calhead"><button class="dp-nav" onclick="'+navP+'">‹</button><span>'+MESF[cur.m-1]+' / '+cur.y+'</span><button class="dp-nav" onclick="'+navN+'">›</button></div>';
+  h+='<div class="dp-dow">'+DOW.map(d=>'<span>'+d+'</span>').join('')+'</div><div class="dp-days">';
+  for(let i=0;i<first;i++) h+='<span class="dp-day empty"></span>';
+  for(let d=1;d<=days;d++){ const key=cur.y+'-'+pad(cur.m)+'-'+pad(d); let cls='dp-day';
+    if(selKey&&selKey===key) cls+=' sel';
+    if(rng&&rng.a){ if(key===rng.a||key===rng.b) cls+=' sel'; else if(rng.a&&rng.b&&key>rng.a&&key<rng.b) cls+=' inr'; }
+    h+='<button class="'+cls+'" onclick="'+onDay+'('+cur.y+','+cur.m+','+d+')">'+d+'</button>'; }
+  return h+'</div>';
+}
+
+function selLabel(){
+  if(DP.mode==='ano') return DP.selYear?('Ano <b>'+DP.selYear+'</b>'):'—';
+  if(DP.mode==='mes') return DP.selMonth?('<b>'+MESF[DP.selMonth.m-1]+'/'+DP.selMonth.y+'</b>'):'—';
+  if(DP.mode==='dia') return DP.selDay?('<b>'+fmtBR(DP.selDay)+'</b>'):'—';
+  if(DP.mode==='periodo'){ if(DP.rIni&&DP.rFim) return '<b>'+fmtBR(DP.rIni)+'</b> até <b>'+fmtBR(DP.rFim)+'</b>'; if(DP.rIni) return 'início <b>'+fmtBR(DP.rIni)+'</b> — escolha o fim'; return '—'; }
+  return '—';
+}
+function canApply(){ return (DP.mode==='ano'&&DP.selYear)||(DP.mode==='mes'&&DP.selMonth)||(DP.mode==='dia'&&DP.selDay)||(DP.mode==='periodo'&&DP.rIni&&DP.rFim); }
+
+function renderDP(){
+  const box=document.getElementById('dp'+DP.host); if(!box) return;
+  const tabName={ano:'ANO',mes:'MÊS',dia:'DIA',periodo:'PERÍODO'};
+  let h='<div class="dp"><div class="dp-tabs">'+DP.tabs.map(t=>'<div class="dp-tab'+(DP.mode===t?' on':'')+'" onclick="dpMode(\''+t+'\')">'+tabName[t]+'</div>').join('')+'</div><div class="dp-body">';
+  if(DP.mode==='ano'){
+    h+='<div class="dp-yhead"><button class="dp-nav" onclick="dpYearBase(-12)">‹</button><span>'+DP.yearBase+' – '+(DP.yearBase+11)+'</span><button class="dp-nav" onclick="dpYearBase(12)">›</button></div><div class="dp-grid3">';
+    for(let i=0;i<12;i++){ const y=DP.yearBase+i; h+='<button class="dp-cell'+(DP.selYear===y?' on':'')+'" onclick="dpPickYear('+y+')">'+y+'</button>'; }
+    h+='</div>';
+  } else if(DP.mode==='mes'){
+    h+='<div class="dp-yhead"><button class="dp-nav" onclick="dpMonthYear(-1)">‹</button><span>'+DP.year+'</span><button class="dp-nav" onclick="dpMonthYear(1)">›</button></div><div class="dp-grid3">';
+    for(let m=1;m<=12;m++){ const on=DP.selMonth&&DP.selMonth.y===DP.year&&DP.selMonth.m===m; h+='<button class="dp-cell'+(on?' on':'')+'" onclick="dpPickMonth('+m+')">'+MES3[m-1]+'</button>'; }
+    h+='</div>';
+  } else if(DP.mode==='dia'){
+    h+=cal(DP.dayCur,'dpDayNav(-1)','dpDayNav(1)','dpPickDay',DP.selDay,null);
+  } else if(DP.mode==='periodo'){
+    h+='<div class="dp-atalhos">'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'semana\')">Esta semana</button>'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'mes\')">Este mês</button>'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'tri\')">Trimestre</button>'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'ano\')">Este ano</button>'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'30\')">Últimos 30 dias</button>'
+      +'<button class="dp-atalho" onclick="dpAtalho(\'90\')">Últimos 90 dias</button></div>';
+    const rng={a:DP.rIni,b:DP.rFim};
+    h+='<div class="dp-secg">Início</div>'+cal(DP.iniCur,'dpIniNav(-1)','dpIniNav(1)','dpPickRange',null,rng);
+    h+='<div class="dp-secg" style="margin-top:12px">Fim</div>'+cal(DP.fimCur,'dpFimNav(-1)','dpFimNav(1)','dpPickRange',null,rng);
+  }
+  h+='</div><div class="dp-foot"><div class="dp-sel">Selecionado: '+selLabel()+'</div>'
+    +'<button class="dp-btn ghost" onclick="dpClose()">CANCELAR</button>'
+    +'<button class="dp-btn ok" '+(canApply()?'':'disabled')+' onclick="dpAplicar()">APLICAR</button></div></div>';
+  box.innerHTML=h;
+}
+
+function dpAplicar(){
+  if(!canApply()) return;
+  const host=DP.host; let label='',valor='';
+  if(DP.mode==='ano'){ label='Ano '+DP.selYear; valor=String(DP.selYear); }
+  else if(DP.mode==='mes'){ label=MESF[DP.selMonth.m-1]+'/'+DP.selMonth.y; valor=DP.selMonth.y+'-'+pad(DP.selMonth.m); }
+  else if(DP.mode==='dia'){ label=fmtBR(DP.selDay); valor=DP.selDay; }
+  else if(DP.mode==='periodo'){ label=fmtBR(DP.rIni)+' a '+fmtBR(DP.rFim); valor=DP.rIni+' … '+DP.rFim; }
+  document.getElementById('val'+host).innerHTML='<span class="val">'+label+'</span>';
+  document.getElementById('res'+host).innerHTML='✓ Aplicado — valor enviado ao comando: <code>'+valor+'</code>';
+  dpClose();
+}
+/* clicar fora fecha */
+document.addEventListener('click',e=>{ if(DP && !e.target.closest('.dp-wrap')) dpClose(); });
+</script>
+</body>
+</html>

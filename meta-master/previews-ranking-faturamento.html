@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking da Master — 10 formas de mostrar o faturamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#202022;font-family:'Archivo',sans-serif;color:#eee;padding:28px 20px 80px;}
+  header.pg{max-width:1340px;margin:0 auto 26px;}
+  header.pg h1{font-size:23px;font-weight:900;}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:7px;line-height:1.55;max-width:880px;}
+  header.pg p b{color:#F0C84A;}
+  .grid{max-width:1340px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:30px 24px;}
+  .item{display:flex;flex-direction:column;gap:11px;}
+  .cap{font-size:13px;color:#9a9a9a;line-height:1.45;}
+  .cap b{color:#F0C84A;font-size:14px;display:block;margin-bottom:2px;}
+
+  .phone{width:306px;height:620px;margin:0 auto;background:#0c0c0c;border:9px solid #000;border-radius:34px;
+    box-shadow:0 14px 40px rgba(0,0,0,.55),inset 0 0 0 2px #232323;overflow:hidden;position:relative;}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:86px;height:17px;background:#000;border-radius:0 0 12px 12px;z-index:60;}
+  .scr{position:absolute;inset:0;background:#1c1c20;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#444 transparent;}
+  .scr::-webkit-scrollbar{width:5px;}.scr::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+  .pad{padding:34px 12px 16px;}
+  .hub-sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;margin:0 0 10px;}
+
+  /* ===== base do hub (igual ao app) ===== */
+  .hub-av{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;color:#15151a;font-weight:800;font-size:14px;flex:none;}
+  .hub-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #2a2a32;border-radius:12px;background:#1a1a1f;margin-bottom:8px;}
+  .hub-row.bat{border-color:#5a4a1e;background:linear-gradient(90deg,#221d0e,#1a1a1f);}
+  .hub-pos{width:16px;text-align:center;font-weight:900;color:#6f6f78;font-size:13px;flex:none;}
+  .hub-mid{flex:1;min-width:0;}
+  .hub-rn{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hub-bar{height:6px;border-radius:5px;background:#2a2a32;overflow:hidden;margin-top:6px;}
+  .hub-bar>i{display:block;height:100%;background:linear-gradient(90deg,#c9a84a,#F0C84A);}
+  .hub-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:auto;}
+  .hub-rp{font-size:14px;font-weight:900;color:#F0C84A;}
+  .hub-rp.dim{color:#cbb88a;}
+  .hub-gs{width:auto;padding:6px 11px;font-size:11px;border-radius:8px;border:none;background:#F0C84A;color:#1a1500;font-weight:900;font-family:'Archivo';}
+
+  /* ===== elementos novos (faturamento) por variação ===== */
+  .fat-sub{font-size:11px;color:#9fd07a;font-weight:800;margin-top:3px;}
+  .fat-sm{font-size:11px;color:#cbb88a;font-weight:700;}
+  .fat-big{font-size:15px;color:#9fd07a;font-weight:900;}
+  .pct-sm{font-size:10px;color:#9a9aa2;font-weight:700;}
+  .fat-barlabel{position:relative;}
+  .fat-barlabel span{position:absolute;right:0;top:-1px;font-size:9px;color:#cbb88a;font-weight:800;}
+  .chip{font-size:10px;font-weight:800;padding:3px 8px;border-radius:12px;background:#23232b;border:1px solid #34343e;color:#cfcfcf;white-space:nowrap;}
+  .chip.ouro{background:#2a2410;border-color:#4a3f1f;color:#F0C84A;}
+  .chip.verde{background:#16241a;border-color:#2f5a36;color:#9fe6aa;}
+  .chip-fat{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;background:#16241a;border:1px solid #2f5a36;color:#9fe6aa;margin-left:6px;vertical-align:middle;}
+  .metric{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;}
+  .metric small{font-size:7.5px;text-transform:uppercase;letter-spacing:.4px;color:#7f7f88;font-weight:800;}
+  .metric b{font-size:12px;font-weight:900;}
+  .metric b.ouro{color:#F0C84A;} .metric b.verde{color:#9fd07a;}
+  .colhead{display:flex;align-items:center;gap:10px;padding:0 10px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.4px;color:#7f7f88;font-weight:800;}
+  .colhead .c-fat{width:70px;text-align:right;} .colhead .c-pct{width:54px;text-align:right;}
+  .cell-fat{width:70px;text-align:right;font-size:11px;font-weight:800;color:#9fd07a;flex:none;}
+  .cell-pct{width:54px;text-align:right;font-size:13px;font-weight:900;color:#F0C84A;flex:none;}
+  .cell-pct.dim{color:#cbb88a;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>🏆 Ranking da Master — 10 formas de incluir o faturamento</h1>
+  <p>Hoje cada linha mostra só a <b>% da Master</b>. Abaixo, 10 jeitos de exibir também o <b>faturamento (R$)</b> de cada consultor. Dados de exemplo reais. Escolha o número e eu aplico no <b>renderHub</b> do app.</p>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+  const D=[
+    {nome:'Gabriela Jesus', ini:'G', cor:'#e0a96d', pct:187.1, fat:415792, bateu:true},
+    {nome:'Natalia Cunha',  ini:'N', cor:'#61afef', pct:184.5, fat:356909, bateu:true},
+    {nome:'Karla Oliveira', ini:'K', cor:'#98c379', pct:5.1,   fat:2396,   bateu:false},
+    {nome:'Artur Borges',   ini:'A', cor:'#c678dd', pct:null,  fat:8589,   bateu:false},
+    {nome:'Filipe Frazão',  ini:'F', cor:'#56b6c2', pct:null,  fat:1997,   bateu:false},
+    {nome:'Ana Francisco',  ini:'A', cor:'#d19a66', pct:null,  fat:0,      bateu:false},
+  ];
+  const full = v => 'R$ '+(+v||0).toLocaleString('pt-BR');
+  const kshort = v => { v=+v||0; if(v>=1000) return 'R$'+Math.floor(v/1000)+'k'; return 'R$'+v; };
+  const pctTxt = p => (p===null||isNaN(p)) ? '—' : (String(p).replace('.',',')+'%');
+  const av = c => '<span class="hub-av" style="background:'+c.cor+'">'+c.ini+'</span>';
+  const pos = k => '<span class="hub-pos">'+(k+1)+'</span>';
+  const trofeu = c => c.bateu?' 🏆':'';
+  const bar = c => '<div class="hub-bar"><i style="width:'+Math.min(100,c.pct||0)+'%"></i></div>';
+  const gerar = c => c.bateu?'<button class="hub-gs">Gerar →</button>':'';
+
+  // ---- 10 variações: cada uma retorna o innerHTML de UMA linha ----
+  const V=[
+   {t:'1 · R$ abaixo do nome', s:'Faturamento verde como subtítulo, no lugar da barra. % à direita.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div><div class="fat-sub">'+full(c.fat)+'</div></div>'
+      +'<div class="hub-right"><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span>'+gerar(c)+'</div>'},
+
+   {t:'2 · R$ acima da % (direita)', s:'Coluna direita: faturamento pequeno em cima, % grande embaixo.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div>'+bar(c)+'</div>'
+      +'<div class="hub-right"><span class="fat-sm">'+full(c.fat)+'</span><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span></div>'},
+
+   {t:'3 · % acima, R$ abaixo (direita)', s:'% grande em cima, faturamento verde embaixo.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div>'+bar(c)+'</div>'
+      +'<div class="hub-right"><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span><span class="fat-sm">'+full(c.fat)+'</span></div>'},
+
+   {t:'4 · Dois chips (R$ | %)', s:'Faturamento e % como etiquetas lado a lado à direita.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div>'+bar(c)+'</div>'
+      +'<div class="hub-right" style="flex-direction:row;align-items:center;gap:5px"><span class="chip verde">'+kshort(c.fat)+'</span><span class="chip ouro">'+pctTxt(c.pct)+'</span></div>'},
+
+   {t:'5 · R$ protagonista, % subtítulo', s:'Foco no faturamento (grande verde); % vira legenda pequena.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div>'+bar(c)+'</div>'
+      +'<div class="hub-right"><span class="fat-big">'+full(c.fat)+'</span><span class="pct-sm">'+pctTxt(c.pct)+' da master</span></div>'},
+
+   {t:'6 · Métricas rotuladas', s:'Rótulos pequenos FAT / MASTER sobre cada número.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div>'+bar(c)+'</div>'
+      +'<div class="hub-right" style="flex-direction:row;gap:12px"><span class="metric"><small>Faturado</small><b class="verde">'+kshort(c.fat)+'</b></span><span class="metric"><small>Master</small><b class="ouro">'+pctTxt(c.pct)+'</b></span></div>'},
+
+   {t:'7 · R$ chip ao lado do nome', s:'Faturamento num selo verde junto do nome; % à direita.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'<span class="chip-fat">'+kshort(c.fat)+'</span></div>'+bar(c)+'</div>'
+      +'<div class="hub-right"><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span></div>'},
+
+   {t:'8 · R$ sobre a barra', s:'Faturamento como rótulo no canto da barra de progresso.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div><div class="fat-barlabel">'+bar(c)+'<span>'+kshort(c.fat)+'</span></div></div>'
+      +'<div class="hub-right"><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span>'+gerar(c)+'</div>'},
+
+   {t:'9 · Colunas alinhadas (tabela)', s:'Colunas fixas: Nome | Faturado | %. Leitura tipo planilha.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div></div>'
+      +'<span class="cell-fat">'+kshort(c.fat)+'</span><span class="cell-pct'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span>', head:true},
+
+   {t:'10 · R$ + barra + Gerar', s:'Faturamento verde sob o nome, barra fina, % e botão Gerar à direita.',
+    fn:(c,k)=>pos(k)+av(c)+'<div class="hub-mid"><div class="hub-rn">'+c.nome+trofeu(c)+'</div><div class="fat-sub">'+full(c.fat)+'</div><div class="hub-bar" style="margin-top:5px"><i style="width:'+Math.min(100,c.pct||0)+'%"></i></div></div>'
+      +'<div class="hub-right"><span class="hub-rp'+(c.bateu?'':' dim')+'">'+pctTxt(c.pct)+'</span>'+gerar(c)+'</div>'},
+  ];
+
+  const grid=document.getElementById('grid');
+  V.forEach(v=>{
+    let rows='';
+    if(v.head) rows+='<div class="colhead"><span style="width:16px"></span><span style="width:36px"></span><span style="flex:1">Consultor</span><span class="c-fat">Faturado</span><span class="c-pct">Master</span></div>';
+    D.forEach((c,k)=>{ rows+='<div class="hub-row'+(c.bateu?' bat':'')+'">'+v.fn(c,k)+'</div>'; });
+    const item=document.createElement('div'); item.className='item';
+    item.innerHTML='<div class="phone"><div class="scr"><div class="pad"><div class="hub-sec">Ranking da Master</div>'+rows+'</div></div></div>'
+      +'<div class="cap"><b>'+v.t+'</b>'+v.s+'</div>';
+    grid.appendChild(item);
+  });
+</script>
+</body>
+</html>

@@ -3488,6 +3488,9 @@
   };
   function _npTrocarMes(){
     _npVendasTurma=[];_npVendasAvulso={};_npGoals={};
+    /* Invalida o cache de linhas da aba Metas — sem isto, o toggle
+       Card/Lista e a ordenação repintavam a tabela do mês anterior. */
+    window._npMetasRows=null;
     /* Renderizar imediatamente o estado vazio para evitar mostrar dados do mês anterior */
     if(typeof _npRenderTudo==='function') _npRenderTudo();
     _npIniciarListeners();

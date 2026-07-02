@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barra pegando fogo na superação — 4 versões</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:radial-gradient(120% 90% at 50% -10%,#16161c,#0b0b0d 60%);min-height:100vh;
+    font-family:'Archivo',sans-serif;color:#eee;padding:26px 22px 120px;
+    --accent:#F0C84A;--soft:#cbb88a;--green:#7ed957;--green2:#3f8a32;--card:#1a1a1f;--line:#2a2a32;--dim:#9a9aa2;--heroLine:#4a3f1f;}
+  header.pg{max-width:1080px;margin:0 auto 26px;}
+  header.pg h1{font-size:24px;font-weight:900;} header.pg h1 span{color:#ff7a18;}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:8px;line-height:1.6;max-width:900px;}
+  header.pg p b{color:var(--accent);} header.pg p i{color:#ff7a18;font-style:normal;}
+
+  .pick{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#16140a;border-top:2px solid var(--accent);
+    padding:13px 22px;display:flex;align-items:center;gap:14px;justify-content:center;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+  .pick b{color:var(--accent);font-size:15px;} .pick.empty{color:#8f8f98;background:#161618;border-top-color:var(--line);font-size:13px;}
+
+  .list{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:30px;}
+  .opt-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .opt-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7a1500,#ff8a00);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex:none;}
+  .opt-meta{flex:1;min-width:0;} .opt-t{font-size:15px;font-weight:900;} .opt-d{font-size:12px;color:#9a9a9a;margin-top:1px;}
+  .opt-pick{border:1px solid var(--heroLine);background:#2a2410;color:var(--accent);font-family:'Archivo';font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .opt-pick:hover{background:var(--accent);color:#1a1500;}
+  .opt.chosen .opt-pick{background:#ff8a00;border-color:#ff8a00;color:#1a0e00;}
+  .opt.chosen .stage{outline:2px solid #ff8a00;outline-offset:4px;}
+
+  .stage{background:linear-gradient(160deg,#17171c,#0e0e11);border:1px solid #26262c;border-radius:16px;padding:54px 28px 26px;}
+  .lead{text-align:center;margin-bottom:46px;}
+  .lead .hl{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--soft);font-weight:800;}
+  .lead .hn{font-size:16px;font-weight:900;}
+  .lead .hp{font-size:24px;font-weight:900;color:var(--accent);line-height:1.05;text-shadow:0 1px 0 #6b4d12,0 2px 6px rgba(0,0,0,.6);}
+
+  /* ===== barra base 3D ===== */
+  .fbar{position:relative;}
+  .ftrk{position:relative;height:36px;border-radius:19px;padding:4px;background:linear-gradient(#08080a,#1b1b21);
+    box-shadow:inset 0 4px 8px rgba(0,0,0,.85),inset 0 -2px 2px rgba(255,255,255,.05),0 1px 0 rgba(255,255,255,.05);overflow:visible;}
+  .frow{position:relative;height:100%;overflow:visible;}
+  .fgreen{position:absolute;left:0;top:0;bottom:0;border-radius:15px 0 0 15px;z-index:2;
+    background:linear-gradient(90deg,var(--green2),var(--green) 80%,#9fe6aa);
+    box-shadow:inset 0 2px 2px rgba(255,255,255,.55),inset 0 -4px 7px rgba(0,0,0,.35);}
+  .fgreen::before{content:"";position:absolute;top:2px;left:8px;right:6px;height:40%;border-radius:9px;background:linear-gradient(rgba(255,255,255,.55),transparent);}
+  /* núcleo de brasa DENTRO da barra (clipado) */
+  .ffire{position:absolute;top:0;bottom:0;right:0;overflow:hidden;border-radius:0 15px 15px 0;z-index:1;}
+  .fcore{position:absolute;inset:0;}
+  .fcore.dark{background:linear-gradient(90deg,#2a0d04,#5a1a08);}
+  .fcore.hot{background:linear-gradient(90deg,#8a1c00,#ff4d00 55%,#ff9a00);}
+  .fglow{position:absolute;left:0;right:0;bottom:0;height:7px;background:linear-gradient(#ff7a00,#ffe27a);box-shadow:0 0 18px 5px rgba(255,140,0,.95);z-index:3;}
+  /* camada de CHAMAS que sobe acima da barra */
+  .flames{position:absolute;right:0;bottom:0;top:auto;height:100%;z-index:6;pointer-events:none;}
+  .flame{position:absolute;bottom:0;transform-origin:50% 100%;mix-blend-mode:screen;filter:blur(3px);
+    background:radial-gradient(ellipse at 50% 100%,#fff3b0 0%,#ffd24a 16%,#ff8a00 40%,#ff2a00 66%,rgba(255,42,0,0) 80%);
+    border-radius:50% 50% 46% 54%/70% 70% 40% 40%;animation:flameUp var(--d,.8s) ease-in-out infinite;}
+  .ember{position:absolute;border-radius:50%;filter:blur(.4px);animation:flick 1.5s ease-in-out infinite;z-index:4;}
+  .spark{position:absolute;bottom:5px;width:3px;height:3px;border-radius:50%;z-index:7;
+    background:radial-gradient(circle,#fff3b0,#ff7a00 60%,transparent);box-shadow:0 0 5px #ff8a00;animation:rise linear infinite;}
+
+  @keyframes flameUp{
+    0%{transform:translateY(7px) scaleY(.65) scaleX(1.05);opacity:.55;}
+    30%{opacity:1;}
+    50%{transform:translateY(-12px) scaleY(1.4) scaleX(.8);opacity:.98;}
+    68%{transform:translateY(-6px) scaleY(1.12) scaleX(1.06);opacity:.85;}
+    100%{transform:translateY(7px) scaleY(.65) scaleX(1.05);opacity:.5;}}
+  @keyframes flick{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.3)}}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:0}12%{opacity:1}100%{transform:translateY(-52px) scale(.3);opacity:0}}
+  @keyframes gpulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+  .fcore.pulse{animation:gpulse 1.2s ease-in-out infinite;}
+
+  .fmk{position:absolute;top:-6px;bottom:-6px;width:3px;border-radius:2px;background:linear-gradient(#fff,#cfcfcf);box-shadow:0 0 8px rgba(255,255,255,.85);z-index:8;}
+  .flabels{position:relative;height:16px;margin-top:13px;font-size:11.5px;font-weight:800;}
+  .lfat{position:absolute;left:0;color:var(--green);}
+  .lmeta{position:absolute;transform:translateX(-50%);color:#e7e7ea;white-space:nowrap;}
+  .lwin{position:absolute;right:0;color:var(--accent);}
+  .fsup{text-align:center;margin-top:14px;font-size:13px;font-weight:800;color:#ff9a3a;}
+  .fsup b{color:#ffd24a;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>Barra <span>pegando fogo</span> na superação — 4 versões</h1>
+  <p>Verde até a <b>meta (linha branca = 100%)</b>; do excedente em diante a barra <i>pega fogo</i>, com chamas subindo. A barra cheia = faturado realizado. <i>Quem ainda não bateu mantém a barra verde, sem fogo.</i> Clique em <b>“Escolher”</b> e me diga o número.</p>
+</header>
+
+<div class="list" id="opts"></div>
+<div class="pick empty" id="pickbar">Nenhuma opção escolhida — clique em “Escolher” na que você preferir.</div>
+
+<script>
+window.addEventListener('error',function(e){var w=document.getElementById('opts');if(!w)return;
+  w.innerHTML='<div style="background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4"><b style="color:#ff8a8a">JS ERROR:</b> '+(e.message||'')+' — linha '+e.lineno+'</div>'+w.innerHTML;});
+</script>
+<script>
+const FAT=425786.06, METAV=227571.38;
+const PCT=FAT/METAV*100, mark=(METAV/FAT*100);
+const SUPv=FAT-METAV, SUPp=(PCT-100).toFixed(1).replace('.',',');
+const brl=v=>'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+function flames(n,maxH){let s='';for(let i=0;i<n;i++){
+  const l=rnd(-3,100),w=rnd(16,40).toFixed(0),h=rnd(maxH*0.55,maxH).toFixed(0),d=rnd(.55,1.15).toFixed(2),dl=rnd(0,1.2).toFixed(2);
+  s+=`<span class="flame" style="left:${l}%;width:${w}px;height:${h}px;--d:${d}s;animation-delay:${dl}s"></span>`;}return s;}
+function embers(n){let s='';for(let i=0;i<n;i++){const l=rnd(0,100),b=rnd(0,90),sz=rnd(2,5).toFixed(1),d=rnd(0,1.5).toFixed(2),
+  col=Math.random()<.5?'#ffd24a':'#ff5a00';
+  s+=`<span class="ember" style="left:${l}%;bottom:${b}%;width:${sz}px;height:${sz}px;background:radial-gradient(circle,${col},#ff2a00 60%,transparent);animation-delay:${d}s"></span>`;}return s;}
+function sparks(n){let s='';for(let i=0;i<n;i++){const l=rnd(0,100),dur=rnd(1,2).toFixed(2),d=rnd(0,2).toFixed(2);
+  s+=`<span class="spark" style="left:${l}%;animation-duration:${dur}s;animation-delay:${d}s"></span>`;}return s;}
+
+const lead=()=>`<div class="lead"><div class="hl">⭐ Líder do mês</div><div class="hn">Gabriela Jesus</div><div class="hp">187,1%</div></div>`;
+function bar(coreCls,inner){return `
+  <div class="fbar"><div class="ftrk"><div class="frow">
+    <div class="fgreen" style="width:${mark}%"></div>
+    <div class="ffire" style="left:${mark}%"><div class="fcore ${coreCls}"></div><div class="fglow"></div></div>
+    <div class="flames" style="left:${mark}%">${inner}</div>
+  </div><span class="fmk" style="left:${mark}%"></span></div>
+  <div class="flabels"><span class="lfat">FATURADO: ${brl(FAT)}</span><span class="lmeta" style="left:${mark}%">META: ${brl(METAV)}</span><span class="lwin">META ATINGIDA! 🏆</span></div>
+  <div class="fsup">🔥 superou em <b>+${SUPp}%</b> · <b>${brl(SUPv)}</b> acima da meta</div></div>`;}
+
+const OPTS=[
+ {t:'Chamas subindo', d:'Línguas de fogo lambendo para cima a partir da meta, com brilho que soma luz. O fogo "de verdade".',
+  body:()=>lead()+bar('hot', flames(20,52)+sparks(10))},
+ {t:'Inferno (intenso)', d:'Chamas altas + brasas + faíscas densas. Máximo impacto.',
+  body:()=>lead()+bar('hot', flames(26,66)+embers(20)+sparks(16))},
+ {t:'Brasas + chamas baixas', d:'Mais perto do anexo: brasas piscando dentro da barra com chaminhas curtas saindo.',
+  body:()=>lead()+bar('dark', flames(16,30)+embers(28)+sparks(8))},
+ {t:'Sutil (elegante)', d:'Chamas baixas e brilho pulsante. Discreto, sem exagero.',
+  body:()=>lead()+bar('hot pulse', flames(12,26)+sparks(5))},
+];
+
+const wrap=document.getElementById('opts');
+try{
+  wrap.innerHTML=OPTS.map((o,i)=>`
+   <div class="opt" id="opt${i+1}">
+     <div class="opt-head"><div class="opt-num">${i+1}</div>
+       <div class="opt-meta"><div class="opt-t">${o.t}</div><div class="opt-d">${o.d}</div></div>
+       <button class="opt-pick" onclick="escolher(${i+1})">Escolher</button></div>
+     <div class="stage">${o.body()}</div>
+   </div>`).join('');
+}catch(err){
+  wrap.innerHTML='<div style="background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4"><b style="color:#ff8a8a">Erro:</b> '+String(err&&err.stack||err)+'</div>';
+}
+function escolher(n){
+  document.querySelectorAll('.opt').forEach(e=>e.classList.remove('chosen'));
+  document.getElementById('opt'+n).classList.add('chosen');
+  const b=document.getElementById('pickbar');
+  b.className='pick'; b.innerHTML=`Você escolheu a <b>Opção ${n} — ${OPTS[n-1].t}</b>. Me diga esse número no chat para eu aplicar.`;
+}
+</script>
+</body>
+</html>

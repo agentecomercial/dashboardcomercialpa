@@ -79,7 +79,7 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 | `Equilíbrio de Leads` | Redistribui leads **igualmente** entre os consultores escolhidos, **movendo só o excedente** (quem está acima da média cede p/ quem está abaixo; sobra por ordem alfabética). Base: Ativos 1–4 ou etapa específica. Padrão = pipeline atual (todas as datas) |
 | `Equilíbrio de Leads campanha [mês]` | Igual ao Equilíbrio, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Base com atalho extra "Só Novo Lead" |
 
-**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Wallyson 1625 · Artur 80 · Filipe 17 · Ana Karoline 1624.
+**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314.
 
 ---
 
@@ -119,6 +119,20 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 | `Meta Master [mês]` | Idem com `-Periodo AAAA-MM` daquele mês (ex.: "Meta Master julho" → `-Periodo 2026-07`) e abro |
 
 Modificador: `por fechamento` (padrão) / `por faturamento` (`-Por`). Atalhos prontos: `meta-master/Atualizar-MetaMaster.bat` e `meta-master/Servir.bat`.
+
+---
+
+## 👥 8. Consultores de Vitória (incluir / excluir)
+**Script:** `Consultores-Vitoria.ps1` — atualiza a equipe em **todos** os scripts de uma vez (`$Consultores` nos 7 relatórios + `$Equipe` com user_id no `Acoes-Leads-Vitoria.ps1` + mapa do COMANDOS.md).
+
+| Comando | O que faz |
+|---|---|
+| `Consultores Vitória` | Lista a equipe atual (nome, apelido, user_id) e **confere se todos os scripts estão iguais** |
+| `Incluir consultor <nome>` | **Fluxo guiado:** peço o nome EXATO do Sales Cube + user_id (busco no Sales Cube se não souber) → prévia antes→depois → só grava após confirmar |
+| `Excluir consultor` | **Fluxo guiado:** mostro a lista numerada (1..N) → **você responde só o número** → prévia antes→depois → só grava após confirmar. Também aceita nome parcial direto (precisa casar com 1 só) |
+
+**Parâmetros diretos:** `-Incluir 'Nome Exato' -Id <user_id> [-Val Apelido]` · `-Excluir <número da lista ou parte do nome>` · sem `-Aplicar` = só prévia.
+Metas não são tocadas (`metas-vitoria.json`): consultor novo entra sem meta ("—") — cadastrar depois com `Atualizar Meta`.
 
 ---
 

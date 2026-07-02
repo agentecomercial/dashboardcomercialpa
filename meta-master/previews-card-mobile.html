@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Master — 10 layouts mobile (aba Card, controles ocultos)</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#2b2b2b;--pnl:#1f1f1f;--pnl2:#191919;--line:#3a3a3a;--line2:#2e2e2e;--ouro:#F0C84A;--txt:#eee;--mut:#9a9a9a;}
+  body{background:#202022;font-family:'Archivo',sans-serif;color:var(--txt);padding:28px 20px 80px;}
+  header.pg{max-width:1340px;margin:0 auto 26px;}
+  header.pg h1{font-size:23px;font-weight:900;letter-spacing:.3px;}
+  header.pg p{color:var(--mut);font-size:13.5px;margin-top:7px;line-height:1.55;max-width:880px;}
+  header.pg p b{color:var(--ouro);}
+  header.pg .tagline{margin-top:10px;font-size:12px;color:#cbb88a;background:#231f10;border:1px solid #4a3f1f;border-radius:8px;padding:8px 12px;display:inline-block;}
+
+  .grid{max-width:1340px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:32px 24px;}
+  .item{display:flex;flex-direction:column;gap:11px;}
+  .cap{font-size:13px;color:var(--mut);line-height:1.45;}
+  .cap b{color:var(--ouro);font-size:14px;display:block;margin-bottom:2px;letter-spacing:.3px;}
+  .cap b span{color:#6a6a6a;font-weight:700;}
+
+  /* moldura de celular */
+  .phone{width:298px;height:610px;margin:0 auto;background:#0c0c0c;border:9px solid #000;border-radius:34px;
+    box-shadow:0 14px 40px rgba(0,0,0,.55),inset 0 0 0 2px #232323;overflow:hidden;position:relative;}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:86px;height:17px;background:#000;border-radius:0 0 12px 12px;z-index:60;}
+  .scr{position:absolute;inset:0;background:var(--bg);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#444 transparent;}
+  .scr::-webkit-scrollbar{width:5px;}.scr::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+  .pad{padding:33px 12px 16px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .tab{flex:1;background:var(--pnl);border:1px solid var(--line);color:#bbb;font-weight:800;font-size:11px;padding:8px 4px;border-radius:9px;text-align:center;}
+  .tab.on{background:var(--ouro);color:#111;border-color:var(--ouro);}
+
+  /* card real */
+  .cardreal{position:relative;aspect-ratio:9/16;background:url('modelo.jpg') center/cover no-repeat;border-radius:9px;overflow:hidden;width:100%;border:1px solid #000;}
+  .cardreal .pf{position:absolute;left:17.7%;top:25.6%;width:64.9%;height:44.9%;border-radius:7%;background:linear-gradient(160deg,#3a3a3a,#141414);display:flex;align-items:center;justify-content:center;color:#cfcfcf;font-weight:900;font-size:clamp(16px,8vw,40px);letter-spacing:1px;}
+  .cardreal .nm{position:absolute;left:0;right:0;top:70.5%;text-align:center;color:#fff;font-weight:900;font-size:clamp(11px,4.4vw,22px);letter-spacing:1px;text-shadow:0 2px 6px rgba(0,0,0,.5);}
+
+  /* info compacta */
+  .info{display:flex;gap:7px;background:#161616;border:1px solid #333;border-radius:8px;padding:7px 9px;margin-bottom:9px;font-size:9px;align-items:center;}
+  .info .l{flex:1;color:#bbb;line-height:1.35;}.info .l b{color:var(--ouro);}
+  .info .st{text-align:center;padding:0 6px;}
+  .info .st .k{font-size:7px;text-transform:uppercase;letter-spacing:.4px;color:#888;}
+  .info .st .v{font-size:12px;font-weight:900;color:var(--ouro);}.info .st .v.g{color:#9fd07a;}
+
+  /* grupo essencial */
+  .grp{background:var(--pnl2);border:1px solid var(--line2);border-radius:9px;padding:9px 10px;margin-bottom:9px;}
+  .gt{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--ouro);font-weight:800;margin-bottom:7px;}
+  .fld{margin-bottom:7px;}.fld:last-child{margin-bottom:0;}
+  .fld label{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:#aaa;margin-bottom:3px;}
+  .inp{width:100%;background:#111;border:1px solid #444;border-radius:7px;padding:7px 9px;font-size:11.5px;color:#fff;font-weight:700;}
+  .inp.ph{color:#bbb;font-weight:600;}
+  input[type=range]{width:100%;height:14px;accent-color:var(--ouro);margin:0;}
+  .two{display:flex;gap:7px;}.two .fld{flex:1;}
+
+  /* acordeão (barra oculta) */
+  .acc{background:var(--pnl2);border:1px solid var(--line2);border-radius:9px;margin-bottom:8px;overflow:hidden;}
+  .acc>.h{display:flex;align-items:center;gap:8px;padding:11px 11px;cursor:pointer;font-size:11px;font-weight:800;color:#e7e7ea;}
+  .acc>.h .ic{font-size:13px;}
+  .acc>.h .cv{margin-left:auto;color:#888;font-size:11px;}
+  .acc.on>.h{color:var(--ouro);}
+  .acc.on>.h .cv{transform:rotate(90deg);}
+  .acc>.b{display:none;padding:0 10px 11px;}
+  .acc.on>.b{display:block;}
+
+  /* botões */
+  .btn{width:100%;padding:10px;border:none;border-radius:9px;font-weight:900;font-size:12px;letter-spacing:.4px;font-family:'Archivo';}
+  .b-ouro{background:var(--ouro);color:#111;}
+  .b-sec{background:#2c2c2c;color:#eee;border:1px solid #4a4a4a;}
+  .acts2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .btn-baixar{width:100%;padding:14px;font-size:15px;background:var(--ouro);color:#111;border:none;border-radius:10px;font-weight:900;letter-spacing:.5px;margin-bottom:9px;}
+
+  /* chips / segmented */
+  .seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:9px;scrollbar-width:none;}
+  .seg::-webkit-scrollbar{display:none;}
+  .chip{flex:none;background:#1c1c1c;border:1px solid var(--line);color:#cfcfcf;font-weight:800;font-size:11px;padding:7px 13px;border-radius:20px;white-space:nowrap;}
+  .chip.on{background:var(--ouro);border-color:var(--ouro);color:#111;}
+
+  /* settings-list (iOS) */
+  .slist{background:var(--pnl2);border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:9px;}
+  .srow{display:flex;align-items:center;gap:9px;padding:11px 11px;border-bottom:1px solid #242424;font-size:12px;font-weight:700;color:#e0e0e4;}
+  .srow:last-child{border-bottom:none;}
+  .srow .ic{font-size:14px;width:18px;text-align:center;}
+  .srow .ch{margin-left:auto;color:#777;font-size:12px;}
+
+  /* toolbar inferior fixa */
+  .barbottom{position:sticky;bottom:0;background:#161616;border-top:1px solid var(--line);margin:8px -12px -16px;padding:9px 12px;display:flex;gap:7px;z-index:40;}
+  .barbottom .btn{padding:11px 8px;font-size:12px;}
+
+  /* fab */
+  .fab{position:absolute;right:14px;bottom:16px;width:54px;height:54px;border-radius:50%;background:var(--ouro);color:#111;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.6);z-index:50;}
+  .fabmenu{position:absolute;right:16px;bottom:80px;display:flex;flex-direction:column;gap:8px;z-index:50;}
+  .fabmenu .mi{background:#1f1f1f;border:1px solid var(--line);color:#eee;font-size:10.5px;font-weight:800;padding:8px 12px;border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.5);white-space:nowrap;text-align:right;}
+
+  /* sheet */
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pnl);border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:8px 12px 14px;max-height:60%;overflow-y:auto;z-index:45;box-shadow:0 -10px 30px rgba(0,0,0,.5);}
+  .sheet .handle{width:42px;height:4px;background:#555;border-radius:3px;margin:2px auto 11px;}
+
+  /* modal */
+  .modal{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:55;display:flex;align-items:flex-end;}
+  .modal .sh{background:var(--pnl);width:100%;border-radius:16px 16px 0 0;padding:12px;max-height:78%;overflow-y:auto;}
+  .modal .mh{display:flex;align-items:center;margin-bottom:10px;}
+  .modal .mh b{font-size:13px;color:var(--ouro);}
+  .modal .mh .x{margin-left:auto;color:#999;font-size:16px;font-weight:900;}
+
+  /* subtabs */
+  .subtabs{display:flex;gap:0;background:var(--pnl2);border:1px solid var(--line2);border-radius:9px;padding:3px;margin-bottom:10px;}
+  .subtab{flex:1;text-align:center;font-size:11px;font-weight:800;color:#bbb;padding:8px 4px;border-radius:7px;}
+  .subtab.on{background:var(--ouro);color:#111;}
+
+  .note{font-size:8.5px;color:#777;margin-top:3px;}
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>🏆 Meta Master — 10 layouts mobile (aba Card)</h1>
+  <p>Objetivo: deixar <b>visível só o essencial</b> (Consultor &amp; foto + Baixar PNG) e <b>ocultar/colapsar</b> Enquadrar foto, Cor, Nome, Selo, Formato, Histórico de batedores e a grade de ações secundárias. Abaixo, 10 formas de fazer isso no celular. Card real (<b>modelo.jpg</b>) renderizado.</p>
+  <div class="tagline">💡 Em todas: o <b>card</b> aparece no final (como você pediu) e <b>Baixar PNG</b> fica sempre à mão.</div>
+</header>
+
+<div class="grid">
+
+  <!-- 1 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="info"><div class="l">Competência <b>Jun/2026</b><br>🏆 2 bateram a Master</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><label>Consultor</label><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><label>Foto</label><div class="inp ph">📷 escolher / arrastar</div></div></div>
+      <button class="btn-baixar">⬇ BAIXAR PNG</button>
+      <div class="acc"><div class="h"><span class="ic">⚙</span> Ajustes do card <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">⋯</span> Mais ações <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">📜</span> Histórico de batedores <span class="cv">▸</span></div></div>
+    </div></div></div>
+    <div class="cap"><b>1 · Três gavetas <span>(simples)</span></b>Tudo de ajuste num só “⚙ Ajustes do card”; ações secundárias em “⋯ Mais ações”; histórico à parte. Mínimo de barras.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+      <button class="btn-baixar">⬇ BAIXAR PNG</button>
+      <div class="acc"><div class="h"><span class="ic">🖼</span> Enquadrar foto <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">🎨</span> Cor da foto <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">🔤</span> Nome <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">🏷</span> Selo de dados <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">📐</span> Formato de saída <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">⋯</span> Mais ações <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">📜</span> Histórico <span class="cv">▸</span></div></div>
+    </div></div></div>
+    <div class="cap"><b>2 · Acordeões separados <span>(1 por seção)</span></b>Cada seção é uma barra própria, fechada. Abre só a que precisa. Mais granular, porém mais barras.</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+      <button class="btn-baixar">⬇ BAIXAR PNG</button>
+      <div class="acc on"><div class="h"><span class="ic">⚙</span> Ajustes <span class="cv">▸</span></div>
+        <div class="b">
+          <div class="seg"><div class="chip on">Enquadrar</div><div class="chip">Cor</div><div class="chip">Nome</div><div class="chip">Selo</div><div class="chip">Saída</div></div>
+          <div class="fld"><label>Zoom</label><input type="range" value="45"></div>
+          <div class="two"><div class="fld"><label>↔</label><input type="range" value="50"></div><div class="fld"><label>↕</label><input type="range" value="50"></div></div>
+        </div></div>
+      <div class="acc"><div class="h"><span class="ic">⋯</span> Mais ações · 📜 Histórico <span class="cv">▸</span></div></div>
+    </div></div></div>
+    <div class="cap"><b>3 · Gaveta + abas internas <span>(chips)</span></b>Uma gaveta “⚙ Ajustes” e, dentro dela, chips trocam Enquadrar/Cor/Nome/Selo/Saída. Compacto e organizado.</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="item">
+    <div class="phone">
+      <div class="scr" style="background:#141414"><div class="pad" style="padding-top:37px">
+        <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+        <div class="grp"><div class="gt">Consultor &amp; foto</div>
+          <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+          <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+        <button class="btn-baixar" style="margin:0">⬇ BAIXAR PNG</button>
+      </div></div>
+      <div class="sheet"><div class="handle"></div>
+        <div class="seg"><div class="chip on">Enquadrar</div><div class="chip">Cor</div><div class="chip">Nome</div><div class="chip">Selo</div><div class="chip">Saída</div></div>
+        <div class="fld"><label>Zoom</label><input type="range" value="45"></div>
+        <div class="two"><div class="fld"><label>↔</label><input type="range" value="50"></div><div class="fld"><label>↕</label><input type="range" value="50"></div></div>
+        <div class="note">⋯ Mais ações · 📜 Histórico (no fim do painel)</div>
+      </div>
+    </div>
+    <div class="cap"><b>4 · Bottom sheet <span>(painel deslizante)</span></b>Essencial na tela; todos os ajustes ocultos num painel que você puxa de baixo. Estilo app nativo.</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="item">
+    <div class="phone">
+      <div class="scr"><div class="pad">
+        <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+        <div class="grp"><div class="gt">Consultor &amp; foto</div>
+          <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+          <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+        <button class="btn-baixar">⬇ BAIXAR PNG</button>
+        <div class="acc"><div class="h"><span class="ic">⚙</span> Ajustes do card <span class="cv">▸</span></div></div>
+        <div class="acc"><div class="h"><span class="ic">📜</span> Histórico <span class="cv">▸</span></div></div>
+      </div></div>
+      <div class="fabmenu"><div class="mi">📋 Copiar</div><div class="mi">💾 Foto p/ pasta</div><div class="mi">📦 Baixar todos</div><div class="mi">📤 Publicar fotos</div></div>
+      <div class="fab">⋯</div>
+    </div>
+    <div class="cap"><b>5 · FAB de ações <span>(botão flutuante)</span></b>Ajustes num acordeão; todas as ações secundárias somem num botão flutuante “⋯” que abre o menu.</div>
+  </div>
+
+  <!-- 6 -->
+  <div class="item">
+    <div class="phone">
+      <div class="scr"><div class="pad">
+        <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+        <div class="grp"><div class="gt">Consultor &amp; foto</div>
+          <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+          <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+        <button class="btn-baixar">⬇ BAIXAR PNG</button>
+        <button class="btn b-sec" style="margin-bottom:8px">⚙ Ajustes avançados</button>
+        <button class="btn b-sec">⋯ Mais ações &amp; histórico</button>
+      </div></div>
+      <div class="modal"><div class="sh">
+        <div class="mh"><b>⚙ Ajustes avançados</b><span class="x">✕</span></div>
+        <div class="grp"><div class="gt">Enquadrar foto</div><div class="fld"><label>Zoom</label><input type="range" value="45"></div></div>
+        <div class="grp"><div class="gt">Cor da foto</div><div class="fld"><label>Brilho</label><input type="range" value="50"></div></div>
+        <div class="grp"><div class="gt">Nome</div><div class="fld"><label>Tamanho</label><input type="range" value="40"></div></div>
+      </div></div>
+    </div>
+    <div class="cap"><b>6 · Botão abre modal <span>(tela cheia)</span></b>Tela limpíssima com 2 botões; “Ajustes avançados” abre um painel modal por cima com tudo dentro.</div>
+  </div>
+
+  <!-- 7 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad" style="padding-bottom:0">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+      <div class="acc"><div class="h"><span class="ic">🖼</span> Enquadrar foto <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">🎨</span> Cor · 🔤 Nome · 🏷 Selo · 📐 Formato <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">📜</span> Histórico de batedores <span class="cv">▸</span></div></div>
+      <div class="barbottom"><button class="btn b-ouro">⬇ BAIXAR</button><button class="btn b-sec">📋</button><button class="btn b-sec">📦</button><button class="btn b-sec">⋯</button></div>
+    </div></div></div>
+    <div class="cap"><b>7 · Toolbar fixa embaixo <span>(ações sempre visíveis)</span></b>Ajustes em gavetas no corpo; barra de ações fixa no rodapé (Baixar + ícones + “⋯”). Histórico colapsado.</div>
+  </div>
+
+  <!-- 8 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+      <button class="btn-baixar">⬇ BAIXAR PNG</button>
+      <div class="slist">
+        <div class="srow"><span class="ic">🖼</span> Enquadrar foto <span class="ch">›</span></div>
+        <div class="srow"><span class="ic">🎨</span> Cor da foto <span class="ch">›</span></div>
+        <div class="srow"><span class="ic">🔤</span> Nome <span class="ch">›</span></div>
+        <div class="srow"><span class="ic">🏷</span> Selo de dados <span class="ch">›</span></div>
+        <div class="srow"><span class="ic">📐</span> Formato de saída <span class="ch">›</span></div>
+      </div>
+      <div class="slist">
+        <div class="srow"><span class="ic">⋯</span> Mais ações <span class="ch">›</span></div>
+        <div class="srow"><span class="ic">📜</span> Histórico de batedores <span class="ch">›</span></div>
+      </div>
+    </div></div></div>
+    <div class="cap"><b>8 · Lista estilo iOS <span>(Ajustes)</span></b>Cada item é uma linha “›” que abre seu painel. Visual familiar de tela de configurações. Bem limpo.</div>
+  </div>
+
+  <!-- 9 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><div class="inp ph">📷 escolher foto</div></div></div>
+      <button class="btn-baixar">⬇ BAIXAR PNG</button>
+      <div class="acc on"><div class="h"><span class="ic">🖼</span> Ajustes da foto <span class="cv">▸</span></div>
+        <div class="b"><div class="fld"><label>Zoom</label><input type="range" value="45"></div><div class="fld"><label>Brilho</label><input type="range" value="50"></div></div></div>
+      <div class="acc"><div class="h"><span class="ic">🔤</span> Texto &amp; saída <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">⋯</span> Mais ações <span class="cv">▸</span></div></div>
+      <div class="acc"><div class="h"><span class="ic">📜</span> Histórico <span class="cv">▸</span></div></div>
+    </div></div></div>
+    <div class="cap"><b>9 · Dois blocos temáticos <span>(agrupado)</span></b>“Ajustes da foto” (enquadrar+cor) e “Texto &amp; saída” (nome+selo+formato), + ações + histórico. Menos itens, agrupados por sentido.</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="item">
+    <div class="phone"><div class="scr"><div class="pad">
+      <div class="tabs"><div class="tab on">🏆 Card</div><div class="tab">📊 Leads</div><div class="tab">📋 Cmd</div></div>
+      <div class="subtabs"><div class="subtab on">Gerar</div><div class="subtab">Ajustes</div><div class="subtab">Ações</div></div>
+      <div class="grp"><div class="gt">Consultor &amp; foto</div>
+        <div class="fld"><label>Consultor</label><div class="inp">Natalia Cunha ▾</div></div>
+        <div class="fld"><label>Foto</label><div class="inp ph">📷 escolher / arrastar</div></div></div>
+      <button class="btn-baixar" style="margin-bottom:0">⬇ BAIXAR PNG</button>
+      <div class="note" style="text-align:center;margin-top:10px">“Ajustes” = Enquadrar/Cor/Nome/Selo/Formato · “Ações” = Copiar/Pasta/Todos/Publicar · 📜 Histórico</div>
+    </div></div></div>
+    <div class="cap"><b>10 · Sub-abas <span>(Gerar / Ajustes / Ações)</span></b>Barra secundária divide a aba Card em 3 telas. “Gerar” já basta no dia a dia; o resto fica fora do caminho.</div>
+  </div>
+
+</div>
+</body>
+</html>

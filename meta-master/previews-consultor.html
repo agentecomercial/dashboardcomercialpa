@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seletor de Consultor — 10 opções</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#141414;color:#eee;font-family:'Archivo',system-ui,Segoe UI,Arial,sans-serif;padding:26px;line-height:1.4;}
+  h1{font-size:22px;font-weight:900;letter-spacing:.5px;}
+  .lead{color:#9a9a9a;font-size:13px;margin:6px 0 22px;max-width:760px;}
+  .lead b{color:#F0C84A;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;}
+  .demo{background:#1f1f1f;border:1px solid #3a3a3a;border-radius:14px;padding:16px;}
+  .demo h3{font-size:13px;font-weight:900;color:#F0C84A;letter-spacing:.4px;margin-bottom:3px;}
+  .demo .sub{font-size:11px;color:#888;margin-bottom:14px;}
+  .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9a9a9a;font-weight:800;margin-bottom:7px;display:block;}
+  .out{margin-top:12px;font-size:12px;color:#7fd98a;background:#151715;border:1px solid #2c3a2c;border-radius:7px;padding:7px 10px;}
+  .out b{color:#bff0c4;}
+
+  /* avatar */
+  .av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#111;flex-shrink:0;}
+  .av-sm{width:24px;height:24px;font-size:10px;}
+  .av-lg{width:42px;height:42px;font-size:14px;}
+
+  /* === op1: select nativo estilizado === */
+  .o1-sel{width:100%;appearance:none;background:#161616 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%23F0C84A' stroke-width='2' fill='none'/></svg>") no-repeat right 14px center;
+    border:1px solid #3a3a3a;color:#eee;border-radius:9px;padding:11px 36px 11px 13px;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;}
+  .o1-sel:focus{outline:none;border-color:#F0C84A;}
+
+  /* === op2: pills primeiro nome === */
+  .pills{display:flex;flex-wrap:wrap;gap:7px;}
+  .pill{background:#262626;border:1px solid #3a3a3a;color:#cfcfcf;font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:20px;cursor:pointer;transition:.12s;font-family:inherit;}
+  .pill:hover{background:#2f2f2f;color:#fff;}
+  .pill.on{background:#F0C84A;color:#111;border-color:#F0C84A;}
+
+  /* === op3: avatar pills === */
+  .apills{display:flex;flex-wrap:wrap;gap:8px;}
+  .apill{display:flex;align-items:center;gap:8px;background:#1c1c1c;border:1px solid #333;color:#ddd;font-weight:700;font-size:12.5px;padding:5px 13px 5px 5px;border-radius:22px;cursor:pointer;transition:.12s;font-family:inherit;}
+  .apill:hover{background:#262626;}
+  .apill.on{border-color:#F0C84A;background:#241f11;color:#F0C84A;}
+
+  /* === op4: lista radio com avatar === */
+  .rlist{display:flex;flex-direction:column;gap:6px;}
+  .ritem{display:flex;align-items:center;gap:11px;background:#181818;border:1px solid #2c2c2c;border-radius:10px;padding:8px 11px;cursor:pointer;transition:.12s;}
+  .ritem:hover{background:#1d1d1d;}
+  .ritem.on{border-color:#F0C84A;background:#1d1a12;}
+  .ritem .nm{font-weight:800;font-size:13px;}
+  .ritem .full{font-size:11px;color:#8a8a8a;}
+  .ritem .dot{width:16px;height:16px;border-radius:50%;border:2px solid #555;margin-left:auto;flex-shrink:0;}
+  .ritem.on .dot{border-color:#F0C84A;background:radial-gradient(#F0C84A 40%,transparent 46%);}
+
+  /* === op5: cards grid === */
+  .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .ccard{display:flex;flex-direction:column;align-items:center;gap:7px;background:#181818;border:1px solid #2c2c2c;border-radius:11px;padding:12px 6px;cursor:pointer;transition:.12s;text-align:center;}
+  .ccard:hover{background:#1d1d1d;}
+  .ccard.on{border-color:#F0C84A;background:#1d1a12;}
+  .ccard .nm{font-size:11.5px;font-weight:800;color:#ddd;}
+  .ccard.on .nm{color:#F0C84A;}
+
+  /* === dropdown genérico (op6, op7, op9) === */
+  .dd{position:relative;}
+  .dd-btn{width:100%;display:flex;align-items:center;gap:10px;background:#161616;border:1px solid #3a3a3a;color:#eee;border-radius:9px;padding:10px 13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .dd-btn .car{margin-left:auto;color:#F0C84A;font-size:11px;}
+  .dd-btn:focus{outline:none;border-color:#F0C84A;}
+  .dd-pan{position:absolute;z-index:20;top:calc(100% + 6px);left:0;right:0;background:#1c1c1c;border:1px solid #444;border-radius:11px;padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.55);max-height:280px;overflow:auto;display:none;}
+  .dd.open .dd-pan{display:block;}
+  .dd-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+  .dd-row:hover{background:#262626;}
+  .dd-row.on{background:#241f11;}
+  .dd-row .nm{font-weight:800;font-size:13px;}
+  .dd-row .full{font-size:11px;color:#8a8a8a;}
+  .dd-row .ck{margin-left:auto;color:#F0C84A;font-weight:900;opacity:0;}
+  .dd-row.on .ck{opacity:1;}
+  .dd-search{width:100%;background:#0f0f0f;border:1px solid #3a3a3a;color:#eee;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;margin-bottom:6px;}
+  .dd-search:focus{outline:none;border-color:#F0C84A;}
+
+  /* === op8: segmented scroll === */
+  .seg{display:flex;gap:0;overflow-x:auto;background:#161616;border:1px solid #3a3a3a;border-radius:10px;padding:4px;}
+  .seg::-webkit-scrollbar{height:5px;} .seg::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+  .seg button{flex:0 0 auto;background:transparent;border:none;color:#bbb;font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.12s;}
+  .seg button:hover{color:#fff;}
+  .seg button.on{background:#F0C84A;color:#111;}
+
+  /* === op10: tags compactas === */
+  .tags{display:flex;flex-wrap:wrap;gap:5px;}
+  .tag{background:#202020;border:1px solid #333;color:#bbb;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:.1s;}
+  .tag:hover{background:#2a2a2a;color:#eee;}
+  .tag.on{background:#F0C84A;color:#111;border-color:#F0C84A;}
+</style>
+</head>
+<body>
+  <h1>🧑‍💼 Seletor de Consultor — 10 opções</h1>
+  <p class="lead">Cada opção é <b>funcional</b>: clique para selecionar e veja embaixo o valor que seria enviado ao script (<b>primeiro nome em ASCII</b>, ex.: <b>Filipe</b>). Me diga o <b>número</b> que você prefere e eu aplico na aba Comandos. Todas têm a opção <b>Todos</b> (consultor vazio).</p>
+  <div class="grid" id="grid"></div>
+
+<script>
+  const CONS=[
+    {nome:'Gabriela Souza de Jesus',           val:'Gabriela'},
+    {nome:'Natalia de Oliveira Silva Cunha',   val:'Natalia'},
+    {nome:'Karla Ferreira de Oliveira',        val:'Karla'},
+    {nome:'Wallyson Gabriel Gomes Pinheiro',   val:'Wallyson'},
+    {nome:'Artur Alef Borges',                 val:'Artur'},
+    {nome:'Filipe Frazão',                     val:'Filipe'},
+    {nome:'Ana Karoline Nascimento Francisco', val:'Ana Karoline'},
+  ];
+  const CORES=['#C9A227','#3E7CB1','#B5524E','#5B8C5A','#8A5BA8','#C77F3B','#4AA0A0'];
+  function ini(nome){ const p=nome.trim().split(/\s+/); return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase(); }
+  function avatar(i,extra){ const c=CONS[i]; return '<span class="av '+(extra||'')+'" style="background:'+CORES[i%CORES.length]+'">'+ini(c.nome)+'</span>'; }
+  function setOut(host,val){ host.querySelector('.out').innerHTML='envia: <b>'+(val?val:'(todos — vazio)')+'</b>'; }
+
+  const DEMOS=[
+    {t:'1. Select nativo (estilizado)', s:'Dropdown padrão do navegador, com tema escuro e seta dourada.', build:buildSelect},
+    {t:'2. Pills — primeiro nome', s:'Botões em linha; o escolhido fica dourado. Compacto e direto.', build:buildPills},
+    {t:'3. Pills com avatar', s:'Botão com círculo de iniciais colorido + primeiro nome.', build:buildAvatarPills},
+    {t:'4. Lista com avatar + nome completo', s:'Linhas verticais estilo seleção de contato, com rádio à direita.', build:buildRadioList},
+    {t:'5. Cards (grade)', s:'Cartões clicáveis com avatar em cima e nome embaixo.', build:buildCards},
+    {t:'6. Dropdown custom', s:'Botão abre painel estilizado: primeiro nome em destaque + nome completo.', build:(h)=>buildDropdown(h,false,false)},
+    {t:'7. Combobox com busca', s:'Dropdown com campo de busca para filtrar a lista enquanto digita.', build:(h)=>buildDropdown(h,true,false)},
+    {t:'8. Segmentado (rolagem horizontal)', s:'Uma faixa só; desliza na horizontal. Selecionado preenchido.', build:buildSegmented},
+    {t:'9. Dropdown com avatar', s:'Igual ao 6, mas cada linha tem o avatar de iniciais colorido.', build:(h)=>buildDropdown(h,false,true)},
+    {t:'10. Tags compactas', s:'Etiquetas pequenas; ocupa pouquíssimo espaço vertical.', build:buildTags},
+  ];
+
+  function buildSelect(host){
+    let h='<span class="lbl">Consultor</span><select class="o1-sel"><option value="">Todos os consultores</option>';
+    CONS.forEach(c=>h+='<option value="'+c.val+'">'+c.nome+'</option>');
+    h+='</select>';
+    const box=document.createElement('div'); box.innerHTML=h; host.insertBefore(box,host.querySelector('.out'));
+    box.querySelector('select').onchange=e=>setOut(host,e.target.value);
+  }
+  function buildPills(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="pills"></div>';
+    const wrap=box.querySelector('.pills');
+    const add=(label,val)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=label; b.onclick=()=>{wrap.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));b.classList.add('on');setOut(host,val);}; wrap.appendChild(b); return b; };
+    add('Todos','').classList.add('on'); CONS.forEach(c=>add(c.val,c.val));
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildAvatarPills(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="apills"></div>';
+    const wrap=box.querySelector('.apills');
+    const todos=document.createElement('button'); todos.className='apill on'; todos.innerHTML='<span class="av av-sm" style="background:#444;color:#eee">∀</span>Todos';
+    todos.onclick=()=>{wrap.querySelectorAll('.apill').forEach(x=>x.classList.remove('on'));todos.classList.add('on');setOut(host,'');}; wrap.appendChild(todos);
+    CONS.forEach((c,i)=>{ const b=document.createElement('button'); b.className='apill'; b.innerHTML=avatar(i,'av-sm')+c.val; b.onclick=()=>{wrap.querySelectorAll('.apill').forEach(x=>x.classList.remove('on'));b.classList.add('on');setOut(host,c.val);}; wrap.appendChild(b); });
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildRadioList(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="rlist"></div>';
+    const wrap=box.querySelector('.rlist');
+    const row=(av,nm,full,val,on)=>{ const r=document.createElement('div'); r.className='ritem'+(on?' on':''); r.innerHTML=av+'<div><div class="nm">'+nm+'</div>'+(full?'<div class="full">'+full+'</div>':'')+'</div><span class="dot"></span>'; r.onclick=()=>{wrap.querySelectorAll('.ritem').forEach(x=>x.classList.remove('on'));r.classList.add('on');setOut(host,val);}; wrap.appendChild(r); };
+    row('<span class="av" style="background:#444;color:#eee">∀</span>','Todos','todos os consultores','',true);
+    CONS.forEach((c,i)=>row(avatar(i),c.val,c.nome,c.val,false));
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildCards(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="cgrid"></div>';
+    const wrap=box.querySelector('.cgrid');
+    const card=(av,nm,val,on)=>{ const c=document.createElement('div'); c.className='ccard'+(on?' on':''); c.innerHTML=av+'<span class="nm">'+nm+'</span>'; c.onclick=()=>{wrap.querySelectorAll('.ccard').forEach(x=>x.classList.remove('on'));c.classList.add('on');setOut(host,val);}; wrap.appendChild(c); };
+    card('<span class="av av-lg" style="background:#444;color:#eee">∀</span>','Todos','',true);
+    CONS.forEach((c,i)=>card(avatar(i,'av-lg'),c.val,c.val,false));
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildDropdown(host,comBusca,comAvatar){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="dd"><button class="dd-btn"><span class="txt">Todos os consultores</span><span class="car">▼</span></button><div class="dd-pan"></div></div>';
+    const dd=box.querySelector('.dd'), btn=box.querySelector('.dd-btn'), pan=box.querySelector('.dd-pan'), txt=box.querySelector('.txt');
+    let rowsHtml=''; if(comBusca) rowsHtml+='<input class="dd-search" placeholder="🔎 buscar consultor…">';
+    rowsHtml+='<div class="dd-list"></div>';
+    pan.innerHTML=rowsHtml;
+    const list=pan.querySelector('.dd-list');
+    const mk=(av,nm,full,val,on)=>{ const r=document.createElement('div'); r.className='dd-row'+(on?' on':''); r.dataset.q=(nm+' '+full).toLowerCase(); r.innerHTML=(av||'')+'<div><div class="nm">'+nm+'</div>'+(full?'<div class="full">'+full+'</div>':'')+'</div><span class="ck">✓</span>'; r.onclick=()=>{list.querySelectorAll('.dd-row').forEach(x=>x.classList.remove('on'));r.classList.add('on');txt.textContent=full||nm;setOut(host,val);dd.classList.remove('open');}; list.appendChild(r); };
+    mk(comAvatar?'<span class="av av-sm" style="background:#444;color:#eee">∀</span>':'','Todos','Todos os consultores','',true);
+    CONS.forEach((c,i)=>mk(comAvatar?avatar(i,'av-sm'):'',c.val,c.nome,c.val,false));
+    btn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dd.open').forEach(o=>{if(o!==dd)o.classList.remove('open');});dd.classList.toggle('open');const s=pan.querySelector('.dd-search');if(s&&dd.classList.contains('open'))setTimeout(()=>s.focus(),30);};
+    if(comBusca){ const s=pan.querySelector('.dd-search'); s.oninput=()=>{const q=s.value.toLowerCase();list.querySelectorAll('.dd-row').forEach(r=>{r.style.display=(!q||r.dataset.q.indexOf(q)>=0)?'flex':'none';});}; s.onclick=e=>e.stopPropagation(); }
+    pan.onclick=e=>e.stopPropagation();
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildSegmented(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="seg"></div>';
+    const wrap=box.querySelector('.seg');
+    const add=(label,val,on)=>{ const b=document.createElement('button'); if(on)b.className='on'; b.textContent=label; b.onclick=()=>{wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');setOut(host,val);}; wrap.appendChild(b); };
+    add('Todos','',true); CONS.forEach(c=>add(c.val,c.val,false));
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+  function buildTags(host){
+    const box=document.createElement('div'); box.innerHTML='<span class="lbl">Consultor</span><div class="tags"></div>';
+    const wrap=box.querySelector('.tags');
+    const add=(label,val,on)=>{ const b=document.createElement('button'); b.className='tag'+(on?' on':''); b.textContent=label; b.onclick=()=>{wrap.querySelectorAll('.tag').forEach(x=>x.classList.remove('on'));b.classList.add('on');setOut(host,val);}; wrap.appendChild(b); };
+    add('Todos','',true); CONS.forEach(c=>add(c.val,c.val,false));
+    host.insertBefore(box,host.querySelector('.out'));
+  }
+
+  const grid=document.getElementById('grid');
+  DEMOS.forEach(d=>{
+    const card=document.createElement('div'); card.className='demo';
+    card.innerHTML='<h3>'+d.t+'</h3><div class="sub">'+d.s+'</div><div class="out">envia: <b>(todos — vazio)</b></div>';
+    d.build(card);
+    grid.appendChild(card);
+  });
+  document.addEventListener('click',()=>document.querySelectorAll('.dd.open').forEach(o=>o.classList.remove('open')));
+</script>
+</body>
+</html>

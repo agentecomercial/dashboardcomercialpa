@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superação da Meta Master — 6 indicadores 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:radial-gradient(120% 90% at 50% -10%,#16161c,#0c0c0e 60%);min-height:100vh;
+    font-family:'Archivo',sans-serif;color:#eee;padding:26px 22px 120px;
+    --accent:#F0C84A;--soft:#cbb88a;--win:#9fe6aa;--win2:#56b06a;--card:#1a1a1f;--line:#2a2a32;--dim:#9a9aa2;--heroLine:#4a3f1f;}
+  header.pg{max-width:1080px;margin:0 auto 26px;}
+  header.pg h1{font-size:24px;font-weight:900;} header.pg h1 span{color:var(--accent);}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:8px;line-height:1.6;max-width:880px;}
+  header.pg p b{color:var(--accent);} header.pg p i{color:var(--win);font-style:normal;}
+
+  .pick{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#16140a;border-top:2px solid var(--accent);
+    padding:13px 22px;display:flex;align-items:center;gap:14px;justify-content:center;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+  .pick b{color:var(--accent);font-size:15px;} .pick.empty{color:#8f8f98;background:#161618;border-top-color:var(--line);font-size:13px;}
+
+  .grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .opt{display:flex;flex-direction:column;}
+  .opt-head{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+  .opt-num{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#22314f,var(--accent));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;flex:none;}
+  .opt-meta{flex:1;min-width:0;} .opt-t{font-size:14.5px;font-weight:900;} .opt-d{font-size:11.5px;color:#9a9a9a;margin-top:1px;line-height:1.4;}
+  .opt-pick{border:1px solid var(--heroLine);background:#2a2410;color:var(--accent);font-family:'Archivo';font-weight:800;font-size:12px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .opt-pick:hover{background:var(--accent);color:#1a1500;}
+  .opt.chosen .opt-pick{background:var(--win);border-color:var(--win);color:#0c1a0f;}
+  .opt.chosen .stage{outline:2px solid var(--win);outline-offset:4px;}
+
+  .stage{flex:1;background:linear-gradient(160deg,#17171c,#0e0e11);border:1px solid #26262c;border-radius:16px;
+    padding:30px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:240px;
+    perspective:900px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+  .lead{text-align:center;}
+  .lead .hl{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--soft);font-weight:800;}
+  .lead .hn{font-size:16px;font-weight:900;}
+  .lead .hp{font-size:24px;font-weight:900;color:var(--accent);line-height:1.05;
+    text-shadow:0 1px 0 #6b4d12,0 2px 6px rgba(0,0,0,.6);}
+
+  @keyframes shine{0%{transform:translateX(-130%) skewX(-18deg)}55%,100%{transform:translateX(520%) skewX(-18deg)}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* 1 — Barra 3D extrudada (metal → verde) com brilho */
+  .b3wrap{width:100%;}
+  .b3{position:relative;height:34px;border-radius:18px;padding:4px;
+    background:linear-gradient(#08080a,#1b1b21);
+    box-shadow:inset 0 4px 8px rgba(0,0,0,.85),inset 0 -2px 2px rgba(255,255,255,.05),0 1px 0 rgba(255,255,255,.05);}
+  .b3 .fl{height:100%;border-radius:14px;position:relative;overflow:hidden;
+    background:linear-gradient(90deg,#9a6f25,#F0C84A 42%,#bfe9a8 78%,#9fe6aa);
+    box-shadow:0 0 20px rgba(159,230,170,.45),inset 0 2px 2px rgba(255,255,255,.65),inset 0 -4px 7px rgba(0,0,0,.4);}
+  .b3 .fl::before{content:"";position:absolute;top:2px;left:7px;right:7px;height:40%;border-radius:10px;background:linear-gradient(rgba(255,255,255,.6),transparent);}
+  .b3 .fl::after{content:"";position:absolute;top:-20%;bottom:-20%;width:46px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);filter:blur(2px);animation:shine 3.4s ease-in-out infinite;}
+  .b3 .mk{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px;background:linear-gradient(#fff,#9a9a9a);box-shadow:0 0 6px rgba(0,0,0,.7);z-index:3;}
+  .leg{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);font-weight:700;margin-top:9px;}
+  .leg .w{color:var(--win);font-weight:900;}
+  .note{font-size:12.5px;font-weight:800;color:var(--win);text-align:center;}
+  .note b{color:#dffbe6;}
+
+  /* 2 — Anel 3D neon */
+  .dial3{width:150px;height:150px;border-radius:50%;position:relative;animation:float 6s ease-in-out infinite;
+    background:conic-gradient(from -90deg,#F0C84A 0 50%,#9fe6aa 50% 93.5%,#1a1a20 93.5% 100%);
+    filter:drop-shadow(0 0 18px rgba(159,230,170,.5)) drop-shadow(0 14px 18px rgba(0,0,0,.6));}
+  .dial3::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 3px 6px rgba(255,255,255,.4),inset 0 -6px 12px rgba(0,0,0,.5);}
+  .dial3 .hole{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle at 50% 32%,#23232b,#101014);box-shadow:inset 0 8px 16px rgba(0,0,0,.8),inset 0 -3px 8px rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .dial3 .hole b{font-size:34px;font-weight:900;color:var(--accent);line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.7);}
+  .dial3 .hole span{font-size:11px;color:var(--win);font-weight:800;margin-top:3px;}
+
+  /* 3 — Medalha 3D metálica */
+  .med{width:150px;height:150px;border-radius:50%;position:relative;animation:float 6.5s ease-in-out infinite;
+    background:radial-gradient(circle at 38% 28%,#fff6d4,#F0C84A 38%,#b9842a 72%,#7c560f);
+    box-shadow:0 16px 30px rgba(0,0,0,.6),inset 0 4px 8px rgba(255,255,255,.8),inset 0 -10px 20px rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;}
+  .med::before{content:"";position:absolute;inset:13px;border-radius:50%;
+    background:radial-gradient(circle at 42% 32%,#ffedb0,#e7b945 55%,#9a6f1f);
+    box-shadow:inset 0 3px 7px rgba(0,0,0,.4),inset 0 -3px 6px rgba(255,255,255,.5);}
+  .med .face{position:relative;text-align:center;z-index:2;}
+  .med .face .ic{font-size:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));}
+  .med .face b{display:block;font-size:30px;font-weight:900;color:#5a3e0c;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.45);}
+  .med .face small{font-size:9px;font-weight:800;color:#6b4d12;letter-spacing:.5px;}
+  .medcap{text-align:center;}
+
+  /* 4 — Multiplicador metálico esculpido */
+  .mx{font-size:76px;font-weight:900;line-height:.9;animation:float 6s ease-in-out infinite;
+    background:linear-gradient(180deg,#fff7d8 4%,#F0C84A 46%,#a9791f 96%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 0 #6b4d12) drop-shadow(0 5px 7px rgba(0,0,0,.6));}
+  .mx em{font-style:normal;font-size:42px;
+    background:linear-gradient(180deg,#dffbe6,#9fe6aa 50%,#3f7a4c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .mxsub{font-size:12px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:.6px;text-align:center;}
+  .mxsub b{color:var(--win);}
+
+  /* 5 — Tubo de vidro (glass) com líquido */
+  .tube{width:100%;height:46px;border-radius:24px;position:relative;overflow:hidden;
+    background:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:inset 0 3px 8px rgba(0,0,0,.55),inset 0 -2px 3px rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.4);}
+  .tube .liq{position:absolute;left:0;top:0;bottom:0;border-radius:24px;
+    background:linear-gradient(90deg,#9a6f25,#F0C84A 50%,#9fe6aa);
+    box-shadow:0 0 22px rgba(240,200,74,.5),inset 0 3px 4px rgba(255,255,255,.6),inset 0 -6px 10px rgba(0,0,0,.35);}
+  .tube .liq::after{content:"";position:absolute;top:0;bottom:0;width:50px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);filter:blur(3px);animation:shine 3.8s ease-in-out infinite;}
+  .tube .gloss{position:absolute;top:5px;left:14px;right:14px;height:34%;border-radius:14px;background:linear-gradient(rgba(255,255,255,.4),transparent);pointer-events:none;}
+  .tube .val{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:900;color:#0c1a0f;text-shadow:0 1px 1px rgba(255,255,255,.4);z-index:2;}
+
+  /* 6 — Card flutuante inclinado (perspective) */
+  .tilt{width:100%;transform:rotateX(9deg) rotateY(-13deg);transform-style:preserve-3d;animation:float 5.5s ease-in-out infinite;
+    background:linear-gradient(135deg,#1d2c20,#0f160f);border:1px solid #2f5a36;border-radius:18px;padding:22px 24px;
+    box-shadow:0 34px 50px -22px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.08),0 0 26px rgba(159,230,170,.12);}
+  .tilt .tline{display:flex;align-items:center;gap:12px;}
+  .tilt .tico{font-size:34px;transform:translateZ(40px);filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
+  .tilt .tt{font-size:15px;font-weight:900;color:var(--win);letter-spacing:.5px;transform:translateZ(26px);}
+  .tilt .tbig{font-size:44px;font-weight:900;line-height:1;transform:translateZ(34px);
+    background:linear-gradient(180deg,#dffbe6,#9fe6aa 60%,#3f7a4c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tilt .ts{font-size:11.5px;color:#bfe6c6;font-weight:700;transform:translateZ(18px);}
+
+  @media (max-width:720px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>Superação da Meta Master — <span>6 indicadores 3D</span></h1>
+  <p>A líder bateu <b>187,1%</b> — <i>superou a meta em +87,1%</i>. Versões com profundidade: relevo metálico, vidro, glow e brilho animado. <i>Quem ainda não bateu mantém a barra de progresso normal.</i> Passe o mouse para ver o brilho. Clique em <b>“Escolher”</b> e me diga o número.</p>
+</header>
+
+<div class="grid" id="opts"></div>
+<div class="pick empty" id="pickbar">Nenhuma opção escolhida — clique em “Escolher” na que você preferir.</div>
+
+<script>
+window.addEventListener('error',function(e){var w=document.getElementById('opts');if(!w)return;
+  w.innerHTML='<div style="grid-column:1/-1;background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4"><b style="color:#ff8a8a">JS ERROR:</b> '+(e.message||'')+' — linha '+e.lineno+'</div>'+w.innerHTML;});
+</script>
+<script>
+const PCT=187.1, META=100, MAX=200;
+const SUP=(PCT-META).toFixed(1).replace('.',',');     // 87,1
+const MULT=(PCT/META).toFixed(2).replace('.',',');    // 1,87
+const fill=(PCT/MAX*100);                             // 93.55
+const metaPos=(META/MAX*100);                         // 50
+
+const lead=()=>`<div class="lead"><div class="hl">⭐ Líder do mês</div><div class="hn">Gabriela Jesus</div><div class="hp">187,1%</div></div>`;
+
+const OPTS=[
+ {t:'Barra 3D extrudada', d:'Trilho côncavo com preenchimento metálico (ouro → verde), relevo e brilho deslizante. Marco nos 100%.',
+  body:()=>lead()+`<div class="b3wrap"><div class="b3"><div class="fl" style="width:${fill}%"></div><span class="mk" style="left:${metaPos}%"></span></div>
+    <div class="leg"><span>0%</span><span>100% bateu</span><span class="w">187,1%</span></div></div>
+    <div class="note">✅ superou a meta em <b>+${SUP}%</b></div>`},
+
+ {t:'Anel 3D neon', d:'Medidor circular com profundidade, glow verde e número esculpido no centro.',
+  body:()=>lead()+`<div class="dial3"><div class="hole"><b>187%</b><span>+${SUP}%</span></div></div>`},
+
+ {t:'Medalha 3D metálica', d:'Medalha de ouro em relevo (bevel + reflexos), com o % cravado. Bem comemorativo.',
+  body:()=>lead()+`<div class="med"><div class="face"><div class="ic">🏆</div><b>187%</b><small>META MASTER</small></div></div>
+    <div class="medcap note">superou em <b>+${SUP}%</b></div>`},
+
+ {t:'Multiplicador esculpido', d:'“1,87×” em ouro escovado com profundidade e sombra projetada.',
+  body:()=>lead()+`<div class="mx">${MULT}<em>×</em></div><div class="mxsub">a meta master · <b>+${SUP}% acima</b></div>`},
+
+ {t:'Tubo de vidro', d:'Cápsula de vidro (glassmorphism) com líquido dourado, reflexo e brilho animado.',
+  body:()=>lead()+`<div class="tube"><div class="liq" style="width:${fill}%"></div><div class="gloss"></div><div class="val">187,1%</div></div>
+    <div class="note">🔥 <b>+${SUP}%</b> acima da meta</div>`},
+
+ {t:'Card flutuante 3D', d:'Cartão inclinado em perspectiva com elevação e camadas em profundidade.',
+  body:()=>lead()+`<div class="tilt"><div class="tline"><div class="tico">🏆</div><div><div class="tt">META BATIDA</div><div class="ts">Meta Master · ${MULT}× a meta</div></div></div>
+    <div class="tbig">+${SUP}%</div><div class="ts">acima da meta</div></div>`},
+];
+
+const wrap=document.getElementById('opts');
+try{
+  wrap.innerHTML=OPTS.map((o,i)=>`
+   <div class="opt" id="opt${i+1}">
+     <div class="opt-head"><div class="opt-num">${i+1}</div>
+       <div class="opt-meta"><div class="opt-t">${o.t}</div><div class="opt-d">${o.d}</div></div>
+       <button class="opt-pick" onclick="escolher(${i+1})">Escolher</button></div>
+     <div class="stage">${o.body()}</div>
+   </div>`).join('');
+}catch(err){
+  wrap.innerHTML='<div style="grid-column:1/-1;background:#2a1416;border:1px solid #6a2a2a;border-radius:12px;padding:20px;color:#ffb4b4"><b style="color:#ff8a8a">Erro:</b> '+String(err&&err.stack||err)+'</div>';
+}
+function escolher(n){
+  document.querySelectorAll('.opt').forEach(e=>e.classList.remove('chosen'));
+  document.getElementById('opt'+n).classList.add('chosen');
+  const b=document.getElementById('pickbar');
+  b.className='pick'; b.innerHTML=`Você escolheu a <b>Opção ${n} — ${OPTS[n-1].t}</b>. Me diga esse número no chat para eu aplicar.`;
+}
+</script>
+</body>
+</html>

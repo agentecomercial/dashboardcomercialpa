@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile — tabela densa com foco por coluna</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0e0e0e;color:#eee;font-family:'Archivo',system-ui,Segoe UI,Arial,sans-serif;padding:24px;}
+  h1{font-size:21px;font-weight:900;letter-spacing:.5px;}
+  .lead{color:#9a9a9a;font-size:13px;margin:6px 0 20px;max-width:760px;}
+  .lead b{color:#F0C84A;}
+  .wrap{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;}
+  .item{display:flex;flex-direction:column;gap:8px;}
+  .cap{font-size:13px;font-weight:900;color:#F0C84A;}
+  .cap small{display:block;color:#888;font-weight:600;font-size:11px;margin-top:1px;}
+  .phone{width:380px;height:660px;background:#000;border-radius:34px;padding:10px;box-shadow:0 10px 40px rgba(0,0,0,.6);}
+  .screen{width:100%;height:100%;background:#141414;border-radius:26px;overflow-y:auto;overflow-x:hidden;}
+  .screen::-webkit-scrollbar{width:0;}
+  .hd{position:sticky;top:0;background:#141414;padding:14px 14px 8px;z-index:5;border-bottom:1px solid #242424;}
+  .hd h2{font-size:14px;font-weight:900;}
+  .hd .sub{font-size:10.5px;color:#9a9a9a;margin-top:2px;}
+  .hd .sub b{color:#F0C84A;}
+  .dica{font-size:10.5px;color:#e2c878;background:#1c1810;border:1px solid #4a3f1f;border-radius:8px;padding:7px 9px;margin:10px 14px 0;}
+  .bd{padding:10px 10px 24px;}
+  .t{border-collapse:collapse;font-size:11px;width:100%;}
+  .t th,.t td{padding:6px 5px;border-bottom:1px solid #242424;white-space:nowrap;text-align:right;}
+  .t th{font-size:9px;text-transform:uppercase;letter-spacing:.2px;color:#888;font-weight:800;cursor:pointer;user-select:none;}
+  .t th:not(.cnm):active{transform:scale(.96);}
+  .t td:first-child,.t th:first-child{text-align:left;}
+  .t .tot{color:#F0C84A;font-weight:900;}
+  .t tr.total td{border-top:2px solid #444;font-weight:900;color:#eee;}
+  .t td.camp{color:#9fcf9f;background:#1a1c1a;}
+  .t th.on{background:#F0C84A;color:#111;}
+  .t td.colhide,.t th.colhide{display:none;}
+  /* quando focado: respiro maior na coluna que sobra */
+  .t.foco th,.t.foco td{padding:9px 8px;font-size:13px;}
+  .t.foco th{font-size:10px;}
+  .voltar{display:none;margin:10px 14px 0;font-size:11px;font-weight:800;color:#F0C84A;background:#241f11;border:1px solid #4a3f1f;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:center;}
+  .voltar.show{display:block;}
+</style>
+</head>
+<body>
+  <h1>📱 Tabela densa com foco por coluna (opção 4 ajustada)</h1>
+  <p class="lead">As etapas ficam só com o <b>número</b> (1–6) pra economizar espaço. Toque no <b>número de uma coluna</b> → as outras somem, fica só <b>Consultor + aquela coluna</b>, e o cabeçalho passa a mostrar o <b>nome completo</b> (ex.: "5 Venda Feita"). Toque de novo (ou em "ver todas") → volta tudo. O frame da direita já está com a coluna 5 isolada, de exemplo.</p>
+  <div class="wrap" id="wrap"></div>
+
+<script>
+  const CURTO=['Cons.','1','2','3','4','5','6','TOT','MCIS','TCE','Outros'];
+  const LONGO=['Consultor','1 Novo Lead','2 Farmer','3 Conversa','4 Negociação','5 Venda Feita','6 Nutrição','Total','MCIS','TCE','Outros'];
+  const CAMP=new Set([8,9,10]);          // indices de coluna que sao campanha
+  const D=[
+    {nm:'Gabriela Jesus', v:[237,18,7,6,36,10]},
+    {nm:'Natalia Cunha', v:[222,14,26,3,33,3]},
+    {nm:'Karla Oliveira', v:[188,44,7,5,1,39]},
+    {nm:'Filipe Frazão', v:[0,0,0,0,77,0]},
+    {nm:'Wallyson Pinheiro', v:[22,0,0,0,1,1]},
+    {nm:'Ana Francisco', v:[15,0,0,0,0,0]},
+    {nm:'Artur Borges', v:[0,0,0,1,4,0]},
+  ];
+  // monta as 11 colunas por consultor: [nome, e1..e6, total, mcis, tce, outros]
+  const CMP=[[170,94,42],[148,106,40],[219,60,15],[0,0,77],[23,0,1],[15,0,0],[1,0,4]];
+  D.forEach((d,i)=>{ const tot=d.v.reduce((a,b)=>a+b,0); d.cells=[d.nm, ...d.v, tot, ...CMP[i]]; });
+  const TOT=[]; for(let c=1;c<11;c++){ TOT[c]=D.reduce((a,d)=>a+(+d.cells[c]||0),0); }
+  function el(h){ const x=document.createElement('div'); x.innerHTML=h.trim(); return x.firstElementChild; }
+
+  function montar(focoInicial){
+    const ph=el('<div class="phone"><div class="screen"><div class="hd"><h2>📊 Leads por consultor</h2><div class="sub">Competência <b>Junho/2026</b></div></div><div class="dica">👆 Toque no número de uma coluna para isolá-la (aí aparece o nome).</div><div class="voltar">↺ ver todas as colunas</div><div class="bd"></div></div></div>');
+    const bd=ph.querySelector('.bd'), voltar=ph.querySelector('.voltar'), dica=ph.querySelector('.dica');
+    let foco = (focoInicial==null) ? null : focoInicial;
+
+    let h='<table class="t"><thead><tr>';
+    CURTO.forEach((c,i)=>h+='<th class="'+(i===0?'cnm':'')+'" data-col="'+i+'">'+c+'</th>');
+    h+='</tr></thead><tbody>';
+    D.forEach(d=>{ h+='<tr>'; d.cells.forEach((val,i)=>{ const cls=(i===7?'tot':'')+(CAMP.has(i)?' camp':''); h+='<td class="'+cls.trim()+'" data-col="'+i+'">'+val+'</td>'; }); h+='</tr>'; });
+    h+='<tr class="total">'; CURTO.forEach((c,i)=>{ if(i===0) h+='<td data-col="0">TOTAL</td>'; else h+='<td class="'+(CAMP.has(i)?'camp':'')+'" data-col="'+i+'">'+(TOT[i]||0)+'</td>'; }); h+='</tr>';
+    h+='</tbody></table>';
+    bd.innerHTML=h;
+    const tbl=bd.querySelector('.t');
+
+    function aplicar(){
+      tbl.classList.toggle('foco', foco!==null);
+      voltar.classList.toggle('show', foco!==null);
+      dica.style.display = foco===null ? '' : 'none';
+      tbl.querySelectorAll('[data-col]').forEach(c=>{
+        const ci=+c.dataset.col;
+        const vis = (foco===null) || ci===0 || ci===foco;
+        c.classList.toggle('colhide', !vis);
+        if(c.tagName==='TH'){ c.classList.toggle('on', foco!==null && ci===foco); c.textContent = (foco===null) ? CURTO[ci] : LONGO[ci]; }
+      });
+    }
+    tbl.querySelectorAll('th').forEach(th=>{ if(th.classList.contains('cnm')) return; th.onclick=()=>{ const ci=+th.dataset.col; foco = (foco===ci) ? null : ci; aplicar(); }; });
+    voltar.onclick=()=>{ foco=null; aplicar(); };
+    aplicar();
+    return ph;
+  }
+
+  const wrap=document.getElementById('wrap');
+  wrap.appendChild(el('<div class="item"><div class="cap">A) Normal (interativo)<small>Toque numa coluna pra isolar</small></div></div>')).appendChild(montar(null));
+  wrap.appendChild(el('<div class="item"><div class="cap">B) Exemplo: "5 Venda" isolada<small>É o resultado de tocar nessa coluna</small></div></div>')).appendChild(montar(5));
+</script>
+</body>
+</html>
