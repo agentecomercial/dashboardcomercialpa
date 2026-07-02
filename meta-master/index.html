@@ -244,8 +244,15 @@
   .rt-c-cont{background:rgba(150,90,200,.18);border-color:#7a4aa2;color:#d0a9f0;}
   .rt-c-none{background:#232323;border-color:#3a3a3a;color:#bbb;}
   .rt-c-warn{background:rgba(210,140,40,.18);border-color:#a2712e;color:#e6b57a;}
-  .rt-lista-tit{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:#999;font-weight:800;margin:2px 0 8px;}
+  .rt-lista-tit{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:#999;font-weight:800;margin:2px 0 8px;display:flex;align-items:center;gap:10px;}
+  .rt-copyall{margin-left:auto;background:#2a2a33;color:#e6cd7a;border:1px solid #3a3a44;border-radius:14px;padding:4px 11px;font-size:11px;font-weight:800;cursor:pointer;text-transform:none;letter-spacing:0;}
+  .rt-copyall:hover{background:#3a3a44;}
+  #rtLista .md-ul li{display:flex;align-items:flex-start;gap:10px;}
+  .rt-al{flex:1;min-width:0;}
+  .rt-cpf{color:#e6cd7a;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;}
   .rt-obs{color:#9a9a9a;}
+  .rt-copy{flex:none;background:#2a2a33;color:#ddd;border:1px solid #3a3a44;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;line-height:1;}
+  .rt-copy:hover{background:#3a3a44;color:#F0C84A;}
   .md-tbl th.mda-l,.md-tbl td.mda-l{text-align:left;white-space:normal;max-width:420px;}
   /* ===== MOBILE: tabelas densas + foco por coluna (toca no número isola; toca de novo volta) ===== */
   .ltbl th.colhide,.ltbl td.colhide,.md-tbl th.colhide,.md-tbl td.colhide{display:none;}
@@ -2609,15 +2616,34 @@
       rtMostrarGrupo(def);
     }
   }
+  let RT_CUR_G=0;
   function rtMostrarGrupo(i){
     if(!RT_CUR) return;
     const g=rtArr(RT_CUR.grupos)[i]; if(!g) return;
+    RT_CUR_G=i;
     document.querySelectorAll('#rtModalBody .rt-chip').forEach(b=>b.classList.toggle('ativo', +b.getAttribute('data-i')===i));
     const alunos=rtArr(g.alunos);
-    let h='<div class="rt-lista-tit">'+(g.emoji||'')+' '+esc(g.label)+' — '+alunos.length+'</div><ul class="md-ul">';
-    alunos.forEach(a=>{ const o=(a.o&&a.o!=='')?' <span class="rt-obs">— '+esc(a.o)+'</span>':''; h+='<li>'+esc(a.n)+o+'</li>'; });
+    let h='<div class="rt-lista-tit">'+(g.emoji||'')+' '+esc(g.label)+' — '+alunos.length
+      +'<button class="rt-copyall" onclick="rtCopiarGrupo()" title="Copiar nome + CPF de todos">⧉ copiar todos</button></div><ul class="md-ul">';
+    alunos.forEach(a=>{
+      const cpf=a.c||'';
+      const copyTxt=a.n+(cpf?(' - '+cpf):'');
+      const o=(a.o&&a.o!=='')?' <span class="rt-obs">— '+esc(a.o)+'</span>':'';
+      h+='<li><span class="rt-al">'+esc(a.n)+(cpf?' <span class="rt-cpf">'+esc(cpf)+'</span>':'')+o+'</span>'
+        +'<button class="rt-copy" data-c="'+encodeURIComponent(copyTxt)+'" onclick="rtCopiar(this)" title="Copiar nome e CPF">⧉</button></li>';
+    });
     h+='</ul>';
     document.getElementById('rtLista').innerHTML=h;
+  }
+  function rtCopiar(btn){ const t=decodeURIComponent(btn.getAttribute('data-c')||''); if(t) copiarTexto(t); }
+  function rtCopiarGrupo(){
+    if(!RT_CUR) return;
+    const g=rtArr(RT_CUR.grupos)[RT_CUR_G]; if(!g) return;
+    const linhas=rtArr(g.alunos).map(a=>a.n+(a.c?(' - '+a.c):'')).join('\n');
+    if(!linhas) return;
+    navigator.clipboard.writeText(linhas)
+      .then(()=>toast('Copiados '+rtArr(g.alunos).length+' — '+g.label))
+      .catch(()=>toast('Não consegui copiar'));
   }
   function fecharModalTurma(){ const m=document.getElementById('rtModal'); if(m) m.style.display='none'; }
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharModalTurma(); });

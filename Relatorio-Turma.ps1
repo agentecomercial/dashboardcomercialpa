@@ -90,6 +90,11 @@ function Motivo($obs){
   else { return 'Outros' }
 }
 
+function FmtCpf($d){
+  $x = "$d" -replace '\D',''
+  if ($x.Length -eq 11) { '{0}.{1}.{2}-{3}' -f $x.Substring(0,3),$x.Substring(3,3),$x.Substring(6,3),$x.Substring(9,2) } else { $x }
+}
+
 # ---------- 4) coletar dados de cada aba ----------
 $turmas = @()
 $todosAlunos = @()  # para cruzamento por CPF
@@ -221,7 +226,7 @@ foreach ($t in $turmas) {
           $raw = "$($al.StatusRaw)".Trim()
           if ($obs -ne '') { $obs = "status '$raw' — $obs" } else { $obs = "status '$raw'" }
         }
-        $alunos += [ordered]@{ n = $al.Nome; o = $obs }
+        $alunos += [ordered]@{ n = $al.Nome; c = (FmtCpf $al.Cpf); o = $obs }
       }
       $grupos += [ordered]@{ label=$g.label; emoji=$g.emoji; cor=$g.cor; n=$lista.Count; alunos=$alunos }
     }
