@@ -218,6 +218,16 @@
   .md-tbl td:first-child,.md-tbl th:first-child{text-align:left;}
   .md-tbl tr.md-tot td{border-top:2px solid #444;font-weight:900;color:#F0C84A;background:#191713;}
   .md-tbl tbody tr:hover{background:#191919;}
+  /* Relatório de Turma: linha clicável + modal por turma */
+  .md-tbl tbody tr.rt-click{cursor:pointer;}
+  .md-tbl tbody tr.rt-click td:first-child{color:#F0C84A;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#5a4a1e;}
+  .md-tbl tbody tr.rt-click:hover{background:rgba(240,200,74,.13);}
+  .md-tbl tbody tr.rt-click:hover td:first-child{text-decoration-color:#F0C84A;}
+  .rt-modal{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:20px;}
+  .rt-modal-box{position:relative;background:#15151b;border:1px solid #33333e;border-radius:14px;max-width:820px;width:100%;max-height:86vh;overflow:auto;padding:24px 26px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
+  .rt-x{position:absolute;top:12px;right:14px;background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;}
+  .rt-x:hover{background:#3a3a44;}
+  #rtModalBody .md-h{margin-top:0;}
   .md-tbl th.mda-l,.md-tbl td.mda-l{text-align:left;white-space:normal;max-width:420px;}
   /* ===== MOBILE: tabelas densas + foco por coluna (toca no número isola; toca de novo volta) ===== */
   .ltbl th.colhide,.ltbl td.colhide,.md-tbl th.colhide,.md-tbl td.colhide{display:none;}
@@ -2437,8 +2447,8 @@
       const r=await fetch('/api/cmd?'+qs.toString(),{cache:'no-store'});
       const txt=await r.text();
       if(!r.ok) throw new Error(txt||('HTTP '+r.status));
-      res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>';
-      aplicarMobileTabelas();   // mobile: densidade + foco por coluna
+      if(id==='relatorioTurma'){ renderRelatorioTurma(txt,res); }
+      else { res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>'; aplicarMobileTabelas(); }   // mobile: densidade + foco por coluna
     }catch(e){
       res.innerHTML='<div class="cmd-aviso">Falhou: '+esc(e.message)+'</div>';
     }finally{
@@ -2523,6 +2533,43 @@
     table.querySelectorAll('th .sarrow').forEach(a=>a.remove());
     const ar=document.createElement('span'); ar.className='sarrow'; ar.textContent=(dir==='1'?' ▲':' ▼'); th.appendChild(ar);
   }
+  /* ===== Relatório de Turma: panorama clicável + modal por turma ===== */
+  let RT_DET={};
+  function renderRelatorioTurma(txt,res){
+    RT_DET={};
+    let body=txt;
+    const m=txt.match(/<!--RT-DET:([\s\S]*?)-->/);
+    if(m){ try{ RT_DET=JSON.parse(m[1]); }catch(e){ RT_DET={}; } body=txt.replace(m[0],''); }
+    res.innerHTML='<div class="cmd-out" id="rtOut">'+mdToHtml(body)+'</div>'
+      +'<div id="rtModal" class="rt-modal" onclick="if(event.target===this)fecharModalTurma()">'
+      +'<div class="rt-modal-box"><button class="rt-x" onclick="fecharModalTurma()" title="Fechar">✕</button>'
+      +'<div id="rtModalBody" class="cmd-out"></div></div></div>';
+    aplicarMobileTabelas();
+    // primeira tabela do relatório = panorama; tornar cada linha de turma clicável
+    const tbl=document.querySelector('#rtOut table.md-tbl');
+    if(tbl){
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        if(tr.classList.contains('md-tot')) return;
+        const c0=tr.querySelector('td'); if(!c0) return;
+        const nome=c0.textContent.trim();
+        if(Object.prototype.hasOwnProperty.call(RT_DET,nome)){
+          tr.classList.add('rt-click');
+          tr.setAttribute('title','Ver detalhes de '+nome);
+          tr.addEventListener('click',()=>abrirModalTurma(nome));
+        }
+      });
+    }
+  }
+  function abrirModalTurma(nome){
+    const md=RT_DET[nome]; if(md==null) return;
+    document.getElementById('rtModalBody').innerHTML=mdToHtml(md);
+    const mod=document.getElementById('rtModal');
+    mod.style.display='flex'; mod.scrollTop=0;
+    const box=mod.querySelector('.rt-modal-box'); if(box) box.scrollTop=0;
+  }
+  function fecharModalTurma(){ const m=document.getElementById('rtModal'); if(m) m.style.display='none'; }
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharModalTurma(); });
+
   function mdToHtml(md){
     const lines=String(md).replace(/\r/g,'').split('\n');
     let html=''; let i=0;
