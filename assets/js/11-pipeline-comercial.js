@@ -317,10 +317,15 @@
     return n.replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
   }
 
-  /* ── Meta Geral: retorna valor definido ou Σ metas básicas ── */
+  /* ── Meta Geral: retorna valor definido ou Σ metas básicas ──
+     (metas de consultores pausados ficam fora da soma) */
   function getMetaEquipeMes(){
     if(window._npMetaGeral&&window._npMetaGeral.valor>0) return window._npMetaGeral.valor;
-    return Object.values(window._npGoals||{}).reduce(function(s,g){return s+(+(g.metaBasica||g.metaValor||0));},0);
+    return Object.entries(window._npGoals||{}).reduce(function(s,e){
+      if(_npEhPausado(e[0])) return s;
+      var g=e[1]||{};
+      return s+(+(g.metaBasica||g.metaValor||0));
+    },0);
   }
   function _npAtualizarBtnConfigurar(){
     var _fmt=function(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
@@ -354,13 +359,30 @@
     }
   }
 
+  /* ── Pausado na Gestão de Usuários (ativo===false) ──
+     Regra: pausado NÃO aparece em nenhuma lista de pessoas do app
+     (selects, metas, rankings, gráficos). As linhas de VENDAS
+     continuam íntegras — vendas nunca são ocultadas. */
+  function _npEhPausado(nome){
+    var k=String(nome||'').toUpperCase().trim();
+    if(!k) return false;
+    var us=window._npUsuarios||{};
+    var ids=Object.keys(us);
+    for(var i=0;i<ids.length;i++){
+      var u=us[ids[i]];
+      if(u&&u.nome&&String(u.nome).toUpperCase().trim()===k) return u.ativo===false;
+    }
+    return false;
+  }
+  window._npEhPausado=_npEhPausado;
+
   /* ── Coletar consultores unificados ─────────────────── */
   function _npColetarConsultores(){
     var set={};
-    /* De usuarios Firebase (perfil consultor) */
+    /* De usuarios Firebase (perfil consultor) — pausado fica de fora */
     if(window._npUsuarios){
       Object.values(window._npUsuarios).forEach(function(u){
-        if(u&&u.perfil==='consultor'&&u.nome){
+        if(u&&u.perfil==='consultor'&&u.nome&&u.ativo!==false){
           set[u.nome.toUpperCase()]=u.nome;
         }
       });
@@ -369,6 +391,10 @@
     _npTodasVendas().forEach(function(v){
       var nome=(v.consultor||'').trim();
       if(nome) set[nome.toUpperCase()]=nome;
+    });
+    /* Remover pausados (inclusive quem entrou via vendas do mês) */
+    Object.keys(set).forEach(function(k){
+      if(_npEhPausado(set[k])) delete set[k];
     });
     /* Ordena: prioriza metaOrdem customizado (salvo em _npGoals[nome].metaOrdem),
        fallback alfabético. metaOrdem 0/undefined cai pro final do bloco custom. */
@@ -738,6 +764,7 @@
     vendas.forEach(function(v){
       if(filtroSrc&&v._src!==filtroSrc) return;
       var n=(v.consultor||'Sem consultor').trim();
+      if(_npEhPausado(n)) return; /* pausado some de ranking/top3/gráficos */
       if(!map[n]) map[n]={nome:n,total:0,pago:0,qtd:0,qtdPago:0};
       var val=+(v.valor||0);
       var st=(v.status||'').toLowerCase();
@@ -2253,11 +2280,12 @@
     var semAtual = _semanaAtual();
     _npSemModalSel = semAtual || semanas[0].num;
 
-    /* Fonte de consultores: usuarios cadastrados em GU (mesma do _npRenderMetasV2) */
+    /* Fonte de consultores: usuarios cadastrados em GU (mesma do _npRenderMetasV2).
+       Pausado (ativo===false) fica de fora de qualquer lista. */
     var _usuariosGU = (window._npUsuarios && typeof window._npUsuarios==='object') ? window._npUsuarios : {};
     var consList = [];
     Object.values(_usuariosGU).forEach(function(u){
-      if(u && u.perfil==='consultor' && u.nome) consList.push(u.nome);
+      if(u && u.perfil==='consultor' && u.nome && u.ativo!==false) consList.push(u.nome);
     });
     if(!consList.length) consList = (_npConsultores||[]).slice();
     consList.sort(function(a,b){ return String(a).localeCompare(String(b),'pt-BR'); });

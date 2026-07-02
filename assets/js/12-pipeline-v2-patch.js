@@ -785,10 +785,12 @@
       if(!nome) return;
       var k=String(nome).toUpperCase().trim();
       if(!k) return;
+      /* Pausado na Gestão de Usuários não aparece em nenhuma lista */
+      if(typeof window._npEhPausado==='function'&&window._npEhPausado(nome)) return;
       if(!_consSet[k]) _consSet[k]=String(nome).trim();
     }
     Object.values(_usuariosGU).forEach(function(u){
-      if(u&&u.perfil==='consultor'&&u.nome) _addCons(u.nome);
+      if(u&&u.perfil==='consultor'&&u.nome&&u.ativo!==false) _addCons(u.nome);
     });
     Object.entries(window._npGoals||{}).forEach(function(e){
       var g=e[1]||{};
