@@ -123,13 +123,14 @@ while ($listener.IsListening) {
         'movimentacao'    { $script='Movimentacao-Leads.ps1';     $psArgs=@('-Periodo',$per) }
         'negociacoes'     { $script='Negociacoes-Vitoria.ps1';    $psArgs=@(); if($con){$psArgs+=@('-Consultor',$con)}; if($fxs -match '^[\d]+-[\d]*(,[\d]+-[\d]*)*$'){$psArgs+=@('-Faixas',$fxs)} }
         'leituraTurma'    { $script='Leitura-Turma.ps1';          $psArgs=@('-Link',$lnk) }
+        'relatorioTurma'  { $script='Relatorio-Turma.ps1';        $psArgs=@('-Link',$lnk) }
       }
       if (-not $script) {
         $res.StatusCode = 400; $res.ContentType = 'text/plain; charset=utf-8'
         $b = [Text.Encoding]::UTF8.GetBytes("Comando desconhecido: $id")
         $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
       }
-      if (($de -or $ate) -and $id -ne 'leituraTurma') { if($de){$psArgs+=@('-De',$de)}; if($ate){$psArgs+=@('-Ate',$ate)} }   # intervalo de datas
+      if (($de -or $ate) -and $id -notin 'leituraTurma','relatorioTurma') { if($de){$psArgs+=@('-De',$de)}; if($ate){$psArgs+=@('-Ate',$ate)} }   # intervalo de datas
       $full = Join-Path $raiz $script
       $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $full @psArgs *>&1 | Out-String
       $code = $LASTEXITCODE

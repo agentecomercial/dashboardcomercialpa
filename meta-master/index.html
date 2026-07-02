@@ -1588,6 +1588,9 @@
 
     {id:'leituraTurma', cat:'📚 Leitura de Turma', label:'Leitura de Turma', exec:true,
       desc:'Cole o link público do Google Sheets da turma → 2 tabelas (ADQUIRIDO × PENDENTE) + leitura rápida (insights).', campos:['link']},
+
+    {id:'relatorioTurma', cat:'📚 Leitura de Turma', label:'Relatório de Turma', exec:true,
+      desc:'Cole o link do Google Sheets de confirmação de presença → lê TODAS as abas (turmas) via .xlsx: panorama consolidado + termômetro da Meta 70% + follow-up (Sem retorno) + transferências por motivo + cruzamento por CPF + qualidade de dados.', campos:['link']},
   ];
 
   function hojeYM(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }

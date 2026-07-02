@@ -110,13 +110,13 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 ---
 
 ## 📋 6B. Relatório de Turma (confirmação de presença × meta 70%)
-**Sem script — fluxo no chat.** Planilha DIFERENTE da Leitura de Turma: aqui cada aba é uma **turma de treinamento** (ex.: `BHP-18`, `CEOP16`, `TAV-03`, `FCIS-31`) com resumo + lista `NOME · CPF · STATUS · OBSERVAÇÃO` (STATUS = Confirmado / Sem retorno / Transferência de turma-titularidade-unidade / Aguardando / Cancelamento / Contato errado).
+**Script:** `Relatorio-Turma.ps1` · **App:** aba Comandos do Meta Master (**executa aqui** via `/api/cmd?id=relatorioTurma`). Planilha DIFERENTE da Leitura de Turma: aqui cada aba é uma **turma de treinamento** (ex.: `BHP-18`, `CEOP16`, `TAV-03`, `FCIS-31`) com resumo + lista `NOME · CPF · STATUS · OBSERVAÇÃO` (STATUS = Confirmado / Sem retorno / Transferência de turma-titularidade-unidade / Aguardando / Cancelamento / Contato errado).
 
 | Comando | O que faz |
 |---|---|
-| `Relatório de Turma <link>` | Lê **TODAS as abas** da planilha (não só o gid do link) e devolve o relatório consolidado das turmas + detalhe de cada uma |
+| `Relatório de Turma <link>` | Lê **TODAS as abas** da planilha (não só o gid do link) e devolve o relatório consolidado das turmas + detalhe de cada uma. Roda no app (card com campo de link + botão Executar) ou no chat |
 
-**Como leio (robusto):** extraio o ID do link e baixo a planilha inteira em **`.xlsx`** (`…/export?format=xlsx`) — **NÃO** uso `gviz`/CSV por aba, que falha em abas com células mescladas (ex.: FCIS-31 vinha achatada/vazia). Parseio o xlsx (zip → `sharedStrings.xml` + `workbook.xml` + `worksheets/sheetN.xml` via rels). Colunas: `A`=resumo, `D`=NOME, `E`=CPF, `F`=STATUS, `G`=OBSERVAÇÃO (cabeçalho na linha 1 **ou** 2); normalizo status tolerando typos ("Agurdando", "Titularidae").
+**Como lê (robusto):** extrai o ID do link e baixa a planilha inteira em **`.xlsx`** (`…/export?format=xlsx`) — **NÃO** usa `gviz`/CSV por aba, que falha em abas com células mescladas (ex.: FCIS-31 vinha achatada). Parseia o xlsx (zip → `sharedStrings.xml` + `workbook.xml` + `worksheets/sheetN.xml` via rels). Colunas: `A`=resumo, `D`=NOME, `E`=CPF, `F`=STATUS, `G`=OBSERVAÇÃO. **Pegadinhas:** os números do resumo são **fórmulas COUNTIF** (`<c><f>…</f><v>N</v></c>`) → o regex de célula precisa ler o `<v>` mesmo com `<f>`; a **Meta 70%** vem vazia na planilha, então é **calculada** = `round(Total × 0,7)`. Normaliza status tolerando typos ("Agurdando", "Titularidae").
 
 **Saída (consolidado + todas as abas):**
 1. **Panorama consolidado** — tabela comparativa das turmas: `Total · Confirmados · Sem retorno · Transf. turma · Meta 70% · Faltam · Termômetro` (🟢/🟡/🔴).
