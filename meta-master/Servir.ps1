@@ -98,6 +98,28 @@ while ($listener.IsListening) {
       continue
     }
 
+    if ($path -eq '/api/metas-consultores') {
+      # retorna os consultores COM meta cadastrada na competencia (le metas-vitoria.json da raiz)
+      $raiz = Split-Path $root -Parent
+      $arq  = Join-Path $raiz 'metas-vitoria.json'
+      $per  = $req.QueryString['periodo']; if ($per -notmatch '^\d{4}-\d{2}$') { $per = (Get-Date -Format 'yyyy-MM') }
+      $nomes = @()
+      try {
+        if (Test-Path $arq) {
+          $j = Get-Content $arq -Raw -Encoding UTF8 | ConvertFrom-Json
+          $comp = $j.$per
+          if ($comp -and $comp.consultores) { $nomes = @($comp.consultores.PSObject.Properties.Name) }
+        }
+      } catch {}
+      $parts = $nomes | ForEach-Object { $_ | ConvertTo-Json -Compress }   # cada nome vira "..." com escape correto
+      $json  = '[' + ($parts -join ',') + ']'
+      $res.StatusCode = 200; $res.ContentType = 'application/json; charset=utf-8'
+      $b = [Text.Encoding]::UTF8.GetBytes($json)
+      $res.OutputStream.Write($b, 0, $b.Length); $res.Close()
+      Write-Host "[$((Get-Date -Format 'HH:mm:ss'))] /api/metas-consultores periodo=$per -> $($nomes.Count)" -ForegroundColor DarkCyan
+      continue
+    }
+
     if ($path -eq '/api/cmd') {
       # executor generico da aba Comandos: mapeia um id whitelisted -> script + args validados
       $id  = $req.QueryString['id']

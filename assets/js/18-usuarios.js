@@ -447,11 +447,7 @@ function _montarGrid(membros,usuarios){
     return perfil+'_'+_normalizeUid(nome);
   }
 
-  // ── Busca + Recentes ──────────────────────────────────────────
-  var recentes=_getUsuariosRecentes().filter(function(r){
-    var u=usuarios&&usuarios[r.uid];
-    return !(u&&u.ativo===false); // pausado não aparece no acesso rápido
-  });
+  // ── Busca ─────────────────────────────────────────────────────
   var html='';
 
   /* Pausados (ativo===false) saem das seções normais e vão para a seção
@@ -474,28 +470,7 @@ function _montarGrid(membros,usuarios){
     +'font-family:\'DM Sans\',sans-serif;font-size:13px;outline:none;">'
     +'</div>';
 
-  // Acesso rápido — recentes
-  if(recentes.length){
-    html+='<div style="grid-column:1/-1;margin-bottom:12px;">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">⚡ Acesso rápido</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-    recentes.forEach(function(r){
-      var ini=(r.nome||'?')[0].toUpperCase();
-      var cor=r.perfil==='consultor'?'var(--green)':r.perfil==='adm'?'var(--accent)':'var(--amber)';
-      html+='<button onclick="_loginRapido(\''+r.uid+'\')" title="Entrar como '+r.nome+'"'
-        +' style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:20px;'
-        +'border:1px solid var(--border2);background:var(--surface2);cursor:pointer;'
-        +'font-family:\'DM Sans\',sans-serif;transition:all .15s;" '
-        +'onmouseover="this.style.borderColor=\''+cor+'\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'
-        +'<div style="width:28px;height:28px;border-radius:50%;background:var(--surface);'
-        +'border:2px solid '+cor+';display:flex;align-items:center;justify-content:center;'
-        +'font-size:12px;font-weight:800;color:'+cor+';">'+ini+'</div>'
-        +'<span style="font-size:12px;font-weight:600;color:var(--text);">'+r.nome.split(' ')[0]+'</span>'
-        +'</button>';
-    });
-    html+='</div></div>';
-    html+='<div style="grid-column:1/-1;border-top:1px solid var(--border2);margin-bottom:12px;"></div>';
-  }
+  /* (Bloco "⚡ Acesso rápido" removido a pedido — poluía o topo do modal.) */
 
   function _secaoHeader(titulo, count, perfil){
     return '<div class="ur-secao-header">'
@@ -507,14 +482,8 @@ function _montarGrid(membros,usuarios){
   /* Fix: só renderiza membros que TÊM entrada em `usuarios/`.
      Membro de turma sem cadastro em `usuarios/` (ou recém-excluído)
      NÃO deve aparecer no painel de gestão — `encontrar()` decide. */
-  if(membros.adms&&membros.adms.length){
-    var admsValidos=_soAtivos(membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});})
-      .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean));
-    if(admsValidos.length){
-      html+=_secaoHeader('ADM', admsValidos.length, 'adm');
-      admsValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
-    }
-  }
+  var admsValidos=_soAtivos(((membros.adms&&membros.adms.length)?membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});}):[])
+    .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean));
 
   /* Resolve [uid, dados] de um membro: usa a conta de usuarios/ se existir,
      senão cria um placeholder "sem acesso" (login/senha vazios). Garante que
@@ -526,34 +495,14 @@ function _montarGrid(membros,usuarios){
     return [ uid_(perfil, nome), {nome:nome, perfil:perfil, login:'', senha:'', ativo:true} ];
   }
 
-  /* Lista de cards é envolvida em .ur-secao-lista que vira rolável a partir
-     do 5º item (CSS define max-height ≈ 4 cards). Header fica fora para
-     que o sticky continue funcionando no scroll global do modal. */
   var consValidos=_soAtivos(membros.consultores.map(function(nome){return _resolverMembro(nome,'consultor');}));
-  html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
-  if(consValidos.length===0){
-    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
-  } else {
-    html+='<div class="ur-secao-lista">';
-    consValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
-    html+='</div>';
-  }
-
   var treinValidos=_soAtivos(membros.treinadores.map(function(nome){return _resolverMembro(nome,'treinador');}));
-  html+=_secaoHeader('Treinadores', treinValidos.length, 'treinador');
-  if(treinValidos.length===0){
-    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
-  } else {
-    html+='<div class="ur-secao-lista">';
-    treinValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
-    html+='</div>';
-  }
 
   /* Fix: garantir que TODO usuário em `usuarios/` apareça no painel.
      Usuários com perfil ausente/desconhecido (não-adm/consultor/treinador/ministrante)
-     eram descartados silenciosamente — agora caem numa seção "Outros". */
+     eram descartados silenciosamente — agora caem num grupo "Outros". */
   var jaRenderizados={};
-  (membros.adms||[]).forEach(function(n){ var e=encontrar(n,'adm'); if(e) jaRenderizados[e[0]]=1; });
+  admsValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   consValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   treinValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   _pausados.forEach(function(e){ jaRenderizados[e[0]]=1; });
@@ -562,29 +511,91 @@ function _montarGrid(membros,usuarios){
   }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});}));
   // garantir nome placeholder para exibição
   outros.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
-  if(outros.length){
-    html+=_secaoHeader('Outros', outros.length, 'outros');
-    outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+
+  /* ── LAYOUT: navegação lateral (perfis + status) ──
+     Coluna à esquerda com contadores; só o grupo selecionado renderiza
+     visível à direita. Bloco STATUS filtra por situação (Ativo,
+     1º acesso pendente, Pausado, Sem acesso) — Pausado aparece SOMENTE
+     por aqui (único lugar do app). */
+  var grupos=[
+    {id:'consultor', ico:'🟢', titulo:'Consultores', perfil:'consultor', entries:consValidos},
+    {id:'treinador', ico:'🟡', titulo:'Treinadores', perfil:'treinador', entries:treinValidos}
+  ];
+  if(admsValidos.length) grupos.push({id:'adm', ico:'⭐', titulo:'ADM', perfil:'adm', entries:admsValidos});
+  if(outros.length) grupos.push({id:'outros', ico:'❔', titulo:'Outros', perfil:'outros', entries:outros});
+  var totalAtivos=grupos.reduce(function(s,g){return s+g.entries.length;},0);
+
+  /* Status de cada usuário — pausado tem prioridade sobre os demais */
+  function _statusDe(u){
+    if(u.ativo===false) return 'pausado';
+    if(!(u.login&&u.senha)) return 'sem-acesso';
+    if(u.congelado===true) return 'congelado';
+    if(u.primeiroAcesso===true) return 'pendente';
+    return 'ativo';
   }
+  var statusListas={'ativo':[],'pendente':[],'pausado':[],'sem-acesso':[]};
+  grupos.forEach(function(g){ g.entries.forEach(function(e){
+    var st=_statusDe(e[1]||{}); if(statusListas[st]) statusListas[st].push(e);
+  });});
+  _pausados.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; statusListas['pausado'].push(e); });
+  Object.keys(statusListas).forEach(function(k){
+    statusListas[k].sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+  });
+  var statusDefs=[
+    {id:'st-ativo',    dot:'ativo',      titulo:'Ativo',              lista:statusListas['ativo']},
+    {id:'st-pendente', dot:'pendente',   titulo:'1º acesso pendente', lista:statusListas['pendente']},
+    {id:'st-pausado',  dot:'pausado',    titulo:'Pausado',            lista:statusListas['pausado']},
+    {id:'st-sem',      dot:'sem-acesso', titulo:'Sem acesso',         lista:statusListas['sem-acesso']}
+  ];
 
-  /* (Seção "Aguardando configuração" removida — membros da turma sem conta
-     agora aparecem nas próprias seções Consultores/Treinadores com dot
-     "sem acesso", via _resolverMembro acima.) */
+  var grupoSel='consultor';
+  try{ grupoSel=localStorage.getItem('urGrupoSel')||'consultor'; }catch(e){}
+  var _selValida=(grupoSel==='todos')
+    ||grupos.some(function(g){return g.id===grupoSel;})
+    ||statusDefs.some(function(s){return s.id===grupoSel;});
+  if(!_selValida) grupoSel='consultor';
 
-  /* ── Seção PAUSADOS ──
-     Único lugar do app onde usuários pausados aparecem — para poder
-     reativar (⋯ → Reativar usuário) ou excluir. */
-  if(_pausados.length){
-    _pausados.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
-    _pausados.sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
-    html+='<div class="ur-secao-header">'
-      +'<div class="ur-secao-titulo" style="color:var(--red);">⏸ Pausados<span class="ur-secao-count">'+_pausados.length+'</span></div>'
-      +'<span style="font-size:10.5px;color:var(--muted);">ocultos de todo o aplicativo</span>'
+  html+='<div class="ur-split">';
+  /* Coluna lateral */
+  html+='<div class="ur-side">';
+  html+='<div class="ur-side-lbl">Perfil</div>';
+  grupos.forEach(function(g){
+    html+='<button type="button" class="ur-side-item'+((grupoSel===g.id)?' on':'')+'" data-grupo="'+g.id+'" onclick="_urSelGrupo(this.dataset.grupo)">'
+      +g.ico+' '+g.titulo+'<span class="ur-side-num">'+g.entries.length+'</span></button>';
+  });
+  html+='<button type="button" class="ur-side-item'+((grupoSel==='todos')?' on':'')+'" data-grupo="todos" onclick="_urSelGrupo(this.dataset.grupo)">👥 Todos<span class="ur-side-num">'+totalAtivos+'</span></button>';
+  html+='<hr class="ur-side-sep">';
+  html+='<div class="ur-side-lbl">Status</div>';
+  statusDefs.forEach(function(s){
+    html+='<button type="button" class="ur-side-item'+((grupoSel===s.id)?' on':'')+'" data-grupo="'+s.id+'" onclick="_urSelGrupo(this.dataset.grupo)">'
+      +'<span class="ur-dot '+s.dot+'"></span>'+s.titulo+'<span class="ur-side-num">'+s.lista.length+'</span></button>';
+  });
+  html+='</div>';
+
+  /* Painel principal — grupos de perfil */
+  html+='<div class="ur-main">';
+  grupos.forEach(function(g){
+    var vis=(grupoSel==='todos'||grupoSel===g.id);
+    html+='<div class="ur-grp'+(vis?' on':'')+'" data-grupo="'+g.id+'">';
+    html+=_secaoHeader(g.titulo, g.entries.length, g.perfil);
+    html+='<div class="ur-grp-lista">'
+      +(g.entries.length?g.entries.map(function(e){return _card(e[0],e[1]);}).join(''):'<div class="ur-vazio">Nenhum usuário.</div>')
+      +'</div></div>';
+  });
+  /* Painéis de STATUS (sem botão Permissões — permissão é por perfil) */
+  statusDefs.forEach(function(s){
+    var vis=(grupoSel===s.id);
+    html+='<div class="ur-grp ur-grp-status'+(vis?' on':'')+'" data-grupo="'+s.id+'">';
+    html+='<div class="ur-secao-header"><div class="ur-secao-titulo"><span class="ur-dot '+s.dot+'"></span>'+s.titulo
+      +'<span class="ur-secao-count">'+s.lista.length+'</span></div>'
+      +(s.id==='st-pausado'?'<span style="font-size:10.5px;color:var(--muted);">ocultos de todo o aplicativo</span>':'')
       +'</div>';
-    html+='<div class="ur-secao-lista" style="opacity:.65;">';
-    _pausados.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
-    html+='</div>';
-  }
+    html+='<div class="ur-grp-lista"'+(s.id==='st-pausado'?' style="opacity:.65;"':'')+'>'
+      +(s.lista.length?s.lista.map(function(e){return _card(e[0],e[1]);}).join(''):'<div class="ur-vazio">Nenhum usuário.</div>')
+      +'</div></div>';
+  });
+  html+='</div>'; /* /ur-main */
+  html+='</div>'; /* /ur-split */
 
   grid.innerHTML=html;
 
@@ -679,11 +690,28 @@ function _addUsuarioRecente(uid,nome,perfil){
 }
 function _filtrarUsuariosGrid(q){
   var t=(q||'').trim().toUpperCase();
+  /* Busca ativa: classe .ur-buscando revela TODOS os grupos (e pausados)
+     para o filtro ser global; ao limpar, volta ao grupo selecionado. */
+  var grid=document.getElementById('usuariosGrid');
+  if(grid) grid.classList.toggle('ur-buscando', !!t);
   document.querySelectorAll('#usuariosGrid .usuario-row').forEach(function(row){
     var nome=(row.dataset.nome||'').toUpperCase();
     row.style.display=(!t||nome.indexOf(t)>=0)?'':'none';
   });
 }
+
+/* ── Navegação lateral da Gestão de Usuários ── */
+function _urSelGrupo(id){
+  try{ localStorage.setItem('urGrupoSel',id); }catch(e){}
+  var grid=document.getElementById('usuariosGrid'); if(!grid) return;
+  grid.querySelectorAll('.ur-side-item').forEach(function(b){
+    b.classList.toggle('on', b.dataset.grupo===id);
+  });
+  grid.querySelectorAll('.ur-grp').forEach(function(g){
+    g.classList.toggle('on', id==='todos'||g.dataset.grupo===id);
+  });
+}
+window._urSelGrupo=_urSelGrupo;
 function _loginRapido(uid){
   // Abre modal de senha pré-preenchendo o login do usuário recente
   var recentes=_getUsuariosRecentes();

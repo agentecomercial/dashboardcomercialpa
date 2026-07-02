@@ -1222,6 +1222,37 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .ur-secao-lista{scrollbar-width:thin;scrollbar-color:rgba(200,240,90,.45) transparent;}
 .ur-secao-titulo{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
 .ur-secao-count{background:var(--surface2);color:var(--muted);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+/* ── Gestão de Usuários · layout com navegação lateral ── */
+.ur-split{grid-column:1/-1;display:grid;grid-template-columns:190px 1fr;gap:16px;align-items:start;}
+.ur-side{display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border2);padding-right:14px;}
+.ur-side-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);background:none;border:none;font-family:'DM Sans',sans-serif;text-align:left;width:100%;transition:background .12s,color .12s;}
+.ur-side-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.ur-side-item.on{background:rgba(200,240,90,.08);color:var(--accent);}
+.ur-side-num{margin-left:auto;font-size:10px;background:var(--surface2);border:1px solid var(--border2);padding:1px 8px;border-radius:10px;font-weight:600;}
+.ur-side-item.on .ur-side-num{border-color:rgba(200,240,90,.35);color:var(--accent);}
+.ur-side-sep{height:1px;background:var(--border2);margin:8px 0;border:none;}
+.ur-side-lbl{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:4px 12px 2px;opacity:.7;}
+.ur-side-item .ur-dot{flex-shrink:0;}
+.ur-main{min-width:0;}
+.ur-grp{display:none;}
+.ur-grp.on{display:block;}
+.ur-grp-lista{max-height:46vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(200,240,90,.45) transparent;}
+.ur-grp-lista::-webkit-scrollbar{width:6px;}
+.ur-grp-lista::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px;}
+.ur-grp-lista::-webkit-scrollbar-thumb:hover{background:rgba(200,240,90,.45);}
+.ur-vazio{color:var(--muted);font-size:12px;padding:12px 0;}
+/* Busca ativa: exibe os grupos de PERFIL + o painel Pausado (cobre todo
+   mundo sem duplicar linhas — pausados só existem no painel de status) */
+#usuariosGrid.ur-buscando .ur-grp{display:none;}
+#usuariosGrid.ur-buscando .ur-grp:not(.ur-grp-status){display:block;}
+#usuariosGrid.ur-buscando .ur-grp[data-grupo="st-pausado"]{display:block;}
+#usuariosGrid.ur-buscando .ur-side{pointer-events:none;opacity:.45;}
+@media (max-width:640px){
+  .ur-split{grid-template-columns:1fr;}
+  .ur-side{flex-direction:row;flex-wrap:wrap;border-right:none;padding-right:0;border-bottom:1px solid var(--border2);padding-bottom:8px;}
+  .ur-side-item{width:auto;}
+  .ur-side-sep{display:none;}
+}
 /* legenda rodapé */
 .ur-legenda{display:flex;align-items:center;gap:16px;font-size:11px;color:var(--muted);}
 .ur-legenda span{display:flex;align-items:center;gap:5px;}

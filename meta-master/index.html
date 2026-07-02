@@ -253,6 +253,7 @@
   .rt-obs{color:#9a9a9a;}
   .rt-copy{flex:none;background:#2a2a33;color:#ddd;border:1px solid #3a3a44;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;line-height:1;}
   .rt-copy:hover{background:#3a3a44;color:#F0C84A;}
+  .cbx-vazio{padding:10px 12px;color:#999;font-size:12.5px;font-style:italic;}
   .md-tbl th.mda-l,.md-tbl td.mda-l{text-align:left;white-space:normal;max-width:420px;}
   /* ===== MOBILE: tabelas densas + foco por coluna (toca no número isola; toca de novo volta) ===== */
   .ltbl th.colhide,.ltbl td.colhide,.md-tbl th.colhide,.md-tbl td.colhide{display:none;}
@@ -1644,13 +1645,29 @@
   }
 
   // ---- combobox de consultor (opção 7: busca) ----
+  // Consultores habilitados: quando definido (array de val), o seletor mostra só esses (ex.: só quem tem meta no mês).
+  let METAS_HAB=null;
+  let CMD_ID=null;
   function cbxInit(){
     const list=document.querySelector('#cbxConsultor .cbx-list'); if(!list) return;
     const row=(val,nm,full,on)=>'<div class="cbx-row'+(on?' on':'')+'" data-val="'+esc(val)+'" data-q="'+esc((nm+' '+full).toLowerCase())+'" onclick="cbxPick(this)">'
       +'<div><div class="cbx-nm">'+esc(nm)+'</div>'+(full?'<div class="cbx-full">'+esc(full)+'</div>':'')+'</div><span class="cbx-ck">✓</span></div>';
     let h=row('','Todos','todos os consultores',true);
-    CONSULTORES.forEach(c=>h+=row(c.val,c.val,c.nome,false));
+    const fonte = Array.isArray(METAS_HAB) ? CONSULTORES.filter(c=>METAS_HAB.indexOf(c.val)>=0) : CONSULTORES;
+    fonte.forEach(c=>h+=row(c.val,c.val,c.nome,false));
+    if(Array.isArray(METAS_HAB) && !fonte.length) h+='<div class="cbx-vazio">Nenhum consultor com meta nesta competência.</div>';
     list.innerHTML=h;
+  }
+  // Busca no backend quem tem meta cadastrada na competência do período atual e refiltra o seletor.
+  async function carregarMetasHab(){
+    if(!document.getElementById('cbxConsultor')) return;
+    const de=valEl('pDe'); const per=(de&&de.length>=7)?de.substring(0,7):hojeYM();
+    try{
+      const r=await fetch('/api/metas-consultores?periodo='+encodeURIComponent(per),{cache:'no-store'});
+      const nomes=await r.json();
+      METAS_HAB = CONSULTORES.filter(c=>nomes.indexOf(c.nome)>=0).map(c=>c.val);
+    }catch(e){ METAS_HAB=null; }
+    cbxInit(); cbxAtualiza();
   }
   function cbxToggle(e){
     e.stopPropagation();
@@ -1696,7 +1713,9 @@
     return [['Hoje',h,h],['Ontem',dAdd(h,-1),dAdd(h,-1)],['Esta semana',seg,h],['Este mês',i1,h],['Mês passado',iMP,fMP]]; }
   // período dos comandos: date picker por clique (Ano/Mês/Dia/Período) gravando nos hidden #pDe/#pAte
   function cmdUltDiaMes(ym){ const a=ym.split('-'); return new Date(+a[0], +a[1], 0).getDate(); }
-  function cmdSetPeriodo(de,ate,label){ const e1=$('pDe'),e2=$('pAte'),lv=$('cmdPerVal'); if(e1)e1.value=de; if(e2)e2.value=ate; if(lv)lv.textContent=label; }
+  function cmdSetPeriodo(de,ate,label){ const e1=$('pDe'),e2=$('pAte'),lv=$('cmdPerVal'); if(e1)e1.value=de; if(e2)e2.value=ate; if(lv)lv.textContent=label;
+    if(CMD_ID==='metaConsultores') carregarMetasHab();   // metas: refiltra o seletor p/ quem tem meta na nova competência
+  }
   function cmdSetPeriodoMes(ym){ const a=ym.split('-'); cmdSetPeriodo(ym+'-01', ym+'-'+dpPad(cmdUltDiaMes(ym)), (MESES_PT[(+a[1])-1]||'')+'/'+a[0]); }
   function periodoInit(){ if(!$('cmdPerVal')) return; cmdSetPeriodoMes(hojeYM()); }   // padrão: mês vigente (mês inteiro)
   function abrirCmdPicker(ev){ if(ev) ev.stopPropagation();
@@ -1748,6 +1767,7 @@
 
   function selecionarComando(id){
     const c=CMDS.find(x=>x.id===id);
+    CMD_ID=id; METAS_HAB=null;   // reset do filtro de consultores (só metaConsultores refiltra por meta)
     const desc=$('cmdDesc'), form=$('cmdForm'), res=$('cmdResultado');
     res.innerHTML='';
     if(!c){ desc.style.display='none'; form.style.display='none'; return; }
@@ -1762,6 +1782,7 @@
         +'</div>';
       if(c.campos.includes('periodo')) periodoInit();
       if(c.campos.includes('consultor')) cbxInit();
+      if(id==='metaConsultores') carregarMetasHab();   // só mostra consultores com meta na competência
     }else if(c.acao==='transferencia'){
       form.innerHTML='<div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
       iniciarWizardTransfer();
