@@ -2,10 +2,12 @@
 # Uso: .\Relatorio-Turma.ps1 -Link "<link do Google Sheets>"
 # Catalogado em COMANDOS.md secao 6B. Saida em Markdown (renderizada no card da aba Comandos).
 param(
-  [Parameter(Mandatory=$true)][string]$Link
+  [string]$Link = ''
 )
 
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
+if ([string]::IsNullOrWhiteSpace($Link)) { Write-Output "**Cole o link público** do Google Sheets da turma antes de executar."; exit 1 }
 
 # ---------- 1) ID da planilha ----------
 $m = [regex]::Match($Link, '/spreadsheets/d/([A-Za-z0-9_-]+)')
