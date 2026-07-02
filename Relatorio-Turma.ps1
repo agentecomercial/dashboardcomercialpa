@@ -171,53 +171,72 @@ foreach ($t in $turmas) {
 Add ("| **TOTAL** | **{0}** | **{1}** | **{2}** | **{3}** | | | |" -f $tTot,$tConf,$tSem,$tTransf)
 Add ""
 
-# 5.2 Detalhe por turma -> guardado por turma (consumido pelo modal do app; NAO vai no corpo visivel)
+# 5.2 Detalhe por turma -> objeto estruturado (alunos agrupados por status) p/ o modal clicavel do app
 $detTurmas = [ordered]@{}
+$ordemGrp = @(
+  @{ key='Confirmado';     label='Confirmados';    emoji='✅'; cor='ok'     },
+  @{ key='Sem retorno';    label='Sem retorno';    emoji='🚫'; cor='no'     },
+  @{ key='Aguardando';     label='Aguardando';     emoji='⏳'; cor='wait'   },
+  @{ key='__transf';       label='Transferências'; emoji='🔄'; cor='trf'    },
+  @{ key='Cancelamento';   label='Cancelamentos';  emoji='❌'; cor='cancel' },
+  @{ key='Contato errado'; label='Contato errado'; emoji='📵'; cor='cont'   },
+  @{ key='(vazio)';        label='Sem status';     emoji='⬜'; cor='none'   },
+  @{ key='__outro';        label='Fora do padrão'; emoji='⚠️'; cor='warn'   }
+)
 foreach ($t in $turmas) {
   $r=$t.Resumo
   $total = if($null -ne $r['Total']){$r['Total']}else{$t.Alunos.Count}
   $conf  = if($null -ne $r['Confirmados']){$r['Confirmados']}else{ if($t.Cont['Confirmado']){$t.Cont['Confirmado']}else{0} }
   $meta  = $r['Meta70']
   if ($null -eq $meta -and $null -ne $total) { $meta = [int][Math]::Round($total * 0.7, 0, [MidpointRounding]::AwayFromZero) }
-  $d = @()
-  $d += "## Turma $($t.Nome)"
-  if ($t.Alunos.Count -eq 0) {
-    $d += ""
-    $d += "⚠️ **Resumo lançado, mas a lista nominal está vazia** (Total declarado: $(N $total), Confirmados: $(N $conf)). Nada para detalhar até os alunos serem preenchidos."
-    $detTurmas[[string]$t.Nome] = ($d -join "`n")
-    continue
-  }
-  # mini-painel de status
-  $qSem = @($t.Alunos | Where-Object { $_.Status -eq 'Sem retorno' }).Count
-  $qTrf = @($t.Alunos | Where-Object { $_.Status -like 'Transf.*' }).Count
-  $d += ""
-  $d += "**Status:** ✅ $conf confirmados · 🚫 $qSem sem retorno · 🔄 $qTrf transferências · 🎯 Meta 70% = $(N $meta) (faltam $([Math]::Max(0, $meta - $conf)))"
-  # alerta de margem
-  $trfTot = 0; foreach($k in 'TransfTurma','TransfTit','TransfUni'){ if($null -ne $r[$k]){$trfTot+=$r[$k]} }
-  $cancel = if($null -ne $r['Cancelamentos']){$r['Cancelamentos']}else{0}
-  $cerr   = if($null -ne $r['ContatoErrado']){$r['ContatoErrado']}else{0}
-  if ($null -ne $meta -and $null -ne $total) {
+
+  # alerta de margem (texto)
+  $margem = ''
+  if ($t.Alunos.Count -gt 0 -and $null -ne $meta -and $null -ne $total) {
+    $trfTot = 0; foreach($k in 'TransfTurma','TransfTit','TransfUni'){ if($null -ne $r[$k]){$trfTot+=$r[$k]} }
+    $cancel = if($null -ne $r['Cancelamentos']){$r['Cancelamentos']}else{0}
+    $cerr   = if($null -ne $r['ContatoErrado']){$r['ContatoErrado']}else{0}
     $confirmaveis = $total - $trfTot - $cancel - $cerr
-    $d += ""
-    if ($confirmaveis -lt $meta) { $d += "🔴 **Meta inatingível pelo caminho atual:** só há **$confirmaveis** confirmáveis (total − transferências/cancelamentos) para uma meta de **$meta**. Faltam $($meta-$confirmaveis) além de converter todos os pendentes." }
-    elseif ($confirmaveis -eq $meta) { $d += "🔴 **Margem zero:** confirmáveis ($confirmaveis) = meta ($meta). **Todo aluno 'Sem retorno'/'Aguardando' precisa confirmar** para bater os 70%." }
-    else { $folga = $confirmaveis - $meta; $d += "🟡 **Margem de $folga aluno(s):** há $confirmaveis confirmáveis para a meta de $meta." }
+    if ($confirmaveis -lt $meta) { $margem = "🔴 Meta inatingível: só há $confirmaveis confirmáveis (total − transferências/cancelamentos) para a meta de $meta." }
+    elseif ($confirmaveis -eq $meta) { $margem = "🔴 Margem zero: confirmáveis ($confirmaveis) = meta ($meta). Todo 'Sem retorno'/'Aguardando' precisa confirmar." }
+    else { $margem = "🟡 Margem de $($confirmaveis - $meta): há $confirmaveis confirmáveis para a meta de $meta." }
   }
-  $d += ""
-  # follow-up: sem retorno / aguardando
-  $followup = @($t.Alunos | Where-Object { $_.Status -eq 'Sem retorno' -or $_.Status -eq 'Aguardando' })
-  $d += "**📞 Follow-up ($($followup.Count)) — Sem retorno / Aguardando:**"
-  if ($followup.Count -eq 0) { $d += "- (nenhum)" }
-  else { foreach($f in $followup){ $o = if($f.Obs -ne ''){ ' — ' + $f.Obs } else { '' }; $d += ("- {0}{1}" -f $f.Nome,$o) } }
-  $d += ""
-  # transferencias por motivo
-  $transf = @($t.Alunos | Where-Object { $_.Status -like 'Transf.*' })
-  if ($transf.Count -gt 0) {
-    $d += "**🔄 Transferências ($($transf.Count)) — por motivo:**"
-    $grp = $transf | Group-Object { Motivo $_.Obs } | Sort-Object Count -Descending
-    foreach($g in $grp){ $d += ("- **{0}** ({1}): {2}" -f $g.Name,$g.Count,(($g.Group | ForEach-Object { $_.Nome }) -join ', ')) }
+
+  # grupos por status (apenas os presentes); transferencias trazem o motivo na obs
+  $grupos = @()
+  foreach ($g in $ordemGrp) {
+    $lista = switch ($g.key) {
+      '__transf' { @($t.Alunos | Where-Object { $_.Status -like 'Transf.*' }) }
+      '__outro'  { @($t.Alunos | Where-Object { $_.Status -like 'Outro:*' }) }
+      default    { @($t.Alunos | Where-Object { $_.Status -eq $g.key }) }
+    }
+    if ($lista.Count -gt 0) {
+      $alunos = @()
+      foreach ($al in $lista) {
+        $obs = "$($al.Obs)"
+        if ($g.key -eq '__transf') {
+          $mot = Motivo $al.Obs
+          if ($obs -ne '') { $obs = "[$mot] $obs" } else { $obs = $mot }
+        } elseif ($g.key -eq '__outro') {
+          $raw = "$($al.StatusRaw)".Trim()
+          if ($obs -ne '') { $obs = "status '$raw' — $obs" } else { $obs = "status '$raw'" }
+        }
+        $alunos += [ordered]@{ n = $al.Nome; o = $obs }
+      }
+      $grupos += [ordered]@{ label=$g.label; emoji=$g.emoji; cor=$g.cor; n=$lista.Count; alunos=$alunos }
+    }
   }
-  $detTurmas[[string]$t.Nome] = ($d -join "`n")
+
+  $detTurmas[[string]$t.Nome] = [ordered]@{
+    nome   = $t.Nome
+    meta   = $meta
+    conf   = $conf
+    total  = $total
+    faltam = if($null -ne $meta){ [Math]::Max(0, $meta - $conf) } else { $null }
+    vazia  = ($t.Alunos.Count -eq 0)
+    margem = $margem
+    grupos = $grupos
+  }
 }
 
 # 5.3 Cruzamento por CPF
@@ -260,6 +279,6 @@ Add ""
 
 # ---------- 6) saida: corpo visivel (markdown) + detalhe por turma (JSON) p/ o modal do app ----------
 $corpo = $L -join "`n"
-$json  = $detTurmas | ConvertTo-Json -Compress -Depth 5
+$json  = $detTurmas | ConvertTo-Json -Compress -Depth 8
 if ([string]::IsNullOrWhiteSpace($json)) { $json = '{}' }
 $corpo + "`n`n<!--RT-DET:" + $json + "-->"
