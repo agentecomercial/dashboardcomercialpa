@@ -254,6 +254,16 @@
   .rt-copy{flex:none;background:#2a2a33;color:#ddd;border:1px solid #3a3a44;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;line-height:1;}
   .rt-copy:hover{background:#3a3a44;color:#F0C84A;}
   .cbx-vazio{padding:10px 12px;color:#999;font-size:12.5px;font-style:italic;}
+  /* Metas: barra de chips "ver card" + modal do card */
+  .mc-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 14px;}
+  .mc-bar-lbl{font-size:12px;color:#999;font-weight:800;text-transform:uppercase;letter-spacing:.4px;}
+  .mc-chip{border:1px solid #3c5aa2;background:rgba(70,110,200,.16);color:#a9c0f0;border-radius:20px;padding:7px 15px;font-size:13px;font-weight:800;cursor:pointer;transition:filter .15s;}
+  .mc-chip:hover{filter:brightness(1.2);}
+  .mc-chip.uni{border-color:#a2872e;background:rgba(240,200,74,.14);color:#e6cd7a;}
+  .mc-box{max-width:820px;width:100%;text-align:center;}
+  .mc-canvas{width:100%;max-width:760px;height:auto;border-radius:14px;display:block;margin:6px auto 0;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .mc-actions{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+  .mc-actions .btn{width:auto;padding:10px 18px;font-size:13px;}
   .md-tbl th.mda-l,.md-tbl td.mda-l{text-align:left;white-space:normal;max-width:420px;}
   /* ===== MOBILE: tabelas densas + foco por coluna (toca no número isola; toca de novo volta) ===== */
   .ltbl th.colhide,.ltbl td.colhide,.md-tbl th.colhide,.md-tbl td.colhide{display:none;}
@@ -400,6 +410,17 @@
   .hub-fat{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1a1a1f;border:1px solid #2a2a32;border-radius:12px;padding:13px 15px;}
   .hub-fat span{font-size:10px;color:#9a9aa2;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
   .hub-fat b{font-size:19px;font-weight:900;color:#F0C84A;white-space:nowrap;}
+  /* faixa "Faturado da unidade" com meta/falta/% (Opção 9 — empilhado: valor grande + rodapé) */
+  .hub-fat2{background:#1a1a1f;border:1px solid #2a2a32;border-radius:12px;padding:13px 15px;text-align:center;}
+  .hub-fat2 .f2lbl{font-size:10px;color:#9a9aa2;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .hub-fat2 .f2val{font-size:27px;font-weight:900;color:#F0C84A;line-height:1.05;margin:4px 0 8px;white-space:nowrap;}
+  .hub-fat2 .f2trk{height:10px;border-radius:6px;background:#2a2a32;overflow:hidden;}
+  .hub-fat2 .f2trk i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#8a5e1f,#F0C84A);}
+  .hub-fat2 .f2trk i.win{background:linear-gradient(90deg,#56b06a,#9fe6aa);}
+  .hub-fat2 .f2ft{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:#9a9aa2;font-weight:700;}
+  .hub-fat2 .f2ft b{color:#eee;white-space:nowrap;}
+  .hub-fat2 .f2ft .f2falta{color:#e88;}
+  .hub-fat2 .f2pill{background:#1f2b1f;border:1px solid #2f5a36;color:#9fe6aa;font-size:11px;font-weight:900;border-radius:99px;padding:3px 10px;white-space:nowrap;}
   .hub-sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;margin:16px 0 9px;display:flex;align-items:center;gap:8px;}
   .hub-gear{margin-left:auto;background:#262626;border:1px solid #3a3a3a;color:#F0C84A;width:30px;height:30px;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
   .hub-gear:active{transform:scale(.94);}
@@ -1143,7 +1164,25 @@
     }
     const med = bat.length ? (Math.round(bat.reduce((s,c)=>s+(parseFloat(c.pct)||0),0)/bat.length)+'%') : '—';
     const kpisHtml='<div class="hub-kpis"><div class="hub-kpi sm2'+(bat.length?' clik" onclick="abrirBatedores()"':'"')+'><b>'+bat.length+'</b><span>Bateram</span></div><div class="hub-kpi sm2"><b>'+med+'</b><span>Média</span></div></div>';
-    const fatHtml='<div class="hub-fat"><span>Faturado da unidade</span><b>'+brlFull(fat)+'</b></div>';
+    // faixa do faturado: SEMPRE mostra a META MASTER da unidade + falta + % atingido.
+    // Prioridade: MM.unidade.master (dados.js) → soma das metas master dos consultores (dados.js antigo/mês sem meta de unidade).
+    let metaUn=(MM.unidade&&+MM.unidade.master>0)?+MM.unidade.master:0;
+    if(!metaUn) metaUn=cons.reduce((s,c)=>s+(+c.master||0),0);
+    let fatHtml;
+    if(metaUn){
+      const pctUn=fat/metaUn*100;
+      const faltaUn=Math.max(0,metaUn-fat);
+      const pctTxt=(Math.round(pctUn*10)/10).toLocaleString('pt-BR')+'%';
+      const bateuUn=pctUn>=100;
+      fatHtml='<div class="hub-fat2"><div class="f2lbl">Faturado da unidade</div><div class="f2val">'+brlFull(fat)+'</div>'
+        +'<div class="f2trk"><i'+(bateuUn?' class="win"':'')+' style="width:'+Math.min(100,pctUn).toFixed(1)+'%"></i></div>'
+        +'<div class="f2ft"><span>Meta master <b>'+brlFull(metaUn)+'</b></span>'
+        +(bateuUn?'<span class="f2pill">🏆 Meta batida · '+pctTxt+'</span>'
+                 :'<span>Falta <b class="f2falta">'+brlFull(faltaUn)+'</b></span><span class="f2pill">'+pctTxt+'</span>')
+        +'</div></div>';
+    } else {
+      fatHtml='<div class="hub-fat"><span>Faturado da unidade</span><b>'+brlFull(fat)+'</b></div>';
+    }
     if(bat.length){
       // ===== LÍDER DO MÊS — só aparece quando alguém bate a Meta Master =====
       const lider=bat.slice().sort((a,b)=>(parseFloat(b.pct)||0)-(parseFloat(a.pct)||0))[0];
@@ -2494,6 +2533,7 @@
       const txt=await r.text();
       if(!r.ok) throw new Error(txt||('HTTP '+r.status));
       if(id==='relatorioTurma'){ renderRelatorioTurma(txt,res); }
+      else if(id==='metaConsultores'||id==='metaUnidade'||id==='metaGeral'){ renderMetaCards(txt,res); }
       else { res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>'; aplicarMobileTabelas(); }   // mobile: densidade + foco por coluna
     }catch(e){
       res.innerHTML='<div class="cmd-aviso">Falhou: '+esc(e.message)+'</div>';
@@ -2667,7 +2707,157 @@
       .catch(()=>toast('Não consegui copiar'));
   }
   function fecharModalTurma(){ const m=document.getElementById('rtModal'); if(m) m.style.display='none'; }
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharModalTurma(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ fecharModalTurma(); fecharCardMeta(); } });
+
+  /* ===== Metas: cards visuais por consultor/unidade (canvas) + copiar imagem ===== */
+  let META_CARDS=[], MC_CUR=null;
+  function mcBRL(v){ return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function mcRR(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  // medalha (fita + disco metalico + numero) — 1 ouro, 2 prata, 3 bronze
+  function mcMedal(ctx,cx,cy,r,medal){
+    const cores={1:['#F7DA5B','#C79419'],2:['#EDF2F8','#9DAEC1'],3:['#E3A366','#A15D26']};
+    const cc=cores[medal]||['#cccccc','#999999'];
+    ctx.save();
+    // fitas atras do disco
+    const rw=r*0.5, topY=cy-r*0.2, botY=cy+r*1.25;
+    ctx.fillStyle='#4a63a6';
+    ctx.beginPath(); ctx.moveTo(cx-rw,topY); ctx.lineTo(cx-rw*0.15,topY); ctx.lineTo(cx-rw*0.55,botY); ctx.lineTo(cx-rw*1.45,botY-r*0.25); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#33478a';
+    ctx.beginPath(); ctx.moveTo(cx+rw,topY); ctx.lineTo(cx+rw*0.15,topY); ctx.lineTo(cx+rw*0.55,botY); ctx.lineTo(cx+rw*1.45,botY-r*0.25); ctx.closePath(); ctx.fill();
+    // disco
+    const g=ctx.createRadialGradient(cx-r*0.35,cy-r*0.35,r*0.2,cx,cy,r);
+    g.addColorStop(0,cc[0]); g.addColorStop(1,cc[1]);
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.fillStyle=g; ctx.fill();
+    ctx.lineWidth=Math.max(1.4,r*0.11); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(cx,cy,r*0.8,0,7); ctx.stroke();
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke();
+    // numero
+    ctx.fillStyle='rgba(55,38,5,0.9)'; ctx.font='800 '+Math.round(r*1.02)+'px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(medal),cx,cy+1);
+    ctx.restore();
+  }
+  function renderMetaCards(txt,res){
+    META_CARDS=[]; let body=txt;
+    const m=txt.match(/<!--META-CARDS:([\s\S]*?)-->/);
+    if(m){ try{ META_CARDS=JSON.parse(m[1]); }catch(e){ META_CARDS=[]; } body=txt.replace(m[0],''); }
+    let bar='';
+    if(META_CARDS.length){
+      bar='<div class="mc-bar"><span class="mc-bar-lbl">🖼️ Ver card:</span>'
+        +META_CARDS.map((c,i)=>'<button class="mc-chip'+(c.tipo==='unidade'?' uni':'')+'" onclick="abrirCardMeta('+i+')">'+esc(c.chip)+'</button>').join('')+'</div>';
+    }
+    res.innerHTML='<div class="cmd-out">'+bar+mdToHtml(body)+'</div>';
+    aplicarMobileTabelas();
+  }
+  function abrirCardMeta(i){
+    const c=META_CARDS[i]; if(!c) return; MC_CUR=c;
+    let modal=document.getElementById('mcModal');
+    if(!modal){
+      modal=document.createElement('div'); modal.id='mcModal'; modal.className='rt-modal';
+      modal.onclick=(e)=>{ if(e.target===modal) fecharCardMeta(); };
+      modal.innerHTML='<div class="rt-modal-box mc-box"><button class="rt-x" onclick="fecharCardMeta()" title="Fechar">✕</button>'
+        +'<canvas id="mcCanvas" class="mc-canvas"></canvas>'
+        +'<div class="mc-actions"><button class="btn btn-ouro" onclick="copiarCardImg()">⧉ Copiar imagem</button>'
+        +'<button class="btn btn-sec" onclick="baixarCardImg()">⬇ Baixar PNG</button></div></div>';
+      document.body.appendChild(modal);
+    }
+    drawMetaCard(c);
+    modal.style.display='flex';
+  }
+  function fecharCardMeta(){ const m=document.getElementById('mcModal'); if(m) m.style.display='none'; }
+  function copiarCardImg(){
+    const cv=document.getElementById('mcCanvas'); if(!cv) return;
+    cv.toBlob(b=>{
+      if(!b){ toast('Falha ao gerar imagem'); return; }
+      if(navigator.clipboard && window.ClipboardItem){
+        navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('Imagem copiada!')).catch(()=>toast('Não consegui copiar (baixe o PNG)'));
+      } else { toast('Navegador não suporta copiar imagem — baixe o PNG'); }
+    },'image/png');
+  }
+  function baixarCardImg(){
+    const cv=document.getElementById('mcCanvas'); if(!cv) return;
+    const a=document.createElement('a'); a.download=((MC_CUR&&MC_CUR.chip)||'meta')+'-'+((MC_CUR&&MC_CUR.competencia)||'').replace('/','-')+'.png'; a.href=cv.toDataURL('image/png'); a.click();
+  }
+  function drawMetaCard(card){
+    const cv=document.getElementById('mcCanvas'); if(!cv) return;
+    const niveis=Array.isArray(card.niveis)?card.niveis:[];
+    const naoBat=niveis.filter(n=>!n.batida);
+    const todas=naoBat.length===0 && niveis.length>0;
+    const W=1040, pad=28;
+    const headH=100, rowH=66, rowGap=10, bodyTop=headH+16;
+    const bodyH=niveis.length*rowH+Math.max(0,niveis.length-1)*rowGap;
+    const sepY=bodyTop+bodyH+24;
+    const footTitleH=44, footRowH=46, footRowGap=8;
+    const footBody=todas?58:(naoBat.length*footRowH+Math.max(0,naoBat.length-1)*footRowGap);
+    const H=sepY+footTitleH+footBody+26;
+    const DPR=2;
+    cv.width=W*DPR; cv.height=H*DPR;
+    const ctx=cv.getContext('2d'); ctx.setTransform(DPR,0,0,DPR,0,0);
+    // fundo
+    let bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0e1826'); bg.addColorStop(1,'#0b0f18');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // header
+    let hg=ctx.createLinearGradient(0,0,W,0); hg.addColorStop(0,'#16273f'); hg.addColorStop(1,'#0c1626');
+    ctx.fillStyle=hg; ctx.fillRect(0,0,W,headH);
+    ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+    ctx.font='800 38px Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText(card.nome, pad, 58);
+    ctx.textAlign='right';
+    ctx.font='600 18px Arial'; ctx.fillStyle='#9fb2c9'; ctx.fillText(card.competencia, W-pad, 42);
+    ctx.font='800 32px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(mcBRL(card.realizado), W-pad, 80);
+    // linhas de nivel
+    const medalCor={1:'#E3C233',2:'#c3ccd6',3:'#cd8a34'};
+    const barCor={minima:'#5b78c4',basica:'#e08a1e',master:'#E3C233'};
+    niveis.forEach((n,idx)=>{
+      const top=bodyTop+idx*(rowH+rowGap), cy=top+rowH/2;
+      ctx.fillStyle=n.batida?'rgba(70,209,122,0.08)':'rgba(255,255,255,0.03)'; mcRR(ctx,pad,top,W-pad*2,rowH,12); ctx.fill();
+      // medalha
+      mcMedal(ctx,pad+30,cy,18,n.medal);
+      // nome + meta
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.font='700 24px Arial'; ctx.fillStyle=n.batida?'#46d17a':'#eef1f6'; ctx.fillText(n.label, pad+62, cy+8);
+      ctx.font='500 18px Arial'; ctx.fillStyle='#9aa7b6'; ctx.fillText(mcBRL(n.meta), pad+195, cy+7);
+      // barra
+      const bx=452,bw=250,bh=16,by=cy-bh/2;
+      mcRR(ctx,bx,by,bw,bh,bh/2); ctx.fillStyle='#2a3140'; ctx.fill();
+      const frac=Math.max(0,Math.min(1,(n.pct||0)/100));
+      if(frac>0){ mcRR(ctx,bx,by,Math.max(bh,bw*frac),bh,bh/2); ctx.fillStyle=n.batida?'#46d17a':(barCor[n.key]||'#5b78c4'); ctx.fill(); }
+      // pct
+      ctx.textAlign='right'; ctx.font='800 22px Arial'; ctx.fillStyle=n.batida?'#46d17a':'#F0C84A'; ctx.fillText((n.pct||0)+'%', 822, cy+8);
+      // selo
+      if(n.batida){
+        const pw=126,px=W-pad-pw,py=cy-16,ph=32;
+        mcRR(ctx,px,py,pw,ph,8); ctx.fillStyle='rgba(70,209,122,0.16)'; ctx.fill();
+        ctx.strokeStyle='#46d17a'; ctx.lineWidth=1.5; mcRR(ctx,px,py,pw,ph,8); ctx.stroke();
+        ctx.fillStyle='#46d17a'; ctx.font='800 15px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓ BATIDA', px+pw/2, cy+1);
+      } else {
+        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='24px "Segoe UI Emoji",Arial'; ctx.fillText('⏳', W-pad-46, cy);
+      }
+      ctx.textBaseline='alphabetic';
+    });
+    // separador + titulo do rodape
+    ctx.strokeStyle='rgba(240,200,74,0.35)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,sepY-10); ctx.lineTo(W-pad,sepY-10); ctx.stroke();
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.font='800 22px "Segoe UI Emoji",Arial'; ctx.fillStyle='#F0C84A';
+    const t1='⚡ PARA BATER A META'; ctx.fillText(t1, pad, sepY+22);
+    const w1=ctx.measureText(t1).width;
+    ctx.font='500 17px Arial'; ctx.fillStyle='#8a94a2'; ctx.fillText(' · '+card.diasUteis+' dias úteis restantes', pad+w1+10, sepY+22);
+    // rodape
+    if(todas){
+      ctx.textAlign='center'; ctx.font='800 26px "Segoe UI Emoji",Arial'; ctx.fillStyle='#46d17a';
+      ctx.fillText('🚀 Todas as metas batidas! Parabéns!', W/2, sepY+footTitleH+36);
+    } else {
+      naoBat.forEach((n,idx)=>{
+        const top=sepY+footTitleH+idx*(footRowH+footRowGap), cy=top+footRowH/2;
+        mcMedal(ctx,pad+22,cy,14,n.medal);
+        ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+        ctx.font='700 20px Arial'; ctx.fillStyle='#eef1f6'; ctx.fillText(n.label, pad+48, cy+7);
+        ctx.font='500 17px Arial'; ctx.fillStyle='#8a94a2'; ctx.fillText('faltam', pad+168, cy+6);
+        ctx.font='800 21px Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText(mcBRL(n.falta), pad+240, cy+7);
+        const lbl=mcBRL(n.porDia).replace(',00','')+' / dia';
+        ctx.font='800 16px Arial'; const pw=ctx.measureText(lbl).width+34, px=W-pad-pw, py=cy-17, ph=34;
+        mcRR(ctx,px,py,pw,ph,8); ctx.fillStyle='#3a2f12'; ctx.fill(); ctx.strokeStyle='#7a6320'; ctx.lineWidth=1; mcRR(ctx,px,py,pw,ph,8); ctx.stroke();
+        ctx.fillStyle='#F0C84A'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lbl, px+pw/2, cy+1);
+        ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      });
+    }
+  }
 
   function mdToHtml(md){
     const lines=String(md).replace(/\r/g,'').split('\n');

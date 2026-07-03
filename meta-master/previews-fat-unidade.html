@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faturado da unidade + Meta — 10 opções</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0f0f11;font-family:'Archivo',sans-serif;color:#eee;padding:26px 22px 120px;
+    --accent:#F0C84A;--soft:#cbb88a;--card:#1a1a1f;--line:#2a2a32;--dim:#9a9aa2;
+    --win:#9fe6aa;--falta:#e88;--heroLine:#4a3f1f;}
+  header.pg{max-width:1080px;margin:0 auto 26px;}
+  header.pg h1{font-size:24px;font-weight:900;} header.pg h1 span{color:var(--accent);}
+  header.pg p{color:#9a9a9a;font-size:13.5px;margin-top:8px;line-height:1.6;max-width:920px;}
+  header.pg p b{color:var(--accent);}
+
+  .pick{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#16140a;border-top:2px solid var(--accent);
+    padding:13px 22px;display:flex;align-items:center;gap:14px;justify-content:center;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+  .pick b{color:var(--accent);font-size:15px;} .pick.empty{color:#8f8f98;background:#161618;border-top-color:var(--line);font-size:13px;}
+
+  .grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .opt{display:flex;flex-direction:column;}
+  .opt-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .opt-num{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#22314f,var(--accent));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;flex:none;}
+  .opt-meta{flex:1;min-width:0;} .opt-t{font-size:14.5px;font-weight:900;} .opt-d{font-size:11.5px;color:#9a9a9a;margin-top:1px;line-height:1.4;}
+  .opt-pick{border:1px solid var(--heroLine);background:#2a2410;color:var(--accent);font-family:'Archivo';font-weight:800;font-size:12px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .opt-pick:hover{background:var(--accent);color:#1a1500;}
+  .opt.chosen .opt-pick{background:var(--win);border-color:var(--win);color:#0c1a0f;}
+  .opt.chosen .stage{outline:2px solid var(--win);outline-offset:3px;}
+
+  .stage{flex:1;background:#161618;border:1px solid #26262c;border-radius:14px;padding:18px;display:flex;flex-direction:column;justify-content:center;min-height:150px;gap:10px;}
+
+  /* contexto: KPIs de cima, esmaecidos (só para situar) */
+  .ctx{display:grid;grid-template-columns:1fr 1fr;gap:8px;opacity:.38;}
+  .ctx .k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center;}
+  .ctx .k b{display:block;font-size:15px;font-weight:900;}
+  .ctx .k span{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+
+  /* base da faixa (igual ao hub-fat atual) */
+  .fat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .fat .lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .fat .gold{color:var(--accent);font-weight:900;}
+  .fat .falta{color:var(--falta);font-weight:900;}
+  .fat .pct{color:var(--win);font-weight:900;}
+
+  .trk{height:10px;border-radius:6px;background:var(--line);overflow:hidden;position:relative;}
+  .trk>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#8a5e1f,var(--accent));}
+  .mk{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff8;}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;}
+  .cols4 .c b{display:block;font-size:14.5px;font-weight:900;white-space:nowrap;}
+  .cols4 .c span{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;font-weight:700;}
+
+  .pill{background:#1f2b1f;border:1px solid #2f5a36;color:var(--win);font-size:11px;font-weight:900;border-radius:99px;padding:3px 10px;white-space:nowrap;}
+  .pillg{background:#2a2410;border:1px solid var(--heroLine);color:var(--accent);font-size:11px;font-weight:900;border-radius:99px;padding:3px 10px;white-space:nowrap;}
+
+  .dial{width:86px;height:86px;border-radius:50%;position:relative;flex:none;background:conic-gradient(var(--accent) 0 25.4%,#2a2a32 25.4% 100%);}
+  .dial::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--card);}
+  .dial .v{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .dial .v b{font-size:19px;font-weight:900;color:var(--accent);line-height:1;}
+  .dial .v span{font-size:8px;color:var(--dim);font-weight:800;margin-top:2px;text-transform:uppercase;}
+
+  .leg{display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim);font-weight:700;margin-top:6px;}
+  .mini{font-size:11px;color:var(--dim);font-weight:700;}
+  .big{font-size:21px;font-weight:900;color:var(--accent);line-height:1.05;white-space:nowrap;}
+  .med{font-size:14px;font-weight:900;white-space:nowrap;}
+
+  @media (max-width:720px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header class="pg">
+  <h1>Faturado da unidade <span>+ Meta · Falta · % Atingido</span> — 10 opções</h1>
+  <p>Cada cartão simula a faixa <b>Faturado da unidade</b> do Meta Master com os dados reais de Julho/2026:
+  faturado <b>R$ 61.594,00</b> · meta master da unidade <b>R$ 242.079,19</b> · falta <b>R$ 180.485,19</b> · atingido <b>25,4%</b>.
+  Os cartões “0 Bateram / — Média” aparecem esmaecidos só para situar. Clique em <b>“Escolher esta”</b> e me diga o número.</p>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="pick empty" id="pick">Nenhuma opção escolhida ainda — clique em “Escolher esta” no cartão que preferir.</div>
+
+<script>
+const FAT=61594, META=242079.19, FALTA=META-FAT, PCT=25.4;
+const MIN=152844.42, BAS=184416.69;
+const brl=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ctx='<div class="ctx"><div class="k"><b>0</b><span>Bateram</span></div><div class="k"><b>—</b><span>Média</span></div></div>';
+const bar=(p,mks)=>'<div class="trk"><i style="width:'+p+'%"></i>'+(mks||'')+'</div>';
+
+const OPTS=[
+{t:'Linha única com 4 colunas', d:'A faixa atual vira 4 mini-colunas: Faturado · Meta · Falta · Atingido. Mesma altura de hoje, sem barra.',
+ h:'<div class="fat"><div class="row" style="margin-bottom:8px"><span class="lbl">Faturado da unidade</span><span class="pillg">Meta master</span></div><div class="cols4">'+
+   '<div class="c"><b class="gold">'+brl(FAT)+'</b><span>Faturado</span></div>'+
+   '<div class="c"><b>'+brl(META)+'</b><span>Meta</span></div>'+
+   '<div class="c"><b class="falta">'+brl(FALTA)+'</b><span>Falta</span></div>'+
+   '<div class="c"><b class="pct">'+PCT.toLocaleString('pt-BR')+'%</b><span>Atingido</span></div></div></div>'},
+
+{t:'Faixa atual + barra de progresso', d:'Mantém “Faturado da unidade” à esquerda e o valor dourado à direita; embaixo entra a barra até a meta com falta e % na legenda.',
+ h:'<div class="fat"><div class="row"><span class="lbl">Faturado da unidade</span><b class="big">'+brl(FAT)+'</b></div>'+
+   '<div style="margin-top:10px">'+bar(PCT)+'</div>'+
+   '<div class="leg"><span>Meta <b class="gold">'+brl(META)+'</b></span><span>Falta <b class="falta">'+brl(FALTA)+'</b></span><span class="pct">'+PCT.toLocaleString('pt-BR')+'% atingido</span></div></div>'},
+
+{t:'% em anel à esquerda', d:'Anel com o % atingido; ao lado, faturado grande e a linha Meta · Falta embaixo.',
+ h:'<div class="fat"><div class="row" style="justify-content:flex-start;gap:16px"><div class="dial"><div class="v"><b>'+PCT.toLocaleString('pt-BR')+'%</b><span>atingido</span></div></div>'+
+   '<div style="flex:1;min-width:0"><div class="lbl">Faturado da unidade</div><div class="big">'+brl(FAT)+'</div>'+
+   '<div class="mini" style="margin-top:6px">Meta <b class="gold">'+brl(META)+'</b> · Falta <b class="falta">'+brl(FALTA)+'</b></div></div></div></div>'},
+
+{t:'Dois blocos: Faturado → Meta', d:'Faturado e Meta lado a lado com seta; embaixo, a falta em destaque e o % em selo verde.',
+ h:'<div class="fat"><div class="row" style="gap:12px;justify-content:center"><div style="text-align:center"><div class="lbl">Faturado</div><div class="big">'+brl(FAT)+'</div></div>'+
+   '<div style="font-size:20px;color:#555">→</div>'+
+   '<div style="text-align:center"><div class="lbl">Meta da unidade</div><div class="big" style="color:#eee">'+brl(META)+'</div></div></div>'+
+   '<div class="row" style="margin-top:10px;justify-content:center;gap:10px"><span class="mini">Falta <b class="falta">'+brl(FALTA)+'</b></span><span class="pill">'+PCT.toLocaleString('pt-BR')+'% atingido</span></div></div>'},
+
+{t:'Termômetro com marco da meta', d:'Barra grossa estilo “Meta Master” do líder: preenchimento dourado, risco branco = meta (100%). Valores nas pontas.',
+ h:'<div class="fat"><div class="row" style="margin-bottom:8px"><span class="lbl">Faturado da unidade</span><span class="pill">'+PCT.toLocaleString('pt-BR')+'%</span></div>'+
+   '<div class="trk" style="height:16px;border-radius:9px"><i style="width:'+PCT+'%"></i><span class="mk" style="left:99%"></span></div>'+
+   '<div class="leg"><span class="gold" style="font-size:12px">'+brl(FAT)+'</span><span>falta <b class="falta">'+brl(FALTA)+'</b></span><span style="font-size:11px">meta <b>'+brl(META)+'</b></span></div></div>'},
+
+{t:'4 mini-cartões (KPIs)', d:'Em vez de uma faixa, quatro cartõezinhos no mesmo estilo dos KPIs de cima: Faturado · Meta · Falta · %.',
+ h:'<div class="cols4">'+
+   '<div class="fat" style="text-align:center;padding:11px 8px"><b class="med gold">'+brl(FAT)+'</b><div class="lbl" style="margin-top:3px">Faturado</div></div>'+
+   '<div class="fat" style="text-align:center;padding:11px 8px"><b class="med">'+brl(META)+'</b><div class="lbl" style="margin-top:3px">Meta unidade</div></div>'+
+   '<div class="fat" style="text-align:center;padding:11px 8px"><b class="med falta">'+brl(FALTA)+'</b><div class="lbl" style="margin-top:3px">Falta</div></div>'+
+   '<div class="fat" style="text-align:center;padding:11px 8px"><b class="med pct">'+PCT.toLocaleString('pt-BR')+'%</b><div class="lbl" style="margin-top:3px">Atingido</div></div>'+
+   '</div>'},
+
+{t:'3 níveis de meta na barra', d:'Barra com os três marcos da unidade — Mínima, Básica e Master — mostrando onde o faturado está no caminho.',
+ h:'<div class="fat"><div class="row" style="margin-bottom:12px"><span class="lbl">Faturado da unidade</span><b class="big">'+brl(FAT)+'</b></div>'+
+   '<div class="trk">'+'<i style="width:'+PCT+'%"></i>'+
+   '<span class="mk" style="left:'+(MIN/META*100).toFixed(1)+'%"></span><span class="mk" style="left:'+(BAS/META*100).toFixed(1)+'%"></span><span class="mk" style="left:99%"></span></div>'+
+   '<div class="leg"><span>Mín <b>'+brl(MIN)+'</b></span><span>Básica <b>'+brl(BAS)+'</b></span><span>Master <b class="gold">'+brl(META)+'</b></span></div>'+
+   '<div class="row" style="margin-top:8px;justify-content:center;gap:10px"><span class="mini">Falta p/ master <b class="falta">'+brl(FALTA)+'</b></span><span class="pill">'+PCT.toLocaleString('pt-BR')+'% da master</span></div></div>'},
+
+{t:'Compacto de linha única', d:'Tudo numa linha só, sem crescer a faixa: Faturado de Meta · falta · % — bom para telas pequenas.',
+ h:'<div class="fat"><div class="row" style="flex-wrap:wrap;row-gap:4px"><span class="lbl">Faturado da unidade</span>'+
+   '<span class="mini"><b class="gold" style="font-size:15px">'+brl(FAT)+'</b> <span style="color:#777">de</span> <b>'+brl(META)+'</b> · falta <b class="falta">'+brl(FALTA)+'</b> · <b class="pct">'+PCT.toLocaleString('pt-BR')+'%</b></span></div>'+
+   '<div style="margin-top:8px">'+bar(PCT)+'</div></div>'},
+
+{t:'Empilhado: valor grande + rodapé', d:'Faturado gigante no centro; embaixo, uma linha discreta com Meta · Falta · % e barra fina.',
+ h:'<div class="fat" style="text-align:center"><div class="lbl">Faturado da unidade</div><div class="big" style="font-size:27px;margin:4px 0 8px">'+brl(FAT)+'</div>'+
+   bar(PCT)+
+   '<div class="row" style="margin-top:8px;justify-content:center;gap:14px"><span class="mini">Meta <b>'+brl(META)+'</b></span><span class="mini">Falta <b class="falta">'+brl(FALTA)+'</b></span><span class="pill">'+PCT.toLocaleString('pt-BR')+'%</span></div></div>'},
+
+{t:'Meta como “trilho” lado a lado', d:'Duas metades: esquerda Faturado + %, direita Meta + Falta, separadas por um traço vertical — leitura em espelho.',
+ h:'<div class="fat"><div class="row" style="gap:0"><div style="flex:1;text-align:center;border-right:1px solid var(--line);padding-right:10px">'+
+   '<div class="lbl">Faturado</div><div class="big">'+brl(FAT)+'</div><span class="pill" style="margin-top:5px;display:inline-block">'+PCT.toLocaleString('pt-BR')+'% da meta</span></div>'+
+   '<div style="flex:1;text-align:center;padding-left:10px"><div class="lbl">Meta da unidade</div><div class="big" style="color:#eee">'+brl(META)+'</div>'+
+   '<div class="mini" style="margin-top:5px">falta <b class="falta">'+brl(FALTA)+'</b></div></div></div></div>'}
+];
+
+const grid=document.getElementById('grid');
+OPTS.forEach((o,i)=>{
+  const n=i+1, div=document.createElement('div');
+  div.className='opt'; div.id='opt'+n;
+  div.innerHTML='<div class="opt-head"><div class="opt-num">'+n+'</div><div class="opt-meta"><div class="opt-t">'+o.t+'</div><div class="opt-d">'+o.d+'</div></div>'+
+    '<button class="opt-pick" onclick="escolher('+n+')">Escolher esta</button></div>'+
+    '<div class="stage">'+ctx+o.h+'</div>';
+  grid.appendChild(div);
+});
+function escolher(n){
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('chosen'));
+  document.getElementById('opt'+n).classList.add('chosen');
+  const p=document.getElementById('pick');
+  p.classList.remove('empty');
+  p.innerHTML='Escolhida a opção <b>nº '+n+'</b> — “'+OPTS[n-1].t+'”. Volte ao chat e me diga: <b>'+n+'</b>';
+}
+</script>
+</body>
+</html>
