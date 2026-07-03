@@ -3545,10 +3545,18 @@ Aguarde o user message — siga o cabeçalho.`;
         return;
       }
 
-      const apiKey = (window.FebracisData && window.FebracisData.API_KEY_TRANSCRICAO || '').trim();
+      let apiKey = (window.FebracisData && window.FebracisData.API_KEY_TRANSCRICAO || '').trim();
       if (!apiKey) {
-        toast('Configure a API key em FebracisData.API_KEY_TRANSCRICAO', 'error');
-        return;
+        // Modo online (sem api-key.js): pede a chave uma vez e guarda só neste navegador
+        const colada = (window.prompt('Cole sua chave de transcrição (Groq gsk_... ou OpenAI sk-...).\nEla fica salva só neste navegador.') || '').trim();
+        if (!colada || (!colada.startsWith('gsk_') && !colada.startsWith('sk-'))) {
+          toast('Chave inválida — use Groq (gsk_...) ou OpenAI (sk-...)', 'error');
+          return;
+        }
+        window.FebracisData = window.FebracisData || {};
+        window.FebracisData.API_KEY_TRANSCRICAO = colada;
+        try { localStorage.setItem('_febracis_api_transcricao', colada); } catch (e) {}
+        apiKey = colada;
       }
 
       // Detecta provider pelo prefixo da key
@@ -5870,8 +5878,10 @@ Aguarde o user message — siga o cabeçalho.`;
         window.FebracisData = window.FebracisData || {};
         var ak = localStorage.getItem('_febracis_api_anthropic');
         var gk = localStorage.getItem('_febracis_api_gemini');
+        var tk = localStorage.getItem('_febracis_api_transcricao');
         if (ak && !window.FebracisData.API_KEY_ANTHROPIC) window.FebracisData.API_KEY_ANTHROPIC = ak;
         if (gk && !window.FebracisData.API_KEY_GEMINI) window.FebracisData.API_KEY_GEMINI = gk;
+        if (tk && !window.FebracisData.API_KEY_TRANSCRICAO) window.FebracisData.API_KEY_TRANSCRICAO = tk;
       } catch (e) {}
     })();
 
