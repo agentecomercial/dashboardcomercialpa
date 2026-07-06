@@ -594,6 +594,15 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .cli-bar-unica .search-bar .search-icon{display:none;}
 .cli-bar-unica .ms-status,
 .cli-bar-unica .ms-filt{min-width:auto;}
+/* Desktop: NUNCA quebrar a linha — quando o rótulo do filtro cresce
+   (ex.: TODOS → NEGOCIAÇÃO), o trigger encolhe/ellipsiza em vez de
+   empurrar os botões para uma 2ª linha. Mobile (≤768px) usa grid próprio. */
+@media (min-width:769px){
+  .cli-bar-unica{flex-wrap:nowrap !important;}
+  .cli-bar-unica .ms-status{flex:0 1 auto;min-width:0;max-width:132px;}
+  .cli-bar-unica .ms-filt{flex:0 1 auto;min-width:0;max-width:150px;}
+  .cli-bar-unica .search-bar{min-width:90px;}
+}
 
 /* AÇÕES extras (Clientes/Importar/SUPREMO) — mesmo visual de .btn-secondary */
 .cli-bar-unica .cli-action-btn{

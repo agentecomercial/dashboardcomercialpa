@@ -2919,7 +2919,6 @@
     ctx.font='600 18px Arial'; ctx.fillStyle='#9fb2c9'; ctx.fillText(card.competencia, W-pad, 38);
     ctx.font='700 14px Arial'; ctx.fillStyle='#7f8ea0'; ctx.fillText('UNIDADE', W-pad, 60);
     ctx.font='800 26px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(mcBRL(card.realizado), W-pad, 88);
-    const lider=itens.reduce((m,x)=>Math.max(m,x.realizado||0),0)||1;
     const barCorPos={1:'#E3C233',2:'#c3ccd6',3:'#cd8a34'};
     itens.forEach((it,idx)=>{
       const top=bodyTop+idx*(rowH+rowGap), cy=top+rowH/2;
@@ -2930,8 +2929,9 @@
       ctx.font='800 25px Arial'; ctx.fillStyle=(it.pos===1)?'#F0C84A':'#eef1f6'; ctx.fillText(it.nome, pad+74, cy-6);
       const bx=pad+74, bw=548, bh=15, by=cy+8;
       mcRR(ctx,bx,by,bw,bh,bh/2); ctx.fillStyle='#2a3140'; ctx.fill();
-      const frac=Math.max(0.02,Math.min(1,(it.realizado||0)/lider));
-      mcRR(ctx,bx,by,Math.max(bh,bw*frac),bh,bh/2); ctx.fillStyle=barCorPos[it.pos]||'#5b78c4'; ctx.fill();
+      const frac=Math.max(0.02,Math.min(1,(it.pctMin||0)/100));   // proporcional à META (% da mínima), não ao líder
+      const batida=(it.pctMin||0)>=100;
+      mcRR(ctx,bx,by,Math.max(bh,bw*frac),bh,bh/2); ctx.fillStyle=batida?'#46d17a':(barCorPos[it.pos]||'#5b78c4'); ctx.fill();
       ctx.textAlign='right';
       ctx.font='800 25px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(mcBRL(it.realizado), W-pad, cy-4);
       const tag=it.batidaMin?'✓ bateu a mínima':((it.pctMin||0)+'% da mínima');
