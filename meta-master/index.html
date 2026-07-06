@@ -260,6 +260,7 @@
   .mc-chip{border:1px solid #3c5aa2;background:rgba(70,110,200,.16);color:#a9c0f0;border-radius:20px;padding:7px 15px;font-size:13px;font-weight:800;cursor:pointer;transition:filter .15s;}
   .mc-chip:hover{filter:brightness(1.2);}
   .mc-chip.uni{border-color:#a2872e;background:rgba(240,200,74,.14);color:#e6cd7a;}
+  .mc-chip.rk{border-color:#c79a2e;background:rgba(240,200,74,.20);color:#f0d47a;}
   .mc-box{max-width:820px;width:100%;text-align:center;}
   .mc-canvas{width:100%;max-width:760px;height:auto;border-radius:14px;display:block;margin:6px auto 0;box-shadow:0 10px 30px rgba(0,0,0,.5);}
   .mc-actions{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
@@ -410,17 +411,36 @@
   .hub-fat{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1a1a1f;border:1px solid #2a2a32;border-radius:12px;padding:13px 15px;}
   .hub-fat span{font-size:10px;color:#9a9aa2;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
   .hub-fat b{font-size:19px;font-weight:900;color:#F0C84A;white-space:nowrap;}
-  /* faixa "Faturado da unidade" com meta/falta/% (Opção 9 — empilhado: valor grande + rodapé) */
-  .hub-fat2{background:#1a1a1f;border:1px solid #2a2a32;border-radius:12px;padding:13px 15px;text-align:center;}
-  .hub-fat2 .f2lbl{font-size:10px;color:#9a9aa2;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
-  .hub-fat2 .f2val{font-size:27px;font-weight:900;color:#F0C84A;line-height:1.05;margin:4px 0 8px;white-space:nowrap;}
-  .hub-fat2 .f2trk{height:10px;border-radius:6px;background:#2a2a32;overflow:hidden;}
-  .hub-fat2 .f2trk i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#8a5e1f,#F0C84A);}
-  .hub-fat2 .f2trk i.win{background:linear-gradient(90deg,#56b06a,#9fe6aa);}
-  .hub-fat2 .f2ft{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:#9a9aa2;font-weight:700;}
-  .hub-fat2 .f2ft b{color:#eee;white-space:nowrap;}
-  .hub-fat2 .f2ft .f2falta{color:#e88;}
-  .hub-fat2 .f2pill{background:#1f2b1f;border:1px solid #2f5a36;color:#9fe6aa;font-size:11px;font-weight:900;border-radius:99px;padding:3px 10px;white-space:nowrap;}
+  /* KPIs do hub redesenhados (estados vazios + hierarquia: número em branco, só o Faturado em dourado) */
+  .hkpi{background:#16161c;border:1px solid #262630;border-radius:12px;padding:13px 8px;text-align:center;}
+  .hkpi.clik{cursor:pointer;transition:border-color .12s,background .12s;}
+  .hkpi.clik:hover{border-color:#c9a84a;background:#1b1a15;}
+  .hkpi b{display:block;font-size:20px;font-weight:900;color:#eef1f6;line-height:1;}
+  .hkpi b.zero{color:#5f6069;}
+  .hkpi span{font-size:10px;color:#aab2bd;text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:block;margin-top:5px;}
+  .hkpi small{display:block;font-size:9.5px;color:#6f6f78;margin-top:3px;font-weight:600;}
+  .hkpi.clik small{color:#c9a84a;}
+  /* faixa "Faturado da unidade" — Split (valor à esquerda · % + status à direita) + cor por ritmo */
+  .hub-fat2{background:#16161c;border:1px solid #262630;border-radius:13px;padding:14px 16px;}
+  .hub-fat2 .f2top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+  .hub-fat2 .f2lbl{font-size:10.5px;color:#aab2bd;text-transform:uppercase;letter-spacing:.6px;font-weight:800;}
+  .hub-fat2 .f2val{font-size:27px;font-weight:900;color:#F0C84A;line-height:1.05;white-space:nowrap;margin-top:2px;letter-spacing:.3px;}
+  .hub-fat2 .f2right{text-align:right;flex:none;}
+  .hub-fat2 .f2pct{font-size:24px;font-weight:900;line-height:1;}
+  .hub-fat2 .f2st{font-size:10.5px;font-weight:800;margin-top:3px;}
+  .hub-fat2 .f2trk{position:relative;height:13px;border-radius:7px;background:#24242c;}
+  .hub-fat2 .f2trk i{display:block;height:100%;border-radius:7px;position:relative;z-index:1;}
+  .hub-fat2 .f2trk .pace{position:absolute;top:-4px;bottom:-4px;width:2px;background:#eef1f6;opacity:.85;z-index:2;border-radius:2px;}
+  .hub-fat2 .f2trk .pace:after{content:'hoje';position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:8px;color:#cfd4dc;font-weight:800;white-space:nowrap;}
+  .hub-fat2 .f2foot{font-size:11.5px;color:#9299a3;font-weight:600;margin-top:9px;text-align:center;}
+  .hub-fat2 .f2foot b{color:#cfd4dc;font-weight:800;}
+  .hub-fat2 .f2falta{color:#e79a9a;font-weight:800;white-space:nowrap;}
+  /* cores por ritmo (texto + preenchimento da barra) */
+  .rt-behind{color:#e79a9a;} .rt-near{color:#e6c260;} .rt-ok{color:#7fd99a;}
+  .fill-behind{background:linear-gradient(90deg,#7a2f2f,#d06565);}
+  .fill-near{background:linear-gradient(90deg,#8a6a1f,#e6c260);}
+  .fill-ok{background:linear-gradient(90deg,#2f7a49,#7fd99a);}
+  .fill-win{background:linear-gradient(90deg,#2f7a49,#9fe6aa);}
   .hub-sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;margin:16px 0 9px;display:flex;align-items:center;gap:8px;}
   .hub-gear{margin-left:auto;background:#262626;border:1px solid #3a3a3a;color:#F0C84A;width:30px;height:30px;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
   .hub-gear:active{transform:scale(.94);}
@@ -1142,6 +1162,20 @@
     try{ localStorage.setItem('mm_hero', JSON.stringify({h:+$('heH').value,o:+$('heO').value})); }catch(e){}
     fecharHeroEditor(); renderHub(); toast('Destaque ajustado');
   }
+  // R$ arredondado (sem centavos) p/ KPIs do hub
+  function brlR(v){ return 'R$ '+Math.round(+v||0).toLocaleString('pt-BR'); }
+  // ritmo esperado da unidade = dias úteis decorridos / dias úteis do mês (menos feriados nacionais+ES+Vitória)
+  function hubPascoa(a){ const b=Math.floor(a/100),c=a%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*(a%19)+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a%19+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(a,mo-1,da); }
+  function hubYMD(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function hubFeriados(a){ const p=hubPascoa(a), f=new Set(); const add=(mo,da)=>f.add(a+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0')); add(1,1);add(4,21);add(5,1);add(9,7);add(9,8);add(10,12);add(11,2);add(11,15);add(11,20);add(12,25); const mov=n=>{const d=new Date(p);d.setDate(d.getDate()+n);f.add(hubYMD(d));}; mov(-48);mov(-47);mov(-2);mov(60); return f; }
+  function hubDiasUteis(de,ate,fer){ let n=0; const d=new Date(de); while(d<=ate){ const w=d.getDay(); if(w!==0&&w!==6&&!fer.has(hubYMD(d))) n++; d.setDate(d.getDate()+1);} return n; }
+  function hubRitmo(ym){ const now=new Date(); const nowYM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    if(ym!==nowYM) return {corrente:false, esperado:100};
+    const a=+ym.split('-')[0], mo=+ym.split('-')[1], fer=hubFeriados(a);
+    const ini=new Date(a,mo-1,1), fim=new Date(a,mo,0);
+    const totU=hubDiasUteis(ini,fim,fer), decU=hubDiasUteis(ini,now,fer);
+    return {corrente:true, esperado: totU>0 ? decU/totU*100 : 0}; }
+
   function renderHub(){
     const box=$('mobHub'); if(!box) return;
     box.style.setProperty('--avsize', getAvSize()+'px');   // tamanho global do avatar
@@ -1163,7 +1197,13 @@
         +'<button type="button" class="hub-perchip alt" onclick="hubEscolherMes()">Escolher mês…</button></div>';
     }
     const med = bat.length ? (Math.round(bat.reduce((s,c)=>s+(parseFloat(c.pct)||0),0)/bat.length)+'%') : '—';
-    const kpisHtml='<div class="hub-kpis"><div class="hub-kpi sm2'+(bat.length?' clik" onclick="abrirBatedores()"':'"')+'><b>'+bat.length+'</b><span>Bateram</span></div><div class="hub-kpi sm2"><b>'+med+'</b><span>Média</span></div></div>';
+    const kBat = bat.length
+      ? '<div class="hkpi clik" onclick="abrirBatedores()"><b>'+bat.length+'</b><span>Bateram</span><small>ver quem bateu ›</small></div>'
+      : '<div class="hkpi"><b class="zero">0</b><span>Bateram</span><small>ninguém ainda</small></div>';
+    const kMed = bat.length
+      ? '<div class="hkpi"><b>'+med+'</b><span>Média</span><small>da Meta Master</small></div>'
+      : '<div class="hkpi"><b class="zero">—</b><span>Média</span><small>sem batedores</small></div>';
+    const kpisHtml='<div class="hub-kpis">'+kBat+kMed+'</div>';
     // faixa do faturado: SEMPRE mostra a META MASTER da unidade + falta + % atingido.
     // Prioridade: MM.unidade.master (dados.js) → soma das metas master dos consultores (dados.js antigo/mês sem meta de unidade).
     let metaUn=(MM.unidade&&+MM.unidade.master>0)?+MM.unidade.master:0;
@@ -1173,13 +1213,18 @@
       const pctUn=fat/metaUn*100;
       const faltaUn=Math.max(0,metaUn-fat);
       const pctTxt=(Math.round(pctUn*10)/10).toLocaleString('pt-BR')+'%';
-      const bateuUn=pctUn>=100;
-      fatHtml='<div class="hub-fat2"><div class="f2lbl">Faturado da unidade</div><div class="f2val">'+brlFull(fat)+'</div>'
-        +'<div class="f2trk"><i'+(bateuUn?' class="win"':'')+' style="width:'+Math.min(100,pctUn).toFixed(1)+'%"></i></div>'
-        +'<div class="f2ft"><span>Meta master <b>'+brlFull(metaUn)+'</b></span>'
-        +(bateuUn?'<span class="f2pill">🏆 Meta batida · '+pctTxt+'</span>'
-                 :'<span>Falta <b class="f2falta">'+brlFull(faltaUn)+'</b></span><span class="f2pill">'+pctTxt+'</span>')
-        +'</div></div>';
+      const rit=hubRitmo(MM.periodo||ymVig), esp=rit.esperado;
+      let st = pctUn>=100 ? 'win' : (rit.corrente ? (pctUn>=esp?'ok':(pctUn>=esp*0.6?'near':'behind')) : 'behind');
+      const stTxt={win:'🏆 meta batida',ok:'no ritmo',near:'quase no ritmo',behind:(rit.corrente?'atrás do ritmo':'não batida')}[st];
+      const txtC=(st==='win'?'rt-ok':'rt-'+st), fillC=(st==='win'?'fill-win':'fill-'+st);
+      const paceHtml=(rit.corrente && st!=='win') ? '<span class="pace" style="left:'+Math.min(100,esp).toFixed(1)+'%"></span>' : '';
+      const espTxt=(rit.corrente && st!=='win') ? ' · <span style="color:#6f6f78">esperado '+(Math.round(esp*10)/10).toLocaleString('pt-BR')+'%</span>' : '';
+      fatHtml='<div class="hub-fat2">'
+        +'<div class="f2top"><div><div class="f2lbl">Faturado da unidade</div><div class="f2val">'+brlR(fat)+'</div></div>'
+        +'<div class="f2right"><div class="f2pct '+txtC+'">'+pctTxt+'</div><div class="f2st '+txtC+'">'+stTxt+'</div></div></div>'
+        +'<div class="f2trk"><i class="'+fillC+'" style="width:'+Math.min(100,pctUn).toFixed(1)+'%"></i>'+paceHtml+'</div>'
+        +'<div class="f2foot">Meta master <b>'+brlR(metaUn)+'</b>'+(st==='win'?'':' · Falta <b class="f2falta">'+brlR(faltaUn)+'</b>')+espTxt+'</div>'
+        +'</div>';
     } else {
       fatHtml='<div class="hub-fat"><span>Faturado da unidade</span><b>'+brlFull(fat)+'</b></div>';
     }
@@ -1607,10 +1652,6 @@
     {nome:'Gabriela Souza de Jesus',         val:'Gabriela'},
     {nome:'Natalia de Oliveira Silva Cunha', val:'Natalia'},
     {nome:'Karla Ferreira de Oliveira',      val:'Karla'},
-    {nome:'Wallyson Gabriel Gomes Pinheiro', val:'Wallyson'},
-    {nome:'Artur Alef Borges',               val:'Artur'},
-    {nome:'Filipe Frazão',                   val:'Filipe'},
-    {nome:'Ana Karoline Nascimento Francisco', val:'Ana Karoline'},
   ];
   const semAcento = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
   // Converte o que o usuário escolheu/digitou no valor ASCII seguro do consultor (ou devolve como está).
@@ -2741,7 +2782,7 @@
     let bar='';
     if(META_CARDS.length){
       bar='<div class="mc-bar"><span class="mc-bar-lbl">🖼️ Ver card:</span>'
-        +META_CARDS.map((c,i)=>'<button class="mc-chip'+(c.tipo==='unidade'?' uni':'')+'" onclick="abrirCardMeta('+i+')">'+esc(c.chip)+'</button>').join('')+'</div>';
+        +META_CARDS.map((c,i)=>'<button class="mc-chip'+(c.tipo==='unidade'?' uni':'')+(c.tipo==='ranking'?' rk':'')+'" onclick="abrirCardMeta('+i+')">'+(c.tipo==='ranking'?'🏆 ':'')+esc(c.chip)+'</button>').join('')+'</div>';
     }
     res.innerHTML='<div class="cmd-out">'+bar+mdToHtml(body)+'</div>';
     aplicarMobileTabelas();
@@ -2758,7 +2799,7 @@
         +'<button class="btn btn-sec" onclick="baixarCardImg()">⬇ Baixar PNG</button></div></div>';
       document.body.appendChild(modal);
     }
-    drawMetaCard(c);
+    if(c.tipo==='ranking') drawRankingCard(c); else drawMetaCard(c);
     modal.style.display='flex';
   }
   function fecharCardMeta(){ const m=document.getElementById('mcModal'); if(m) m.style.display='none'; }
@@ -2857,6 +2898,46 @@
         ctx.textAlign='left'; ctx.textBaseline='alphabetic';
       });
     }
+  }
+  function drawRankingCard(card){
+    const cv=document.getElementById('mcCanvas'); if(!cv) return;
+    const itens=Array.isArray(card.itens)?card.itens:[];
+    const W=1040, pad=28;
+    const headH=100, rowH=78, rowGap=10, bodyTop=headH+18;
+    const bodyH=itens.length*rowH+Math.max(0,itens.length-1)*rowGap;
+    const H=bodyTop+bodyH+24;
+    const DPR=2;
+    cv.width=W*DPR; cv.height=H*DPR;
+    const ctx=cv.getContext('2d'); ctx.setTransform(DPR,0,0,DPR,0,0);
+    let bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0e1826'); bg.addColorStop(1,'#0b0f18');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    let hg=ctx.createLinearGradient(0,0,W,0); hg.addColorStop(0,'#16273f'); hg.addColorStop(1,'#0c1626');
+    ctx.fillStyle=hg; ctx.fillRect(0,0,W,headH);
+    ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+    ctx.font='800 36px "Segoe UI Emoji",Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText('🏆 '+card.nome, pad, 60);
+    ctx.textAlign='right';
+    ctx.font='600 18px Arial'; ctx.fillStyle='#9fb2c9'; ctx.fillText(card.competencia, W-pad, 38);
+    ctx.font='700 14px Arial'; ctx.fillStyle='#7f8ea0'; ctx.fillText('UNIDADE', W-pad, 60);
+    ctx.font='800 26px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(mcBRL(card.realizado), W-pad, 88);
+    const lider=itens.reduce((m,x)=>Math.max(m,x.realizado||0),0)||1;
+    const barCorPos={1:'#E3C233',2:'#c3ccd6',3:'#cd8a34'};
+    itens.forEach((it,idx)=>{
+      const top=bodyTop+idx*(rowH+rowGap), cy=top+rowH/2;
+      ctx.fillStyle=(it.pos===1)?'rgba(240,200,74,0.10)':'rgba(255,255,255,0.03)';
+      mcRR(ctx,pad,top,W-pad*2,rowH,12); ctx.fill();
+      mcMedal(ctx,pad+34,cy,21,it.pos);
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.font='800 25px Arial'; ctx.fillStyle=(it.pos===1)?'#F0C84A':'#eef1f6'; ctx.fillText(it.nome, pad+74, cy-6);
+      const bx=pad+74, bw=548, bh=15, by=cy+8;
+      mcRR(ctx,bx,by,bw,bh,bh/2); ctx.fillStyle='#2a3140'; ctx.fill();
+      const frac=Math.max(0.02,Math.min(1,(it.realizado||0)/lider));
+      mcRR(ctx,bx,by,Math.max(bh,bw*frac),bh,bh/2); ctx.fillStyle=barCorPos[it.pos]||'#5b78c4'; ctx.fill();
+      ctx.textAlign='right';
+      ctx.font='800 25px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(mcBRL(it.realizado), W-pad, cy-4);
+      const tag=it.batidaMin?'✓ bateu a mínima':((it.pctMin||0)+'% da mínima');
+      ctx.font='700 16px Arial'; ctx.fillStyle=it.batidaMin?'#46d17a':'#c9b06a'; ctx.fillText(tag, W-pad, cy+20);
+      ctx.textAlign='left';
+    });
   }
 
   function mdToHtml(md){

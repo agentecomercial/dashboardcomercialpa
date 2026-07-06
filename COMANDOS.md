@@ -50,7 +50,7 @@ Saída sempre em 2 blocos: **1)** Detalhe por consultor (Criado \| Cliente \| Va
 **Fluxo do `Atualizar Meta` (uma pergunta por vez, tabela de prévia sempre visível):**
 1. **Mês** — Enter = mês atual; ou digita outra competência `AAAA-MM`.
 2. **Unidade** — digita os **3 níveis manuais**: `mínima`, `básica`, `master`. (Atalho: o padrão histórico é básica = mínima ×20/17 e master = básica ×10/9, caso queira conferir.)
-3. **Consultores** — percorro os 7, um a um, mostrando o valor atual: digita os 3 níveis novos · Enter mantém · "pular" deixa sem meta.
+3. **Consultores** — percorro a equipe atual (lista do `Consultores Vitória`), um a um, mostrando o valor atual: digita os 3 níveis novos · Enter mantém · "pular" deixa sem meta.
 4. **Prévia** — tabela antes→depois (unidade + cada consultor, 3 níveis).
 5. **Confirmar** → grava no `metas-vitoria.json`.
 6. **Mostra a Meta Geral** (realizado × meta) e em seguida faz **Deploy** (commit + push).
@@ -142,7 +142,7 @@ Modificador: `por fechamento` (padrão) / `por faturamento` (`-Por`). Atalhos pr
 ---
 
 ## 👥 8. Consultores de Vitória (incluir / excluir)
-**Script:** `Consultores-Vitoria.ps1` — atualiza a equipe em **todos** os scripts de uma vez (`$Consultores` nos 7 relatórios + `$Equipe` com user_id no `Acoes-Leads-Vitoria.ps1` + mapa do COMANDOS.md).
+**Script:** `Consultores-Vitoria.ps1` — atualiza a equipe em **todos** os scripts de uma vez (`$Consultores` nos 7 relatórios + `$Equipe` com user_id no `Acoes-Leads-Vitoria.ps1` + `const CONSULTORES` da aba Comandos no `meta-master/index.html` + mapa do COMANDOS.md).
 
 | Comando | O que faz |
 |---|---|

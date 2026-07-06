@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Hub Faturado (5 variantes)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0b0b0d;color:#e8e8ee;font-family:'Segoe UI',system-ui,Arial,sans-serif;padding:20px 14px 90px;}
+  .wrap{max-width:440px;margin:0 auto;}
+  h1{font-size:18px;font-weight:900;color:#F0C84A;margin-bottom:3px;}
+  .sub{font-size:12px;color:#9a9aa2;margin-bottom:14px;line-height:1.4;}
+  .states{position:sticky;top:0;z-index:5;background:#0b0b0dee;backdrop-filter:blur(4px);padding:10px 0;display:flex;gap:7px;flex-wrap:wrap;border-bottom:1px solid #22222a;margin-bottom:16px;}
+  .stbtn{border:1px solid #33333e;background:#17171d;color:#cbcbd4;border-radius:99px;padding:6px 12px;font-size:11.5px;font-weight:800;cursor:pointer;}
+  .stbtn.on{background:#F0C84A;color:#161616;border-color:#F0C84A;}
+  .vlabel{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8f8f98;font-weight:800;margin:22px 0 9px;display:flex;align-items:center;gap:8px;}
+  .vlabel small{font-weight:600;text-transform:none;letter-spacing:0;color:#6f6f78;font-size:11px;}
+
+  /* ---- KPIs comuns (redesenhados) ---- */
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .kpi{background:#16161c;border:1px solid #262630;border-radius:13px;padding:13px 8px;text-align:center;}
+  .kpi.clik{cursor:pointer;} .kpi.clik:hover{border-color:#c9a84a;background:#1b1a15;}
+  .kpi b{display:block;font-size:21px;font-weight:900;color:#eef1f6;line-height:1;}
+  .kpi b.zero{color:#5f6069;}
+  .kpi span{font-size:10px;color:#aab2bd;text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:block;margin-top:5px;}
+  .kpi small{display:block;font-size:9.5px;color:#6f6f78;margin-top:3px;font-weight:600;}
+  .kpi.clik small{color:#c9a84a;}
+
+  /* ---- comuns ---- */
+  .card{background:#16161c;border:1px solid #262630;border-radius:13px;padding:15px 16px;}
+  .lbl{font-size:10.5px;color:#aab2bd;text-transform:uppercase;letter-spacing:.6px;font-weight:800;}
+  .falta{color:#e79a9a;font-weight:800;white-space:nowrap;}
+  .trk{position:relative;height:13px;border-radius:7px;background:#24242c;}
+  .trk.big{height:20px;border-radius:10px;} .trk.thin{height:9px;border-radius:5px;}
+  .trk>i{display:block;height:100%;border-radius:inherit;position:relative;z-index:1;}
+  .trk>.pace{position:absolute;top:-4px;bottom:-4px;width:2px;background:#eef1f6;opacity:.85;z-index:2;border-radius:2px;}
+  .trk>.pace:after{content:'hoje';position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:8.5px;color:#cfd4dc;font-weight:800;white-space:nowrap;}
+  .fill-behind{background:linear-gradient(90deg,#7a2f2f,#d06565);}
+  .fill-near{background:linear-gradient(90deg,#8a6a1f,#e6c260);}
+  .fill-ok{background:linear-gradient(90deg,#2f7a49,#7fd99a);}
+  .fill-win{background:linear-gradient(90deg,#2f7a49,#9fe6aa);}
+  .pill{font-size:12px;font-weight:900;border-radius:99px;padding:3px 11px;white-space:nowrap;border:1px solid;}
+  .pill-behind{background:rgba(200,60,60,.16);border-color:#a23c3c;color:#f0a8a8;}
+  .pill-near{background:rgba(210,170,40,.16);border-color:#9a7f2c;color:#ecd07a;}
+  .pill-ok{background:rgba(70,180,110,.16);border-color:#3f8a58;color:#8fe0a6;}
+  .txt-behind{color:#e79a9a;} .txt-near{color:#e6c260;} .txt-ok{color:#7fd99a;}
+
+  /* V1 empilhado */
+  .v1{text-align:center;}
+  .v1 .val{font-size:30px;font-weight:900;color:#F0C84A;margin:5px 0 12px;letter-spacing:.3px;white-space:nowrap;}
+  .v1 .meta{font-size:11px;color:#9299a3;font-weight:600;margin-top:9px;}
+  .v1 .meta b{color:#cfd4dc;font-weight:800;}
+  .v1 .ft{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:700;}
+
+  /* V2 split */
+  .v2 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+  .v2 .val{font-size:27px;font-weight:900;color:#F0C84A;line-height:1.05;white-space:nowrap;margin-top:2px;}
+  .v2 .right{text-align:right;}
+  .v2 .bigpct{font-size:24px;font-weight:900;line-height:1;}
+  .v2 .st{font-size:11px;font-weight:800;margin-top:3px;}
+  .v2 .foot{font-size:11.5px;color:#9299a3;font-weight:600;margin-top:9px;text-align:center;}
+  .v2 .foot b{color:#cfd4dc;font-weight:800;}
+
+  /* V3 anel */
+  .v3{display:flex;align-items:center;gap:16px;}
+  .ring{position:relative;width:96px;height:96px;border-radius:50%;flex:none;display:grid;place-items:center;}
+  .ring::after{content:'';position:absolute;inset:11px;border-radius:50%;background:#16161c;z-index:0;}
+  .ring b{position:relative;z-index:1;font-size:19px;font-weight:900;}
+  .v3 .info{min-width:0;}
+  .v3 .val{font-size:25px;font-weight:900;color:#F0C84A;line-height:1.05;white-space:nowrap;margin:3px 0 5px;}
+  .v3 .sub{font-size:11px;color:#9299a3;font-weight:600;} .v3 .sub b{color:#cfd4dc;font-weight:800;}
+  .v3 .st{font-size:11.5px;font-weight:800;margin-top:6px;}
+
+  /* V4 barra dominante */
+  .v4 .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .v4 .st{font-size:11px;font-weight:800;}
+  .v4 .val{font-size:24px;font-weight:900;color:#F0C84A;margin-bottom:11px;display:flex;align-items:baseline;gap:9px;white-space:nowrap;}
+  .v4 .val .pc{font-size:15px;font-weight:900;}
+  .v4 .foot{display:flex;justify-content:space-between;font-size:11.5px;color:#9299a3;font-weight:700;margin-top:9px;}
+  .v4 .foot b{color:#cfd4dc;}
+
+  /* V5 minimal */
+  .v5{padding:6px 2px;}
+  .v5 .lbl{margin-bottom:4px;}
+  .v5 .line{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .v5 .val{font-size:29px;font-weight:900;color:#F0C84A;white-space:nowrap;letter-spacing:.3px;}
+  .v5 .sub{font-size:11.5px;color:#9299a3;font-weight:600;margin-top:9px;} .v5 .sub b{color:#e79a9a;font-weight:800;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Hub “Faturado da Unidade” — 5 variantes</h1>
+  <div class="sub">Todas com as 4 melhorias (cor por ritmo · hierarquia · estados vazios · valores arredondados). Troque o cenário e compare os layouts.</div>
+
+  <div class="states" id="states"></div>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="vlabel">Variante 1 <small>· Empilhado (valor central + rodapé)</small></div>
+  <div class="card v1" id="v1"></div>
+  <div class="vlabel">Variante 2 <small>· Split (valor à esquerda, % grande à direita)</small></div>
+  <div class="card v2" id="v2"></div>
+  <div class="vlabel">Variante 3 <small>· Anel de progresso</small></div>
+  <div class="card v3" id="v3"></div>
+  <div class="vlabel">Variante 4 <small>· Barra dominante</small></div>
+  <div class="card v4" id="v4"></div>
+  <div class="vlabel">Variante 5 <small>· Minimal (sem moldura pesada)</small></div>
+  <div class="card v5" id="v5" style="background:#101015;"></div>
+</div>
+
+<script>
+  const META=605197.98;
+  const brlR=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
+  const pctBR=v=>(Math.round(v*10)/10).toLocaleString('pt-BR')+'%';
+  const estados=[
+    {rot:'Início (dia 3/31)',   dia:3, dias:31, fat:61594,  bateram:0, media:null},
+    {rot:'Atrás (dia 20/31)',   dia:20,dias:31, fat:180000, bateram:0, media:null},
+    {rot:'No ritmo (dia 15/31)',dia:15,dias:31, fat:300000, bateram:1, media:112},
+    {rot:'Batido (dia 28/31)',  dia:28,dias:31, fat:640000, bateram:3, media:135},
+  ];
+  let cur=0;
+
+  function calc(s){
+    const pct=s.fat/META*100, falta=Math.max(0,META-s.fat), esperado=s.dia/s.dias*100;
+    let st = pct>=100?'win' : pct>=esperado?'ok' : pct>=esperado*0.6?'near' : 'behind';
+    const stTxt={win:'🏆 meta batida',ok:'no ritmo',near:'quase no ritmo',behind:'atrás do ritmo'}[st];
+    const cCol={behind:'#d06565',near:'#e6c260',ok:'#7fd99a',win:'#7fd99a'}[st];
+    return {pct,falta,esperado,st,stTxt,cCol,fill:st==='win'?'fill-win':'fill-'+st,
+            txt:st==='win'?'txt-ok':'txt-'+st, pillC:st==='win'?'pill-ok':'pill-'+st,
+            w:Math.min(100,pct).toFixed(1), pace:Math.min(100,esperado).toFixed(1)};
+  }
+  const bar=(k,mods)=>'<div class="trk '+(mods||'')+'"><i class="'+k.fill+'" style="width:'+k.w+'%"></i>'+(k.st!=='win'?'<span class="pace" style="left:'+k.pace+'%"></span>':'')+'</div>';
+  const pillTag=k=> k.st==='win' ? '<span class="pill pill-ok">🏆 '+pctBR(k.pct)+'</span>' : '<span class="pill '+k.pillC+'">'+pctBR(k.pct)+'</span>';
+
+  function renderKpis(s){
+    const kBat = s.bateram===0
+      ? '<div class="kpi"><b class="zero">0</b><span>Bateram</span><small>ninguém ainda</small></div>'
+      : '<div class="kpi clik"><b>'+s.bateram+'</b><span>Bateram</span><small>ver quem bateu ›</small></div>';
+    const kMed = s.media==null
+      ? '<div class="kpi"><b class="zero">—</b><span>Média</span><small>sem batedores</small></div>'
+      : '<div class="kpi"><b>'+s.media+'%</b><span>Média</span><small>da Meta Master</small></div>';
+    document.getElementById('kpis').innerHTML=kBat+kMed;
+  }
+
+  function render(){
+    const s=estados[cur], k=calc(s);
+    renderKpis(s);
+    // V1 empilhado
+    document.getElementById('v1').innerHTML=
+      '<div class="lbl">Faturado da unidade</div><div class="val">'+brlR(s.fat)+'</div>'
+      +bar(k)
+      +'<div class="meta">Meta master <b>'+brlR(META)+'</b> · <span class="'+k.txt+'">'+k.stTxt+'</span> <span style="color:#6f6f78">(esperado '+pctBR(k.esperado)+')</span></div>'
+      +'<div class="ft">'+(k.st==='win'?'':'<span class="falta">Falta '+brlR(k.falta)+'</span>')+pillTag(k)+'</div>';
+    // V2 split
+    document.getElementById('v2').innerHTML=
+      '<div class="top"><div><div class="lbl">Faturado da unidade</div><div class="val">'+brlR(s.fat)+'</div></div>'
+      +'<div class="right"><div class="bigpct '+k.txt+'">'+pctBR(k.pct)+'</div><div class="st '+k.txt+'">'+k.stTxt+'</div></div></div>'
+      +bar(k)
+      +'<div class="foot">Meta master <b>'+brlR(META)+'</b>'+(k.st==='win'?'':' · Falta <b class="falta">'+brlR(k.falta)+'</b>')+'</div>';
+    // V3 anel
+    document.getElementById('v3').innerHTML=
+      '<div class="ring" style="background:conic-gradient('+k.cCol+' '+Math.min(100,k.pct).toFixed(1)+'%,#24242c 0)"><b class="'+k.txt+'">'+pctBR(k.pct)+'</b></div>'
+      +'<div class="info"><div class="lbl">Faturado da unidade</div><div class="val">'+brlR(s.fat)+'</div>'
+      +'<div class="sub">Meta <b>'+brlR(META)+'</b>'+(k.st==='win'?'':' · Falta <b class="falta">'+brlR(k.falta)+'</b>')+'</div>'
+      +'<div class="st '+k.txt+'">● '+k.stTxt+'</div></div>';
+    // V4 barra dominante
+    document.getElementById('v4').innerHTML=
+      '<div class="head"><span class="lbl">Faturado da unidade</span><span class="st '+k.txt+'">'+k.stTxt+'</span></div>'
+      +'<div class="val">'+brlR(s.fat)+' <span class="pc '+k.txt+'">'+pctBR(k.pct)+'</span></div>'
+      +bar(k,'big')
+      +'<div class="foot"><span>Meta <b>'+brlR(META)+'</b></span>'+(k.st==='win'?'<span class="txt-ok">🏆 batida</span>':'<span class="falta">Faltam '+brlR(k.falta)+'</span>')+'</div>';
+    // V5 minimal
+    document.getElementById('v5').innerHTML=
+      '<div class="lbl">Faturado da unidade</div>'
+      +'<div class="line"><span class="val">'+brlR(s.fat)+'</span>'+pillTag(k)+'</div>'
+      +bar(k,'thin')
+      +'<div class="sub">'+(k.st==='win'?'<span class="txt-ok" style="font-weight:800">🏆 Meta Master batida!</span> ':'faltam <b>'+brlR(k.falta)+'</b> para a Meta Master ('+brlR(META)+')')+' · <span class="'+k.txt+'" style="font-weight:800">'+k.stTxt+'</span></div>';
+  }
+
+  // seletor de cenário
+  const sb=document.getElementById('states');
+  sb.innerHTML=estados.map((s,i)=>'<button class="stbtn'+(i===0?' on':'')+'" data-i="'+i+'">'+s.rot+'</button>').join('');
+  sb.addEventListener('click',e=>{ const b=e.target.closest('.stbtn'); if(!b)return; cur=+b.dataset.i;
+    sb.querySelectorAll('.stbtn').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+  render();
+</script>
+</body>
+</html>

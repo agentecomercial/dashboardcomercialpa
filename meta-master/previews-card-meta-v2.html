@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Card de Meta (redesenho v2)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0b0b0d;color:#e8e8ee;font-family:'Segoe UI',system-ui,Arial,sans-serif;padding:22px 14px 90px;}
+  .wrap{max-width:820px;margin:0 auto;text-align:center;}
+  h1{font-size:18px;font-weight:900;color:#F0C84A;margin-bottom:3px;}
+  .sub{font-size:12.5px;color:#9a9aa2;margin-bottom:16px;line-height:1.45;}
+  .states{position:sticky;top:0;z-index:5;background:#0b0b0dee;backdrop-filter:blur(4px);padding:10px 0;display:flex;gap:7px;flex-wrap:wrap;justify-content:center;border-bottom:1px solid #22222a;margin-bottom:18px;}
+  .stbtn{border:1px solid #33333e;background:#17171d;color:#cbcbd4;border-radius:99px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;}
+  .stbtn.on{background:#F0C84A;color:#161616;border-color:#F0C84A;}
+  canvas{width:100%;max-width:720px;height:auto;border-radius:16px;box-shadow:0 12px 34px rgba(0,0,0,.55);display:block;margin:0 auto;}
+  .note{font-size:11.5px;color:#8a8a94;margin-top:14px;line-height:1.6;text-align:left;background:#141419;border:1px solid #24242c;border-radius:12px;padding:12px 14px;}
+  .note b{color:#cfd4dc;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Card de Meta — redesenho v2 (Fable + análise)</h1>
+  <div class="sub">Protagonista único · rodapé fundido · R$/dia herói no início · escada (sem pódio) · dourado disciplinado · sem centavos · marcador de ritmo · assinatura. Troque o cenário pra ver a história.</div>
+  <div class="states" id="states"></div>
+  <canvas id="cv"></canvas>
+  <div class="note" id="note"></div>
+</div>
+
+<script>
+  const METAS={min:152844.42, bas:184416.69, mas:242079.19};
+  const NOME='GABRIELA SOUZA', COMP='JULHO/2026';
+  // estados: realizado + dias úteis restantes + ritmo esperado (%) do dia
+  const estados=[
+    {rot:'Início (dia 2)',  real:1497,   dias:19, esp:9.5,  nota:'Começo de mês. Herói = <b>R$/dia</b> (concreto e factível), não o “1%”. Só a <b>Mínima</b> é protagonista; Básica/Master compactas. Marcador “hoje” mostra que 1% está quase no ritmo do dia 2.'},
+    {rot:'Meio (dia 10)',   real:160000, dias:11, esp:48,   nota:'Mínima <b>batida</b> (colapsa em linha fina verde). Protagonista vira a <b>Básica</b> — e como já passou de 50%, o herói inverte para <b>“faltam R$ X · %”</b>. Master segue compacta.'},
+    {rot:'Quase (dia 18)',  real:210000, dias:3,  esp:86,   nota:'Mínima e Básica batidas. Só a <b>Master</b> em jogo, perto — herói “faltam R$ X”. Dourado concentrado na Master (o topo da escada).'},
+    {rot:'Batido (dia 24)', real:250000, dias:0,  esp:100,  nota:'Todas batidas → o corpo dá lugar à celebração. Assinatura fixa reforça identidade da peça.'},
+  ];
+  let cur=0;
+
+  const brlR=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
+  const abrev=v=>{ v=Math.round(v); if(v>=1000000) return 'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi'; if(v>=1000) return 'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil'; return 'R$ '+v.toLocaleString('pt-BR'); };
+  function rr(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  // escada: 3 degraus crescentes; acende 'lvl' degraus na cor do nível
+  function escada(ctx,x,cy,lvl,cor,dim){
+    const bw=7,gap=4,hs=[13,20,28];
+    for(let i=0;i<3;i++){ const bx=x+i*(bw+gap), bh=hs[i], by=cy+14-bh;
+      ctx.fillStyle=(i<lvl)?cor:'#33343d'; rr(ctx,bx,by,bw,bh,2); ctx.fill(); }
+    if(dim){ ctx.globalAlpha=1; }
+  }
+  function nivelData(key,meta,real,dias){
+    const pct=Math.round(real/meta*100), batida=real>=meta, falta=Math.max(0,meta-real);
+    const porDia=(!batida&&dias>0)?Math.round(falta/dias):0;
+    return {key,meta,pct,batida,falta,porDia};
+  }
+
+  function draw(){
+    const s=estados[cur], cv=document.getElementById('cv');
+    const niveis=[
+      Object.assign({label:'Mínima',lvl:1,cor:'#7f9bc9'}, nivelData('min',METAS.min,s.real,s.dias)),
+      Object.assign({label:'Básica',lvl:2,cor:'#d7a93e'}, nivelData('bas',METAS.bas,s.real,s.dias)),
+      Object.assign({label:'Master',lvl:3,cor:'#E3C233'}, nivelData('mas',METAS.mas,s.real,s.dias)),
+    ];
+    const protagIdx=niveis.findIndex(n=>!n.batida);
+    const todas=protagIdx<0;
+    const W=1040,pad=30;
+    // alturas
+    const headH=112;
+    let bodyH=0; const geo=[];
+    niveis.forEach((n,i)=>{
+      let t = n.batida ? 'batida' : (i===protagIdx?'prot':'fut');
+      const hh = t==='batida'?40 : t==='prot'?134 : 60;
+      geo.push({t,h:hh}); bodyH+=hh+8;
+    });
+    if(todas) bodyH=150;
+    const stripH=52, signH=40;
+    const H=headH+16+bodyH+stripH+signH+20;
+    const DPR=2; cv.width=W*DPR; cv.height=H*DPR;
+    const ctx=cv.getContext('2d'); ctx.setTransform(DPR,0,0,DPR,0,0);
+    // fundo + header
+    let bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0e1826'); bg.addColorStop(1,'#0b0f18'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    let hg=ctx.createLinearGradient(0,0,W,0); hg.addColorStop(0,'#16273f'); hg.addColorStop(1,'#0c1626'); ctx.fillStyle=hg; ctx.fillRect(0,0,W,headH);
+    ctx.textBaseline='alphabetic';
+    ctx.textAlign='left'; ctx.font='800 37px Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText(NOME,pad,56);
+    ctx.font='600 15px Arial'; ctx.fillStyle='#8ea0b6'; ctx.fillText('META MASTER',pad,82);
+    ctx.textAlign='right';
+    ctx.font='700 13px Arial'; ctx.fillStyle='#8ea0b6'; ctx.fillText('REALIZADO · '+COMP,W-pad,40);
+    ctx.font='800 30px Arial'; ctx.fillStyle='#46d17a'; ctx.fillText(brlR(s.real),W-pad,78);
+
+    let y=headH+16;
+    if(todas){
+      ctx.textAlign='center'; ctx.font='800 30px "Segoe UI Emoji",Arial'; ctx.fillStyle='#46d17a';
+      ctx.fillText('🚀 Todas as metas batidas!',W/2,y+70);
+      ctx.font='700 19px Arial'; ctx.fillStyle='#8fe0a6'; ctx.fillText('Parabéns, '+NOME.split(' ')[0]+'! Faturado '+brlR(s.real),W/2,y+108);
+    } else {
+      niveis.forEach((n,i)=>{
+        const g=geo[i], top=y, h=g.h, cy=top+h/2;
+        if(g.t==='batida'){
+          ctx.fillStyle='rgba(70,209,122,0.07)'; rr(ctx,pad,top,W-pad*2,h,10); ctx.fill();
+          escada(ctx,pad+14,cy-7,n.lvl,'#46d17a',false);
+          ctx.textAlign='left'; ctx.font='800 19px "Segoe UI Emoji",Arial'; ctx.fillStyle='#46d17a'; ctx.fillText('✓ '+n.label+' batida',pad+70,cy+7);
+          ctx.textAlign='right'; ctx.font='600 15px Arial'; ctx.fillStyle='#7a8698'; ctx.fillText(brlR(n.meta),W-pad-16,cy+6);
+        } else if(g.t==='prot'){
+          // card protagonista
+          ctx.fillStyle='rgba(255,255,255,0.045)'; rr(ctx,pad,top,W-pad*2,h,14); ctx.fill();
+          ctx.strokeStyle='rgba(240,200,74,0.30)'; ctx.lineWidth=1.5; rr(ctx,pad,top,W-pad*2,h,14); ctx.stroke();
+          const ix=pad+24;
+          escada(ctx,ix,top+30,n.lvl,n.cor,false);
+          ctx.textAlign='left'; ctx.font='800 27px Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText(n.label,ix+52,top+42);
+          // selo ALVO ATUAL
+          const st='🎯 ALVO ATUAL'; ctx.font='800 13px "Segoe UI Emoji",Arial'; const sw=ctx.measureText(st).width+22;
+          rr(ctx,W-pad-sw-16,top+18,sw,26,13); ctx.fillStyle='rgba(240,200,74,0.16)'; ctx.fill(); ctx.strokeStyle='#9a7f2c'; ctx.lineWidth=1; rr(ctx,W-pad-sw-16,top+18,sw,26,13); ctx.stroke();
+          ctx.fillStyle='#ecd07a'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(st,W-pad-16-sw/2,top+31); ctx.textBaseline='alphabetic';
+          // barra alta com min-fill + marcador ritmo
+          const bx=ix+52,bw=W-pad-16-(ix+52),bh=20,by=top+58;
+          rr(ctx,bx,by,bw,bh,bh/2); ctx.fillStyle='#242c3a'; ctx.fill();
+          const frac=Math.max(0.035,Math.min(1,n.pct/100));
+          rr(ctx,bx,by,Math.max(bh,bw*frac),bh,bh/2); ctx.fillStyle=n.cor; ctx.fill();
+          const px=bx+bw*Math.min(1,s.esp/100);
+          ctx.fillStyle='#eef1f6'; ctx.fillRect(px-1,by-4,2,bh+8);
+          ctx.textAlign='center'; ctx.font='700 10px Arial'; ctx.fillStyle='#cfd4dc'; ctx.fillText('hoje',px,by-8);
+          // herói por estado
+          const heroY=top+108;
+          ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+          if(n.pct<20){
+            ctx.font='800 32px Arial'; ctx.fillStyle='#F0C84A'; ctx.fillText(brlR(n.porDia)+' / dia',ix+52,heroY);
+            const w1=ctx.measureText(brlR(n.porDia)+' / dia').width;
+            ctx.font='600 15px Arial'; ctx.fillStyle='#8a94a2'; ctx.fillText('para bater a '+n.label,ix+52+w1+14,heroY-3);
+            ctx.textAlign='right'; ctx.font='700 15px Arial'; ctx.fillStyle='#aab4c0'; ctx.fillText('faltam '+brlR(n.falta)+'  ·  '+n.pct+'%',W-pad-16,heroY);
+          } else {
+            ctx.font='800 30px Arial'; ctx.fillStyle='#f4f6fa'; ctx.fillText('faltam '+brlR(n.falta),ix+52,heroY);
+            const w1=ctx.measureText('faltam '+brlR(n.falta)).width;
+            ctx.font='800 20px Arial'; ctx.fillStyle=n.cor; ctx.fillText('· '+n.pct+'%',ix+52+w1+12,heroY);
+            ctx.textAlign='right'; ctx.font='700 15px Arial'; ctx.fillStyle='#8a94a2'; ctx.fillText('R$ '+n.porDia.toLocaleString('pt-BR')+' / dia',W-pad-16,heroY);
+          }
+        } else { // futura compacta
+          ctx.fillStyle='rgba(255,255,255,0.025)'; rr(ctx,pad,top,W-pad*2,h,10); ctx.fill();
+          escada(ctx,pad+16,cy-7,n.lvl,'#5a6172',false);
+          ctx.textAlign='left'; ctx.font='700 20px Arial'; ctx.fillStyle='#aeb6c2'; ctx.fillText(n.label,pad+70,cy-4);
+          const bx=pad+70,bw=300,bh=8,by=cy+6;
+          rr(ctx,bx,by,bw,bh,4); ctx.fillStyle='#242c3a'; ctx.fill();
+          rr(ctx,bx,by,Math.max(bh,bw*Math.max(0.035,Math.min(1,n.pct/100))),bh,4); ctx.fillStyle=n.cor; ctx.fill();
+          ctx.textAlign='right'; ctx.font='700 16px Arial'; ctx.fillStyle='#8a94a2';
+          ctx.fillText('faltam '+abrev(n.falta)+'  ·  '+abrev(n.porDia)+'/dia  ·  '+n.pct+'%',W-pad-16,cy+2);
+        }
+        y+=h+8;
+      });
+    }
+    // faixa de contexto
+    const sy=headH+16+bodyH+8;
+    ctx.strokeStyle='rgba(240,200,74,0.28)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,sy); ctx.lineTo(W-pad,sy); ctx.stroke();
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.font='800 18px "Segoe UI Emoji",Arial'; ctx.fillStyle='#F0C84A';
+    ctx.fillText(todas?'🏆 Meta Master conquistada':'⚡ '+s.dias+' dias úteis restantes',pad,sy+30);
+    ctx.textAlign='right'; ctx.font='800 16px "Segoe UI Emoji",Arial'; ctx.fillStyle='#8a94a2';
+    ctx.fillText('Cada dia conta. 🥇',W-pad,sy+30);
+
+    document.getElementById('note').innerHTML='<b>'+s.rot+':</b> '+s.nota;
+  }
+
+  const sb=document.getElementById('states');
+  sb.innerHTML=estados.map((s,i)=>'<button class="stbtn'+(i===0?' on':'')+'" data-i="'+i+'">'+s.rot+'</button>').join('');
+  sb.addEventListener('click',e=>{ const b=e.target.closest('.stbtn'); if(!b)return; cur=+b.dataset.i; sb.querySelectorAll('.stbtn').forEach(x=>x.classList.toggle('on',x===b)); draw(); });
+  draw();
+</script>
+</body>
+</html>

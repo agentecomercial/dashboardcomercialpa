@@ -58,7 +58,7 @@ $NomeMCIS = 'Meta Ads MCIS 250 - Vitoria'
 $NomeTCE  = 'Meta Ads TCE Cresc. Empresarial - Teresina'
 
 $Token = 'mcp_a7f09259f81429f0f204dd1cb5ea5eb04b382a7dca881fe6fd5613c7'
-$Url   = 'https://mcp.salescube.com.br/mcp'
+$Url   = 'https://mcp.zsales.com.br/mcp'
 # =================================================
 
 $ErrorActionPreference = 'Stop'

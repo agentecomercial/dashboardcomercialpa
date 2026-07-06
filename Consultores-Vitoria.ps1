@@ -9,6 +9,7 @@
     - $Consultores   -> Faturamento-Vitoria.ps1, Leads-Vitoria.ps1, Leads-Vitoria-Campanha.ps1,
                         Negociacoes-Vitoria.ps1, Meta-Vitoria.ps1, Movimentacao-Leads.ps1,
                         meta-master\Gerar-Dados-MetaMaster.ps1
+    - const CONSULTORES (aba Comandos) -> meta-master\index.html
     - Linha "Mapa de consultores -> user_id" -> COMANDOS.md
 
 .EXAMPLE
@@ -49,6 +50,7 @@ $ArquivosConsultores = @(
 )
 $ArquivoEquipe   = 'Acoes-Leads-Vitoria.ps1'
 $ArquivoComandos = 'COMANDOS.md'
+$ArquivoIndexMM  = 'meta-master\index.html'   # const CONSULTORES da aba Comandos
 
 $Utf8Bom    = New-Object System.Text.UTF8Encoding($true)    # .ps1 SEMPRE com BOM (PS 5.1 + acentos)
 $Utf8SemBom = New-Object System.Text.UTF8Encoding($false)   # .md sem BOM
@@ -60,7 +62,7 @@ function Read-Texto([string]$rel) {
 }
 function Write-Texto([string]$rel, [string]$texto) {
   $enc = $Utf8Bom
-  if ($rel -match '\.md$') { $enc = $Utf8SemBom }
+  if ($rel -match '\.(md|html)$') { $enc = $Utf8SemBom }
   [System.IO.File]::WriteAllText((Join-Path $Root $rel), $texto, $enc)
 }
 # Substitui a 1a ocorrencia do padrao sem interpretar $ no texto novo
@@ -188,6 +190,25 @@ if (-not $acao) {
       }
     }
   }
+  # meta-master\index.html (const CONSULTORES da aba Comandos)
+  $tIdx = Read-Texto $ArquivoIndexMM
+  if (-not $tIdx) { Write-Output ("  [FALTA ] {0} (arquivo nao encontrado)" -f $ArquivoIndexMM) }
+  else {
+    $mi = [regex]::Match($tIdx, '(?ms)^\s*const CONSULTORES=\[\r?\n(.*?)^\s*\];')
+    if (-not $mi.Success) { Write-Output ("  [ERRO  ] {0} (bloco const CONSULTORES nao encontrado)" -f $ArquivoIndexMM) }
+    else {
+      $nomesIdx = @([regex]::Matches($mi.Groups[1].Value, "nome:'([^']+)'") | ForEach-Object { $_.Groups[1].Value } | Sort-Object)
+      $difIdx = @(Compare-Object $ref $nomesIdx)
+      if ($difIdx.Count -eq 0) { Write-Output ("  [OK    ] {0}" -f $ArquivoIndexMM) }
+      else {
+        Write-Output ("  [DIFERE] {0}:" -f $ArquivoIndexMM)
+        foreach ($d in $difIdx) {
+          $lado = 'so aqui'; if ($d.SideIndicator -eq '<=') { $lado = 'falta aqui' }
+          Write-Output ("           - {0} ({1})" -f $d.InputObject, $lado)
+        }
+      }
+    }
+  }
   Write-Output ''
   Write-Output "Para alterar: -Incluir 'Nome Exato' -Id <user_id> [-Val Apelido] | -Excluir <numero da lista ou parte do nome>  (+ -Aplicar para gravar)"
   return
@@ -223,6 +244,14 @@ $BlocoEquipe = '$Equipe = @(' + $NL + ($linhasEq -join $NL) + $NL + ')'
 
 $MapaComandos = (@($novaEquipe | ForEach-Object { '{0} {1}' -f $_.val, $_.id }) -join ' · ')
 
+# Bloco JS da aba Comandos (meta-master\index.html) — alinhamento por coluna como o original
+$linhasJs = @()
+foreach ($c in $novaEquipe) {
+  $pn = "{nome:'" + $c.nome + "'," + (' ' * ($wNome2 - $c.nome.Length + 1))
+  $linhasJs += ('    ' + $pn + "val:'" + $c.val + "'},")
+}
+$BlocoIndexMM = '  const CONSULTORES=[' + $NL + ($linhasJs -join $NL) + $NL + '  ];'
+
 # ---------- 6) Aplica (ou avisa que e so previa) ----------
 $PadraoConsultores = '(?ms)^\$Consultores = @\(\r?\n.*?^\)'
 
@@ -230,6 +259,7 @@ if (-not $Aplicar) {
   Write-Output 'PREVIA (nada gravado). Arquivos que serao atualizados com -Aplicar:'
   Write-Output ("  - {0} (bloco `$Equipe + user_id)" -f $ArquivoEquipe)
   foreach ($rel in $ArquivosConsultores) { Write-Output ("  - {0}" -f $rel) }
+  Write-Output ("  - {0} (const CONSULTORES da aba Comandos)" -f $ArquivoIndexMM)
   Write-Output ("  - {0} (linha do mapa consultor -> user_id)" -f $ArquivoComandos)
   Write-Output ''
   Write-Output 'Rode novamente com -Aplicar para gravar.'
@@ -250,7 +280,15 @@ foreach ($rel in $ArquivosConsultores) {
   if ($novo) { Write-Texto $rel $novo; $ok += $rel } else { $falha += "$rel (bloco nao encontrado)" }
 }
 
-# 6c) COMANDOS.md (linha do mapa) — melhor esforco, nao e critico
+# 6c) meta-master\index.html (const CONSULTORES da aba Comandos)
+$PadraoIndexMM = '(?ms)^[ \t]*const CONSULTORES=\[\r?\n.*?^[ \t]*\];'
+$tIdx = Read-Texto $ArquivoIndexMM
+if ($tIdx) {
+  $novo = Update-Bloco $tIdx $PadraoIndexMM $BlocoIndexMM
+  if ($novo) { Write-Texto $ArquivoIndexMM $novo; $ok += $ArquivoIndexMM } else { $falha += "$ArquivoIndexMM (bloco nao encontrado)" }
+} else { $falha += "$ArquivoIndexMM (nao encontrado)" }
+
+# 6d) COMANDOS.md (linha do mapa) — melhor esforco, nao e critico
 $cmdTexto = Read-Texto $ArquivoComandos
 if ($cmdTexto) {
   $padraoMapa = '(?m)^(\*\*Mapa de consultores → user_id\*\*[^:]*: ).*$'
