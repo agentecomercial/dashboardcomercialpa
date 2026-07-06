@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Treinamento Comercial · Maestria Global Business</title>
+<link rel="stylesheet" href="assets/maestria.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
+  body { color: var(--cis-text); font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  /* ===== Layout com sidebar ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    position: relative;
+    background: linear-gradient(170deg, #151d2c 0%, #06080e 100%);
+    border-right: 1px solid rgba(226,182,79,0.18);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 14px;
+    overflow-y: auto;
+    z-index: 6;
+  }
+  .sidebar .brand {
+    padding: 4px 12px 18px;
+    border-bottom: 1px solid rgba(226,182,79,0.12);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+  }
+  .sidebar .brand h2 {
+    margin: 4px 0 0;
+    font-size: 22px;
+    color: var(--cis-yellow);
+    letter-spacing: -0.5px;
+    font-weight: 900;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidenav-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+    margin: 14px 12px 6px;
+  }
+  .sidenav-item {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cis-text);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 600 14px/1.2 inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .sidenav-item:hover { background: rgba(226,182,79,0.08); color: var(--cis-yellow); }
+  .sidenav-item.is-active {
+    background: rgba(226,182,79,0.15);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico {
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico svg { width: 16px; height: 16px; }
+  .sidenav-item .num {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(226,182,79,0.15);
+    color: var(--cis-yellow);
+    font-weight: 900;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidenav-item .meta {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--cis-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Chevron para expandir/recolher subtópicos */
+  .sidenav-item .chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: var(--cis-muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: transform .2s ease, background .15s ease, color .15s ease;
+    flex: 0 0 22px;
+    padding: 0;
+  }
+  .sidenav-item .chevron:hover {
+    background: rgba(226,182,79,0.18);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .chevron svg { width: 11px; height: 11px; }
+  .sidenav-item .chevron.is-open { transform: rotate(90deg); color: var(--cis-yellow); }
+  .sidenav-item.highlight .chevron { color: var(--cis-yellow); }
+  .sidenav-item.highlight.is-active .chevron { color: var(--cis-blue-900); }
+
+  .sidenav-item.highlight {
+    background: linear-gradient(135deg, rgba(226,182,79,0.18), rgba(181,132,40,0.10));
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    font-weight: 800;
+    margin-top: 6px;
+  }
+  .sidenav-item.highlight:hover { background: linear-gradient(135deg, rgba(226,182,79,0.28), rgba(181,132,40,0.18)); }
+  .sidenav-item.highlight.is-active { background: var(--cis-yellow); color: var(--cis-blue-900); }
+  .sidenav-item.highlight.is-active .ico { color: var(--cis-blue-900); }
+
+  .sidebar .foot {
+    margin-top: auto;
+    padding: 14px 12px 0;
+    border-top: 1px solid rgba(226,182,79,0.12);
+    font-size: 11px;
+    color: var(--cis-muted);
+    line-height: 1.4;
+  }
+
+  /* Container agrupador */
+  .sidenav-group {
+    display: none;
+    margin-left: 18px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(226,182,79,0.18);
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .sidenav-group.is-open { display: block; }
+
+  /* Item aninhado */
+  .sidenav-item.nested {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--cis-yellow);
+    background: rgba(226,182,79,0.06);
+    border: 1px solid rgba(226,182,79,0.18);
+    margin-top: 4px;
+  }
+  .sidenav-item.nested:hover {
+    background: rgba(226,182,79,0.14);
+    border-color: var(--cis-card-border-strong);
+  }
+  .sidenav-item.nested.is-active {
+    background: rgba(226,182,79,0.22);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+
+  /* Sublista de slides (subtópicos) por deck */
+  .sidenav-sub {
+    list-style: none;
+    margin: 4px 0 8px;
+    padding: 4px 4px 8px 12px;
+    border-left: 2px solid rgba(226,182,79,0.18);
+    margin-left: 18px;
+    display: none;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sidenav-sub.is-open { display: block; }
+
+  .sidenav-sub li { margin: 0; }
+  .sidenav-sub-item {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--cis-muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font: 500 12px/1.35 inherit;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    transition: background .12s ease, color .12s ease;
+  }
+  .sidenav-sub-item:hover { background: rgba(226,182,79,0.08); color: var(--cis-yellow); }
+  .sidenav-sub-item.is-current {
+    background: rgba(226,182,79,0.18);
+    color: var(--cis-yellow);
+    font-weight: 700;
+  }
+  .sidenav-sub-item .sub-n {
+    flex: 0 0 22px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 10px;
+    color: var(--cis-yellow);
+    opacity: .7;
+    padding-top: 1px;
+  }
+  .sidenav-sub-item.is-current .sub-n { opacity: 1; }
+  .sidenav-sub-item .sub-title { flex: 1; }
+
+  /* ===== Conteúdo principal (Views) ===== */
+  .main { position: relative; overflow: hidden; }
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* ===== Menu view ===== */
+  #menu-view {
+    height: 100vh; overflow: auto;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(36,48,74,0.45), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(226,182,79,0.10), transparent 55%),
+      linear-gradient(160deg, var(--cis-blue-900) 0%, var(--cis-blue-800) 55%, var(--cis-blue-700) 100%);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 36px 96px; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(226,182,79,0.18);
+    margin-bottom: 40px;
+  }
+  .hero .badge {
+    display: inline-block; background: var(--cis-yellow); color: var(--cis-blue-900);
+    padding: 6px 18px; border-radius: 999px; font-weight: 900;
+    letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 60px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
+    letter-spacing: -1.5px; font-weight: 900;
+    /* efeito metálico dourado */
+    background:linear-gradient(100deg,
+      color-mix(in srgb, var(--cis-yellow) 55%, #ffffff) 0%,
+      var(--cis-yellow) 32%,
+      color-mix(in srgb, var(--cis-yellow) 82%, #ffffff) 52%,
+      var(--cis-yellow) 72%,
+      color-mix(in srgb, var(--cis-yellow) 68%, #06080e) 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.45)) drop-shadow(0 2px 5px rgba(0,0,0,.5));
+  }
+  .hero h1 small { display:block; color:#fff; font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px;
+    -webkit-text-fill-color:initial; filter:none; background:none; }
+  .hero p.sub { max-width: 720px; font-size: 17px; color: var(--cis-muted); margin: 0; }
+  .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero .stats strong { display:block; font-size: 44px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-bottom: 40px; }
+  .module-card {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(226,182,79,0.10), transparent 50%),
+      rgba(21, 29, 44, 0.65);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 24px 60px -32px rgba(0,0,0,0.85);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(226,182,79,0.25); }
+  .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
+  .module-card h3 { margin: 0; font-size: 28px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 14px; line-height: 1.5; }
+  .module-card .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(226,182,79,0.18);
+    font-size: 13px; color: var(--cis-muted);
+  }
+  .module-card .meta .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 5px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 13px; color: var(--cis-text); }
+  .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
+
+  .section-title { font-size: 13px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 14px; }
+
+  /* Card especial Fechamento */
+  .closing-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(226,182,79,0.25), transparent 50%),
+      linear-gradient(135deg, rgba(181,132,40,0.18), rgba(21, 29, 44, 0.85));
+    border: 1px solid var(--cis-card-border-strong);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 28px 60px -28px rgba(226,182,79,0.3);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .closing-card:hover { transform: translateY(-3px); box-shadow: 0 32px 70px -25px rgba(226,182,79,0.45); }
+  .closing-card .tag { font-size: 11px; letter-spacing: 0.2em; color: var(--cis-blue-900); font-weight: 900; text-transform: uppercase; background: var(--cis-yellow); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .closing-card h3 { margin: 10px 0 6px; font-size: 32px; color: var(--cis-yellow); line-height: 1.05; font-weight: 900; letter-spacing: -1px; }
+  .closing-card p { margin: 0; color: #fff; font-size: 14px; line-height: 1.5; max-width: 580px; }
+  .closing-card .cta {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px -8px rgba(226,182,79,0.6);
+  }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
+  .info-grid .card {
+    background: rgba(21, 29, 44, 0.55);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+  .info-grid .card h4 { margin: 0 0 6px; color: var(--cis-yellow); font-size: 15px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 13px; line-height: 1.5; }
+  .info-grid .card kbd {
+    display: inline-block; background: rgba(226,182,79,0.18);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
+  }
+
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 20px; border-top: 1px solid rgba(226,182,79,0.12); }
+
+  /* ===== Player view ===== */
+  #player-view { position: absolute; inset: 0; background: #000; }
+  #player-view iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0; display: block;
+  }
+  .player-topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
+    pointer-events: none;
+    font-family: inherit;
+  }
+  .player-topbar > * { pointer-events: auto; }
+  .player-topbar .spacer { flex: 1; }
+
+  .pbtn {
+    appearance: none;
+    background: rgba(21, 29, 44, 0.6);
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: 700 13px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+  }
+  .pbtn:hover { background: rgba(226,182,79,0.2); transform: translateY(-1px); }
+  .pbtn:active { transform: translateY(0); }
+  .pbtn svg { width: 14px; height: 14px; }
+  .pbtn.is-on {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    border-color: var(--cis-yellow);
+  }
+
+  .player-topbar .module-label {
+    font: 700 11px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cis-muted);
+    background: rgba(21,29,44,0.5);
+    border: 1px solid rgba(226,182,79,0.25);
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
+
+
+  /* Em fullscreen, a sidebar some do grid (vira overlay sob demanda) */
+  .is-fullscreen .sidebar { display: none; }
+  .is-fullscreen .app { grid-template-columns: 1fr; }
+
+  /* Puxador da sidebar — visível só em fullscreen */
+  .sidebar-pull {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 40;
+    background: linear-gradient(90deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+    color: var(--cis-blue-900);
+    border: 0;
+    border-radius: 0 14px 14px 0;
+    padding: 22px 10px 22px 6px;
+    cursor: pointer;
+    box-shadow: 6px 0 20px -4px rgba(0,0,0,0.6);
+    transition: padding-right .15s ease, transform .15s ease;
+  }
+  .sidebar-pull:hover { padding-right: 14px; transform: translateY(-50%) translateX(2px); }
+  .sidebar-pull svg { width: 18px; height: 18px; display: block; }
+  .is-fullscreen .sidebar-pull { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Sidebar como overlay quando em fullscreen e ativada via puxador */
+  .is-fullscreen .sidebar.is-overlay {
+    display: flex !important;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px;
+    z-index: 45;
+    animation: sidebarIn .22s ease both;
+    box-shadow: 8px 0 30px -8px rgba(0,0,0,0.6);
+  }
+  .is-fullscreen .sidebar-pull.is-hidden { display: none; }
+
+  /* Backdrop para fechar a sidebar overlay */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 42;
+    animation: fadeIn .2s ease both;
+  }
+  .is-fullscreen .sidebar-backdrop.is-open { display: block; }
+
+  @keyframes sidebarIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Botão "fechar sidebar overlay" */
+  .sidebar-close {
+    display: none;
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease;
+  }
+  .sidebar-close:hover { background: rgba(226,182,79,0.18); }
+  .sidebar-close svg { width: 14px; height: 14px; }
+  .is-fullscreen .sidebar.is-overlay .sidebar-close { display: inline-flex; }
+
+  /* Sidebar toggle (mobile/narrow) */
+  .sidebar-toggle {
+    display: none;
+    position: fixed; top: 14px; left: 14px; z-index: 30;
+  }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+    }
+    .sidebar.is-open { transform: translateX(0); }
+    .sidebar-toggle { display: inline-flex; }
+    .hero { grid-template-columns: 1fr; }
+    .hero .stats { text-align: left; }
+    .hero h1 { font-size: 42px; }
+    .grid-modules { grid-template-columns: 1fr; }
+    .closing-card { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- =========================== SIDEBAR =========================== -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebar-close" title="Fechar (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="brand">
+      <small>Treinamento Comercial</small>
+      <h2>MAESTRIA</h2>
+    </div>
+
+    <nav class="sidenav">
+      <button class="sidenav-item is-active" data-go="menu">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+        Visão geral
+      </button>
+
+      <button class="sidenav-item highlight" data-go="fechamento">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Fechamento
+        <span class="meta">15</span>
+        <span class="chevron" data-toggle-sub="fechamento" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
+
+      <div class="sidenav-label">Trilha completa</div>
+
+      <button class="sidenav-item" data-go="1">
+        <span class="num">1</span>
+        Produto
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="1" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="1"></ul>
+
+      <button class="sidenav-item" data-go="2">
+        <span class="num">2</span>
+        Prospecção
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="2" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="2"></ul>
+
+      <button class="sidenav-item" data-go="3">
+        <span class="num">3</span>
+        Apresentação
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="3" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="3"></ul>
+
+      <button class="sidenav-item" data-go="4">
+        <span class="num">4</span>
+        Negociação
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="4" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="4"></ul>
+
+      <button class="sidenav-item" data-go="spin">
+        <span class="num">S</span>
+        SPIN Selling
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="spin" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="spin"></ul>
+    </nav>
+
+    <div class="foot">
+      Conteúdo Febracis · uso interno (consultores + equipe).
+    </div>
+  </aside>
+
+  <!-- =========================== MAIN =========================== -->
+  <main class="main">
+
+    <!-- ====== MENU VIEW ====== -->
+    <section id="menu-view" class="view is-active">
+
+      <div class="wrap">
+
+        <header class="hero">
+          <div>
+            <img class="logo-maestria" src="assets/img/logo.jpg" alt="" style="height:120px; display:block; margin-bottom:14px;">
+            <span class="badge">Treinamento Comercial</span>
+            <h1>MAESTRIA<small>Global Business — mastermind oficial da Febracis</small></h1>
+            <p class="sub">Programa de formação da equipe comercial para vender a Maestria Global Business: 12 meses de mentoria premium com Paulo Vieira, experts e diretores Febracis — um ecossistema contínuo de desenvolvimento empresarial, com imersões no Brasil e no exterior. 4 módulos + SPIN Selling e sessão de Fechamento: produto, prospecção premium, apresentação, negociação, scripts e roteiros completos.</p>
+          </div>
+          <div class="stats">
+            <div class="img-frame" style="width:300px; height:169px; margin-bottom:16px;"><img src="assets/img/capa-paulo.jpg" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"></div>
+            <strong>115</strong>
+            Slides 16:9
+            <div style="margin-top:14px;"><strong>06</strong>Trilhas</div>
+          </div>
+        </header>
+
+        <button class="closing-card" data-go="fechamento">
+          <div>
+            <span class="tag">Sessão especial</span>
+            <h3>Fechamento Maestria</h3>
+            <p>Frases prontas, choice close (integral ou à vista), yes ladder, inversão de risco e o custo de ficar fora da sala certa. Scripts por objeção, roteiro completo da abertura ao contrato e o mantra do fechador high-ticket.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="spin">
+          <div>
+            <span class="tag">Módulo • Closer</span>
+            <h3>SPIN Selling — aplicado à Maestria</h3>
+            <p>As 4 perguntas (Situação, Problema, Implicação, Necessidade) adaptadas às dores do empresário: preso na operação, crescimento caótico, solidão do topo e falta de rede de alto nível. Diálogos closer↔empresário, frases-ponte e erros fatais.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <h2 class="section-title">▸ Trilha do Treinamento</h2>
+        <div class="grid-modules">
+
+          <button class="module-card" data-go="1">
+            <span class="tag">Módulo 1</span>
+            <h3>Produto<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">(Maestria)</span></h3>
+            <p>O que se vende, quem é o cliente e por que a Maestria é um ecossistema — não encontros pontuais.</p>
+            <ul>
+              <li>A Jornada Integra: 5 frentes e os 5 pilares</li>
+              <li>Mentoria com Paulo Vieira, Interbusiness e imersões</li>
+              <li>Formações incluídas: Assessment, BHP, FGPC e CIS Black</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="2">
+            <span class="tag">Módulo 2</span>
+            <h3>Prospecção<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Qualificação</span></h3>
+            <p>Caça seletiva: funil inteligente, perfil do empresário Maestria e SPIN para extrair a dor real antes da oferta.</p>
+            <ul>
+              <li>ICP: empresário com negócio rodando que quer escalar</li>
+              <li>Base quente: alunos CIS, BHP e FGPC</li>
+              <li>Matriz de priorização e roteiro de qualificação</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="3">
+            <span class="tag">Módulo 3</span>
+            <h3>Apresentação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Proposta</span></h3>
+            <p>Vender o ecossistema, não os encontros. Narrativa das 5 frentes, Paulo Vieira como ativo central e proposta irresistível.</p>
+            <ul>
+              <li>Storytelling: o ROI de estar na sala certa</li>
+              <li>Ancoragem: R$ 275 mil de entregas por R$ 85 mil</li>
+              <li>Prova social, cases e framework de conversão</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="4">
+            <span class="tag">Módulo 4</span>
+            <h3>Negociação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Objeções</span></h3>
+            <p>Transformar objeções em fechamento no high ticket. Scripts prontos, técnica do silêncio e reframing avançado.</p>
+            <ul>
+              <li>Objeções: preço, tempo, "já tenho mentoria"</li>
+              <li>"Vou fazer só o CIS primeiro" e o custo da inação</li>
+              <li>Método Benjamin Franklin e matriz de objeções</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+        </div>
+
+        <h2 class="section-title">▸ Como navegar</h2>
+        <div class="info-grid">
+          <div class="card">
+            <h4>Teclado</h4>
+            <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+          </div>
+          <div class="card">
+            <h4>Touch / Mouse</h4>
+            <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+          </div>
+          <div class="card">
+            <h4>Apresentação</h4>
+            <p>Use a sidebar à esquerda para alternar rapidamente entre trilhas. A tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+          </div>
+        </div>
+
+        <footer>
+          Treinamento Comercial Maestria Global Business · Conteúdo Febracis · uso interno (consultores + equipe).
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ====== PLAYER VIEW ====== -->
+    <section id="player-view" class="view" aria-hidden="true">
+      <div class="player-topbar">
+        <button class="pbtn" id="back-menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          Menu
+        </button>
+        <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+        <div class="spacer"></div>
+      </div>
+      <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+    </section>
+
+  </main>
+
+  <!-- Puxador da sidebar em fullscreen -->
+  <button class="sidebar-pull" id="sidebar-pull" title="Abrir menu" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <!-- Backdrop para fechar overlay -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+</div>
+
+<script>
+  // ---- Estado e rotas ----
+  const menuView   = document.getElementById('menu-view');
+  const playerView = document.getElementById('player-view');
+  const frame      = document.getElementById('module-frame');
+  const moduleLbl  = document.getElementById('module-label');
+  const backBtn    = document.getElementById('back-menu');
+  const sidebar    = document.getElementById('sidebar');
+
+  const ROUTES = {
+    menu:        { file: null,                title: null },
+    fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Fechamento' },
+    spin:        { file: 'spin-selling.html',  title: '<strong>S</strong> SPIN Selling' },
+    '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> Produto' },
+    '2':         { file: 'modulo-2.html',     title: '<strong>02</strong> Prospecção' },
+    '3':         { file: 'modulo-3.html',     title: '<strong>03</strong> Apresentação' },
+    '4':         { file: 'modulo-4.html',     title: '<strong>04</strong> Negociação' },
+  };
+
+  // Sem sub-itens aninhados: SPIN Selling é um módulo próprio da trilha.
+  const NESTED_PARENT = {};
+
+  function setActiveNav(key) {
+    document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+
+    // Abre o grupo pai se a key for um sub-item aninhado
+    const groupKey = NESTED_PARENT[key] || key;
+    document.querySelectorAll('.sidenav-group').forEach(g => {
+      g.classList.toggle('is-open', g.dataset.groupFor === groupKey);
+    });
+
+    // Sublista do deck ativo aberta, demais fechadas
+    document.querySelectorAll('.sidenav-sub').forEach(ul => {
+      ul.classList.toggle('is-open', ul.dataset.subFor === key);
+    });
+    syncChevrons();
+  }
+
+  function syncChevrons() {
+    document.querySelectorAll('.chevron[data-toggle-sub]').forEach(c => {
+      const key = c.dataset.toggleSub;
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+      const isOpen = (group && group.classList.contains('is-open'))
+                  || (sub && sub.classList.contains('is-open'));
+      c.classList.toggle('is-open', isOpen);
+    });
+  }
+
+  function toggleSubFor(key) {
+    const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+    if (group) {
+      group.classList.toggle('is-open');
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open', group.classList.contains('is-open'));
+    } else {
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open');
+    }
+    syncChevrons();
+  }
+
+  // ---- Subtópicos: títulos pré-definidos (funciona em file://) ----
+  // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
+  // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
+  const SLIDE_TITLES = {
+    '1': [
+      'Maestria Global Business (capa)',
+      'O que é a Maestria',
+      'O que NÃO é',
+      'A Dor que a Maestria Resolve',
+      'Transformação vs. Produto',
+      'A Jornada Integra — 5 Frentes',
+      'Os 5 Pilares do Posicionamento',
+      'Mentoria Direta com Paulo Vieira',
+      '9 Encontros Estratégicos + 9 Táticos',
+      'Imersões Presenciais e Mente Mestra',
+      'Interbusiness — O Evento Internacional',
+      'Formações Incluídas no Ecossistema',
+      'Plataforma e Comunidade',
+      'Os Especialistas da Jornada',
+      'Para Quem É (ICP)',
+      'Para Quem NÃO É',
+      'Maestria em Números',
+      'Estrutura do Pitch',
+      'Erros Comuns ao Apresentar',
+      'Checklist + Próximos Passos'
+    ],
+    '2': [
+      'Prospecção e Qualificação (capa)',
+      'Prospecção Premium: Caça Seletiva',
+      'O Funil Inteligente da Maestria',
+      'ICP — O Empresário Maestria',
+      'Onde Encontrar Esse Empresário',
+      'A Base Quente: Alunos CIS, BHP e FGPC',
+      'Sinais de Dor do Empresário',
+      'Tipos de Lead: Frio, Morno, Quente',
+      'SPIN na Qualificação',
+      'Diagnóstico: Crescimento Caótico',
+      'Escuta Ativa de Alto Nível',
+      'Roteiro de Qualificação',
+      'Matriz de Priorização',
+      'Gatilhos de Abordagem',
+      'Mensagens de Prospecção',
+      'Qualificando o Decisor e o Momento',
+      'Preparação para a Reunião',
+      'Exemplo Real de Abordagem',
+      'Erros Fatais na Prospecção',
+      'Checklist do Módulo'
+    ],
+    '3': [
+      'Apresentação e Proposta (capa)',
+      'Venda o Ecossistema, Não os Encontros',
+      'Estrutura da Apresentação Premium',
+      'Conectar Dor → Solução',
+      'A Narrativa das 5 Frentes',
+      'Paulo Vieira como Ativo Central',
+      'Storytelling: A Sala Certa',
+      'Networking como Alavanca de Negócios',
+      'Gatilhos Mentais na Venda Premium',
+      'Construção de Autoridade',
+      'Demonstrando as Experiências',
+      'A Proposta Irresistível',
+      'Ancoragem: R$ 275 mil por R$ 85 mil',
+      'Prova Social e Cases',
+      'O ROI de Estar na Sala Certa',
+      'Comunicação Não-Verbal',
+      'Conduzindo a Reunião',
+      'Framework de Conversão',
+      'Erros na Apresentação',
+      'Checklist do Módulo'
+    ],
+    '4': [
+      'Negociação e Objeções (capa)',
+      'Psicologia da Objeção no High Ticket',
+      'Mapa das Objeções da Maestria',
+      '"Está caro"',
+      'Contorno por Valor Embutido',
+      '"Preciso pensar"',
+      '"Já tenho mentoria"',
+      '"Não tenho tempo"',
+      '"Não é o momento da empresa"',
+      '"Vou fazer só o CIS primeiro"',
+      'Urgência Ética',
+      'O Custo da Inação',
+      'Negociação de Alto Valor',
+      'Scripts Prontos de Contorno',
+      'Método Benjamin Franklin',
+      'A Técnica do Silêncio',
+      'Reframing de Objeções',
+      'Fechando a Negociação',
+      'Erros Fatais',
+      'Matriz de Objeções'
+    ],
+    'spin': [
+      'SPIN Selling na Maestria (capa)',
+      'O que é SPIN',
+      'Por que o Closer Premium Usa',
+      'A Regra de Ouro',
+      'SPIN no Fluxo da Venda',
+      'Perguntas de SITUAÇÃO',
+      'Perguntas de PROBLEMA',
+      'Perguntas de IMPLICAÇÃO',
+      'Perguntas de NECESSIDADE',
+      'Frases-Ponte',
+      'Narrativa 1: Preso na Operação',
+      'Narrativa 2: Crescimento Caótico',
+      'Narrativa 3: Sozinho no Topo',
+      'Narrativa 4: Sem Rede de Alto Nível',
+      'Combos SPIN + Fechamento',
+      'Frases que Matam a Venda',
+      'Erros Fatais no SPIN',
+      'Mapa de Diagnóstico do Empresário',
+      'Roleplay',
+      'Checklist + Mantra'
+    ],
+    'fechamento': [
+      'Fechamento (capa)',
+      'A Regra de Ouro do Fechamento',
+      'Os 4 Pilares',
+      'Sinais de Compra',
+      'A Sequência Clássica',
+      'Frases Prontas de Fechamento',
+      'Choice Close: Integral ou À Vista',
+      'Yes Ladder',
+      'O Custo de Ficar Fora da Sala',
+      'Empathy Close + Prova Social',
+      'O Silêncio',
+      'Inversão de Risco',
+      'Contornos Rápidos Finais',
+      'Roteiro da Abertura ao Contrato',
+      'Checklist Final + Mantra'
+    ]
+  };
+
+  const slideTitlesByKey = {}; // key -> [titles]
+  function decodeText(s) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+  function extractTitlesFromDoc(doc) {
+    const slides = doc.querySelectorAll('.slide');
+    return Array.from(slides).map((s, i) => {
+      const title = s.querySelector('.slide-title');
+      const badge = s.querySelector('.module-badge');
+      const eyebrow = s.querySelector('.eyebrow');
+      if (title) return decodeText(title.textContent);
+      if (s.classList.contains('module-cover') && badge) return decodeText(badge.textContent) + ' — Capa';
+      if (eyebrow) return decodeText(eyebrow.textContent);
+      return `Slide ${i + 1}`;
+    });
+  }
+
+  function renderSubtopicsPlaceholder(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '<li style="padding:6px 10px;font-size:11px;color:var(--cis-muted);font-style:italic;">carregando…</li>';
+  }
+
+  // Renderiza os subtópicos imediatamente a partir da lista estática.
+  function loadSlideTitles() {
+    Object.keys(SLIDE_TITLES).forEach(key => {
+      slideTitlesByKey[key] = SLIDE_TITLES[key];
+      renderSubtopics(key);
+    });
+  }
+
+  function renderSubtopics(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    const titles = slideTitlesByKey[key] || [];
+    ul.innerHTML = '';
+    titles.forEach((title, i) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'sidenav-sub-item';
+      btn.dataset.deck = key;
+      btn.dataset.slide = String(i + 1);
+      btn.innerHTML = `<span class="sub-n">${String(i + 1).padStart(2, '0')}</span><span class="sub-title">${title.replace(/</g,'&lt;')}</span>`;
+      btn.addEventListener('click', () => openAtSlide(key, i + 1));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function openAtSlide(key, slideN) {
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      return;
+    }
+    openRoute(key);
+    const onLoad = () => {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      frame.removeEventListener('load', onLoad);
+    };
+    frame.addEventListener('load', onLoad);
+  }
+
+  function markCurrentSubtopic(key, slideN) {
+    document.querySelectorAll('.sidenav-sub-item').forEach(b => {
+      b.classList.toggle('is-current', b.dataset.deck === key && b.dataset.slide === String(slideN));
+    });
+  }
+
+  function showMenu() {
+    playerView.classList.remove('is-active');
+    playerView.setAttribute('aria-hidden', 'true');
+    menuView.classList.add('is-active');
+    menuView.setAttribute('aria-hidden', 'false');
+    frame.src = 'about:blank';
+    history.replaceState(null, '', '#');
+    setActiveNav('menu');
+  }
+  function openRoute(key) {
+    if (key === 'menu') { showMenu(); return; }
+    const route = ROUTES[key];
+    if (!route || !route.file) return;
+    moduleLbl.innerHTML = route.title || ('Módulo ' + key);
+    frame.src = route.file;
+    frame.dataset.currentKey = key;
+    menuView.classList.remove('is-active');
+    menuView.setAttribute('aria-hidden', 'true');
+    playerView.classList.add('is-active');
+    playerView.setAttribute('aria-hidden', 'false');
+    history.replaceState(null, '', `#${key}`);
+    setActiveNav(key);
+    markCurrentSubtopic(key, 1);
+    if (sidebar) sidebar.classList.remove('is-open');
+  }
+
+  // Cliques: sidebar e cards do menu (mesmo data-go)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubFor(chev.dataset.toggleSub);
+        return;
+      }
+      openRoute(btn.dataset.go);
+    });
+  });
+  backBtn.addEventListener('click', showMenu);
+
+  // Mensagens do iframe
+  window.addEventListener('message', (e) => {
+    const fromMain = e.source === (frame && frame.contentWindow);
+    if (!fromMain) return;
+    const msg = e.data || {};
+    if (msg.type === 'cis-nav') {
+      if (msg.target === 'menu') showMenu();
+      else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+      else if (msg.target === 'fullscreen') toggleFullscreen();
+    } else if (msg.type === 'cis-slide-changed' && msg.n) {
+      const key = frame.dataset.currentKey;
+      if (key) markCurrentSubtopic(key, msg.n);
+    }
+  });
+
+  // Enviar estado de fullscreen para o iframe ativo
+  function broadcastFsState() {
+    const on = !!document.fullscreenElement;
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-fullscreen-state', on }, '*');
+    }
+  }
+  frame.addEventListener('load', broadcastFsState);
+
+  // Fullscreen
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function syncFs() {
+    const on = !!document.fullscreenElement;
+    document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => {
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const lbl = b.querySelector('.fs-label');
+      if (lbl) lbl.textContent = on ? 'Sair' : 'Tela cheia';
+    });
+  }
+  document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
+  document.addEventListener('fullscreenchange', () => {
+    syncFs();
+    broadcastFsState();
+    const on = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', on);
+    if (!on) closeSidebarOverlay();
+  });
+
+  // ---- Sidebar overlay em fullscreen ----
+  const pull = document.getElementById('sidebar-pull');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebarOverlay() {
+    sidebar.classList.add('is-overlay');
+    backdrop.classList.add('is-open');
+    pull.classList.add('is-hidden');
+  }
+  function closeSidebarOverlay() {
+    sidebar.classList.remove('is-overlay');
+    backdrop.classList.remove('is-open');
+    pull.classList.remove('is-hidden');
+  }
+
+  if (pull) pull.addEventListener('click', openSidebarOverlay);
+  if (backdrop) backdrop.addEventListener('click', closeSidebarOverlay);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebarOverlay);
+
+  // Fechar overlay ao clicar em um item da sidebar (navegação)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) return;
+      if (sidebar.classList.contains('is-overlay')) closeSidebarOverlay();
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      if (!playerView.classList.contains('is-active')) toggleFullscreen();
+    }
+    if (e.key === 'Escape') {
+      if (sidebar.classList.contains('is-overlay')) { closeSidebarOverlay(); return; }
+      if (playerView.classList.contains('is-active') && !document.fullscreenElement) showMenu();
+    }
+  });
+
+  // Hash inicial
+  const h = (location.hash || '').replace('#', '');
+  if (h && ROUTES[h]) openRoute(h);
+
+  // Carrega títulos dos slides
+  loadSlideTitles();
+</script>
+
+</body>
+</html>

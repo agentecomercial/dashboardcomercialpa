@@ -105,6 +105,28 @@
       ]
     },
     {
+      id: 'treinamento-maestria',
+      titulo: 'Treinamento Comercial MAESTRIA',
+      descricao: 'Maestria Global Business — mastermind oficial Febracis (12 meses de mentoria premium com Paulo Vieira, imersões no Brasil e exterior, ecossistema contínuo de desenvolvimento empresarial) — treinamento comercial para a equipe vender a Maestria. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'MAESTRIA',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 20,
+      url: 'treinamento-maestria/index.html',
+      icone: '💎',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-maestria/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (Maestria)',        url: 'treinamento-maestria/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-maestria/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-maestria/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-maestria/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado à Maestria',   url: 'treinamento-maestria/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-maestria/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
       id: 'treinamento-if',
       titulo: 'Treinamento Comercial IF',
       descricao: 'Inteligência Financeira — treinamento comercial para a equipe vender o IF. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
