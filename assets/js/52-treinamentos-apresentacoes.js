@@ -42,7 +42,12 @@
   var _listenerOver = null;
   var _listenerAdd = null;
   var _itemVisualizando = null;
-  var _indiceMod = 0; /* item selecionado dentro de item.estrutura */
+  var _indiceMod = 0; /* item selecionado dentro de item.estrutura (índice nas partes VISÍVEIS) */
+
+  /* ── Curadoria de páginas (ocultar partes da exibição em tela cheia) ── */
+  var _gerPaginas = false;      /* painel "Gerenciar páginas" aberto */
+  var _prevPaginas = false;     /* modo pré-visualização (mostra só o que ficará visível) */
+  var _stagingOcultas = null;   /* array de URLs marcadas p/ ocultar, ainda não salvas */
 
   /* ── Estado do wizard Claude (Caminho A) ───────────────────────── */
   var _claudeStep = 1;
@@ -294,6 +299,42 @@
       + '.trap-viz-nav button:disabled{ opacity:.35; cursor:not-allowed; }'
       + '.trap-viz-nav .pos{ color:rgba(255,255,255,.6); font-variant-numeric:tabular-nums; padding:0 8px; align-self:center; font-size:10px; }'
 
+      /* ── Curadoria de páginas: barra de prévia ── */
+      + '.trap-viz-prevbar{ display:flex; align-items:center; gap:12px; padding:9px 16px; background:linear-gradient(90deg, rgba(56,189,248,.18), rgba(56,189,248,.05)); border-bottom:1px solid rgba(56,189,248,.35); color:#7dd3fc; font-size:12px; font-weight:800; flex-shrink:0; }'
+      + '.trap-viz-prevbar .sp{ flex:1; }'
+      + '.trap-viz-prevbar button{ background:transparent; border:1px solid rgba(255,255,255,.20); color:var(--text); font-size:11px; font-weight:700; padding:6px 12px; border-radius:7px; cursor:pointer; font-family:inherit; }'
+      + '.trap-viz-prevbar button:hover{ border-color:#38bdf8; color:#38bdf8; }'
+      + '.trap-viz-prevbar button.pri{ background:var(--accent); border-color:var(--accent); color:var(--bg); }'
+      + '.trap-viz-prevbar button.pri:hover{ color:var(--bg); filter:brightness(1.08); }'
+      /* ── Curadoria de páginas: painel ── */
+      + '.trap-gp-wrap{ flex:1; overflow-y:auto; padding:24px 22px; max-width:840px; margin:0 auto; width:100%; display:flex; flex-direction:column; }'
+      + '.trap-gp-head{ margin-bottom:18px; }'
+      + '.trap-gp-head h3{ font-size:17px; font-weight:800; margin:0 0 6px; }'
+      + '.trap-gp-head p{ font-size:12px; color:var(--muted,#9aa5b1); margin:0; line-height:1.6; }'
+      + '.trap-gp-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }'
+      + '.trap-gp-row{ display:flex; align-items:center; gap:14px; background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:12px 16px; transition:opacity .15s, border-color .15s; }'
+      + '.trap-gp-row.off{ opacity:.55; border-style:dashed; }'
+      + '.trap-gp-n{ font-family:"DM Mono",monospace; font-size:12px; color:var(--muted,#9aa5b1); font-weight:700; flex-shrink:0; }'
+      + '.trap-gp-info{ flex:1; min-width:0; }'
+      + '.trap-gp-t{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+      + '.trap-gp-u{ font-size:10px; color:var(--muted,#9aa5b1); font-family:"DM Mono",monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }'
+      + '.trap-gp-status{ font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; flex-shrink:0; width:52px; text-align:right; }'
+      + '.trap-gp-row.off .trap-gp-status{ color:var(--red,#ef4444); }'
+      + '.trap-gp-row:not(.off) .trap-gp-status{ color:var(--green,#34d399); }'
+      + '.trap-gp-toggle{ width:42px; height:24px; border-radius:100px; position:relative; cursor:pointer; flex-shrink:0; transition:all .15s; padding:0; background:var(--bg-3,#1c2128); border:1px solid var(--border); }'
+      + '.trap-gp-toggle::after{ content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; background:var(--muted,#9aa5b1); border-radius:50%; transition:all .15s; }'
+      + '.trap-gp-toggle.on{ background:rgba(52,211,153,.25); border-color:var(--green,#34d399); }'
+      + '.trap-gp-toggle.on::after{ left:20px; background:var(--green,#34d399); }'
+      + '.trap-gp-foot{ position:sticky; bottom:0; display:flex; gap:10px; align-items:center; padding:14px 0 6px; margin-top:auto; background:linear-gradient(transparent, var(--bg-2,#161b22) 34%); flex-wrap:wrap; }'
+      + '.trap-gp-foot .grow{ flex:1; }'
+      + '.trap-gp-foot button{ font-size:12px; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; font-family:inherit; border:1px solid var(--border); background:transparent; color:var(--text); }'
+      + '.trap-gp-foot button.ghost{ color:var(--muted,#9aa5b1); }'
+      + '.trap-gp-foot button.ghost:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); }'
+      + '.trap-gp-foot button.prev{ border-color:rgba(56,189,248,.4); color:#38bdf8; }'
+      + '.trap-gp-foot button.prev:hover{ background:rgba(56,189,248,.10); }'
+      + '.trap-gp-foot button.save{ background:var(--accent); border-color:var(--accent); color:var(--bg); }'
+      + '.trap-gp-foot button.save:hover{ filter:brightness(1.08); }'
+
       /* Botões de abrir no card (substitui o "Abrir em nova aba" sozinho) */
       + '.trap-card-actions{ display:flex; gap:6px; padding-top:12px; border-top:1px dashed var(--border); }'
       + '.trap-card-actions button{ flex:1; background:rgba(200,240,90,.10); border:1px solid rgba(200,240,90,.30); color:var(--accent); font-size:11px; font-weight:700; padding:7px 8px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all .15s; }'
@@ -432,18 +473,31 @@
   function _viewVisualizar(){
     var item = _itemVisualizando;
     if(!item) return _viewPainel();
+
+    /* Painel de curadoria (ocultar/exibir páginas) tem view própria */
+    if(_gerPaginas) return _viewGerenciarPaginas(item);
+
     var temEstrutura = Array.isArray(item.estrutura) && item.estrutura.length > 0;
-    var modAtual = temEstrutura ? item.estrutura[_indiceMod] : null;
+    /* Partes ativas = apenas as VISÍVEIS (respeita paginasOcultas / staging no preview) */
+    var partes = temEstrutura ? _vizPartesAtivas() : [];
+    var totalEstrut = temEstrutura ? item.estrutura.length : 0;
+    var nOcultas = totalEstrut - partes.length;
+    /* Clamp do índice contra a lista visível */
+    if(_indiceMod >= partes.length) _indiceMod = Math.max(0, partes.length - 1);
+    var modAtual = partes.length ? partes[_indiceMod] : null;
     var urlAtual = modAtual ? modAtual.url : item.url;
     var subTit = modAtual ? modAtual.titulo : item.descricao;
     /* Conteúdo gerado pelo Claude é salvo inline em item.conteudo (sem URL real).
        Usa srcdoc no iframe nesse caso. */
     var ehInline = item.url && item.url.indexOf('__inline:') === 0 && item.conteudo;
+    var podeCurar = _ehAdmin() && temEstrutura && totalEstrut > 1;
 
     var sideHtml = '';
-    if(temEstrutura){
-      sideHtml = '<aside class="trap-viz-side"><h4>Conteúdo · '+item.estrutura.length+' partes</h4>'
-        + item.estrutura.map(function(s, i){
+    if(partes.length){
+      sideHtml = '<aside class="trap-viz-side"><h4>Conteúdo · '+partes.length+' partes'
+        + (nOcultas > 0 ? ' <span style="color:var(--red,#ef4444);font-weight:800;">· '+nOcultas+' oculta'+(nOcultas>1?'s':'')+'</span>' : '')
+        + '</h4>'
+        + partes.map(function(s, i){
             var n = String(i + 1).padStart(2, '0');
             return '<button class="trap-viz-mod'+(i === _indiceMod ? ' curr' : '')+'" onclick="window._trapVizSetMod('+i+')">'
               + '<span class="trap-viz-mod-n">'+n+'</span>' + _esc(s.titulo)
@@ -453,8 +507,8 @@
     }
 
     var navHtml = '';
-    if(temEstrutura){
-      var n = item.estrutura.length;
+    if(partes.length > 1){
+      var n = partes.length;
       navHtml = '<div class="trap-viz-nav">'
         + '<button onclick="window._trapVizAnt()" '+(_indiceMod === 0 ? 'disabled' : '')+' title="Anterior (atalho: ←)">‹ Anterior</button>'
         + '<span class="pos">'+(_indiceMod + 1)+' / '+n+'</span>'
@@ -462,15 +516,37 @@
         + '</div>';
     }
 
+    /* Barra de PRÉVIA (modo pré-visualização antes de salvar) */
+    var prevBar = '';
+    if(_prevPaginas){
+      prevBar = '<div class="trap-viz-prevbar">'
+        + '👁 PRÉVIA · '+partes.length+' de '+totalEstrut+' páginas visíveis em tela cheia'
+        + '<span class="sp"></span>'
+        + '<button onclick="window._trapVizVoltarEditar()" title="Voltar a escolher as páginas">‹ Voltar a editar</button>'
+        + '<button class="pri" onclick="window._trapVizSalvarPaginas()" title="Salvar esta configuração de exibição">💾 Salvar exibição</button>'
+        + '</div>';
+    }
+
+    /* Em modo prévia, os botões do topo voltam à edição (não descartam a seleção) */
+    var acaoVoltar = _prevPaginas ? 'window._trapVizVoltarEditar()' : 'window._trapVizFechar()';
+    var tituloVoltar = _prevPaginas ? 'Voltar a editar as páginas (ESC)' : 'Fechar visualizador (ESC)';
+
     return ''
       + '<div class="trap-viz">'
+      +   prevBar
       +   '<div class="trap-viz-bar">'
-      +     '<button class="trap-viz-btn" onclick="window._trapVizFechar()" title="Fechar visualizador (ESC)">‹ Voltar</button>'
+      +     '<button class="trap-viz-btn" onclick="'+acaoVoltar+'" title="'+tituloVoltar+'">‹ Voltar</button>'
       +     '<div class="trap-viz-t">'+_esc(item.icone||'📄')+' '+_esc(item.titulo)+'<small>'+_esc(subTit||'')+' · <code style="font-size:9px;">'+_esc(urlAtual)+'</code></small></div>'
+      +     (_ehAdmin() && !ehInline && !_prevPaginas
+            ? '<button class="trap-viz-btn" onclick="window._trapVizEditarSlides()" title="Ocultar/mostrar slides internos deste conteúdo (modo edição do deck)">🎬 Editar slides</button>'
+            : '')
+      +     (podeCurar && !_prevPaginas
+            ? '<button class="trap-viz-btn" onclick="window._trapVizGerenciar()" title="Escolher quais páginas aparecem na tela cheia">👁 Gerenciar páginas'+(nOcultas>0 ? ' <b style="color:#f0a">('+nOcultas+')</b>' : '')+'</button>'
+            : '')
       +     (ehInline
             ? '<button class="trap-viz-btn" onclick="window._trapAbrirInlineNovaAba(\''+_esc(item.id)+'\')" title="Abrir esta página em nova aba">↗ Nova aba</button>'
             : '<button class="trap-viz-btn" onclick="window.open(\''+_esc(urlAtual)+'\',\'_blank\',\'noopener,noreferrer\')" title="Abrir esta página em nova aba">↗ Nova aba</button>')
-      +     '<button class="trap-viz-btn" onclick="window._trapVizFechar()" title="Fechar (ESC)" style="padding:7px 10px;">✕</button>'
+      +     '<button class="trap-viz-btn" onclick="'+acaoVoltar+'" title="'+tituloVoltar+'" style="padding:7px 10px;">✕</button>'
       +   '</div>'
       +   '<div class="trap-viz-body">'
       +     sideHtml
@@ -485,9 +561,60 @@
       + '</div>';
   }
 
+  /* ────────────────────────────────────────────────────────────────
+     VIEW · GERENCIAR PÁGINAS (curadoria de exibição em tela cheia)
+     ────────────────────────────────────────────────────────────────
+     Lista TODAS as partes com um toggle exibir/ocultar. As mudanças
+     ficam em _stagingOcultas (não salvas) até o usuário clicar em
+     "Salvar" — permitindo pré-visualizar antes de aplicar. */
+  function _viewGerenciarPaginas(item){
+    var parts = (item && item.estrutura) || [];
+    var staging = _stagingOcultas || [];
+    var nOcultas = parts.filter(function(p){ return p.url && staging.indexOf(p.url) !== -1; }).length;
+    var nVisiveis = parts.length - nOcultas;
+
+    var rows = parts.map(function(p, i){
+      var oc = p.url && staging.indexOf(p.url) !== -1;
+      var n = String(i + 1).padStart(2, '0');
+      return '<div class="trap-gp-row'+(oc ? ' off' : '')+'">'
+        +   '<div class="trap-gp-n">'+n+'</div>'
+        +   '<div class="trap-gp-info">'
+        +     '<div class="trap-gp-t">'+_esc(p.titulo || '(sem título)')+'</div>'
+        +     '<div class="trap-gp-u">'+_esc(p.url || '')+'</div>'
+        +   '</div>'
+        +   '<div class="trap-gp-status">'+(oc ? 'Oculta' : 'Visível')+'</div>'
+        +   '<button class="trap-gp-toggle'+(oc ? '' : ' on')+'" onclick="window._trapTogglePagina('+i+')" title="'+(oc ? 'Exibir esta página' : 'Ocultar esta página')+'"></button>'
+        + '</div>';
+    }).join('');
+
+    return ''
+      + '<div class="trap-viz">'
+      +   '<div class="trap-viz-bar">'
+      +     '<button class="trap-viz-btn" onclick="window._trapVizCancelarPaginas()" title="Descartar alterações (ESC)">‹ Voltar</button>'
+      +     '<div class="trap-viz-t">👁 Gerenciar páginas<small>'+_esc(item.titulo)+' · '+nVisiveis+' visível(is), '+nOcultas+' oculta(s)</small></div>'
+      +     '<button class="trap-viz-btn" onclick="window._trapDesocultarTodas()" title="Marcar todas as páginas como visíveis">↺ Desocultar todas</button>'
+      +   '</div>'
+      +   '<div class="trap-gp-wrap">'
+      +     '<div class="trap-gp-head">'
+      +       '<h3>Escolha o que aparece na tela cheia</h3>'
+      +       '<p>Desligue as páginas que <b>não</b> devem entrar na navegação/apresentação. As páginas ocultas continuam guardadas — é só religar quando quiser. Nada é salvo até você clicar em <b>Salvar exibição</b>.</p>'
+      +     '</div>'
+      +     '<div class="trap-gp-list">'+rows+'</div>'
+      +     '<div class="trap-gp-foot">'
+      +       '<button class="ghost" onclick="window._trapVizCancelarPaginas()">Cancelar</button>'
+      +       '<button class="ghost" onclick="window._trapDesocultarTodas()" title="Marca todas como visíveis">↺ Desocultar todas</button>'
+      +       '<span class="grow"></span>'
+      +       '<button class="prev" onclick="window._trapVizPreviewPaginas()" title="Ver como ficará a tela cheia antes de salvar">👁 Pré-visualizar</button>'
+      +       '<button class="save" onclick="window._trapVizSalvarPaginas()" title="Salvar esta configuração">💾 Salvar exibição</button>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
   /* Atalhos de teclado dentro do visualizador (setas ←/→) */
   document.addEventListener('keydown', function(e){
     if(_telaAtual !== 'visualizar') return;
+    if(_gerPaginas) return; /* no painel de curadoria as setas não navegam */
     if(!_itemVisualizando || !Array.isArray(_itemVisualizando.estrutura)) return;
     /* Ignora se foco está dentro do iframe (não dá pra detectar facilmente,
        então só responde se foco está no body) */
@@ -599,6 +726,25 @@
       + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
   }
   function _trapTemEstrutura(i){ return Array.isArray(i.estrutura) && i.estrutura.length > 0; }
+
+  /* ── Curadoria de páginas: helpers ─────────────────────────────────
+     item.paginasOcultas = [url, url, ...] → partes que NÃO entram na
+     navegação/tela cheia. Persistido via override (mesclado por _getItens). */
+  function _paginasOcultasDe(item){
+    return Array.isArray(item && item.paginasOcultas) ? item.paginasOcultas.slice() : [];
+  }
+  function _partesVisiveis(item, ocultas){
+    var parts = (item && item.estrutura) || [];
+    var oc = ocultas || _paginasOcultasDe(item);
+    return parts.filter(function(p){ return !(p && p.url && oc.indexOf(p.url) !== -1); });
+  }
+  /* Partes ativas do visualizador: em preview usa o staging; normal usa o salvo */
+  function _vizPartesAtivas(){
+    var item = _itemVisualizando;
+    if(!item || !Array.isArray(item.estrutura)) return [];
+    var oc = _prevPaginas ? (_stagingOcultas || []) : _paginasOcultasDe(item);
+    return _partesVisiveis(item, oc);
+  }
   /* Botão Imprimir (apostila/PDF) — só para itens com partes (treinamentos) */
   function _trapPrintBtnHtml(i, cls){
     if(!_trapTemEstrutura(i)) return '';
@@ -2266,23 +2412,37 @@
     });
   }
 
-  /* ── Persistência ───────────────────────────────────────────────── */
+  /* ── Persistência ───────────────────────────────────────────────────
+     Durável em DOIS níveis:
+       1) localStorage → sobrevive a reload mesmo offline / via file://
+       2) Firebase (_fbSave) → sincroniza entre máquinas quando online
+     Obs.: o código antigo usava window._fbSet, que NUNCA foi definido
+     (o real é _fbSave). Por isso nada persistia. Corrigido aqui. */
+  var _LS_OVER = 'trap_overrides_v1';
+  var _LS_ADD  = 'trap_adicionados_v1';
+  function _lsGet(k){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+  function _lsSet(k, obj){ try{ localStorage.setItem(k, JSON.stringify(obj || {})); }catch(e){} }
+  function _fbSalvar(path, valor){
+    if(typeof window._fbSave !== 'function') return;
+    try{ var pr = window._fbSave(path, valor); if(pr && pr.catch) pr.catch(function(){}); }catch(e){}
+  }
   function _salvarOverride(id, patch){
     _overrides[id] = Object.assign({}, _overrides[id] || {}, patch);
-    if(typeof window._fbSet === 'function'){
-      window._fbSet('treinamentos/overrides/' + id, _overrides[id]);
-    }
+    _lsSet(_LS_OVER, _overrides);
+    _fbSalvar('treinamentos/overrides/' + id, _overrides[id]);
   }
   function _salvarAdicionado(id, obj){
     _adicionados[id] = obj;
-    if(typeof window._fbSet === 'function'){
-      window._fbSet('treinamentos/adicionados/' + id, obj);
-    }
+    _lsSet(_LS_ADD, _adicionados);
+    _fbSalvar('treinamentos/adicionados/' + id, obj);
   }
   function _removerAdicionado(id){
     delete _adicionados[id];
-    if(typeof window._fbSet === 'function'){
-      window._fbSet('treinamentos/adicionados/' + id, null);
+    _lsSet(_LS_ADD, _adicionados);
+    if(typeof window._fbRemove === 'function'){
+      try{ var pr = window._fbRemove('treinamentos/adicionados/' + id); if(pr && pr.catch) pr.catch(function(){}); }catch(e){}
+    } else {
+      _fbSalvar('treinamentos/adicionados/' + id, null);
     }
   }
 
@@ -2341,10 +2501,10 @@
     _renderTela();
   };
 
-  /* Trocar de módulo dentro do visualizador (quando item tem estrutura) */
+  /* Trocar de módulo dentro do visualizador (índice nas partes VISÍVEIS) */
   window._trapVizSetMod = function(idx){
     if(!_itemVisualizando) return;
-    var n = (_itemVisualizando.estrutura||[]).length;
+    var n = _vizPartesAtivas().length;
     if(!n) return;
     _indiceMod = Math.max(0, Math.min(n - 1, +idx || 0));
     _renderTela();
@@ -2356,17 +2516,123 @@
   window._trapVizFechar = function(){
     _itemVisualizando = null;
     _indiceMod = 0;
+    _gerPaginas = false;
+    _prevPaginas = false;
+    _stagingOcultas = null;
     _telaAtual = 'painel';
     var host = document.getElementById('trapScreen');
     if(host) host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x.dataset.tela === 'painel'); });
     _renderTela();
   };
 
-  /* Atalho ESC fecha o visualizador */
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && _telaAtual === 'visualizar'){
-      window._trapVizFechar();
+  /* Aciona o modo edição do DECK carregado no iframe (Fase 2: ocultar slides
+     internos). Os decks (cis.js/apr.js/etc.) expõem o botão [data-nav="edit"]
+     e salvam os slides ocultos no próprio localStorage. Same-origin (localhost/
+     GitHub Pages) → clica direto; em file:// o acesso falha e mostramos a dica. */
+  window._trapVizEditarSlides = function(){
+    var iframe = document.querySelector('.trap-viz-iframe-wrap iframe');
+    if(!iframe){ _toast('Abra um conteúdo primeiro', 'var(--amber)'); return; }
+    var ok = false;
+    try{
+      var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+      if(doc){
+        var btn = doc.querySelector('[data-nav="edit"]');
+        if(btn){ btn.click(); ok = true; }
+        else {
+          /* deck ainda carregando ou sem HUD de edição */
+          if(iframe.contentWindow && iframe.contentWindow.dispatchEvent){
+            iframe.contentWindow.dispatchEvent(new iframe.contentWindow.KeyboardEvent('keydown', { key:'e' }));
+            ok = true;
+          }
+        }
+      }
+    }catch(e){ /* cross-origin (file://) — cai na dica abaixo */ }
+    if(ok){
+      _toast('🎬 Modo edição do deck — passe pelos slides e clique em "Ocultar slide"; use "Mostrar todos" para reverter');
+    } else {
+      _toast('Dentro do deck, clique em "Editar" (ou tecla E) para ocultar slides', 'var(--amber)');
     }
+  };
+
+  /* ── Ações de curadoria de páginas ──────────────────────────────── */
+  /* Abre o painel "Gerenciar páginas" carregando o estado salvo no staging */
+  window._trapVizGerenciar = function(){
+    if(!_itemVisualizando) return;
+    _stagingOcultas = _paginasOcultasDe(_itemVisualizando);
+    _gerPaginas = true;
+    _prevPaginas = false;
+    _renderTela();
+  };
+  /* Liga/desliga uma página no staging (índice na estrutura completa) */
+  window._trapTogglePagina = function(idx){
+    if(!_itemVisualizando) return;
+    var p = (_itemVisualizando.estrutura || [])[idx];
+    if(!p || !p.url){ _toast('Esta página não tem URL própria — não dá pra ocultar', 'var(--amber)'); return; }
+    if(!_stagingOcultas) _stagingOcultas = [];
+    var pos = _stagingOcultas.indexOf(p.url);
+    if(pos === -1) _stagingOcultas.push(p.url);
+    else _stagingOcultas.splice(pos, 1);
+    _renderTela();
+  };
+  /* Botão "Desocultar todas" — marca todas as páginas como visíveis (no staging) */
+  window._trapDesocultarTodas = function(){
+    _stagingOcultas = [];
+    _toast('Todas as páginas marcadas como visíveis');
+    _renderTela();
+  };
+  /* Pré-visualizar: entra no visualizador mostrando só as páginas visíveis do staging */
+  window._trapVizPreviewPaginas = function(){
+    if(!_itemVisualizando) return;
+    var parts = _itemVisualizando.estrutura || [];
+    var st = _stagingOcultas || [];
+    var vis = parts.filter(function(p){ return !(p.url && st.indexOf(p.url) !== -1); });
+    if(!vis.length){ _toast('Deixe ao menos 1 página visível', 'var(--amber)'); return; }
+    _gerPaginas = false;
+    _prevPaginas = true;
+    _indiceMod = 0;
+    _renderTela();
+  };
+  /* Da prévia, voltar a editar a lista de páginas */
+  window._trapVizVoltarEditar = function(){
+    _prevPaginas = false;
+    _gerPaginas = true;
+    _renderTela();
+  };
+  /* Salva a configuração de exibição (persiste via override) */
+  window._trapVizSalvarPaginas = function(){
+    var item = _itemVisualizando;
+    if(!item) return;
+    var parts = item.estrutura || [];
+    /* mantém no array só URLs que ainda existem na estrutura */
+    var st = (_stagingOcultas || []).filter(function(u){
+      return parts.some(function(p){ return p.url === u; });
+    });
+    var vis = parts.filter(function(p){ return !(p.url && st.indexOf(p.url) !== -1); });
+    if(!vis.length){ _toast('Deixe ao menos 1 página visível', 'var(--amber)'); return; }
+    _salvarOverride(item.id, { paginasOcultas: st });
+    /* recarrega o item mesclado (SEED + override) para refletir o salvo */
+    _itemVisualizando = _getItens().find(function(i){ return i.id === item.id; }) || item;
+    _stagingOcultas = null;
+    _gerPaginas = false;
+    _prevPaginas = false;
+    _indiceMod = 0;
+    _toast(st.length ? ('✓ Exibição salva · '+st.length+' página(s) oculta(s)') : '✓ Exibição salva · todas visíveis');
+    _renderTela();
+  };
+  /* Cancela a curadoria e descarta o staging */
+  window._trapVizCancelarPaginas = function(){
+    _stagingOcultas = null;
+    _gerPaginas = false;
+    _prevPaginas = false;
+    _renderTela();
+  };
+
+  /* Atalho ESC dentro do visualizador */
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || _telaAtual !== 'visualizar') return;
+    if(_gerPaginas){ window._trapVizCancelarPaginas(); return; }
+    if(_prevPaginas){ window._trapVizVoltarEditar(); return; }
+    window._trapVizFechar();
   });
 
   window._trapToggleStatus = function(id){
@@ -2454,24 +2720,31 @@
     _renderTela();
   };
 
-  /* ── Carregamento Firebase ──────────────────────────────────────── */
+  /* ── Carregamento (localStorage + Firebase) ─────────────────────────
+     Baseline vem do localStorage (durável, offline). O Firebase é
+     MESCLADO por cima (chave a chave) — nunca substitui o baseline por
+     um nó vazio, senão uma leitura offline apagaria as edições locais. */
   function _carregar(cb){
+    _overrides   = _lsGet(_LS_OVER) || {};
+    _adicionados = _lsGet(_LS_ADD)  || {};
     var pendentes = 2;
     function ok(){ pendentes--; if(pendentes <= 0 && cb) cb(); }
     if(typeof window._fbGet === 'function'){
-      window._fbGet('treinamentos/overrides').then(function(d){ _overrides = d || {}; ok(); }).catch(function(){ ok(); });
-      window._fbGet('treinamentos/adicionados').then(function(d){ _adicionados = d || {}; ok(); }).catch(function(){ ok(); });
+      window._fbGet('treinamentos/overrides').then(function(d){ if(d) _overrides = Object.assign({}, _overrides, d); _lsSet(_LS_OVER, _overrides); ok(); }).catch(function(){ ok(); });
+      window._fbGet('treinamentos/adicionados').then(function(d){ if(d) _adicionados = Object.assign({}, _adicionados, d); _lsSet(_LS_ADD, _adicionados); ok(); }).catch(function(){ ok(); });
       /* Listeners real-time */
       if(typeof window._fbChange === 'function'){
         if(!_listenerOver){
           _listenerOver = window._fbChange('treinamentos/overrides', function(d){
-            _overrides = d || {};
+            if(d) _overrides = Object.assign({}, _overrides, d);
+            _lsSet(_LS_OVER, _overrides);
             if(document.getElementById('trapScreen').style.display !== 'none') _renderTela();
           });
         }
         if(!_listenerAdd){
           _listenerAdd = window._fbChange('treinamentos/adicionados', function(d){
-            _adicionados = d || {};
+            if(d) _adicionados = Object.assign({}, _adicionados, d);
+            _lsSet(_LS_ADD, _adicionados);
             if(document.getElementById('trapScreen').style.display !== 'none') _renderTela();
           });
         }

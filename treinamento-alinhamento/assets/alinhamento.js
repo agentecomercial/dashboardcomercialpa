@@ -337,6 +337,14 @@
       const found = slides.indexOf(target);
       if (found >= 0) go(found);
     }
+    // O shell alterou os slides ocultos no localStorage — recarrega e re-renderiza
+    if (msg.type === 'cis-reload-hidden') {
+      store = loadStore(); if (!store.edits) store.edits = {}; if (!store.hidden) store.hidden = [];
+      applyHidden();
+      if (typeof refreshEditUI === 'function') refreshEditUI();
+      const list = visibleSlides(); if (idx >= list.length) idx = Math.max(0, list.length - 1);
+      render();
+    }
   });
 
   function toggleFullscreen() {
@@ -533,4 +541,35 @@
   window.addEventListener('resize', fitDeck);
   fitDeck();
   render();
+
+  // ── Botão "Mostrar todos os slides" (desocultar todos SEM apagar textos) ──
+  (function ensureUnhideAllButton() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav || nav.querySelector('[data-nav="unhide-all"]')) return;
+    if (!document.getElementById('unhideAllCss')) {
+      const st = document.createElement('style');
+      st.id = 'unhideAllCss';
+      st.textContent = 'html:not(.edit-mode) [data-nav="unhide-all"]{display:none!important}';
+      document.head.appendChild(st);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'fs-btn';
+    btn.dataset.nav = 'unhide-all';
+    btn.title = 'Mostrar todos os slides (desocultar todos, sem apagar os textos)';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg> <span>Mostrar todos</span>';
+    btn.addEventListener('click', function () {
+      if (!store.hidden || !store.hidden.length) return;
+      store.hidden = [];
+      saveStore(store);
+      applyHidden();
+      if (typeof refreshEditUI === 'function') refreshEditUI();
+      if (typeof refreshResetVisibility === 'function') refreshResetVisibility();
+      const list = visibleSlides();
+      if (idx >= list.length) idx = Math.max(0, list.length - 1);
+      render();
+    });
+    const editBtn = nav.querySelector('[data-nav="edit"]');
+    if (editBtn) nav.insertBefore(btn, editBtn.nextSibling);
+    else nav.insertBefore(btn, nav.firstChild);
+  })();
 })();

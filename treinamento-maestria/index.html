@@ -234,6 +234,35 @@
   .sidenav-sub-item.is-current .sub-n { opacity: 1; }
   .sidenav-sub-item .sub-title { flex: 1; }
 
+  /* ── Olhinhos de ocultar (curadoria da trilha) ── */
+  .eye-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 20px; height: 20px; flex: 0 0 20px; margin-left: 3px;
+    background: none; border: 0; padding: 0; border-radius: 6px;
+    color: var(--cis-muted); cursor: pointer; transition: color .12s, background .12s;
+  }
+  .eye-btn svg { width: 14px; height: 14px; }
+  /* deixa a seta + olhinho caberem lado a lado mesmo em rótulos longos (ex.: Fechamento) */
+  .sidenav-item { gap: 8px; padding-left: 11px; padding-right: 10px; }
+  .sidenav-item .meta { margin-left: auto; margin-right: 0; }
+  .sidenav-item .chevron { margin-left: 3px; }
+  .eye-btn:hover { background: rgba(255,255,255,0.12); color: var(--cis-yellow); }
+  /* aparece ao passar o mouse; e fica sempre visível quando o item está oculto */
+  .sidenav-item:hover .eye-btn,
+  .sidenav-sub-item:hover .eye-btn,
+  .module-card:hover .eye-btn,
+  .sidenav-item.is-oculto .eye-btn,
+  .sidenav-sub-item.is-oculto .eye-btn,
+  .module-card.is-oculto .eye-btn { display: inline-flex; }
+  .eye-btn.is-off { color: #ff6b6b; }
+  .eye-btn.is-off:hover { background: rgba(255,107,107,0.16); color: #ff8a8a; }
+  /* item oculto: esmaecido */
+  .sidenav-item.is-oculto,
+  .sidenav-sub-item.is-oculto,
+  .module-card.is-oculto { opacity: 0.42; }
+  .module-card { position: relative; }
+  .module-card .eye-btn { position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.35); }
+
   /* ===== Conteúdo principal (Views) ===== */
   .main { position: relative; overflow: hidden; }
   .view { display: none; }
@@ -967,18 +996,23 @@
   function renderSubtopics(key) {
     const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
     if (!ul) return;
-    const titles = slideTitlesByKey[key] || [];
     ul.innerHTML = '';
-    titles.forEach((title, i) => {
+    const ocultos = getDeckHidden(key); /* slideIds ocultos (1-indexed, string) */
+    (slideTitlesByKey[key] || []).forEach((title, i) => {
+      const n = i + 1;
+      const oculto = ocultos.includes(String(n));
       const li = document.createElement('li');
       const btn = document.createElement('button');
-      btn.className = 'sidenav-sub-item';
-      btn.dataset.deck = key;
-      btn.dataset.slide = String(i + 1);
-      btn.innerHTML = `<span class="sub-n">${String(i + 1).padStart(2, '0')}</span><span class="sub-title">${title.replace(/</g,'&lt;')}</span>`;
-      btn.addEventListener('click', () => openAtSlide(key, i + 1));
-      li.appendChild(btn);
-      ul.appendChild(li);
+      btn.className = 'sidenav-sub-item' + (oculto ? ' is-oculto' : '');
+      btn.dataset.deck = key; btn.dataset.slide = String(n);
+      btn.innerHTML = `<span class="sub-n">${String(n).padStart(2, '0')}</span>`
+        + `<span class="sub-title">${title.replace(/</g,'&lt;')}</span>`
+        + `<span class="eye-btn${oculto ? ' is-off' : ''}" data-eye-slide title="${oculto ? 'Mostrar este slide' : 'Ocultar este slide'}">${eyeSvg(oculto)}</span>`;
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('[data-eye-slide]')) { e.preventDefault(); e.stopPropagation(); toggleSlideHidden(key, n); return; }
+        openAtSlide(key, n);
+      });
+      li.appendChild(btn); ul.appendChild(li);
     });
   }
 
@@ -1129,12 +1163,102 @@
     }
   });
 
-  // Hash inicial
+  /* ═══ Curadoria da trilha: ocultar módulos e tópicos (olhinhos) ═══
+     - Slides: gravados no MESMO store do deck (localStorage 'cis-edits:<pasta>/<arquivo>'),
+       campo .hidden — assim a tela cheia do deck já pula os ocultos.
+     - Módulos: store próprio do shell (por treinamento). */
+  const TRILHA_FOLDER = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0] || '';
+  const MOD_OCULTO_KEY = 'trilha-mod-oculto:' + (TRILHA_FOLDER || 'default');
+
+  function eyeSvg(off) {
+    return off
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A9 9 0 0 1 21 12a17.6 17.6 0 0 1-2.16 2.96M6.5 6.6A17.6 17.6 0 0 0 3 12s3.5 7 9 7a9 9 0 0 0 3.35-.64"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+
+  function deckStoreKey(key) {
+    const f = ROUTES[key] && ROUTES[key].file;
+    return f ? ('cis-edits:' + (TRILHA_FOLDER ? TRILHA_FOLDER + '/' : '') + f) : null;
+  }
+  function getDeckHidden(key) {
+    const k = deckStoreKey(key); if (!k) return [];
+    try { const s = JSON.parse(localStorage.getItem(k) || '{}'); return Array.isArray(s.hidden) ? s.hidden.map(String) : []; }
+    catch (e) { return []; }
+  }
+  function toggleSlideHidden(key, n) {
+    const k = deckStoreKey(key); if (!k) return;
+    let s; try { s = JSON.parse(localStorage.getItem(k) || '{}'); } catch (e) { s = {}; }
+    if (!s.edits) s.edits = {}; if (!Array.isArray(s.hidden)) s.hidden = [];
+    const id = String(n); const i = s.hidden.indexOf(id);
+    if (i >= 0) s.hidden.splice(i, 1); else s.hidden.push(id);
+    localStorage.setItem(k, JSON.stringify(s));
+    /* se o módulo está aberto no iframe, manda recarregar os ocultos */
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-reload-hidden' }, '*');
+    }
+    renderSubtopics(key);
+  }
+
+  function getHiddenModules() { try { return JSON.parse(localStorage.getItem(MOD_OCULTO_KEY) || '[]'); } catch (e) { return []; } }
+  function setHiddenModules(arr) { localStorage.setItem(MOD_OCULTO_KEY, JSON.stringify(arr)); }
+  function isModuleHidden(key) { return getHiddenModules().includes(key); }
+  function toggleModuleHidden(key) {
+    const arr = getHiddenModules(); const i = arr.indexOf(key);
+    if (i >= 0) arr.splice(i, 1); else arr.push(key);
+    setHiddenModules(arr);
+    applyOcultosUI();
+  }
+
+  function injectModuleEyes() {
+    /* olhinho em cada item de módulo/trilha da sidebar (menos "Visão geral") */
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu' || item.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      const chev = item.querySelector('.chevron');
+      if (chev) item.insertBefore(eye, chev); else item.appendChild(eye);
+    });
+    /* olhinho em cada card de módulo do menu */
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const key = card.dataset.go;
+      if (card.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      card.appendChild(eye);
+    });
+  }
+
+  function applyOcultosUI() {
+    const hidden = getHiddenModules();
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu') return;
+      const h = hidden.includes(key);
+      item.classList.toggle('is-oculto', h);
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-oculto', h);
+      const eye = item.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const h = hidden.includes(card.dataset.go);
+      card.classList.toggle('is-oculto', h);
+      const eye = card.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+  }
+
   const h = (location.hash || '').replace('#', '');
   if (h && ROUTES[h]) openRoute(h);
 
-  // Carrega títulos dos slides
   loadSlideTitles();
+  injectModuleEyes();
+  applyOcultosUI();
 </script>
 
 </body>
