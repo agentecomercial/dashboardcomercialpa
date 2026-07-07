@@ -87,7 +87,7 @@
     });
   });
 
-  const STORAGE_KEY = 'cis-edits:' + (location.pathname.split('/').pop() || 'index');
+  const STORAGE_KEY = 'cis-edits:' + (location.pathname.split('/').slice(-2).join('/') || 'index');
   function loadStore() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
     catch (e) { return {}; }
