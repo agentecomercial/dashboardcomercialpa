@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Atualizar dados sem tirar a tabela</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0b0b0d;color:#e8e8ee;font-family:'Segoe UI',system-ui,Arial,sans-serif;padding:22px 14px 90px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:18px;font-weight:900;color:#F0C84A;margin-bottom:3px;}
+  .sub{font-size:12.5px;color:#9a9aa2;margin-bottom:18px;line-height:1.45;}
+  .sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#8f8f98;font-weight:800;margin:24px 0 10px;border-bottom:1px solid #22222a;padding-bottom:6px;}
+  .tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:8px;}
+  .tag.old{background:#2a1414;color:#e88;border:1px solid #5a2a2a;}
+  .tag.new{background:#13241a;color:#7fd99a;border:1px solid #2f5a36;}
+  .caption{font-size:11.5px;color:#8a8a94;margin:2px 0 12px;}
+  .panel{background:#141419;border:1px solid #24242c;border-radius:14px;padding:14px;}
+  .btns{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .btn{border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;}
+  .btn-ouro{background:linear-gradient(90deg,#c9a84a,#F0C84A);color:#161616;}
+  .btn-sec{background:#26262e;color:#e8e8ee;border:1px solid #3a3a44;}
+  .btn:disabled{opacity:.7;cursor:default;}
+  .res{position:relative;}
+  /* tabela estilo app */
+  .tbl{border-collapse:collapse;font-size:13px;width:100%;}
+  .tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid #2a2a2a;text-align:center;white-space:nowrap;}
+  .tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#888;font-weight:800;background:#181818;}
+  .tbl td:first-child,.tbl th:first-child{text-align:left;color:#F0C84A;font-weight:800;}
+  .tbl .tot td{border-top:2px solid #444;font-weight:900;color:#F0C84A;background:#191713;}
+  .tbl .g{color:#F0C84A;font-weight:800;}
+  .metinfo{font-size:11.5px;color:#9a9aa2;margin-bottom:8px;}
+  .metinfo b{color:#F0C84A;}
+  /* loading ANTIGO (tira a tabela) */
+  .loading-old{text-align:center;color:#F0C84A;font-weight:800;font-size:14px;padding:48px 20px;}
+  /* NOVO: faixa "atualizando" sem tirar a tabela */
+  .res.atualizando .dim{opacity:.5;transition:opacity .2s;filter:saturate(.7);}
+  .upbar{display:none;align-items:center;justify-content:center;gap:8px;background:#F0C84A;color:#161616;font-weight:800;font-size:12px;padding:7px;border-radius:9px;margin-bottom:10px;letter-spacing:.3px;}
+  .res.atualizando .upbar{display:flex;}
+  .spin{width:13px;height:13px;border:2px solid #16161688;border-top-color:#161616;border-radius:50%;animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .flash{animation:fl 5s ease;}
+  @keyframes fl{0%{background:#33521f}10%{background:#33521f}100%{background:transparent}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>“Atualizar dados” sem tirar a tabela da tela</h1>
+  <div class="sub">Simulação com a tabela de <b>Leads Vitória campanha</b>. Clique em “Atualizar dados” em cada versão e compare. (Os números mudam um pouco a cada atualização pra simular dados novos do CRM.)</div>
+
+  <!-- ANTIGO -->
+  <div class="sec">Comportamento atual <span class="tag old">hoje</span></div>
+  <div class="caption">Ao clicar em “Atualizar dados”, a tabela some e aparece a tela “Executando… consultando o CRM”. Você perde a referência do que estava vendo.</div>
+  <div class="panel">
+    <div class="btns">
+      <button class="btn btn-ouro" disabled>▶ Executar</button>
+      <button class="btn btn-sec" id="btnOld">↻ Atualizar dados</button>
+    </div>
+    <div class="res" id="resOld"></div>
+  </div>
+
+  <!-- NOVO -->
+  <div class="sec">Proposto <span class="tag new">novo</span></div>
+  <div class="caption">A tabela <b>permanece</b>; aparece uma faixa “⟳ Atualizando…” no topo e a tabela fica levemente esmaecida. Quando os novos números chegam, a tabela é <b>atualizada no lugar</b> (as células que mudaram dão um leve destaque).</div>
+  <div class="panel">
+    <div class="btns">
+      <button class="btn btn-ouro" disabled>▶ Executar</button>
+      <button class="btn btn-sec" id="btnNew">↻ Atualizar dados</button>
+    </div>
+    <div class="res" id="resNew"></div>
+  </div>
+</div>
+
+<script>
+  const CONS=['Gabriela Jesus','Natalia Cunha','Karla Oliveira'];
+  const COLS=['1 Novo Lead','2 Farmer','3 Conversa','4 Negociação','5 Venda Feita','6 Nutrição','Total','MCIS','TCE','Outros'];
+  // base de números (10 colunas por consultor); Total = soma etapas 1-6
+  let base=[
+    [204,45,20,3,40,29, 0, 183,112,46],
+    [221,14,37,4,36,10, 0, 160,120,42],
+    [137,81,11,15,1,62, 0, 231,60,16],
+  ];
+  function recomputaTotais(m){ m.forEach(r=>{ r[6]=r[0]+r[1]+r[2]+r[3]+r[4]+r[5]; }); }
+  recomputaTotais(base);
+
+  function tabelaHTML(m, destaqueRef){
+    let h='<div class="metinfo">📊 Leads por consultor · Competência <b>Junho/2026</b> · atualizado 06/07/2026 12:24:00</div>';
+    h+='<table class="tbl"><thead><tr><th>Consultor</th>';
+    COLS.forEach(c=>h+='<th>'+c+'</th>'); h+='</tr></thead><tbody>';
+    m.forEach((r,ri)=>{
+      h+='<tr><td>'+CONS[ri]+'</td>';
+      r.forEach((v,ci)=>{
+        const mudou = destaqueRef && destaqueRef[ri] && destaqueRef[ri][ci]!==v;
+        const cls=(ci===6?' class="g'+(mudou?' flash':'')+'"':(mudou?' class="flash"':''));
+        h+='<td'+cls+'>'+v+'</td>';
+      });
+      h+='</tr>';
+    });
+    // total geral
+    const tot=COLS.map((_,ci)=>m.reduce((s,r)=>s+r[ci],0));
+    h+='<tr class="tot"><td>TOTAL</td>'; tot.forEach(v=>h+='<td>'+v+'</td>'); h+='</tr>';
+    h+='</tbody></table>';
+    return h;
+  }
+  function variar(m){
+    // simula dados novos: mexe levemente em algumas células (etapas 1-6)
+    const n=m.map(r=>r.slice());
+    n.forEach(r=>{ for(let c=0;c<6;c++){ if(Math.random()<0.5){ r[c]=Math.max(0, r[c]+ (Math.random()<0.5?-1:1)*Math.round(Math.random()*4)); } } });
+    recomputaTotais(n);
+    return n;
+  }
+
+  // render inicial
+  document.getElementById('resOld').innerHTML='<div class="dim">'+tabelaHTML(base)+'</div>';
+  document.getElementById('resNew').innerHTML='<div class="upbar"><span class="spin"></span> Atualizando…</div><div class="dim">'+tabelaHTML(base)+'</div>';
+
+  // ANTIGO: tira a tabela, mostra loading, depois volta
+  document.getElementById('btnOld').addEventListener('click',function(){
+    const res=document.getElementById('resOld'), b=this; b.disabled=true; b.textContent='⏳ Consultando…';
+    res.innerHTML='<div class="loading-old">⏳ Executando… consultando o CRM (pode levar alguns segundos)</div>';
+    setTimeout(()=>{ base=variar(base); res.innerHTML='<div class="dim">'+tabelaHTML(base)+'</div>'; b.disabled=false; b.textContent='↻ Atualizar dados'; },1600);
+  });
+
+  // NOVO: mantém a tabela, faixa "atualizando" + esmaece, depois atualiza no lugar
+  document.getElementById('btnNew').addEventListener('click',function(){
+    const res=document.getElementById('resNew'), b=this; b.disabled=true; b.textContent='⏳ Consultando…';
+    res.classList.add('atualizando');
+    const antigo=base.map(r=>r.slice());
+    setTimeout(()=>{
+      base=variar(base);
+      res.classList.remove('atualizando');
+      res.innerHTML='<div class="upbar"><span class="spin"></span> Atualizando…</div><div class="dim">'+tabelaHTML(base, antigo)+'</div>';
+      b.disabled=false; b.textContent='↻ Atualizar dados';
+    },1600);
+  });
+</script>
+</body>
+</html>

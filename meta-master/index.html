@@ -254,6 +254,14 @@
   .rt-copy{flex:none;background:#2a2a33;color:#ddd;border:1px solid #3a3a44;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;line-height:1;}
   .rt-copy:hover{background:#3a3a44;color:#F0C84A;}
   .cbx-vazio{padding:10px 12px;color:#999;font-size:12.5px;font-style:italic;}
+  /* Atualizar dados sem tirar a tabela: faixa "Atualizando" + esmaece + flash (5s) nas células alteradas */
+  .cmd-upbar{display:flex;align-items:center;justify-content:center;gap:8px;background:#F0C84A;color:#161616;font-weight:800;font-size:12px;padding:7px;border-radius:9px;margin-bottom:10px;letter-spacing:.3px;}
+  .cmd-spin{width:13px;height:13px;border:2px solid #16161688;border-top-color:#161616;border-radius:50%;animation:cmdsp .7s linear infinite;flex:none;}
+  @keyframes cmdsp{to{transform:rotate(360deg)}}
+  .cmd-atualizando>*{opacity:.5;transition:opacity .2s;filter:saturate(.7);}
+  .cmd-atualizando>.cmd-upbar{opacity:1;filter:none;}
+  .cmd-flash{animation:cmdfl 5s ease;}
+  @keyframes cmdfl{0%{background:#33521f}10%{background:#33521f}100%{background:transparent}}
   /* Metas: barra de chips "ver card" + modal do card */
   .mc-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 14px;}
   .mc-bar-lbl{font-size:12px;color:#999;font-weight:800;text-transform:uppercase;letter-spacing:.4px;}
@@ -361,16 +369,16 @@
   .hub-av.tem-foto{cursor:pointer;}
   /* editor do avatar (overlay) */
   .av-editor{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .av-box{background:#1a1a1f;border:1px solid #3a3a44;border-radius:16px;padding:18px;width:100%;max-width:340px;max-height:92vh;overflow:auto;}
-  .av-ttl{font-size:14px;font-weight:800;color:#f0e6c8;margin-bottom:5px;text-align:center;}
-  .av-hint{font-size:11px;color:#9a9aa2;text-align:center;margin-bottom:14px;}
-  .av-prev{width:170px;height:170px;border-radius:50%;overflow:hidden;margin:0 auto 16px;background:#0e0e0e;position:relative;box-shadow:0 0 0 3px #1a1a1f,0 0 0 5px #F0C84A;}
+  .av-box{background:#1a1a1f;border:1px solid #3a3a44;border-radius:16px;padding:16px 18px 14px;width:100%;max-width:410px;max-height:94vh;overflow-x:hidden;overflow-y:auto;}
+  .av-ttl{font-size:14px;font-weight:800;color:#f0e6c8;margin-bottom:3px;text-align:center;}
+  .av-hint{font-size:11px;color:#9a9aa2;text-align:center;margin-bottom:9px;}
+  .av-prev{width:132px;height:132px;border-radius:50%;overflow:hidden;margin:0 auto 12px;background:#0e0e0e;position:relative;box-shadow:0 0 0 3px #1a1a1f,0 0 0 5px #F0C84A;}
   .av-prev img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;transform-origin:center;}
-  .av-box label{display:block;font-size:10.5px;color:#9a9aa2;font-weight:700;margin-bottom:13px;text-transform:uppercase;letter-spacing:.4px;}
-  .av-box input[type=range]{width:100%;margin-top:6px;accent-color:#F0C84A;}
+  .av-box label{display:block;font-size:10.5px;color:#9a9aa2;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;}
+  .av-box input[type=range]{width:100%;margin-top:5px;accent-color:#F0C84A;}
   .av-box label .he-v{float:right;color:#F0C84A;font-weight:900;font-size:11px;letter-spacing:0;text-transform:none;}
-  .av-acts{display:flex;gap:8px;margin-top:4px;}
-  .av-acts button{flex:1;padding:11px;border-radius:9px;border:1px solid #3a3a44;background:#202026;color:#e8e8ee;font-weight:800;font-size:12px;cursor:pointer;}
+  .av-acts{display:flex;gap:7px;margin-top:8px;}
+  .av-acts button{flex:1;min-width:0;padding:10px 8px;border-radius:9px;border:1px solid #3a3a44;background:#202026;color:#e8e8ee;font-weight:800;font-size:12px;line-height:1.15;cursor:pointer;white-space:nowrap;}
   .av-acts button.btn-ouro{background:#F0C84A;color:#1a1500;border:none;}
   .hub-kpi.clik{cursor:pointer;transition:border-color .12s;}
   .hub-kpi.clik:hover{border-color:#c9a84a;}
@@ -794,7 +802,7 @@
       <label>Vertical<span class="he-v" id="avvY"></span><input type="range" id="avY" min="-50" max="50" step="1" value="0" oninput="avPrev()"></label>
       <div class="he-grp">Tamanho no ranking (todos)</div>
       <label>Tamanho<span class="he-v" id="avvT"></span><input type="range" id="avT" min="34" max="64" step="1" value="50" oninput="avPrev()"></label>
-      <div class="av-acts"><button onclick="avRestaurar()">↺ Restaurar</button><button onclick="fecharAvEditor()">Cancelar</button><button class="btn-ouro" onclick="avSalvar()">Salvar</button></div>
+      <div class="av-acts"><button onclick="adicionarFotoAvatar(avSlug)">🖼 Trocar</button><button onclick="avRestaurar()">↺ Restaurar</button><button onclick="fecharAvEditor()">Cancelar</button><button class="btn-ouro" onclick="avSalvar()">Salvar</button></div>
     </div>
   </div>
 
@@ -1089,7 +1097,19 @@
   let lpTimer=null, lpFired=false;
   function avDown(e,slug){ lpFired=false; clearTimeout(lpTimer); lpTimer=setTimeout(function(){ lpFired=true; try{ if(navigator.vibrate) navigator.vibrate(15); }catch(_){}  toggleSel(slug); },420); }
   function avUpCancel(){ clearTimeout(lpTimer); }
-  function avClick(e,slug){ e.stopPropagation(); if(lpFired){ lpFired=false; return; } if(hubSel.size>0) toggleSel(slug); else editarAvatar(slug); }
+  function avClick(e,slug){ e.stopPropagation(); if(lpFired){ lpFired=false; return; } if(hubSel.size>0){ toggleSel(slug); return; } if(getFoto(slug)) editarAvatar(slug); else adicionarFotoAvatar(slug); }
+  // avatar sem foto (ou "trocar foto"): abre seletor de arquivo, salva no slug e abre o ajuste de enquadramento
+  function adicionarFotoAvatar(slug){
+    if(!slug) return;
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    inp.onchange=ev=>{ const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=e2=>{ try{ localStorage.setItem('mmfoto_'+slug, e2.target.result); }catch(err){ toast('Foto grande demais para salvar'); return; }
+        renderHub(); toast('Foto adicionada'); editarAvatar(slug); };
+      r.readAsDataURL(f);
+    };
+    inp.click();
+  }
   function toggleSel(slug){ if(hubSel.has(slug)) hubSel.delete(slug); else hubSel.add(slug); renderHub(); }
   function limparSel(){ hubSel.clear(); renderHub(); }
   /* editor da foto do avatar (enquadramento próprio, salvo em mmavatar_<slug>, separado do card) */
@@ -1470,6 +1490,8 @@
     const t=new Date(); let a,b;
     if(tipo==='semana'){ const dow=t.getDay(); a=new Date(t); a.setDate(t.getDate()-dow); b=new Date(a); b.setDate(a.getDate()+6); }
     else if(tipo==='mes'){ a=new Date(t.getFullYear(),t.getMonth(),1); b=new Date(t.getFullYear(),t.getMonth()+1,0); }
+    else if(tipo==='mespassado'){ a=new Date(t.getFullYear(),t.getMonth()-1,1); b=new Date(t.getFullYear(),t.getMonth(),0); }
+    else if(tipo==='bimestre'){ const bi=Math.floor(t.getMonth()/2); a=new Date(t.getFullYear(),bi*2,1); b=new Date(t.getFullYear(),bi*2+2,0); }
     else if(tipo==='tri'){ const q=Math.floor(t.getMonth()/3); a=new Date(t.getFullYear(),q*3,1); b=new Date(t.getFullYear(),q*3+3,0); }
     else if(tipo==='ano'){ a=new Date(t.getFullYear(),0,1); b=new Date(t.getFullYear(),11,31); }
     else if(tipo==='30'){ b=new Date(t); a=new Date(t); a.setDate(t.getDate()-29); }
@@ -1515,6 +1537,8 @@
       h+='<div class="dp-atalhos">'
         +'<button class="dp-atalho" onclick="dpAtalho(\'semana\')">Esta semana</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'mes\')">Este mês</button>'
+        +'<button class="dp-atalho" onclick="dpAtalho(\'mespassado\')">Mês passado</button>'
+        +'<button class="dp-atalho" onclick="dpAtalho(\'bimestre\')">Bimestre</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'tri\')">Trimestre</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'ano\')">Este ano</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'30\')">Últimos 30 dias</button>'
@@ -2567,21 +2591,45 @@
     }
     const lbl0 = btn ? btn.textContent : '';
     if(btn){ btn.disabled=true; btn.textContent='⏳ Consultando…'; }
-    res.innerHTML='<div class="cmd-loading">⏳ Executando… consultando (pode levar alguns segundos)</div>';
-    res.scrollIntoView({behavior:'smooth',block:'start'});
+    const snap = cmdRefreshStart(res);   // se já há tabela: mantém na tela (faixa + esmaece); senão mostra o loading
+    if(snap===null) res.scrollIntoView({behavior:'smooth',block:'start'});
     try{
       const r=await fetch('/api/cmd?'+qs.toString(),{cache:'no-store'});
       const txt=await r.text();
       if(!r.ok) throw new Error(txt||('HTTP '+r.status));
+      res.classList.remove('cmd-atualizando');
       if(id==='relatorioTurma'){ renderRelatorioTurma(txt,res); }
       else if(id==='metaConsultores'||id==='metaUnidade'||id==='metaGeral'){ renderMetaCards(txt,res); }
       else { res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>'; aplicarMobileTabelas(); }   // mobile: densidade + foco por coluna
+      cmdFlash(res, snap);   // destaca por 5s as células que mudaram
     }catch(e){
+      res.classList.remove('cmd-atualizando');
       res.innerHTML='<div class="cmd-aviso">Falhou: '+esc(e.message)+'</div>';
     }finally{
       if(btn){ btn.disabled=false; btn.textContent=lbl0; }
-      res.scrollIntoView({behavior:'smooth',block:'start'});
+      if(snap===null) res.scrollIntoView({behavior:'smooth',block:'start'});
     }
+  }
+  // ==== Atualização suave: mantém a tabela na tela; faixa "Atualizando"; flash nas células alteradas ====
+  function cmdRefreshStart(res){
+    const tem = !!res.querySelector('.cmd-out, table, .ltbl');
+    if(tem){
+      const snap = cmdSnapshot(res);
+      res.classList.add('cmd-atualizando');
+      res.insertAdjacentHTML('afterbegin','<div class="cmd-upbar"><span class="cmd-spin"></span> Atualizando…</div>');
+      return snap;   // array (pode ser vazio) = modo refresh
+    }
+    res.innerHTML='<div class="cmd-loading">⏳ Executando… consultando o CRM (pode levar alguns segundos)</div>';
+    return null;     // null = primeira execução (sem tabela p/ preservar)
+  }
+  function cmdSnapshot(el){ return Array.from(el.querySelectorAll('table')).map(t=>Array.from(t.querySelectorAll('tr')).map(tr=>Array.from(tr.querySelectorAll('td')).map(td=>td.textContent.trim()))); }
+  function cmdFlash(el, snap){
+    if(!snap) return;
+    el.querySelectorAll('table').forEach((t,ti)=>{ const st=snap[ti]; if(!st) return;
+      t.querySelectorAll('tr').forEach((tr,ri)=>{ const sr=st[ri]; if(!sr) return;
+        tr.querySelectorAll('td').forEach((td,ci)=>{ if(sr[ci]!==undefined && sr[ci]!==td.textContent.trim()) td.classList.add('cmd-flash'); });
+      });
+    });
   }
 
   // Leads Vitória campanha: renderiza a MESMA tabela rica da aba Leads (TOTAL dourado + campanhas em verde, ordenável).
@@ -2593,22 +2641,25 @@
     const url='/api/leads'+(qp.length?('?'+qp.join('&')):'');
     const lbl0 = btn ? btn.textContent : '';
     if(btn){ btn.disabled=true; btn.textContent='⏳ Consultando…'; }
-    res.innerHTML='<div class="cmd-loading">⏳ Executando… consultando o CRM (pode levar alguns segundos)</div>';
-    res.scrollIntoView({behavior:'smooth',block:'start'});
+    const snap = cmdRefreshStart(res);
+    if(snap===null) res.scrollIntoView({behavior:'smooth',block:'start'});
     try{
       const r=await fetch(url,{cache:'no-store'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json();
       if(d.erro) throw new Error(d.erro);
+      res.classList.remove('cmd-atualizando');
       res.innerHTML='<div class="cmd-leadshead">📊 Leads por consultor · Competência <b>'+esc(d.mes||per)+'</b> · atualizado '+esc(d.geradoEm||'')+'</div>'
         +'<div class="md-tblwrap"><table class="ltbl" id="cmdLeadsTbl"></table></div>';
       LEADSCTX['cmdLeadsTbl']={ data:d, sort:{col:'total',dir:-1} };
       renderLeadsTabela('cmdLeadsTbl');
+      cmdFlash(res, snap);
     }catch(e){
+      res.classList.remove('cmd-atualizando');
       res.innerHTML='<div class="cmd-aviso">Falhou: '+esc(e.message)+'</div>';
     }finally{
       if(btn){ btn.disabled=false; btn.textContent=lbl0; }
-      res.scrollIntoView({behavior:'smooth',block:'start'});
+      if(snap===null) res.scrollIntoView({behavior:'smooth',block:'start'});
     }
   }
 
