@@ -45,6 +45,7 @@ Saída sempre em 2 blocos: **1)** Detalhe por consultor (Criado \| Cliente \| Va
 | `Meta Vitória Consultor <nome>` | Filtra um consultor (ex.: "Gabriela") |
 | `Meta Geral` | Consultores + Unidade + bloco "quanto falta para a unidade bater a meta" (R$ por nível + R$/dia) |
 | `Atualizar Meta` | **Fluxo guiado de edição** dos alvos de **unidade + consultores** (3 níveis manuais) no `metas-vitoria.json`; ao final **mostra a Meta Geral** e faz **Deploy** (commit+push) |
+| `Atualizar Meta Consultor <nome>` | **Fluxo guiado enxuto** que edita **só 1 consultor** (não passa pela unidade nem pela equipe toda). Ao final mostra a **Meta desse consultor** (realizado × meta) e faz **Deploy** |
 | `Cadastro/edição de metas` | Sinônimo do `Atualizar Meta` (mesmo fluxo guiado, sem script) |
 
 **Fluxo do `Atualizar Meta` (uma pergunta por vez, tabela de prévia sempre visível):**
@@ -54,6 +55,14 @@ Saída sempre em 2 blocos: **1)** Detalhe por consultor (Criado \| Cliente \| Va
 4. **Prévia** — tabela antes→depois (unidade + cada consultor, 3 níveis).
 5. **Confirmar** → grava no `metas-vitoria.json`.
 6. **Mostra a Meta Geral** (realizado × meta) e em seguida faz **Deploy** (commit + push).
+
+**Fluxo do `Atualizar Meta Consultor` (só 1 consultor, uma pergunta por vez, prévia sempre visível):**
+1. **Mês** — Enter = mês atual; ou outra competência `AAAA-MM`.
+2. **Consultor** — se o nome já veio no comando, uso ele; senão mostro a **lista numerada** da equipe atual (`Consultores Vitória`) e você responde só o **número** (ou nome parcial que case com 1 só).
+3. **3 níveis** — mostro o valor atual do consultor e você digita `mínima / básica / master`. Enter = mantém. Atalho: básica = mínima ×20/17 · master = básica ×10/9 (digite só a mínima que eu calculo).
+4. **Prévia** — tabela antes→depois só desse consultor (3 níveis).
+5. **Confirmar** → grava no `metas-vitoria.json` (a **unidade e os demais consultores não são tocados**).
+6. **Mostra a Meta desse consultor** (realizado × meta) e em seguida faz **Deploy** (commit + push).
 
 ---
 
@@ -79,7 +88,7 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 | `Equilíbrio de Leads` | Redistribui leads **igualmente** entre os consultores escolhidos, **movendo só o excedente** (quem está acima da média cede p/ quem está abaixo; sobra por ordem alfabética). Base: Ativos 1–4 ou etapa específica. Padrão = pipeline atual (todas as datas) |
 | `Equilíbrio de Leads campanha [mês]` | Igual ao Equilíbrio, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Base com atalho extra "Só Novo Lead" |
 
-**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314.
+**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Milene 17269.
 
 ---
 
