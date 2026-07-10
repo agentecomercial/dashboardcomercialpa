@@ -84,7 +84,8 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 
 | Comando | O que faz |
 |---|---|
-| `Transferência de Leads` | Reatribui N leads de um consultor **origem** para 1+ **destinos** (round-robin). Etapa origem→destino (move de etapa se diferente). Ordem: mais antigos / mais recentes |
+| `Transferência de Leads` | Reatribui N leads de um consultor **origem** para 1+ **destinos** (round-robin). Etapa origem→destino (move de etapa se diferente). Ordem: mais antigos / mais recentes. Mostra a **carteira atual** (matriz consultor × etapa + campanhas) no topo antes do fluxo |
+| `Transferência de Leads campanha` | Igual à Transferência, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Também mostra a carteira atual no topo |
 | `Equilíbrio de Leads` | Redistribui leads **igualmente** entre os consultores escolhidos, **movendo só o excedente** (quem está acima da média cede p/ quem está abaixo; sobra por ordem alfabética). Base: Ativos 1–4 ou etapa específica. Padrão = pipeline atual (todas as datas) |
 | `Equilíbrio de Leads campanha [mês]` | Igual ao Equilíbrio, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Base com atalho extra "Só Novo Lead" |
 
@@ -123,7 +124,7 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 
 | Comando | O que faz |
 |---|---|
-| `Relatório de Turma <link>` | Lê **TODAS as abas** da planilha (não só o gid do link) e devolve o relatório consolidado das turmas + detalhe de cada uma. Roda no app (card com campo de link + botão Executar) ou no chat |
+| `Relatório de Turma <link>` | Lê **TODAS as abas** da planilha (não só o gid do link) e devolve o relatório consolidado das turmas + detalhe de cada uma. Roda no app (card com campo de link + botão Executar) ou no chat. **A última leitura fica guardada** (`localStorage` `rt_ultima`): ao reabrir o comando a tabela reaparece automaticamente; botões **📌 Última tabela** (reexibe) e **🗑 Limpar** (apaga a guardada). Cada nova execução substitui a anterior |
 
 **Como lê (robusto):** extrai o ID do link e baixa a planilha inteira em **`.xlsx`** (`…/export?format=xlsx`) — **NÃO** usa `gviz`/CSV por aba, que falha em abas com células mescladas (ex.: FCIS-31 vinha achatada). Parseia o xlsx (zip → `sharedStrings.xml` + `workbook.xml` + `worksheets/sheetN.xml` via rels). Colunas: `A`=resumo, `D`=NOME, `E`=CPF, `F`=STATUS, `G`=OBSERVAÇÃO. **Pegadinhas:** os números do resumo são **fórmulas COUNTIF** (`<c><f>…</f><v>N</v></c>`) → o regex de célula precisa ler o `<v>` mesmo com `<f>`; a **Meta 70%** vem vazia na planilha, então é **calculada** = `round(Total × 0,7)`. Normaliza status tolerando typos ("Agurdando", "Titularidae").
 

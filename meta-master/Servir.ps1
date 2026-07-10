@@ -171,7 +171,7 @@ while ($listener.IsListening) {
       $raiz   = Split-Path $root -Parent
       $script = Join-Path $raiz 'Acoes-Leads-Vitoria.ps1'
       $acao   = $req.QueryString['acao']
-      if ($acao -notin 'equilibrio','equilibrioCampanha','transferencia') {
+      if ($acao -notin 'equilibrio','equilibrioCampanha','transferencia','transferenciaCampanha') {
         $res.StatusCode = 400; $res.ContentType = 'application/json; charset=utf-8'
         $b = [Text.Encoding]::UTF8.GetBytes((@{ erro = "Acao invalida: $acao" } | ConvertTo-Json -Compress))
         $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
