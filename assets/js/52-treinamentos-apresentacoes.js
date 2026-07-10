@@ -562,15 +562,10 @@
         + '</aside>';
     }
 
+    /* Passador de PARTES removido: duplicava o "Anterior/Próximo" que a HUD do
+       deck já mostra dentro do iframe. As partes seguem navegáveis pela lista
+       lateral de módulos (e pelas setas ←/→ quando o foco está fora do deck). */
     var navHtml = '';
-    if(partes.length > 1){
-      var n = partes.length;
-      navHtml = '<div class="trap-viz-nav">'
-        + '<button onclick="window._trapVizAnt()" '+(_indiceMod === 0 ? 'disabled' : '')+' title="Anterior (atalho: ←)">‹ Anterior</button>'
-        + '<span class="pos">'+(_indiceMod + 1)+' / '+n+'</span>'
-        + '<button onclick="window._trapVizProx()" '+(_indiceMod === n - 1 ? 'disabled' : '')+' title="Próximo (atalho: →)">Próximo ›</button>'
-        + '</div>';
-    }
 
     /* Barra de PRÉVIA (modo pré-visualização antes de salvar) */
     var prevBar = '';
@@ -3098,14 +3093,46 @@
     return out;
   }
 
+  /* Só dá pra usar fetch() servido (http/https); em file:// o navegador bloqueia. */
+  function _findPodeFetch(){ try{ return location.protocol !== 'file:'; }catch(e){ return true; } }
+
   function _findEnsureIndex(cb){
     var item = _itemVisualizando;
     if(!item){ if(cb) cb(); return; }
     if(_findIndex && _findIndexFor === item.id){ if(cb) cb(); return; }
     var partes = _vizPartesAtivas();
-    _findIndex = null; _findIndexFor = item.id;
-    _findIndexing = true; _findIndexErro = false;
-    var acc = [];
+    _findIndexFor = item.id; _findIndexErro = false;
+
+    /* 1) Índice PRÉ-GERADO (treinamentos-busca-index.js) → funciona em file://
+       sem fetch. Chave = url da parte (ex.: "treinamento-cis/modulo-1.html"). */
+    var emb = window.TRAP_BUSCA_INDEX || null;
+    if(emb){
+      var acc = [];
+      partes.forEach(function(p, pi){
+        var arr = p.url ? emb[p.url] : null;
+        if(arr && arr.length){
+          arr.forEach(function(s){
+            acc.push({ pi:pi, slideId:s.id, titulo:(s.t||('Slide '+s.id)), eyebrow:'', texto:(s.x||''), textoN:_findNorm(s.x||'') });
+          });
+        }
+      });
+      /* Usa o embutido se rendeu resultado OU se nem dá pra fazer fetch (file://). */
+      if(acc.length || !_findPodeFetch()){
+        _findIndex = acc; _findIndexing = false;
+        _findIndexErro = (!acc.length && !_findPodeFetch());
+        if(cb) cb();
+        return;
+      }
+    }
+
+    /* 2) Fallback ONLINE: fetch de cada parte (painel servido / GitHub Pages). */
+    if(!_findPodeFetch()){
+      _findIndex = []; _findIndexing = false; _findIndexErro = true;
+      if(cb) cb();
+      return;
+    }
+    _findIndex = null; _findIndexing = true;
+    var acc2 = [];
     var seq = Promise.resolve();
     partes.forEach(function(p, pi){
       seq = seq.then(function(){
@@ -3113,12 +3140,12 @@
         return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
           var doc = new DOMParser().parseFromString(txt, 'text/html');
-          _findExtractSlides(doc, pi).forEach(function(e){ acc.push(e); });
+          _findExtractSlides(doc, pi).forEach(function(e){ acc2.push(e); });
         }).catch(function(){ _findIndexErro = true; });
       });
     });
     seq.then(function(){
-      _findIndex = acc;
+      _findIndex = acc2;
       _findIndexing = false;
       if(cb) cb();
     });
@@ -3169,7 +3196,7 @@
     if(_findIndexing) return '<div class="trap-find-empty"><span class="big">⏳</span>Indexando as '+nPartes+' partes…</div>';
     if(!_findTerm) return '<div class="trap-find-empty"><span class="big">🔎</span>Digite uma palavra para localizar<br>em todas as '+nPartes+' partes do treinamento.</div>';
     if(_findIndexErro && (!_findIndex || !_findIndex.length))
-      return '<div class="trap-find-empty"><span class="big">🔌</span>A busca precisa do painel <b>online</b> (GitHub&nbsp;Pages).<br>Em arquivo local (file://) o navegador bloqueia a leitura das partes.</div>';
+      return '<div class="trap-find-empty"><span class="big">🗂️</span>Índice de busca ausente para este conteúdo.<br>Rode <code>scripts/gerar-indice-busca.ps1</code> (ou abra o painel online) para habilitar a busca.</div>';
     if(!_findHits.length) return '<div class="trap-find-empty"><span class="big">🚫</span>Nenhuma ocorrência de<br><b style="color:var(--text)">“'+_esc(_findTerm)+'”</b></div>';
     var totalOc = _findHits.reduce(function(a,h){ return a+h.n; }, 0);
     var partesArr = _vizPartesAtivas();
@@ -3232,72 +3259,27 @@
     var act = side.querySelector('.trap-find-hit.active'); if(act) act.scrollIntoView({ block:'nearest' });
   }
 
-  /* ── Realce dentro do iframe (same-origin, online) ── */
-  function _findIframeDoc(){
+  /* ── Realce dentro do iframe via postMessage (funciona em file:// também) ──
+     O acesso direto a iframe.contentDocument é bloqueado em file://, então o
+     realce é feito pelo próprio engine do deck (handler 'cis-highlight'). */
+  function _findIframeWin(){
     var iframe = document.querySelector('.trap-viz-iframe-wrap iframe');
-    if(!iframe) return null;
-    try{ return iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document) || null; }
-    catch(e){ return null; }
+    return (iframe && iframe.contentWindow) ? iframe.contentWindow : null;
   }
   function _findClearIframeHl(){
-    var doc = _findIframeDoc(); if(!doc) return;
-    var marks = Array.prototype.slice.call(doc.querySelectorAll('mark.trap-find-hl'));
-    marks.forEach(function(m){
-      if(!m.parentNode) return;
-      var t = doc.createTextNode(m.textContent);
-      var pn = m.parentNode;
-      pn.replaceChild(t, m);
-      if(pn.normalize) pn.normalize();
-    });
+    var win = _findIframeWin();
+    if(win){ try{ win.postMessage({ type:'cis-highlight', term:'' }, '*'); }catch(e){} }
   }
   function _findHighlightIframe(term){
-    var doc = _findIframeDoc(); if(!doc) return;
-    if(!doc.getElementById('trapFindHlCss')){
-      var st = doc.createElement('style'); st.id = 'trapFindHlCss';
-      st.textContent = 'mark.trap-find-hl{background:#ffe066!important;color:#111!important;border-radius:2px;padding:0 1px;} mark.trap-find-hl.cur{background:#ff9f45!important;box-shadow:0 0 0 3px rgba(255,159,69,.45);}';
-      (doc.head || doc.documentElement).appendChild(st);
-    }
-    _findClearIframeHl();
-    var tN = _findNorm(term); if(!tN) return;
-    var scope = doc.querySelector('.slide.is-active') || doc.querySelector('.slide') || doc.body;
-    if(!scope) return;
-    var walker = doc.createTreeWalker(scope, NodeFilter.SHOW_TEXT, null, false);
-    var nodes = [], node;
-    while((node = walker.nextNode())){
-      if(!node.nodeValue || !node.nodeValue.trim()) continue;
-      var tag = node.parentNode ? node.parentNode.nodeName : '';
-      if(tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') continue;
-      nodes.push(node);
-    }
-    var first = null;
-    nodes.forEach(function(n){
-      var text = n.nodeValue, hay = _findNorm(text), idx = hay.indexOf(tN);
-      if(idx < 0) return;
-      var frag = doc.createDocumentFragment(), last = 0;
-      while(idx >= 0){
-        if(idx > last) frag.appendChild(doc.createTextNode(text.slice(last, idx)));
-        var mk = doc.createElement('mark'); mk.className = 'trap-find-hl'; mk.textContent = text.slice(idx, idx+tN.length);
-        if(!first){ mk.className += ' cur'; first = mk; }
-        frag.appendChild(mk);
-        last = idx + tN.length; idx = hay.indexOf(tN, last);
-      }
-      if(last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
-      if(n.parentNode) n.parentNode.replaceChild(frag, n);
-    });
-    if(first){ try{ first.scrollIntoView({ block:'center' }); }catch(e){} }
+    var win = _findIframeWin();
+    if(win){ try{ win.postMessage({ type:'cis-highlight', term: term||'' }, '*'); }catch(e){} }
   }
 
   /* Manda o deck ir ao slide e realça o termo */
   function _findApplyToIframe(slideId, term){
-    if(slideId){
-      var iframe = document.querySelector('.trap-viz-iframe-wrap iframe');
-      if(iframe && iframe.contentWindow){
-        try{ iframe.contentWindow.postMessage({ type:'cis-goto', n: slideId }, '*'); }catch(e){}
-      }
-      setTimeout(function(){ _findHighlightIframe(term); }, 80);
-    } else {
-      _findHighlightIframe(term);
-    }
+    var win = _findIframeWin();
+    if(win && slideId){ try{ win.postMessage({ type:'cis-goto', n: slideId }, '*'); }catch(e){} }
+    setTimeout(function(){ _findHighlightIframe(term); }, slideId ? 90 : 0);
   }
 
   /* Navega até a ocorrência k (troca de parte se preciso) */

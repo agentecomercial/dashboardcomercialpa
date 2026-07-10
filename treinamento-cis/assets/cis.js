@@ -648,3 +648,24 @@
     else nav.insertBefore(btn, nav.firstChild);
   })();
 })();
+
+/* === Busca: realce por mensagem (cis-highlight) - habilita Ctrl+F no shell e em file:// === */
+;(function(){
+  function _cisFindNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(new RegExp('[̀-ͯ]','g'),''); }
+  function _cisFindClear(){
+    var ms = document.querySelectorAll('mark.cis-find-hl');
+    Array.prototype.forEach.call(ms, function(m){ var t=document.createTextNode(m.textContent); var p=m.parentNode; if(p){ p.replaceChild(t,m); if(p.normalize) p.normalize(); } });
+  }
+  function _cisFindHighlight(term){
+    _cisFindClear();
+    var tN=_cisFindNorm(term); if(!tN) return;
+    if(!document.getElementById('cisFindHlCss')){ var st=document.createElement('style'); st.id='cisFindHlCss'; st.textContent='mark.cis-find-hl{background:#ffe066!important;color:#111!important;border-radius:2px;padding:0 1px;}mark.cis-find-hl.cur{background:#ff9f45!important;box-shadow:0 0 0 3px rgba(255,159,69,.45);}'; (document.head||document.documentElement).appendChild(st); }
+    var scope=document.querySelector('.slide.is-active')||document.querySelector('.slide'); if(!scope) return;
+    var w=document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, null, false), ns=[], nd;
+    while((nd=w.nextNode())){ if(!nd.nodeValue||!nd.nodeValue.trim()) continue; var tg=nd.parentNode?nd.parentNode.nodeName:''; if(tg==='SCRIPT'||tg==='STYLE'||tg==='MARK') continue; ns.push(nd); }
+    var first=null;
+    ns.forEach(function(n){ var x=n.nodeValue,h=_cisFindNorm(x),i=h.indexOf(tN); if(i<0) return; var fr=document.createDocumentFragment(),last=0; while(i>=0){ if(i>last) fr.appendChild(document.createTextNode(x.slice(last,i))); var mk=document.createElement('mark'); mk.className='cis-find-hl'; mk.textContent=x.slice(i,i+tN.length); if(!first){ mk.className+=' cur'; first=mk; } fr.appendChild(mk); last=i+tN.length; i=h.indexOf(tN,last); } if(last<x.length) fr.appendChild(document.createTextNode(x.slice(last))); if(n.parentNode) n.parentNode.replaceChild(fr,n); });
+    if(first){ try{ first.scrollIntoView({block:'center'}); }catch(e){} }
+  }
+  window.addEventListener('message', function(e){ var m=e.data||{}; if(m && m.type==='cis-highlight'){ _cisFindHighlight(m.term||''); } });
+})();
