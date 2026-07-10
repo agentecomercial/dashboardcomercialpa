@@ -44,6 +44,22 @@
   var _itemVisualizando = null;
   var _indiceMod = 0; /* item selecionado dentro de item.estrutura (índice nas partes VISÍVEIS) */
 
+  /* ── Busca "estilo Word" dentro do treinamento (Ctrl+F) ─────────────
+     Índice = todas as partes VISÍVEIS fatiadas em slides. Montado via
+     fetch() (igual à impressão): só funciona ONLINE — em file:// o
+     navegador bloqueia a leitura das partes e mostramos o aviso. */
+  var _findOpen = false;         /* painel de busca aberto */
+  var _findTerm = '';            /* termo digitado */
+  var _findWord = false;         /* opção "palavra inteira" */
+  var _findHits = [];            /* [{pi, slideId, ei, n, snip}] — 1 por slide com match */
+  var _findActive = -1;          /* índice ativo em _findHits */
+  var _findIndex = null;         /* [{pi, slideId, titulo, eyebrow, texto, textoN}] */
+  var _findIndexFor = null;      /* id do item cujo índice está em _findIndex */
+  var _findIndexing = false;     /* montando índice */
+  var _findIndexErro = false;    /* fetch bloqueado (file://) */
+  var _findPendingGoto = null;   /* {slideId, term} a aplicar quando o iframe recarregar */
+  var _findDebounce = null;      /* timer do auto-pular ao digitar */
+
   /* ── Curadoria de páginas (ocultar partes da exibição em tela cheia) ── */
   var _gerPaginas = false;      /* painel "Gerenciar páginas" aberto */
   var _prevPaginas = false;     /* modo pré-visualização (mostra só o que ficará visível) */
@@ -289,6 +305,38 @@
       + '.trap-viz-mod:hover{ color:var(--text); background:var(--bg-3,#1c2128); }'
       + '.trap-viz-mod.curr{ background:rgba(200,240,90,.10); border-color:rgba(200,240,90,.30); color:var(--accent); }'
       + '.trap-viz-mod-n{ display:inline-block; font-family:"DM Mono",monospace; font-size:10px; opacity:.6; margin-right:6px; }'
+
+      /* ── Busca estilo Word (Localizar) dentro do treinamento ── */
+      + '.trap-find{ display:flex; flex-direction:column; height:100%; }'
+      + '.trap-find-box{ position:relative; display:flex; align-items:center; background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:8px; padding:2px 4px 2px 10px; transition:border-color .15s; }'
+      + '.trap-find-box:focus-within{ border-color:var(--accent); }'
+      + '.trap-find-box .ic{ color:var(--muted,#9aa5b1); font-size:13px; margin-right:6px; }'
+      + '.trap-find-box input{ flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:13px; font-family:inherit; padding:8px 4px; min-width:0; }'
+      + '.trap-find-box input::placeholder{ color:var(--muted,#9aa5b1); }'
+      + '.trap-find-count{ font-size:10px; color:var(--muted,#9aa5b1); font-variant-numeric:tabular-nums; padding:0 6px; white-space:nowrap; }'
+      + '.trap-find-nav{ display:flex; }'
+      + '.trap-find-nav button{ background:transparent; border:0; color:var(--muted,#9aa5b1); cursor:pointer; width:24px; height:26px; border-radius:5px; font-size:12px; display:flex; align-items:center; justify-content:center; }'
+      + '.trap-find-nav button:hover:not(:disabled){ color:var(--accent); background:rgba(200,240,90,.08); }'
+      + '.trap-find-nav button:disabled{ opacity:.3; cursor:default; }'
+      + '.trap-find-clear{ background:transparent; border:0; color:var(--muted,#9aa5b1); cursor:pointer; width:22px; height:26px; border-radius:5px; font-size:13px; }'
+      + '.trap-find-clear:hover{ color:var(--text); }'
+      + '.trap-find-opts{ display:flex; gap:6px; margin:8px 0 4px; }'
+      + '.trap-find-opt{ font-size:9px; font-weight:700; letter-spacing:.03em; color:var(--muted,#9aa5b1); background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:6px; padding:4px 8px; cursor:pointer; user-select:none; }'
+      + '.trap-find-opt.on{ color:var(--accent); border-color:rgba(200,240,90,.4); background:rgba(200,240,90,.10); }'
+      + '.trap-find-summary{ font-size:10px; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.06em; font-weight:800; margin:14px 2px 8px; }'
+      + '.trap-find-results{ flex:1; overflow-y:auto; margin:0 -4px; }'
+      + '.trap-find-group{ margin-bottom:10px; }'
+      + '.trap-find-group-h{ font-size:9px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); opacity:.85; padding:4px 8px; }'
+      + '.trap-find-hit{ display:block; width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:7px; padding:8px 10px; cursor:pointer; margin-bottom:2px; transition:all .12s; }'
+      + '.trap-find-hit:hover{ background:var(--bg-3,#1c2128); }'
+      + '.trap-find-hit.active{ background:rgba(200,240,90,.10); border-color:rgba(200,240,90,.30); }'
+      + '.trap-find-hit-loc{ font-size:9.5px; font-weight:700; color:var(--muted,#9aa5b1); margin-bottom:3px; display:flex; align-items:center; gap:5px; }'
+      + '.trap-find-hit-loc .pg{ font-family:"DM Mono",monospace; background:var(--bg-4,#21262d); border-radius:4px; padding:1px 5px; color:var(--text); white-space:nowrap; }'
+      + '.trap-find-hit-snip{ font-size:11.5px; line-height:1.5; color:var(--text); opacity:.92; }'
+      + '.trap-find-hit-snip mark, .trap-find-hit-loc mark{ background:#ffe066; color:#111; border-radius:2px; padding:0 1px; font-weight:700; }'
+      + '.trap-find-empty{ padding:26px 10px; text-align:center; color:var(--muted,#9aa5b1); font-size:12px; line-height:1.6; }'
+      + '.trap-find-empty .big{ font-size:24px; display:block; margin-bottom:8px; opacity:.55; }'
+
       + '.trap-viz-iframe-wrap{ position:relative; background:#fff; overflow:hidden; }'
       + '.trap-viz-iframe-wrap iframe{ width:100%; height:100%; border:0; display:block; }'
       + '.trap-viz-loading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg-2,#161b22); color:var(--muted,#9aa5b1); font-size:13px; z-index:2; }'
@@ -470,6 +518,21 @@
      Conteúdos com estrutura[] ganham sidebar de navegação entre
      os HTMLs vinculados (ex: Método CIS · 7 HTMLs).
      Conteúdo simples (sem estrutura) usa só o iframe. */
+
+  /* Miolo do sidebar de navegação (lista de partes/módulos visíveis).
+     Extraído para poder alternar com o painel de BUSCA no mesmo <aside>. */
+  function _vizSideInner(partes, nOcultas){
+    return '<h4>Conteúdo · '+partes.length+' partes'
+      + (nOcultas > 0 ? ' <span style="color:var(--red,#ef4444);font-weight:800;">· '+nOcultas+' oculta'+(nOcultas>1?'s':'')+'</span>' : '')
+      + '</h4>'
+      + partes.map(function(s, i){
+          var n = String(i + 1).padStart(2, '0');
+          return '<button class="trap-viz-mod'+(i === _indiceMod ? ' curr' : '')+'" onclick="window._trapVizSetMod('+i+')">'
+            + '<span class="trap-viz-mod-n">'+n+'</span>' + _esc(s.titulo)
+            + '</button>';
+        }).join('');
+  }
+
   function _viewVisualizar(){
     var item = _itemVisualizando;
     if(!item) return _viewPainel();
@@ -494,15 +557,8 @@
 
     var sideHtml = '';
     if(partes.length){
-      sideHtml = '<aside class="trap-viz-side"><h4>Conteúdo · '+partes.length+' partes'
-        + (nOcultas > 0 ? ' <span style="color:var(--red,#ef4444);font-weight:800;">· '+nOcultas+' oculta'+(nOcultas>1?'s':'')+'</span>' : '')
-        + '</h4>'
-        + partes.map(function(s, i){
-            var n = String(i + 1).padStart(2, '0');
-            return '<button class="trap-viz-mod'+(i === _indiceMod ? ' curr' : '')+'" onclick="window._trapVizSetMod('+i+')">'
-              + '<span class="trap-viz-mod-n">'+n+'</span>' + _esc(s.titulo)
-              + '</button>';
-          }).join('')
+      sideHtml = '<aside class="trap-viz-side" id="trapVizSide">'
+        + (_findOpen ? _findPanelHtml() : _vizSideInner(partes, nOcultas))
         + '</aside>';
     }
 
@@ -543,6 +599,9 @@
       +     (podeCurar && !_prevPaginas
             ? '<button class="trap-viz-btn" onclick="window._trapVizGerenciar()" title="Escolher quais páginas aparecem na tela cheia">👁 Gerenciar páginas'+(nOcultas>0 ? ' <b style="color:#f0a">('+nOcultas+')</b>' : '')+'</button>'
             : '')
+      +     (partes.length && !_prevPaginas
+            ? '<button class="trap-viz-btn'+(_findOpen?' on':'')+'" onclick="window._trapFindToggle()" title="Buscar dentro deste treinamento (Ctrl+F)">🔍 Buscar</button>'
+            : '')
       +     (ehInline
             ? '<button class="trap-viz-btn" onclick="window._trapAbrirInlineNovaAba(\''+_esc(item.id)+'\')" title="Abrir esta página em nova aba">↗ Nova aba</button>'
             : '<button class="trap-viz-btn" onclick="window.open(\''+_esc(urlAtual)+'\',\'_blank\',\'noopener,noreferrer\')" title="Abrir esta página em nova aba">↗ Nova aba</button>')
@@ -553,8 +612,8 @@
       +     '<div class="trap-viz-iframe-wrap">'
       +       '<div class="trap-viz-loading" id="trapVizLoading">Carregando…</div>'
       +       (ehInline
-            ? '<iframe srcdoc="'+_esc(_prepHtmlPreview(item.conteudo))+'" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');" title="'+_esc(item.titulo)+'"></iframe>'
-            : '<iframe src="'+_esc(urlAtual)+'" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');" title="'+_esc(item.titulo)+'"></iframe>')
+            ? '<iframe srcdoc="'+_esc(_prepHtmlPreview(item.conteudo))+'" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');window._trapFindIframeLoaded&&window._trapFindIframeLoaded();" title="'+_esc(item.titulo)+'"></iframe>'
+            : '<iframe src="'+_esc(urlAtual)+'" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');window._trapFindIframeLoaded&&window._trapFindIframeLoaded();" title="'+_esc(item.titulo)+'"></iframe>')
       +       navHtml
       +     '</div>'
       +   '</div>'
@@ -616,9 +675,16 @@
     if(_telaAtual !== 'visualizar') return;
     if(_gerPaginas) return; /* no painel de curadoria as setas não navegam */
     if(!_itemVisualizando || !Array.isArray(_itemVisualizando.estrutura)) return;
-    /* Ignora se foco está dentro do iframe (não dá pra detectar facilmente,
-       então só responde se foco está no body) */
-    if(document.activeElement && document.activeElement.tagName === 'IFRAME') return;
+    /* Ctrl/Cmd+F → abre a busca (mesmo com foco no body) */
+    if((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')){
+      if(_vizPartesAtivas().length && !_prevPaginas){ e.preventDefault(); window._trapFindAbrir(); }
+      return;
+    }
+    if(e.key === 'Escape' && _findOpen){ e.preventDefault(); window._trapFindFechar(); return; }
+    /* Enquanto o foco está no campo de busca, as setas movem o cursor — não navegam partes */
+    var ae = document.activeElement;
+    if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+    if(ae && ae.tagName === 'IFRAME') return;
     if(e.key === 'ArrowRight'){ e.preventDefault(); window._trapVizProx(); }
     else if(e.key === 'ArrowLeft'){ e.preventDefault(); window._trapVizAnt(); }
   });
@@ -745,11 +811,11 @@
     var oc = _prevPaginas ? (_stagingOcultas || []) : _paginasOcultasDe(item);
     return _partesVisiveis(item, oc);
   }
-  /* Botão Imprimir (apostila/PDF) — só para itens com partes (treinamentos) */
+  /* Botão Imprimir (apresentação/apostila) — só para itens com partes (treinamentos) */
   function _trapPrintBtnHtml(i, cls){
     if(!_trapTemEstrutura(i)) return '';
     var id = _esc(i.id);
-    return '<button class="'+(cls||'sec')+'" onclick="event.stopPropagation();window._trapBaixarPdfCompleto(\''+id+'\',this)" title="Imprimir / Salvar apostila em PDF">🖨️ Imprimir</button>';
+    return '<button class="'+(cls||'sec')+'" onclick="event.stopPropagation();window._trapBaixarPdfCompleto(\''+id+'\',this)" title="Imprimir / Salvar PDF (apresentação em slides ou apostila A4)">🖨️ Imprimir</button>';
   }
 
   function _cardHtml(i){
@@ -1204,12 +1270,72 @@
       + '</div>';
   }
 
-  /* ── Baixar treinamento COMPLETO em PDF ──────────────────
-     Busca cada parte (mesmo domínio — funciona online/Pages),
-     extrai o CONTEÚDO de todos os .slide e remonta como uma
-     APOSTILA (documento A4 fundo branco / texto preto), com
-     capa, separadores de parte, rodapé e quebras de página
-     que não cortam cards/tabelas. Dispara window.print(). */
+  /* ── Imprimir treinamento COMPLETO (Apresentação / Apostila) ─────────
+     Busca cada parte via fetch (mesmo domínio — funciona online/Pages) e
+     abre UMA janela de impressão com dois formatos:
+       🎞 Apresentação (padrão) — os slides ORIGINAIS, 1 por página
+          1280×720, com o CSS do próprio treinamento (visual idêntico ao
+          deck) e as edições inline (cis-edits do localStorage) aplicadas.
+       📖 Apostila — documento A4 claro remontado (formato anterior),
+          com Retrato/Paisagem.
+     Ocultos: respeita partes ocultas (item.paginasOcultas) e slides de
+     olhinho (cis-edits:<parte>.hidden). Se houver qualquer item oculto,
+     um modal pergunta antes: imprimir sem os ocultos · incluir tudo ·
+     cancelar. Dispara window.print() na janela gerada. */
+
+  /* Mesma enumeração de elementos editáveis do engine dos decks
+     (data-ed-id = slideId + '.' + índice no querySelectorAll do slide). */
+  var _PRINT_EDIT_SELECTOR = 'h1, h2, h3, h4, p, li, cite, .chip, .quote, .bubble, .label, .value, .who, .num, .meta, .axis-x, .axis-y, .pullquote, .module-badge';
+
+  /* Lê o store cis-edits da parte (edições inline + slides de olhinho) */
+  function _printStoreDe(url){
+    try{
+      var path = new URL(url, window.location.href).pathname;
+      var key = 'cis-edits:' + (path.split('/').slice(-2).join('/') || 'index');
+      var st = JSON.parse(localStorage.getItem(key) || '{}');
+      return { edits: st.edits || {}, hidden: Array.isArray(st.hidden) ? st.hidden.map(String) : [] };
+    }catch(e){ return { edits: {}, hidden: [] }; }
+  }
+
+  function _printTituloSlide(sl, n){
+    var t = sl.querySelector('.slide-title') || sl.querySelector('h1, h2, h3');
+    var txt = t ? t.textContent.replace(/\s+/g, ' ').trim() : '';
+    if(txt.length > 70) txt = txt.slice(0, 67) + '…';
+    return txt || ('Slide ' + n);
+  }
+
+  /* Modal: o treinamento tem itens ocultos — sem eles / incluir tudo / cancelar */
+  function _printModalOcultos(inv, cb, onCancel){
+    var old = document.getElementById('trapOcPrintOvl'); if(old) old.remove();
+    var ovl = document.createElement('div');
+    ovl.id = 'trapOcPrintOvl';
+    ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    var itens = inv.map(function(o){
+      return '<div style="display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px;">'
+        + '<span style="flex:none;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#ffb38a;background:rgba(255,120,60,.16);padding:2px 8px;border-radius:999px;">' + _esc(o.tipo) + '</span>'
+        + '<span style="min-width:0;">' + _esc(o.txt) + ' <span style="color:#8b949e;font-size:11.5px;">· ' + _esc(o.onde) + '</span></span>'
+        + '</div>';
+    }).join('');
+    ovl.innerHTML = '<div style="background:#12161d;color:#e6edf3;border:1px solid #30363d;border-radius:14px;max-width:540px;width:100%;padding:22px 24px;box-shadow:0 30px 80px rgba(0,0,0,.6);font-family:system-ui,sans-serif;">'
+      + '<h3 style="margin:0 0 4px;font-size:17px;color:#ffb38a;">👁 Este treinamento tem itens ocultos</h3>'
+      + '<p style="font-size:12.5px;color:#9aa5b1;margin:0 0 14px;line-height:1.5;">Os itens abaixo estão ocultados na apresentação (olhinho / páginas ocultas). Como você quer gerar o PDF?</p>'
+      + '<div style="background:rgba(255,120,60,.07);border:1px solid rgba(255,120,60,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;max-height:250px;overflow:auto;">' + itens + '</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+      +   '<button data-oc="sem" style="flex:1;min-width:150px;border-radius:8px;padding:11px 12px;font:700 13px system-ui;cursor:pointer;border:1px solid #9a7b1a;background:#9a7b1a;color:#fff;">Imprimir sem os ocultos</button>'
+      +   '<button data-oc="tudo" style="flex:1;min-width:120px;border-radius:8px;padding:11px 12px;font:700 13px system-ui;cursor:pointer;border:1px solid #30363d;background:rgba(255,255,255,.05);color:#c9d1d9;">Incluir tudo</button>'
+      +   '<button data-oc="cancel" style="flex:0 0 auto;border-radius:8px;padding:11px 14px;font:700 13px system-ui;cursor:pointer;border:1px solid #30363d;background:rgba(255,255,255,.05);color:#9aa5b1;">Cancelar</button>'
+      + '</div></div>';
+    document.body.appendChild(ovl);
+    ovl.addEventListener('click', function(ev){
+      var b = ev.target.closest('button[data-oc]');
+      if(!b){ if(ev.target === ovl){ ovl.remove(); onCancel(); } return; }
+      var op = b.getAttribute('data-oc');
+      ovl.remove();
+      if(op === 'cancel'){ onCancel(); return; }
+      cb(op === 'tudo');
+    });
+  }
+
   window._trapBaixarPdfCompleto = function(id, btn){
     var item = _getItens().find(function(i){ return i.id === id; });
     if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
@@ -1217,6 +1343,7 @@
     }
     var partes = item.estrutura.filter(function(p){ return p && p.url; });
     if(!partes.length){ alert('Treinamento sem partes.'); return; }
+    var ocultasUrls = _paginasOcultasDe(item);
     var u0 = partes[0].url;
     var base = u0.substring(0, u0.lastIndexOf('/') + 1);
     var absBase = new URL(base, window.location.href).href;
@@ -1226,9 +1353,8 @@
     function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
 
     var parser = new DOMParser();
-    var sectionsHtml = '';
-    var partCount = 0;
-    var cssHref = '';   /* CSS do treinamento — para extrair a cor de identidade */
+    var decks = [];     /* {parte, slides:[{el,id,titulo,oculto}], parteOculta} */
+    var cssHref = '';   /* CSS do treinamento — identidade visual */
 
     /* Converte 1 slide em bloco de apostila (eyebrow + título + corpo) */
     function _slideToHtml(sl){
@@ -1257,149 +1383,247 @@
         return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
           var doc = parser.parseFromString(txt, 'text/html');
+          var deckEl = doc.querySelector('.deck');
+          var slideEls = Array.prototype.slice.call((deckEl || doc).querySelectorAll('.slide'));
+          if(!slideEls.length) return;   /* pula capa/menu (sem slides) */
           if(!cssHref){
             var _lnk = doc.querySelector('head link[rel="stylesheet"]');
             if(_lnk && _lnk.getAttribute('href')) cssHref = new URL(_lnk.getAttribute('href'), absBase).href;
           }
-          var slides = doc.querySelectorAll('.slide');
-          if(!slides.length) return;   /* pula capa/menu (sem slides) */
-          partCount++;
-          var partHtml = '';
-          slides.forEach(function(sl){ partHtml += _slideToHtml(sl); });
-          sectionsHtml += '<div class="ap-part' + (partCount > 1 ? ' brk' : '') + '">'
-            + '<div class="ap-part-k">Parte ' + partCount + ' · ' + _esc(item.produto || '') + '</div>'
-            + '<h1 class="ap-part-t">' + _esc(p.titulo || ('Parte ' + partCount)) + '</h1>'
-            + '</div>' + partHtml;
+          var st = _printStoreDe(p.url);
+          var slides = slideEls.map(function(sl, i){
+            var sid = String(i + 1);
+            /* aplica as edições inline (mesma enumeração do engine do deck) */
+            Array.prototype.forEach.call(sl.querySelectorAll(_PRINT_EDIT_SELECTOR), function(el, k){
+              if(el.closest('svg, script, style, .progress, .hud, .home-button, [data-no-edit]')) return;
+              var v = st.edits[sid + '.' + k];
+              if(typeof v === 'string') el.innerHTML = v;
+            });
+            return { el: sl, id: sid, titulo: _printTituloSlide(sl, i + 1), oculto: st.hidden.indexOf(sid) !== -1 };
+          });
+          decks.push({ parte: p, slides: slides, parteOculta: ocultasUrls.indexOf(p.url) !== -1 });
         }).catch(function(){ /* ignora parte que falhar */ });
       });
     });
 
     seq.then(function(){
-      if(!sectionsHtml){
+      if(!decks.length){
         _restore();
         alert('Não foi possível extrair o conteúdo.\n\nA impressão completa precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
-      /* Busca o CSS do treinamento p/ extrair a identidade visual; com fallback. */
-      var fb = { ac:'#16a83e', acd:'#0a6d2c', hd:'#0d1b0d' };
-      if(cssHref){
-        fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(function(cssTxt){
-          function pick(n, f){ var m = cssTxt.match(new RegExp('--' + n + '\\s*:\\s*([^;]+)')); return m ? m[1].trim() : f; }
-          _apMontar({ ac: pick('cis-yellow', fb.ac), acd: pick('cis-yellow-deep', fb.acd), hd: pick('cis-blue-900', fb.hd) });
-        }).catch(function(){ _apMontar(fb); });
-      } else { _apMontar(fb); }
 
-      function _apMontar(cor){
-        function _tint(hex, a){
-          hex = String(hex || '').trim().replace('#','');
-          if(hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
-          var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
-          if(isNaN(r)||isNaN(g)||isNaN(b)) return 'rgba(16,168,62,' + a + ')';
-          return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+      /* Inventário de ocultos → modal antes de gerar */
+      var inv = [];
+      decks.forEach(function(d){
+        var tp = d.parte.titulo || d.parte.url;
+        if(d.parteOculta){ inv.push({ tipo: 'Parte', txt: tp, onde: 'página inteira oculta no painel' }); return; }
+        d.slides.forEach(function(s){ if(s.oculto) inv.push({ tipo: 'Slide', txt: s.titulo, onde: tp + ' · slide ' + s.id }); });
+      });
+      if(!inv.length){ _gerar(false, 0); }
+      else { _printModalOcultos(inv, function(incluir){ _gerar(incluir, inv.length); }, _restore); }
+
+      function _gerar(incluirOcultos, nOcultos){
+        var fdecks = decks
+          .filter(function(d){ return incluirOcultos || !d.parteOculta; })
+          .map(function(d){ return { parte: d.parte, slides: d.slides.filter(function(s){ return incluirOcultos || !s.oculto; }) }; })
+          .filter(function(d){ return d.slides.length; });
+        var totalSlides = 0;
+        fdecks.forEach(function(d){ totalSlides += d.slides.length; });
+        if(!totalSlides){ _restore(); alert('Nada a imprimir — todas as partes/slides estão ocultos.'); return; }
+
+        /* Busca o CSS do treinamento p/ extrair a identidade visual; com fallback. */
+        var fb = { ac:'#16a83e', acd:'#0a6d2c', hd:'#0d1b0d' };
+        if(cssHref){
+          fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(function(cssTxt){
+            function pick(n, f){ var m = cssTxt.match(new RegExp('--' + n + '\\s*:\\s*([^;]+)')); return m ? m[1].trim() : f; }
+            _montar({ ac: pick('cis-yellow', fb.ac), acd: pick('cis-yellow-deep', fb.acd), hd: pick('cis-blue-900', fb.hd) });
+          }).catch(function(){ _montar(fb); });
+        } else { _montar(fb); }
+
+        function _montar(cor){
+          function _tint(hex, a){
+            hex = String(hex || '').trim().replace('#','');
+            if(hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
+            var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+            if(isNaN(r)||isNaN(g)||isNaN(b)) return 'rgba(16,168,62,' + a + ')';
+            return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+          }
+          var hoje = new Date();
+          var dataStr = hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+          /* Variáveis de identidade (apostila clara + capa da apresentação) */
+          var rootVars = ':root{'
+            + '--ac:' + cor.ac + ';--acd:' + cor.acd + ';--hd:' + cor.hd + ';'
+            + '--tint:' + _tint(cor.ac, 0.10) + ';--tint2:' + _tint(cor.ac, 0.18) + ';--tline:' + _tint(cor.ac, 0.35) + ';'
+            + '}';
+
+          /* ---- vista APRESENTAÇÃO: capa + slides originais ---- */
+          var apresHtml = '<section class="slide pv-capa"><div class="pv-capa-in">'
+            + '<span class="pv-capa-badge">' + _esc(item.produto || 'Treinamento') + ' · Treinamento Comercial</span>'
+            + '<h1>' + _esc(item.titulo) + '</h1>'
+            + '<div class="pv-capa-sub">' + fdecks.length + ' parte' + (fdecks.length > 1 ? 's' : '') + ' · ' + totalSlides + ' slides · gerado em ' + _esc(dataStr) + '</div>'
+            + '</div></section>';
+
+          /* ---- vista APOSTILA: mesmos slides remontados em A4 claro ---- */
+          var sectionsHtml = '';
+          var partCount = 0;
+          fdecks.forEach(function(d){
+            partCount++;
+            sectionsHtml += '<div class="ap-part' + (partCount > 1 ? ' brk' : '') + '">'
+              + '<div class="ap-part-k">Parte ' + partCount + ' · ' + _esc(item.produto || '') + '</div>'
+              + '<h1 class="ap-part-t">' + _esc(d.parte.titulo || ('Parte ' + partCount)) + '</h1>'
+              + '</div>';
+            d.slides.forEach(function(s){
+              var cl = s.el.cloneNode(true);
+              Array.prototype.forEach.call(cl.querySelectorAll('script'), function(x){ x.remove(); });
+              cl.classList.remove('is-active', 'is-leaving', 'is-hidden-slide', 'dir-prev', 'dir-next');
+              apresHtml += cl.outerHTML;
+              sectionsHtml += _slideToHtml(cl.cloneNode(true));
+            });
+          });
+
+          var css = '<style>'
+            + rootVars
+            + '*{ box-sizing:border-box; }'
+            + 'html,body{ margin:0; padding:0; background:#fff; color:#1a1a1a; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; font-size:12px; line-height:1.5; }'
+            + 'img{ max-width:100% !important; height:auto; }'
+            /* Capa */
+            + '.ap-cover{ text-align:center; padding:6px 0 16px; border-bottom:3px solid var(--acd); margin-bottom:18px; }'
+            + '.ap-cover .ap-prod{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
+            + '.ap-cover h1{ font-size:25px; margin:8px 0 6px; color:var(--hd); }'
+            + '.ap-cover .ap-date{ font-size:11px; color:#555; }'
+            + '.ap-cover .ap-desc{ font-size:11px; color:#444; max-width:620px; margin:8px auto 0; }'
+            /* Separador de parte */
+            + '.ap-part{ margin:16px 0 12px; padding:9px 14px; background:var(--tint); border-left:5px solid var(--acd); border-radius:4px; break-after:avoid; page-break-after:avoid; }'
+            + '.ap-part.brk{ break-before:page; page-break-before:always; }'
+            + '.ap-part-k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
+            + '.ap-part-t{ font-size:18px; margin:2px 0 0; color:var(--hd); }'
+            /* Bloco slide */
+            + '.ap-slide{ margin:0 0 14px; padding:0 0 11px; border-bottom:1px solid var(--tline); }'
+            + '.ap-eyebrow{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--acd); font-weight:700; margin-bottom:2px; }'
+            + '.ap-title{ font-size:15px; color:var(--hd); margin:0 0 8px; break-after:avoid; page-break-after:avoid; }'
+            /* Conteúdo genérico */
+            + '.ap-body *{ color:#1a1a1a !important; }'
+            + '.ap-body strong{ color:var(--acd) !important; font-weight:700; }'
+            + '.ap-body h3{ font-size:12.5px; margin:9px 0 3px; color:var(--hd) !important; break-after:avoid; }'
+            + '.ap-body h4{ font-size:11.5px; margin:7px 0 3px; color:var(--hd) !important; }'
+            + '.ap-body p{ margin:4px 0; }'
+            + '.ap-body ul,.ap-body ol{ margin:4px 0 4px 18px; padding:0; }'
+            + '.ap-body li{ margin:3px 0; break-inside:avoid; }'
+            + '.ap-body li::marker{ color:var(--acd); }'
+            + '.ap-body .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }'
+            + '.ap-body .grid-3{ grid-template-columns:1fr 1fr 1fr; }'
+            + '.ap-body .grid-1{ grid-template-columns:1fr; }'
+            + '.ap-body .card,.ap-body .quad,.ap-body .turn,.ap-body .col,.ap-body .step{ background:var(--tint) !important; border:1px solid var(--tline); border-radius:6px; padding:9px 11px; break-inside:avoid; page-break-inside:avoid; }'
+            + '.ap-body .card.solid{ background:var(--tint2) !important; border-color:var(--acd); }'
+            + '.ap-body .card h3,.ap-body .card h4{ margin-top:0; }'
+            + '.ap-body .seq,.ap-body .aida,.ap-body .funnel,.ap-body .matrix,.ap-body .split,.ap-body .script-list,.ap-body .dialog,.ap-body .cols-aside{ display:block; }'
+            + '.ap-body .seq>*,.ap-body .aida>*,.ap-body .funnel>*,.ap-body .script-list>*,.ap-body .split>*{ margin:5px 0; break-inside:avoid; page-break-inside:avoid; }'
+            + '.ap-body table{ width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }'
+            + '.ap-body th,.ap-body td{ border:1px solid var(--tline); padding:5px 8px; text-align:left; vertical-align:top; }'
+            + '.ap-body thead th{ background:var(--tint) !important; color:var(--hd) !important; font-weight:700; }'
+            + '.ap-body tr{ break-inside:avoid; page-break-inside:avoid; }'
+            + '.ap-body [style*="background-image"]{ background-image:none !important; }'
+            + '.ap-foot{ display:none; }'
+            /* Tela (pré-visualização) */
+            + '@media screen{ body{ background:#525659; } '
+            +   '.ap-doc{ background:#fff; max-width:820px; margin:60px auto 40px; padding:30px 36px; box-shadow:0 8px 34px rgba(0,0,0,.45); border-radius:3px; } '
+            +   '.ap-bar{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
+            +   '.ap-bar button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:7px 13px; font:inherit; cursor:pointer; } '
+            +   '.ap-bar button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
+            +   '.ap-bar .ap-print{ background:var(--acd); border:none; color:#fff; font-weight:700; } }'
+            /* Impressão */
+            + '@media print{ '
+            +   'body{ background:#fff !important; } '
+            +   '*{ animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important; } '
+            +   '.ap-bar{ display:none !important; } '
+            +   '.ap-doc{ margin:0; padding:0; max-width:none; box-shadow:none; } '
+            +   '.ap-foot{ display:block; position:fixed; bottom:6mm; left:0; right:0; text-align:center; font-size:8.5px; color:#888; } }'
+            + '</style>';
+
+          /* ---- CSS da vista Apresentação (receita validada: 1 slide = 1 página 1280×720) ---- */
+          var apresCss = '<style>'
+            /* html do deck traz overflow:hidden/height — sem este reset sobra 1 página em branco no fim */
+            + 'html{ overflow:visible !important; height:auto !important; }'
+            + 'body.view-apres{ background:#525659 !important; overflow:auto !important; height:auto !important; font-size:16px !important; }'
+            + 'body.view-apres .ap-doc, body.view-apres .ap-foot{ display:none !important; }'
+            + 'body.view-apost #pvApres{ display:none !important; }'
+            + 'body.view-apres #grpOrient{ display:none !important; }'
+            + '#pvApres .slide{ position:relative !important; inset:auto !important; display:flex !important; width:1280px !important; height:720px !important; margin:0 !important; border-radius:0 !important; box-shadow:none !important; overflow:hidden !important; animation:none !important; }'
+            + '#pvApres .slide *{ animation:none !important; transition:none !important; }'
+            + '#pvApres, #pvApres *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }'
+            + '.pv-capa{ background:radial-gradient(circle at 85% 15%, rgba(255,255,255,.06), transparent 45%), linear-gradient(160deg,#141414 0%,#111111 55%,#0d0d0d 100%) !important; }'
+            + '.pv-capa .pv-capa-in{ margin:auto; text-align:center; position:relative; z-index:1; }'
+            + '.pv-capa-badge{ display:inline-block; background:var(--ac); color:#111; font:800 13px/1 system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase; padding:8px 22px; border-radius:999px; }'
+            + '.pv-capa h1{ color:var(--ac); font-size:58px; margin:26px 0 10px; font-family:"Inter","Segoe UI",sans-serif; }'
+            + '.pv-capa-sub{ color:#9c9c9c; font-size:17px; font-family:"Inter","Segoe UI",sans-serif; }'
+            + '@media screen{'
+            +   '#pvApres{ padding:72px 0 46px; }'
+            +   '#pvApres .slide{ zoom:.62; margin:0 auto 28px !important; box-shadow:0 10px 40px rgba(0,0,0,.55) !important; }'
+            + '}'
+            + '@media print{'
+            +   '#pvApres{ padding:0; }'
+            +   '#pvApres .slide{ page-break-after:always !important; box-shadow:none !important; }'
+            +   '#pvApres .slide:last-child{ page-break-after:auto !important; }'
+            + '}'
+            + '</style>';
+
+          var orientCss = '<style id="apOrient">@page{ size:1280px 720px; margin:0 }</style>';
+
+          var chipOcultos = nOcultos
+            ? '<span style="background:rgba(255,120,60,.15);border:1px solid rgba(255,120,60,.5);color:#ffb38a;border-radius:6px;padding:5px 10px;font-size:12px;">👁 ' + nOcultos + ' oculto' + (nOcultos > 1 ? 's' : '') + ' ' + (incluirOcultos ? 'incluído' + (nOcultos > 1 ? 's' : '') : 'fora') + '</span>'
+            : '';
+          var bar = '<div class="ap-bar">'
+            + '<span>📄 ' + _esc(item.titulo) + '</span>'
+            + '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+            +   chipOcultos
+            +   '<span style="opacity:.7;font-weight:500;">Formato:</span>'
+            +   '<button id="btnApres" class="on" onclick="setModo(\'apresentacao\')">🎞 Apresentação</button>'
+            +   '<button id="btnApost" onclick="setModo(\'apostila\')">📖 Apostila A4</button>'
+            +   '<span id="grpOrient" style="display:flex;gap:8px;align-items:center;">'
+            +     '<span style="opacity:.7;font-weight:500;">A4:</span>'
+            +     '<button id="btnPort" class="on" onclick="setOrient(\'portrait\')">Retrato</button>'
+            +     '<button id="btnLand" onclick="setOrient(\'landscape\')">Paisagem</button>'
+            +   '</span>'
+            +   '<button class="ap-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
+            + '</span>'
+            + '</div>';
+          var script = '<scr' + 'ipt>'
+            + 'var PORT="@page{size:A4 portrait;margin:16mm 14mm 18mm}";'
+            + 'var LAND="@page{size:A4 landscape;margin:14mm 16mm 16mm}";'
+            + 'var APRES="@page{size:1280px 720px;margin:0}";'
+            + 'var TIT=' + JSON.stringify(String(item.titulo || '')) + ';'
+            + 'var _ori="portrait";'
+            + 'function setOrient(o){_ori=o;var P=document.getElementById("btnPort"),L=document.getElementById("btnLand");if(P)P.className=(o==="portrait")?"on":"";if(L)L.className=(o==="landscape")?"on":"";if(document.body.className.indexOf("view-apost")>=0)document.getElementById("apOrient").textContent=(o==="landscape")?LAND:PORT;}'
+            + 'function setModo(m){var a=(m==="apresentacao");document.body.className=a?"view-apres":"view-apost";var d=document.getElementById("deckCss");if(d)d.disabled=!a;document.getElementById("apOrient").textContent=a?APRES:((_ori==="landscape")?LAND:PORT);var A=document.getElementById("btnApres"),B=document.getElementById("btnApost");if(A)A.className=a?"on":"";if(B)B.className=a?"on":"";document.title=TIT+(a?" — Apresentação":" — Apostila");}'
+            + '</scr' + 'ipt>';
+          var cover = '<div class="ap-cover">'
+            + '<div class="ap-prod">' + _esc(item.produto || '') + ' · Treinamento Comercial</div>'
+            + '<h1>' + _esc(item.titulo) + '</h1>'
+            + '<div class="ap-date">Documento gerado em ' + _esc(dataStr) + '</div>'
+            + (item.descricao ? '<div class="ap-desc">' + _esc(item.descricao) + '</div>' : '')
+            + '</div>';
+          var foot = '<div class="ap-foot">Documento gerado automaticamente pelo sistema de treinamento</div>';
+
+          var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+            + '<base href="' + absBase + '">'
+            + css
+            + (cssHref ? '<link id="deckCss" rel="stylesheet" href="' + cssHref + '">' : '')
+            + apresCss + orientCss
+            + '<title>' + _esc(item.titulo) + ' — Apresentação</title></head>'
+            + '<body class="view-apres">'
+            + bar
+            + '<div id="pvApres">' + apresHtml + '</div>'
+            + '<div class="ap-doc">' + cover + sectionsHtml + '</div>'
+            + foot
+            + script
+            + '</body></html>';
+          var w = window.open('', '_blank');
+          if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar a impressão e tente novamente.'); return; }
+          w.document.open(); w.document.write(html); w.document.close();
+          _restore();
         }
-        var hoje = new Date();
-        var dataStr = hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-        /* Variáveis de identidade aplicadas à apostila (fundo sempre claro p/ leitura) */
-        var rootVars = ':root{'
-          + '--ac:' + cor.ac + ';--acd:' + cor.acd + ';--hd:' + cor.hd + ';'
-          + '--tint:' + _tint(cor.ac, 0.10) + ';--tint2:' + _tint(cor.ac, 0.18) + ';--tline:' + _tint(cor.ac, 0.35) + ';'
-          + '}';
-
-        var css = '<style>'
-          + rootVars
-          + '*{ box-sizing:border-box; }'
-          + 'html,body{ margin:0; padding:0; background:#fff; color:#1a1a1a; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; font-size:12px; line-height:1.5; }'
-          + 'img{ max-width:100% !important; height:auto; }'
-          /* Capa */
-          + '.ap-cover{ text-align:center; padding:6px 0 16px; border-bottom:3px solid var(--acd); margin-bottom:18px; }'
-          + '.ap-cover .ap-prod{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
-          + '.ap-cover h1{ font-size:25px; margin:8px 0 6px; color:var(--hd); }'
-          + '.ap-cover .ap-date{ font-size:11px; color:#555; }'
-          + '.ap-cover .ap-desc{ font-size:11px; color:#444; max-width:620px; margin:8px auto 0; }'
-          /* Separador de parte */
-          + '.ap-part{ margin:16px 0 12px; padding:9px 14px; background:var(--tint); border-left:5px solid var(--acd); border-radius:4px; break-after:avoid; page-break-after:avoid; }'
-          + '.ap-part.brk{ break-before:page; page-break-before:always; }'
-          + '.ap-part-k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
-          + '.ap-part-t{ font-size:18px; margin:2px 0 0; color:var(--hd); }'
-          /* Bloco slide */
-          + '.ap-slide{ margin:0 0 14px; padding:0 0 11px; border-bottom:1px solid var(--tline); }'
-          + '.ap-eyebrow{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--acd); font-weight:700; margin-bottom:2px; }'
-          + '.ap-title{ font-size:15px; color:var(--hd); margin:0 0 8px; break-after:avoid; page-break-after:avoid; }'
-          /* Conteúdo genérico */
-          + '.ap-body *{ color:#1a1a1a !important; }'
-          + '.ap-body strong{ color:var(--acd) !important; font-weight:700; }'
-          + '.ap-body h3{ font-size:12.5px; margin:9px 0 3px; color:var(--hd) !important; break-after:avoid; }'
-          + '.ap-body h4{ font-size:11.5px; margin:7px 0 3px; color:var(--hd) !important; }'
-          + '.ap-body p{ margin:4px 0; }'
-          + '.ap-body ul,.ap-body ol{ margin:4px 0 4px 18px; padding:0; }'
-          + '.ap-body li{ margin:3px 0; break-inside:avoid; }'
-          + '.ap-body li::marker{ color:var(--acd); }'
-          + '.ap-body .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }'
-          + '.ap-body .grid-3{ grid-template-columns:1fr 1fr 1fr; }'
-          + '.ap-body .grid-1{ grid-template-columns:1fr; }'
-          + '.ap-body .card,.ap-body .quad,.ap-body .turn,.ap-body .col,.ap-body .step{ background:var(--tint) !important; border:1px solid var(--tline); border-radius:6px; padding:9px 11px; break-inside:avoid; page-break-inside:avoid; }'
-          + '.ap-body .card.solid{ background:var(--tint2) !important; border-color:var(--acd); }'
-          + '.ap-body .card h3,.ap-body .card h4{ margin-top:0; }'
-          + '.ap-body .seq,.ap-body .aida,.ap-body .funnel,.ap-body .matrix,.ap-body .split,.ap-body .script-list,.ap-body .dialog,.ap-body .cols-aside{ display:block; }'
-          + '.ap-body .seq>*,.ap-body .aida>*,.ap-body .funnel>*,.ap-body .script-list>*,.ap-body .split>*{ margin:5px 0; break-inside:avoid; page-break-inside:avoid; }'
-          + '.ap-body table{ width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }'
-          + '.ap-body th,.ap-body td{ border:1px solid var(--tline); padding:5px 8px; text-align:left; vertical-align:top; }'
-          + '.ap-body thead th{ background:var(--tint) !important; color:var(--hd) !important; font-weight:700; }'
-          + '.ap-body tr{ break-inside:avoid; page-break-inside:avoid; }'
-          + '.ap-body [style*="background-image"]{ background-image:none !important; }'
-          + '.ap-foot{ display:none; }'
-          /* Tela (pré-visualização) */
-          + '@media screen{ body{ background:#525659; } '
-          +   '.ap-doc{ background:#fff; max-width:820px; margin:60px auto 40px; padding:30px 36px; box-shadow:0 8px 34px rgba(0,0,0,.45); border-radius:3px; } '
-          +   '.ap-bar{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
-          +   '.ap-bar button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:7px 13px; font:inherit; cursor:pointer; } '
-          +   '.ap-bar button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
-          +   '.ap-bar .ap-print{ background:var(--acd); border:none; color:#fff; font-weight:700; } }'
-          /* Impressão */
-          + '@media print{ '
-          +   'body{ background:#fff !important; } '
-          +   '*{ animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important; } '
-          +   '.ap-bar{ display:none !important; } '
-          +   '.ap-doc{ margin:0; padding:0; max-width:none; box-shadow:none; } '
-          +   '.ap-foot{ display:block; position:fixed; bottom:6mm; left:0; right:0; text-align:center; font-size:8.5px; color:#888; } }'
-          + '</style>';
-        var orientCss = '<style id="apOrient">@page{ size:A4 portrait; margin:16mm 14mm 18mm; }</style>';
-        var bar = '<div class="ap-bar">'
-          + '<span>📄 ' + _esc(item.titulo) + ' — apostila</span>'
-          + '<span style="display:flex;gap:8px;align-items:center;">'
-          +   '<span style="opacity:.7;font-weight:500;">A4:</span>'
-          +   '<button id="btnPort" class="on" onclick="setOrient(\'portrait\')">Retrato</button>'
-          +   '<button id="btnLand" onclick="setOrient(\'landscape\')">Paisagem</button>'
-          +   '<button class="ap-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
-          + '</span>'
-          + '</div>';
-        var script = '<scr' + 'ipt>'
-          + 'var PORT="@page{size:A4 portrait;margin:16mm 14mm 18mm}";'
-          + 'var LAND="@page{size:A4 landscape;margin:14mm 16mm 16mm}";'
-          + 'function setOrient(o){var e=document.getElementById("apOrient");if(e)e.textContent=(o==="landscape")?LAND:PORT;var P=document.getElementById("btnPort"),L=document.getElementById("btnLand");if(P)P.className=(o==="portrait")?"on":"";if(L)L.className=(o==="landscape")?"on":"";}'
-          + '</scr' + 'ipt>';
-        var cover = '<div class="ap-cover">'
-          + '<div class="ap-prod">' + _esc(item.produto || '') + ' · Treinamento Comercial</div>'
-          + '<h1>' + _esc(item.titulo) + '</h1>'
-          + '<div class="ap-date">Documento gerado em ' + _esc(dataStr) + '</div>'
-          + (item.descricao ? '<div class="ap-desc">' + _esc(item.descricao) + '</div>' : '')
-          + '</div>';
-        var foot = '<div class="ap-foot">Documento gerado automaticamente pelo sistema de treinamento</div>';
-
-        var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
-          + '<base href="' + absBase + '">'
-          + css + orientCss
-          + '<title>' + _esc(item.titulo) + ' — Apostila</title></head><body>'
-          + bar
-          + '<div class="ap-doc">' + cover + sectionsHtml + '</div>'
-          + foot
-          + script
-          + '</body></html>';
-        var w = window.open('', '_blank');
-        if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar a impressão e tente novamente.'); return; }
-        w.document.open(); w.document.write(html); w.document.close();
-        _restore();
       }
     });
   };
@@ -1497,6 +1721,18 @@
           + '</scr' + 'ipt>';
         if(shellHtml.indexOf('</head>') >= 0) shellHtml = shellHtml.replace('</head>', boot + '</head>');
         else shellHtml = boot + shellHtml;
+
+        /* Injeta a busca "estilo Word" no HTML baixado (índice embutido, sem fetch) */
+        try{
+          var fileTitulo = {};
+          partes.forEach(function(p){ var fnm = p.url.substring(p.url.lastIndexOf('/') + 1); fileTitulo[fnm] = p.titulo || fnm; });
+          var findIdx = _findBuildDownloadIndex(shellTxt, moduleTxt, fileTitulo);
+          if(findIdx.length){
+            var inj = _findDownloadInjection(findIdx);
+            if(shellHtml.indexOf('</body>') >= 0) shellHtml = shellHtml.replace('</body>', inj + '</body>');
+            else shellHtml = shellHtml + inj;
+          }
+        }catch(e){ /* se a indexação falhar, baixa o HTML sem a busca */ }
 
         var slug = String(item.id || item.titulo || 'treinamento').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
         try{
@@ -2498,6 +2734,7 @@
     _itemVisualizando = item;
     _indiceMod = 0;
     _telaAtual = 'visualizar';
+    _findReset();
     _renderTela();
   };
 
@@ -2514,6 +2751,7 @@
 
   /* Fecha o visualizador embutido e volta ao painel */
   window._trapVizFechar = function(){
+    _findReset();
     _itemVisualizando = null;
     _indiceMod = 0;
     _gerPaginas = false;
@@ -2807,5 +3045,502 @@
       if(home) home.style.display = '';
     }
   };
+
+  /* ════════════════════════════════════════════════════════════════
+     BUSCA "ESTILO WORD" DENTRO DO TREINAMENTO
+     ────────────────────────────────────────────────────────────────
+     Vive só aqui no shell → cobre TODOS os treinamentos de uma vez.
+     • Índice: fetch() de cada parte VISÍVEL, fatiada em slides (mesma
+       leitura da impressão — só funciona online; file:// bloqueia).
+     • Ir até: postMessage 'cis-goto' (suportado por todos os engines)
+       + realce via contentDocument (same-origin online).
+     ════════════════════════════════════════════════════════════════ */
+
+  var _FIND_DIACR = new RegExp('[\\u0300-\\u036f]', 'g');
+  function _findNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(_FIND_DIACR, ''); }
+  function _findEscRe(s){ return (s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+  function _findReset(){
+    if(_findDebounce){ clearTimeout(_findDebounce); _findDebounce = null; }
+    _findOpen = false; _findTerm = ''; _findWord = false;
+    _findHits = []; _findActive = -1;
+    _findIndex = null; _findIndexFor = null; _findIndexing = false; _findIndexErro = false;
+    _findPendingGoto = null;
+  }
+
+  /* ── Índice: fatia cada parte visível em slides pesquisáveis ── */
+  function _findExtractSlides(doc, pi){
+    var out = [];
+    var deck = doc.querySelector('.deck') || doc;
+    var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+    if(!slides.length){
+      /* Capa/menu sem slides → indexa o corpo inteiro como uma entrada */
+      var body = doc.body || doc.documentElement;
+      var clone0 = body ? body.cloneNode(true) : null;
+      if(clone0) clone0.querySelectorAll('script,style,noscript').forEach(function(x){ x.remove(); });
+      var txt0 = clone0 ? (clone0.textContent||'').replace(/\s+/g,' ').trim() : '';
+      if(txt0) out.push({ pi:pi, slideId:null, titulo:(doc.title||'Página'), eyebrow:'', texto:txt0, textoN:_findNorm(txt0) });
+      return out;
+    }
+    slides.forEach(function(sl, i){
+      var clone = sl.cloneNode(true);
+      clone.querySelectorAll('script,style,noscript').forEach(function(x){ x.remove(); });
+      var tt = clone.querySelector('.slide-title') || clone.querySelector('h1,h2');
+      var eb = clone.querySelector('.eyebrow');
+      var texto = (clone.textContent||'').replace(/\s+/g,' ').trim();
+      out.push({
+        pi:pi, slideId:(i+1),
+        titulo:(tt ? tt.textContent.trim() : ('Slide '+(i+1))),
+        eyebrow:(eb ? eb.textContent.trim() : ''),
+        texto:texto, textoN:_findNorm(texto)
+      });
+    });
+    return out;
+  }
+
+  function _findEnsureIndex(cb){
+    var item = _itemVisualizando;
+    if(!item){ if(cb) cb(); return; }
+    if(_findIndex && _findIndexFor === item.id){ if(cb) cb(); return; }
+    var partes = _vizPartesAtivas();
+    _findIndex = null; _findIndexFor = item.id;
+    _findIndexing = true; _findIndexErro = false;
+    var acc = [];
+    var seq = Promise.resolve();
+    partes.forEach(function(p, pi){
+      seq = seq.then(function(){
+        if(!p.url || p.url.indexOf('__inline:') === 0) return;
+        return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
+          if(!txt) return;
+          var doc = new DOMParser().parseFromString(txt, 'text/html');
+          _findExtractSlides(doc, pi).forEach(function(e){ acc.push(e); });
+        }).catch(function(){ _findIndexErro = true; });
+      });
+    });
+    seq.then(function(){
+      _findIndex = acc;
+      _findIndexing = false;
+      if(cb) cb();
+    });
+  }
+
+  /* ── Busca no índice ── */
+  function _findContar(textoN, tN){
+    if(_findWord){
+      var re = new RegExp('(^|[^a-z0-9])'+_findEscRe(tN)+'(?=[^a-z0-9]|$)','g');
+      var n=0; while(re.exec(textoN)) n++; return n;
+    }
+    var c=0, i=0;
+    while((i = textoN.indexOf(tN, i)) !== -1){ c++; i += tN.length; }
+    return c;
+  }
+  function _findSnippet(texto, textoN, tN){
+    var idx;
+    if(_findWord){
+      var m = new RegExp('(?:^|[^a-z0-9])('+_findEscRe(tN)+')(?=[^a-z0-9]|$)').exec(textoN);
+      idx = m ? (m.index + m[0].length - tN.length) : textoN.indexOf(tN);
+    } else { idx = textoN.indexOf(tN); }
+    if(idx < 0) return _esc(texto.slice(0,80));
+    var ini = Math.max(0, idx-32), fim = Math.min(texto.length, idx+tN.length+48);
+    return (ini>0?'…':'') + _esc(texto.slice(ini, idx))
+      + '<mark>' + _esc(texto.slice(idx, idx+tN.length)) + '</mark>'
+      + _esc(texto.slice(idx+tN.length, fim)) + (fim<texto.length?'…':'');
+  }
+  function _findSearch(){
+    var tN = _findNorm(_findTerm);
+    _findHits = [];
+    if(tN.length >= 1 && _findIndex){
+      _findIndex.forEach(function(e, ei){
+        var n = _findContar(e.textoN, tN);
+        if(n > 0) _findHits.push({ ei:ei, pi:e.pi, slideId:e.slideId, n:n, snip:_findSnippet(e.texto, e.textoN, tN) });
+      });
+    }
+    _findActive = _findHits.length ? 0 : -1;
+  }
+
+  /* ── HTML do painel ── */
+  function _findCountLabel(){
+    if(!_findTerm) return '';
+    if(!_findHits.length) return '0/0';
+    return (_findActive+1)+'/'+_findHits.length;
+  }
+  function _findResultsHtml(){
+    var nPartes = _vizPartesAtivas().length;
+    if(_findIndexing) return '<div class="trap-find-empty"><span class="big">⏳</span>Indexando as '+nPartes+' partes…</div>';
+    if(!_findTerm) return '<div class="trap-find-empty"><span class="big">🔎</span>Digite uma palavra para localizar<br>em todas as '+nPartes+' partes do treinamento.</div>';
+    if(_findIndexErro && (!_findIndex || !_findIndex.length))
+      return '<div class="trap-find-empty"><span class="big">🔌</span>A busca precisa do painel <b>online</b> (GitHub&nbsp;Pages).<br>Em arquivo local (file://) o navegador bloqueia a leitura das partes.</div>';
+    if(!_findHits.length) return '<div class="trap-find-empty"><span class="big">🚫</span>Nenhuma ocorrência de<br><b style="color:var(--text)">“'+_esc(_findTerm)+'”</b></div>';
+    var totalOc = _findHits.reduce(function(a,h){ return a+h.n; }, 0);
+    var partesArr = _vizPartesAtivas();
+    var groups = '', lastP = -1;
+    _findHits.forEach(function(h, k){
+      if(h.pi !== lastP){
+        if(lastP !== -1) groups += '</div>';
+        var ptit = partesArr[h.pi] ? partesArr[h.pi].titulo : ('Parte '+(h.pi+1));
+        groups += '<div class="trap-find-group"><div class="trap-find-group-h">'+_esc(ptit)+'</div>';
+        lastP = h.pi;
+      }
+      var e = _findIndex[h.ei];
+      var loc = h.slideId ? ('slide '+h.slideId) : 'página';
+      groups += '<button class="trap-find-hit'+(k===_findActive?' active':'')+'" data-k="'+k+'" onclick="window._trapFindHit('+k+')">'
+        + '<div class="trap-find-hit-loc"><span class="pg">'+loc+'</span> '+_esc(e.titulo)
+        + (h.n>1?' <span style="opacity:.6">· '+h.n+'×</span>':'') + '</div>'
+        + '<div class="trap-find-hit-snip">'+h.snip+'</div></button>';
+    });
+    groups += '</div>';
+    return '<div class="trap-find-summary">'+totalOc+' ocorrência'+(totalOc>1?'s':'')+' em '+_findHits.length+' slide'+(_findHits.length>1?'s':'')+'</div>'
+      + '<div class="trap-find-results">'+groups+'</div>';
+  }
+  function _findPanelHtml(){
+    var dis = _findHits.length ? '' : 'disabled';
+    return '<div class="trap-find">'
+      + '<div class="trap-find-box">'
+      +   '<span class="ic">🔍</span>'
+      +   '<input id="trapFindInput" type="text" placeholder="Buscar no treinamento…" value="'+_esc(_findTerm)+'" autocomplete="off" spellcheck="false" oninput="window._trapFindInput(this.value)" onkeydown="window._trapFindKey(event)">'
+      +   '<span class="trap-find-count">'+_findCountLabel()+'</span>'
+      +   '<span class="trap-find-nav">'
+      +     '<button id="trapFindPrev" '+dis+' title="Anterior (Shift+Enter)" onclick="window._trapFindPrev()">▲</button>'
+      +     '<button id="trapFindNext" '+dis+' title="Próximo (Enter)" onclick="window._trapFindNext()">▼</button>'
+      +   '</span>'
+      +   '<button class="trap-find-clear" title="Fechar busca (Esc)" onclick="window._trapFindFechar()">✕</button>'
+      + '</div>'
+      + '<div class="trap-find-opts">'
+      +   '<span class="trap-find-opt'+(_findWord?' on':'')+'" title="Localizar apenas palavras inteiras" onclick="window._trapFindWordToggle()">Palavra inteira</span>'
+      + '</div>'
+      + '<div id="trapFindResultsWrap" style="flex:1;display:flex;flex-direction:column;min-height:0;">'+_findResultsHtml()+'</div>'
+      + '</div>';
+  }
+
+  function _findRefreshPanel(){
+    var side = document.getElementById('trapVizSide');
+    if(side) side.innerHTML = _findPanelHtml();
+  }
+  function _findFocusInput(){
+    setTimeout(function(){
+      var inp = document.getElementById('trapFindInput');
+      if(inp){ inp.focus(); var v = inp.value.length; try{ inp.setSelectionRange(v, v); }catch(e){} }
+    }, 0);
+  }
+  /* Atualização leve (sem recriar o input → não perde foco/cursor) */
+  function _findMarkActive(){
+    var side = document.getElementById('trapVizSide'); if(!side) return;
+    Array.prototype.forEach.call(side.querySelectorAll('.trap-find-hit'), function(b){
+      b.classList.toggle('active', (+b.getAttribute('data-k')) === _findActive);
+    });
+    var cnt = side.querySelector('.trap-find-count'); if(cnt) cnt.textContent = _findCountLabel();
+    var act = side.querySelector('.trap-find-hit.active'); if(act) act.scrollIntoView({ block:'nearest' });
+  }
+
+  /* ── Realce dentro do iframe (same-origin, online) ── */
+  function _findIframeDoc(){
+    var iframe = document.querySelector('.trap-viz-iframe-wrap iframe');
+    if(!iframe) return null;
+    try{ return iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document) || null; }
+    catch(e){ return null; }
+  }
+  function _findClearIframeHl(){
+    var doc = _findIframeDoc(); if(!doc) return;
+    var marks = Array.prototype.slice.call(doc.querySelectorAll('mark.trap-find-hl'));
+    marks.forEach(function(m){
+      if(!m.parentNode) return;
+      var t = doc.createTextNode(m.textContent);
+      var pn = m.parentNode;
+      pn.replaceChild(t, m);
+      if(pn.normalize) pn.normalize();
+    });
+  }
+  function _findHighlightIframe(term){
+    var doc = _findIframeDoc(); if(!doc) return;
+    if(!doc.getElementById('trapFindHlCss')){
+      var st = doc.createElement('style'); st.id = 'trapFindHlCss';
+      st.textContent = 'mark.trap-find-hl{background:#ffe066!important;color:#111!important;border-radius:2px;padding:0 1px;} mark.trap-find-hl.cur{background:#ff9f45!important;box-shadow:0 0 0 3px rgba(255,159,69,.45);}';
+      (doc.head || doc.documentElement).appendChild(st);
+    }
+    _findClearIframeHl();
+    var tN = _findNorm(term); if(!tN) return;
+    var scope = doc.querySelector('.slide.is-active') || doc.querySelector('.slide') || doc.body;
+    if(!scope) return;
+    var walker = doc.createTreeWalker(scope, NodeFilter.SHOW_TEXT, null, false);
+    var nodes = [], node;
+    while((node = walker.nextNode())){
+      if(!node.nodeValue || !node.nodeValue.trim()) continue;
+      var tag = node.parentNode ? node.parentNode.nodeName : '';
+      if(tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') continue;
+      nodes.push(node);
+    }
+    var first = null;
+    nodes.forEach(function(n){
+      var text = n.nodeValue, hay = _findNorm(text), idx = hay.indexOf(tN);
+      if(idx < 0) return;
+      var frag = doc.createDocumentFragment(), last = 0;
+      while(idx >= 0){
+        if(idx > last) frag.appendChild(doc.createTextNode(text.slice(last, idx)));
+        var mk = doc.createElement('mark'); mk.className = 'trap-find-hl'; mk.textContent = text.slice(idx, idx+tN.length);
+        if(!first){ mk.className += ' cur'; first = mk; }
+        frag.appendChild(mk);
+        last = idx + tN.length; idx = hay.indexOf(tN, last);
+      }
+      if(last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
+      if(n.parentNode) n.parentNode.replaceChild(frag, n);
+    });
+    if(first){ try{ first.scrollIntoView({ block:'center' }); }catch(e){} }
+  }
+
+  /* Manda o deck ir ao slide e realça o termo */
+  function _findApplyToIframe(slideId, term){
+    if(slideId){
+      var iframe = document.querySelector('.trap-viz-iframe-wrap iframe');
+      if(iframe && iframe.contentWindow){
+        try{ iframe.contentWindow.postMessage({ type:'cis-goto', n: slideId }, '*'); }catch(e){}
+      }
+      setTimeout(function(){ _findHighlightIframe(term); }, 80);
+    } else {
+      _findHighlightIframe(term);
+    }
+  }
+
+  /* Navega até a ocorrência k (troca de parte se preciso) */
+  function _findGoto(k){
+    if(k < 0 || k >= _findHits.length) return;
+    _findActive = k;
+    var h = _findHits[k];
+    if(h.pi === _indiceMod){
+      _findApplyToIframe(h.slideId, _findTerm);
+      _findMarkActive();
+    } else {
+      _findPendingGoto = { slideId: h.slideId, term: _findTerm };
+      window._trapVizSetMod(h.pi);   /* _renderTela reconstrói tudo; iframe.onload → _trapFindIframeLoaded */
+    }
+  }
+
+  /* ── API pública da busca ── */
+  window._trapFindToggle = function(){ if(_findOpen) window._trapFindFechar(); else window._trapFindAbrir(); };
+
+  window._trapFindAbrir = function(){
+    if(!_itemVisualizando || !_vizPartesAtivas().length) return;
+    _findOpen = true;
+    _findRefreshPanel();
+    var b = document.querySelector('.trap-viz-bar .trap-viz-btn[onclick*="_trapFindToggle"]'); if(b) b.classList.add('on');
+    _findFocusInput();
+    _findEnsureIndex(function(){
+      if(!_findOpen) return;
+      if(_findTerm) _findSearch();
+      _findRefreshPanel();
+      _findFocusInput();
+      if(_findTerm && _findHits.length) _findGoto(0);
+    });
+  };
+
+  window._trapFindFechar = function(){
+    _findOpen = false;
+    if(_findDebounce){ clearTimeout(_findDebounce); _findDebounce = null; }
+    _findClearIframeHl();
+    var partes = _vizPartesAtivas();
+    var totalEstrut = (_itemVisualizando && Array.isArray(_itemVisualizando.estrutura)) ? _itemVisualizando.estrutura.length : partes.length;
+    var side = document.getElementById('trapVizSide');
+    if(side) side.innerHTML = _vizSideInner(partes, totalEstrut - partes.length);
+    var b = document.querySelector('.trap-viz-bar .trap-viz-btn[onclick*="_trapFindToggle"]'); if(b) b.classList.remove('on');
+  };
+
+  window._trapFindInput = function(val){
+    _findTerm = val;
+    _findSearch();
+    var side = document.getElementById('trapVizSide'); if(!side) return;
+    var wrap = side.querySelector('#trapFindResultsWrap'); if(wrap) wrap.innerHTML = _findResultsHtml();
+    var cnt = side.querySelector('.trap-find-count'); if(cnt) cnt.textContent = _findCountLabel();
+    var pv = side.querySelector('#trapFindPrev'), nx = side.querySelector('#trapFindNext');
+    if(pv) pv.disabled = !_findHits.length; if(nx) nx.disabled = !_findHits.length;
+    if(_findDebounce){ clearTimeout(_findDebounce); _findDebounce = null; }
+    if(_findHits.length){
+      if(_findHits[0].pi === _indiceMod){ _findGoto(0); }                 /* mesma parte → instantâneo */
+      else { _findDebounce = setTimeout(function(){ _findGoto(0); }, 350); } /* outra parte → espera parar de digitar */
+    } else {
+      _findClearIframeHl();
+    }
+  };
+
+  window._trapFindKey = function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); if(e.shiftKey) window._trapFindPrev(); else window._trapFindNext(); }
+    else if(e.key === 'Escape'){ e.preventDefault(); window._trapFindFechar(); }
+  };
+
+  window._trapFindNext = function(){ if(_findHits.length) _findGoto((_findActive+1) % _findHits.length); };
+  window._trapFindPrev = function(){ if(_findHits.length) _findGoto((_findActive-1+_findHits.length) % _findHits.length); };
+  window._trapFindHit  = function(k){ _findGoto(k); };
+
+  window._trapFindWordToggle = function(){
+    _findWord = !_findWord;
+    _findSearch();
+    _findRefreshPanel();
+    _findFocusInput();
+    if(_findHits.length) _findGoto(0);
+  };
+
+  /* Chamado pelo onload do iframe (ver _viewVisualizar): aplica o goto
+     pendente depois que o deck recarregou e registrou seu listener. */
+  window._trapFindIframeLoaded = function(){
+    if(!_findPendingGoto) return;
+    var pg = _findPendingGoto; _findPendingGoto = null;
+    setTimeout(function(){ _findApplyToIframe(pg.slideId, pg.term); _findMarkActive(); }, 60);
+  };
+
+  /* ════════════════════════════════════════════════════════════════
+     BUSCA NO HTML BAIXADO (_trapBaixarHtml)
+     ────────────────────────────────────────────────────────────────
+     O arquivo baixado é auto-contido: shell (menu) + módulos como blob.
+     Aqui embutimos um ÍNDICE em JSON (sem fetch) + um painel de busca +
+     um runtime. O runtime é escrito como função JS normal e serializado
+     com .toString() (evita escape manual). Ele navega via a própria
+     window.openAtSlide do shell e realça dentro do #module-frame.
+     ════════════════════════════════════════════════════════════════ */
+
+  /* Índice: mapeia arquivo→rota (das ROUTES do shell) e fatia cada módulo. */
+  function _findBuildDownloadIndex(shellTxt, moduleTxt, fileTitulo){
+    var fileToKey = {};
+    var rx = /(['"]?)([A-Za-z0-9_\-]+)\1\s*:\s*\{\s*file\s*:\s*'([^']+\.html)'/g, m;
+    while((m = rx.exec(shellTxt))){ fileToKey[m[3]] = m[2]; }
+    var idx = [];
+    Object.keys(moduleTxt).forEach(function(fn){
+      var key = fileToKey[fn] || fn.replace(/\.html$/, '');
+      var label = fileTitulo[fn] || fn;
+      var doc = new DOMParser().parseFromString(moduleTxt[fn], 'text/html');
+      var deck = doc.querySelector('.deck') || doc;
+      var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+      slides.forEach(function(sl, i){
+        var c = sl.cloneNode(true);
+        c.querySelectorAll('script,style,noscript').forEach(function(x){ x.remove(); });
+        var tt = c.querySelector('.slide-title') || c.querySelector('h1,h2');
+        var texto = (c.textContent||'').replace(/\s+/g,' ').trim();
+        idx.push({ key:key, file:fn, mod:label, slideId:(i+1), titulo:(tt?tt.textContent.trim():('Slide '+(i+1))), texto:texto });
+      });
+    });
+    return idx;
+  }
+
+  /* Runtime que roda DENTRO do arquivo baixado. Auto-contido: só usa
+     window.__FINDIDX, window.openAtSlide/openRoute/__MODURL e o DOM. */
+  function _findDownloadRuntime(){
+    var IDX = window.__FINDIDX || [];
+    var DIA = new RegExp('[\\u0300-\\u036f]', 'g');
+    function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(DIA, ''); }
+    IDX.forEach(function(e){ e.textoN = norm(e.texto); });
+    function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+    var term='', hits=[], active=-1, deb=null;
+    var panel=document.getElementById('tfindPanel'), btn=document.getElementById('tfindBtn'),
+        inp=document.getElementById('tfindInput'), res=document.getElementById('tfindResults'),
+        cnt=document.getElementById('tfindCount'), pv=document.getElementById('tfindPrev'), nx=document.getElementById('tfindNext');
+    if(!panel || !btn || !inp) return;
+    function frameEl(){ return document.getElementById('module-frame'); }
+    function contar(h,t){ var c=0,i=0; while((i=h.indexOf(t,i))!==-1){ c++; i+=t.length; } return c; }
+    function snip(x,h,t){ var i=h.indexOf(t); if(i<0) return esc(x.slice(0,80)); var a=Math.max(0,i-32), b=Math.min(x.length,i+t.length+48); return (a>0?'…':'')+esc(x.slice(a,i))+'<mark>'+esc(x.slice(i,i+t.length))+'</mark>'+esc(x.slice(i+t.length,b))+(b<x.length?'…':''); }
+    function search(){ var t=norm(term); hits=[]; if(t){ IDX.forEach(function(e,ei){ var n=contar(e.textoN,t); if(n>0) hits.push({ei:ei,n:n,snip:snip(e.texto,e.textoN,t)}); }); } active=hits.length?0:-1; }
+    function clearHl(doc){ if(!doc) return; var mk=[].slice.call(doc.querySelectorAll('mark.tfind-hl')); mk.forEach(function(k){ var t=doc.createTextNode(k.textContent); var p=k.parentNode; if(p){ p.replaceChild(t,k); if(p.normalize) p.normalize(); } }); }
+    function hl(){
+      var f=frameEl(); if(!f) return; var doc; try{ doc=f.contentDocument; }catch(e){ return; } if(!doc) return;
+      if(!doc.getElementById('tfindHlCss')){ var st=doc.createElement('style'); st.id='tfindHlCss'; st.textContent='mark.tfind-hl{background:#ffe066!important;color:#111!important;border-radius:2px;padding:0 1px;}mark.tfind-hl.cur{background:#ff9f45!important;box-shadow:0 0 0 3px rgba(255,159,69,.45);}'; (doc.head||doc.documentElement).appendChild(st); }
+      clearHl(doc);
+      var t=norm(term); if(!t) return;
+      var sc=doc.querySelector('.slide.is-active')||doc.querySelector('.slide')||doc.body; if(!sc) return;
+      var w=doc.createTreeWalker(sc, NodeFilter.SHOW_TEXT, null, false), ns=[], nd;
+      while((nd=w.nextNode())){ if(!nd.nodeValue||!nd.nodeValue.trim()) continue; var tg=nd.parentNode?nd.parentNode.nodeName:''; if(tg==='SCRIPT'||tg==='STYLE'||tg==='MARK') continue; ns.push(nd); }
+      var first=null;
+      ns.forEach(function(n){
+        var x=n.nodeValue, h=norm(x), i=h.indexOf(t); if(i<0) return;
+        var fr=doc.createDocumentFragment(), last=0;
+        while(i>=0){ if(i>last) fr.appendChild(doc.createTextNode(x.slice(last,i))); var mko=doc.createElement('mark'); mko.className='tfind-hl'; mko.textContent=x.slice(i,i+t.length); if(!first){ mko.className+=' cur'; first=mko; } fr.appendChild(mko); last=i+t.length; i=h.indexOf(t,last); }
+        if(last<x.length) fr.appendChild(doc.createTextNode(x.slice(last)));
+        if(n.parentNode) n.parentNode.replaceChild(fr,n);
+      });
+      if(first){ try{ first.scrollIntoView({block:'center'}); }catch(e){} }
+    }
+    function mark(){ [].forEach.call(res.querySelectorAll('.tfind-hit'), function(b){ b.classList.toggle('active', (+b.getAttribute('data-k'))===active); }); cnt.textContent=hits.length?(active+1)+'/'+hits.length:(term?'0/0':''); var a=res.querySelector('.tfind-hit.active'); if(a) a.scrollIntoView({block:'nearest'}); }
+    function goTo(k){
+      if(k<0||k>=hits.length) return; active=k; var e=IDX[hits[k].ei]; var f=frameEl(); var key=String(e.key);
+      var same=f&&f.dataset&&f.dataset.currentKey===key;
+      function afterLoad(){ try{ f.contentWindow.postMessage({type:'cis-goto',n:e.slideId},'*'); }catch(x){} setTimeout(hl,90); }
+      if(same){ try{ f.contentWindow.postMessage({type:'cis-goto',n:e.slideId},'*'); }catch(x){} setTimeout(hl,90); }
+      else {
+        if(f){ var ol=function(){ f.removeEventListener('load',ol); afterLoad(); }; f.addEventListener('load',ol); }
+        if(typeof window.openAtSlide==='function') window.openAtSlide(key,e.slideId);
+        else if(typeof window.openRoute==='function') window.openRoute(key);
+        else if(f&&window.__MODURL&&window.__MODURL[e.file]) f.src=window.__MODURL[e.file];
+      }
+      mark();
+    }
+    function render(){
+      pv.disabled=nx.disabled=!hits.length; cnt.textContent=hits.length?(active+1)+'/'+hits.length:(term?'0/0':'');
+      if(!term){ res.innerHTML='<div class="tfind-empty"><span class="big">🔎</span>Digite uma palavra para localizar<br>em todo o treinamento.</div>'; return; }
+      if(!hits.length){ res.innerHTML='<div class="tfind-empty"><span class="big">🚫</span>Nenhuma ocorrência de<br><b>“'+esc(term)+'”</b></div>'; return; }
+      var oc=0; hits.forEach(function(h){ oc+=h.n; });
+      var g='', lastK=null;
+      hits.forEach(function(h,k){ var e=IDX[h.ei]; if(e.mod!==lastK){ if(lastK!==null) g+='</div>'; g+='<div class="tfind-group"><div class="tfind-group-h">'+esc(e.mod||'')+'</div>'; lastK=e.mod; } g+='<button class="tfind-hit'+(k===active?' active':'')+'" data-k="'+k+'"><div class="tfind-loc"><span class="pg">slide '+e.slideId+'</span> '+esc(e.titulo)+(h.n>1?' · '+h.n+'×':'')+'</div><div class="tfind-snip">'+h.snip+'</div></button>'; });
+      g+='</div>';
+      res.innerHTML='<div class="tfind-summary">'+oc+' ocorrência'+(oc>1?'s':'')+' em '+hits.length+' slide'+(hits.length>1?'s':'')+'</div>'+g;
+      [].forEach.call(res.querySelectorAll('.tfind-hit'), function(b){ b.addEventListener('click', function(){ goTo(+b.getAttribute('data-k')); }); });
+    }
+    function onInput(){
+      term=inp.value; search(); render();
+      if(deb){ clearTimeout(deb); deb=null; }
+      if(hits.length){ var e=IDX[hits[0].ei]; var f=frameEl(); var same=f&&f.dataset&&f.dataset.currentKey===String(e.key); if(same) goTo(0); else deb=setTimeout(function(){ goTo(0); }, 350); }
+      else { var f2=frameEl(); if(f2){ try{ clearHl(f2.contentDocument); }catch(x){} } }
+    }
+    function openP(){ panel.classList.add('open'); setTimeout(function(){ inp.focus(); }, 0); }
+    function closeP(){ panel.classList.remove('open'); var f=frameEl(); if(f){ try{ clearHl(f.contentDocument); }catch(x){} } }
+    btn.addEventListener('click', function(){ panel.classList.contains('open')?closeP():openP(); });
+    var xb=document.getElementById('tfindClose'); if(xb) xb.addEventListener('click', closeP);
+    inp.addEventListener('input', onInput);
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); if(!hits.length) return; e.shiftKey?goTo((active-1+hits.length)%hits.length):goTo((active+1)%hits.length); } else if(e.key==='Escape'){ e.preventDefault(); closeP(); } });
+    pv.addEventListener('click', function(){ if(hits.length) goTo((active-1+hits.length)%hits.length); });
+    nx.addEventListener('click', function(){ if(hits.length) goTo((active+1)%hits.length); });
+    document.addEventListener('keydown', function(e){ if((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F')){ e.preventDefault(); openP(); } });
+    render();
+  }
+
+  /* Monta o bloco (CSS + UI + índice + runtime) a injetar no shell baixado. */
+  function _findDownloadInjection(idx){
+    var json = JSON.stringify(idx).replace(/</g, '\\u003c');
+    var css = '<style id="tfindCss">'
+      + '#tfindBtn{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:6px;background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:10px;padding:9px 13px;font:600 12px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4);}'
+      + '#tfindBtn:hover{border-color:#c8f05a;color:#c8f05a;}'
+      + '#tfindPanel{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:88vw;z-index:2147483001;background:#0f1319;border-left:1px solid #30363d;box-shadow:-8px 0 30px rgba(0,0,0,.45);display:none;flex-direction:column;font-family:system-ui,sans-serif;color:#e6edf3;}'
+      + '#tfindPanel.open{display:flex;}'
+      + '.tfind-top{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid #21262d;}'
+      + '.tfind-box{flex:1;display:flex;align-items:center;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:2px 4px 2px 10px;}'
+      + '.tfind-box:focus-within{border-color:#c8f05a;}'
+      + '.tfind-box input{flex:1;background:transparent;border:0;outline:0;color:#e6edf3;font-size:13px;padding:8px 4px;min-width:0;font-family:inherit;}'
+      + '.tfind-count{font-size:10px;color:#9aa5b1;padding:0 6px;white-space:nowrap;}'
+      + '.tfind-nav{display:flex;}'
+      + '.tfind-nav button{background:transparent;border:0;color:#9aa5b1;cursor:pointer;width:26px;height:28px;border-radius:5px;font-size:12px;}'
+      + '.tfind-nav button:hover:not(:disabled){color:#c8f05a;background:rgba(200,240,90,.08);}'
+      + '.tfind-nav button:disabled{opacity:.3;cursor:default;}'
+      + '.tfind-x{background:transparent;border:0;color:#9aa5b1;cursor:pointer;width:26px;height:28px;border-radius:5px;font-size:13px;}'
+      + '.tfind-x:hover{color:#e6edf3;}'
+      + '.tfind-results{flex:1;overflow-y:auto;padding:6px;}'
+      + '.tfind-summary{font-size:10px;color:#9aa5b1;text-transform:uppercase;letter-spacing:.06em;font-weight:800;margin:8px 6px;}'
+      + '.tfind-group-h{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#c8f05a;opacity:.85;padding:6px 8px 3px;}'
+      + '.tfind-hit{display:block;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:8px 10px;cursor:pointer;margin-bottom:2px;color:#e6edf3;font:inherit;}'
+      + '.tfind-hit:hover{background:#161b22;}'
+      + '.tfind-hit.active{background:rgba(200,240,90,.10);border-color:rgba(200,240,90,.30);}'
+      + '.tfind-loc{font-size:9.5px;font-weight:700;color:#9aa5b1;margin-bottom:3px;}'
+      + '.tfind-loc .pg{font-family:ui-monospace,monospace;background:#21262d;border-radius:4px;padding:1px 5px;color:#e6edf3;}'
+      + '.tfind-snip{font-size:11.5px;line-height:1.5;color:#e6edf3;opacity:.92;}'
+      + '.tfind-snip mark{background:#ffe066;color:#111;border-radius:2px;padding:0 1px;font-weight:700;}'
+      + '.tfind-empty{padding:26px 12px;text-align:center;color:#9aa5b1;font-size:12px;line-height:1.6;}'
+      + '.tfind-empty .big{font-size:24px;display:block;margin-bottom:8px;opacity:.55;}'
+      + '@media print{#tfindBtn,#tfindPanel{display:none!important;}}'
+      + '</style>';
+    var ui = '<button id="tfindBtn" title="Buscar no treinamento (Ctrl+F)">🔍 Buscar</button>'
+      + '<div id="tfindPanel"><div class="tfind-top">'
+      +   '<div class="tfind-box"><input id="tfindInput" type="text" placeholder="Buscar no treinamento…" autocomplete="off" spellcheck="false">'
+      +     '<span class="tfind-count" id="tfindCount"></span>'
+      +     '<span class="tfind-nav"><button id="tfindPrev" disabled title="Anterior (Shift+Enter)">▲</button><button id="tfindNext" disabled title="Próximo (Enter)">▼</button></span>'
+      +   '</div>'
+      +   '<button class="tfind-x" id="tfindClose" title="Fechar (Esc)">✕</button>'
+      + '</div><div class="tfind-results" id="tfindResults"></div></div>';
+    return css + ui
+      + '<scr'+'ipt>window.__FINDIDX=' + json + ';</scr'+'ipt>'
+      + '<scr'+'ipt>(' + _findDownloadRuntime.toString() + ')();</scr'+'ipt>';
+  }
 
 })();
