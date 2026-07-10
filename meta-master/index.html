@@ -228,6 +228,39 @@
   .md-tbl tbody tr.rt-click td:first-child{color:#F0C84A;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#5a4a1e;}
   .md-tbl tbody tr.rt-click:hover{background:rgba(240,200,74,.13);}
   .md-tbl tbody tr.rt-click:hover td:first-child{text-decoration-color:#F0C84A;}
+  /* Confirmação WS: barra + busca + menu de 3 pontinhos (imprimir / html / excel / pdf) */
+  .cws-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;flex-wrap:wrap;}
+  .cws-buscawrap{display:flex;align-items:center;gap:8px;flex:1;min-width:220px;}
+  .cws-busca{flex:1;max-width:460px;background:#151410;border:1px solid #4a4436;border-radius:8px;color:#eee;padding:7px 12px;font-size:13px;}
+  .cws-busca:focus{outline:none;border-color:#F0C84A;}
+  .cws-busca::placeholder{color:#7a7466;}
+  .cws-count{color:#9a9384;font-size:12px;white-space:nowrap;}
+  .cws-menuwrap{position:relative;}
+  .cws-dots{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:8px;font-size:18px;line-height:1;padding:4px 12px;cursor:pointer;}
+  .cws-dots:hover{background:#2c2920;}
+  .cws-menu{position:absolute;right:0;top:110%;background:#1b1a16;border:1px solid #4a4436;border-radius:10px;padding:6px;display:none;flex-direction:column;min-width:180px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .cws-menu.open{display:flex;}
+  .cws-menu button{background:none;border:none;color:#eee;text-align:left;padding:8px 10px;border-radius:6px;font-size:13px;cursor:pointer;}
+  .cws-menu button:hover{background:rgba(240,200,74,.15);color:#F0C84A;}
+  .cws-copybar{display:flex;justify-content:flex-end;margin:10px 0 4px;}
+  .cws-copybtn{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:8px;font-size:13px;padding:8px 16px;cursor:pointer;font-weight:700;}
+  .cws-copybtn:hover{background:#2c2920;border-color:#F0C84A;}
+  /* cartão-resumo no card + modal amplo (sem scroll horizontal) + coluna copiar por linha */
+  .cws-inline-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#191713;border:1px solid #3a3529;border-radius:10px;padding:14px 16px;}
+  .cws-inline-tit{font-weight:800;color:#F0C84A;font-size:15px;}
+  .cws-inline-sub{color:#9a9384;font-size:13px;}
+  .cws-modal{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.74);align-items:flex-start;justify-content:center;padding:24px 14px;}
+  .cws-modal-box{position:relative;background:#15151b;border:1px solid #33333e;border-radius:14px;width:97vw;max-width:1440px;max-height:92vh;overflow-y:auto;overflow-x:hidden;padding:22px 26px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
+  .cws-modal-box .cws-out{overflow-x:hidden;}
+  .cws-modal-box table{width:100%;table-layout:auto;}
+  .cws-modal-box td,.cws-modal-box th{white-space:normal;word-break:break-word;}
+  .cws-x{position:absolute;top:12px;right:14px;background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;z-index:3;}
+  .cws-x:hover{background:#3a3a44;}
+  .cws-modal-head{font-size:12.5px;color:#9a9aa2;margin:0 44px 12px 0;}
+  .cws-modal-head b{color:#c9b98a;}
+  .cws-copycol{width:46px;text-align:center;white-space:nowrap;}
+  .cws-rowcopy{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:6px;font-size:13px;padding:3px 9px;cursor:pointer;line-height:1;}
+  .cws-rowcopy:hover{background:#F0C84A;color:#000;}
   .rt-modal{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:20px;}
   .rt-modal-box{position:relative;background:#15151b;border:1px solid #33333e;border-radius:14px;max-width:820px;width:100%;max-height:86vh;overflow:auto;padding:24px 26px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
   .rt-x{position:absolute;top:12px;right:14px;background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;z-index:2;}
@@ -1504,6 +1537,7 @@
     if(tipo==='semana'){ const dow=t.getDay(); a=new Date(t); a.setDate(t.getDate()-dow); b=new Date(a); b.setDate(a.getDate()+6); }
     else if(tipo==='mes'){ a=new Date(t.getFullYear(),t.getMonth(),1); b=new Date(t.getFullYear(),t.getMonth()+1,0); }
     else if(tipo==='mespassado'){ a=new Date(t.getFullYear(),t.getMonth()-1,1); b=new Date(t.getFullYear(),t.getMonth(),0); }
+    else if(tipo==='3meses'){ a=new Date(t.getFullYear(),t.getMonth()-2,1); b=new Date(t.getFullYear(),t.getMonth()+1,0); }   // mês atual + 2 anteriores (inclui o mês corrente)
     else if(tipo==='bimestre'){ const bi=Math.floor(t.getMonth()/2); a=new Date(t.getFullYear(),bi*2,1); b=new Date(t.getFullYear(),bi*2+2,0); }
     else if(tipo==='tri'){ const q=Math.floor(t.getMonth()/3); a=new Date(t.getFullYear(),q*3,1); b=new Date(t.getFullYear(),q*3+3,0); }
     else if(tipo==='ano'){ a=new Date(t.getFullYear(),0,1); b=new Date(t.getFullYear(),11,31); }
@@ -1551,6 +1585,7 @@
         +'<button class="dp-atalho" onclick="dpAtalho(\'semana\')">Esta semana</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'mes\')">Este mês</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'mespassado\')">Mês passado</button>'
+        +'<button class="dp-atalho" onclick="dpAtalho(\'3meses\')">3 meses</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'bimestre\')">Bimestre</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'tri\')">Trimestre</button>'
         +'<button class="dp-atalho" onclick="dpAtalho(\'ano\')">Este ano</button>'
@@ -1763,7 +1798,7 @@
       desc:'Cole o link público do Google Sheets da turma → 2 tabelas (ADQUIRIDO × PENDENTE) + leitura rápida (insights).', campos:['link']},
 
     {id:'relatorioTurma', cat:'📚 Leitura de Turma', label:'Relatório de Turma', exec:true,
-      desc:'Cole o link do Google Sheets de confirmação de presença → lê TODAS as abas (turmas) via .xlsx: panorama consolidado + termômetro da Meta 70% + follow-up (Sem retorno) + transferências por motivo + cruzamento por CPF + qualidade de dados.', campos:['link']},
+      desc:'Aceita 2 tipos de link. (1) Google Sheets de confirmação de presença → lê TODAS as abas (turmas) via .xlsx: panorama + Meta 70% + follow-up + transferências + cruzamento por CPF. (2) Link de turma do Sales Cube (…/classes/ID) → CONFIRMAÇÃO WS: tabela Nome · Telefone · CPF · Status · Responsável (com menu ⋮ para imprimir / HTML / Excel / PDF).', campos:['link']},
   ];
 
   function hojeYM(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
@@ -2064,7 +2099,7 @@
     if(!base || !prev || !ops.length) return;   // sem carteira carregada ou nada a mover → não projeta
     const proj=projetarCarteira(base, ops);
     const div=document.createElement('div'); div.className='proj-carteira';
-    div.innerHTML='<div class="cmd-leadshead" style="margin-top:16px">📊 Como a carteira ficaria depois <span style="color:#e0a96d">(projeção — ainda não aplicado)</span></div>'
+    div.innerHTML='<div class="cmd-leadshead" style="margin-top:16px">📊 Como a carteira ficaria depois <span style="color:#e0a96d">(projeção — ainda não aplicado)</span>'+btnAtualizarPrevia()+'</div>'
       +'<div class="md-tblwrap"><table class="ltbl" id="projLeadsTbl"></table></div>';
     prev.appendChild(div);
     LEADSCTX['projLeadsTbl']={ data:proj, sort:{col:'total',dir:-1} };
@@ -2072,7 +2107,7 @@
   }
 
   function renderPreviaAcao(c, d){
-    let h='<div class="acao-head">📋 <b>'+esc(d.titulo||'')+'</b></div>';
+    let h='<div class="acao-head">📋 <b>'+esc(d.titulo||'')+'</b>'+btnAtualizarPrevia()+'</div>';
     h+='<div class="acao-sub">'+esc(d.baseLabel||'')+' · '+esc(d.periodoLabel||'')+' · cessão: '+esc(d.ordemLabel||'')+' · base lida: '+(d.totalLeads||0)+' leads</div>';
     h+='<div class="md-tblwrap"><table class="md-tbl"><thead><tr><th>Consultor</th><th>Antes</th><th>Depois</th><th>Δ</th></tr></thead><tbody>';
     d.antes.forEach((a,i)=>{ const dp=(d.depois[i]||{}).qtd||0; const delta=dp-a.qtd; const cor=delta>0?'#7fd98a':(delta<0?'#e89090':'#999');
@@ -2149,6 +2184,9 @@
     else if(id==='transferencia') previewTransfer(btn);
     else if(id==='transferenciaIndividual'||id==='transferenciaIndividualCampanha') previewIndividual(btn);
   }
+  // botão 🔄 no cabeçalho da prévia/projeção: recalcula com as seleções atuais do wizard ativo
+  function atualizarPrevia(btn){ rePreviewAcao(CMD_ID, btn); }
+  function btnAtualizarPrevia(){ return ' <button class="btn btn-sec" style="width:auto;padding:5px 12px;font-size:12px;margin-left:8px" onclick="atualizarPrevia(this)">🔄 Atualizar</button>'; }
 
   // Tabela atual (matriz consultor × etapas + campanhas) mostrada no topo dos fluxos de transferência,
   // para o gestor ver a carteira antes de decidir a transferência. Reusa a MESMA tabela rica da aba Leads.
@@ -2178,16 +2216,17 @@
       renderLeadsTabela('atualLeadsTbl');
     }catch(e){ if(seq===_carteiraSeq) box.innerHTML=avisoBox('Não consegui carregar a carteira: '+esc(e.message)); }
   }
-  // botão 🔄 Atualizar do cabeçalho da carteira: recarrega usando o período + campanha do wizard ativo
+  // botão 🔄 Atualizar do cabeçalho da CARTEIRA (só ele): REINICIA o passo a passo para o Passo 1 e recarrega a carteira do zero
   function atualizarCarteira(btn){
-    const id=CMD_ID; let per=null, camps=null;
-    if(id==='transferencia'){ per=WIZ&&WIZ.periodo; }
-    else if(id==='transferenciaCampanha'){ per=WIZT&&WIZT.periodo; camps=WIZT&&WIZT.campanhas; }
-    else if(id==='equilibrio'){ per=WIZE&&WIZE.periodo; }
-    else if(id==='equilibrioCampanha'){ per=WIZC&&WIZC.periodo; camps=WIZC&&WIZC.campanhas; }
-    else if(id==='transferenciaIndividual'){ per=WIZI&&WIZI.periodo; }
-    else if(id==='transferenciaIndividualCampanha'){ per=WIZI&&WIZI.periodo; camps=WIZI&&WIZI.campanhas; }
-    carregarTabelaAtual(per, camps);
+    const id=CMD_ID;
+    const prev=$('acaoPrevia'); if(prev) prev.innerHTML='';   // limpa prévia/projeção do fluxo anterior
+    if(id==='transferencia') iniciarWizardTransfer();
+    else if(id==='transferenciaCampanha') iniciarWizardTransferCamp();
+    else if(id==='equilibrio') iniciarWizardEq();
+    else if(id==='equilibrioCampanha') iniciarWizardCamp();
+    else if(id==='transferenciaIndividual') iniciarWizardIndividual(false);
+    else if(id==='transferenciaIndividualCampanha') iniciarWizardIndividual(true);
+    carregarTabelaAtual();   // volta ao estado inicial: mês vigente, sem filtro de campanha
   }
   // recarrega a carteira filtrando pelas campanhas marcadas no Passo 2 (com debounce p/ cliques rápidos)
   let _campReloadT=null;
@@ -2637,7 +2676,7 @@
     const movs=antes.map((a,i)=>({nome:a.nome, antes:a.qtd, depois:(depois[i]||{}).qtd||0}));
     const sobraNomes=movs.filter(m=>m.depois===baseAlvo+1).map(m=>m.nome);
     const alvos=movs.map(m=>m.depois).join(' / ');
-    let h='<div class="acao-head">⚖️ Prévia do Equilíbrio'+(d.campanhaLabel?' <span style="color:#7fd98a">('+esc(d.campanhaLabel)+')</span>':'')+' — '+esc(d.baseLabel||'')+'</div>';
+    let h='<div class="acao-head">⚖️ Prévia do Equilíbrio'+(d.campanhaLabel?' <span style="color:#7fd98a">('+esc(d.campanhaLabel)+')</span>':'')+' — '+esc(d.baseLabel||'')+btnAtualizarPrevia()+'</div>';
     h+='<div class="acao-sub">'+esc(d.periodoLabel||'')+' · Total a redistribuir igualmente entre os '+N+': <b style="color:#e2c878">'+total+'</b> leads → média ≈ '+media.toFixed(1).replace('.',',')+' → alvo '+esc(alvos)+(resto>0?(' <i>(sobra de '+resto+' por ordem alfabética: '+esc(sobraNomes.join(', '))+')</i>'):'')+'</div>';
     h+='<div class="md-tblwrap"><table class="md-tbl"><thead><tr><th>Consultor</th><th>Antes</th><th>Depois</th><th>Movimento</th></tr></thead><tbody>';
     movs.forEach(m=>{ const delta=m.depois-m.antes; let mv='—'; if(delta<0) mv='<span style="color:#e89090;font-weight:700">▼ cede '+(-delta)+'</span>'; else if(delta>0) mv='<span style="color:#7fd98a;font-weight:700">● recebe '+delta+'</span>'; h+='<tr><td>'+esc(m.nome)+'</td><td>'+m.antes+'</td><td>'+m.depois+'</td><td>'+mv+'</td></tr>'; });
@@ -2987,7 +3026,8 @@
       const txt=await r.text();
       if(!r.ok) throw new Error(txt||('HTTP '+r.status));
       res.classList.remove('cmd-atualizando');
-      if(id==='relatorioTurma'){ renderRelatorioTurma(txt,res); rtSalvarUltima(valEl('pLink'),txt); rtAtualizarHint(); }   // nova leitura substitui a "última tabela" guardada
+      if(id==='relatorioTurma'){ renderTurma(txt,res); rtSalvarUltima(valEl('pLink'),txt); rtAtualizarHint(); }   // nova leitura substitui a "última tabela" guardada (aceita Relatório de Turma OU Confirmação WS)
+      else if(id==='negociacoes'){ renderNegociacoes(txt,res); }   // camada rica: modal amplo + busca + copiar + exportar
       else if(id==='metaConsultores'||id==='metaUnidade'||id==='metaGeral'){ renderMetaCards(txt,res); }
       else { res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>'; aplicarMobileTabelas(); }   // mobile: densidade + foco por coluna
       cmdFlash(res, snap);   // destaca por 5s as células que mudaram
@@ -3127,9 +3167,10 @@
     const u=rtLerUltima();
     if(!u){ toast('Nenhuma leitura guardada ainda'); return; }
     if($('pLink') && !valEl('pLink')) $('pLink').value=u.link||'';
+    if(/<!--CONFIRMACAO-WS-->/.test(u.txt)){ CWS_CUR={txt:u.txt.replace('<!--CONFIRMACAO-WS-->','').trim()}; cwsAbrirModal(rtFmtQuando(u.quando)); return; }   // Confirmação WS abre no modal amplo
     rtEnsureUltimaModal();
     document.getElementById('rtUltimaHead').innerHTML='📌 Última leitura — <b>'+esc(rtFmtQuando(u.quando))+'</b>';
-    renderRelatorioTurma(u.txt, document.getElementById('rtUltimaBody'));
+    renderTurma(u.txt, document.getElementById('rtUltimaBody'));
     const mod=document.getElementById('rtUltimaModal'); mod.style.display='flex';
     const box=mod.querySelector('.rt-modal-box'); if(box) box.scrollTop=0;
   }
@@ -3151,6 +3192,189 @@
     d.innerHTML='<div class="rt-modal-box"><button class="rt-x" onclick="fecharModalTurma()" title="Fechar">✕</button><div id="rtModalBody" class="cmd-out"></div></div>';
     document.body.appendChild(d);
   }
+  // dispatcher: o card "Relatório de Turma" aceita 2 tipos de link → Confirmação WS (Sales Cube) ou Relatório de presença (Google Sheets)
+  function renderTurma(txt,res){
+    if(/<!--CONFIRMACAO-WS-->/.test(txt)) renderConfirmacaoWS(txt,res);
+    else renderRelatorioTurma(txt,res);
+  }
+  /* ===== Tabela rica reutilizável: modal amplo + busca + copiar (linha e todos) + menu ⋮ (imprimir/html/excel/pdf)
+     Usada por: Confirmação WS (link Sales Cube) e Negociações Vitória. Suporta VÁRIAS tabelas (uma por consultor).
+     CWS_CUR = {txt, titulo, placeholder, arqbase, unid:[singular,plural]}. ===== */
+  let CWS_CUR=null;
+  function richTitulo(txt){ const m=(txt||'').match(/^#{1,6}\s*(.+)$/m); return m ? m[1].replace(/[*#]/g,'').trim() : 'Tabela'; }
+  // Confirmação WS: card mostra resumo + botão que abre o modal amplo (a tabela completa mora no modal)
+  function renderConfirmacaoWS(txt,res){
+    const body=txt.replace('<!--CONFIRMACAO-WS-->','').trim();
+    const nAlunos=(body.match(/^\|\s*\d+\s*\|/gm)||[]).length;
+    CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por nome, telefone, CPF, status ou responsável…', arqbase:'Confirmacao-WS', unid:['aluno','alunos']};
+    cwsResumoCard(res, '📱', nAlunos+' matriculados');
+    cwsAbrirModal();
+  }
+  // Negociações Vitória: mesma camada rica (várias tabelas por consultor; a coluna Anotação longa cabe no modal amplo)
+  function renderNegociacoes(txt,res){
+    const body=(txt||'').trim();
+    const mm=body.match(/\*\*(\d+)\s+negocia\w*\*\*([^\n]*)/i);
+    const sub=mm ? ((mm[1]+' negociações')+(mm[2]?(' '+mm[2].replace(/\*\*/g,'').trim()):'')) : '';
+    CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por cliente, valor, data ou anotação…', arqbase:'Negociacoes-Vitoria', unid:['negociação','negociações']};
+    cwsResumoCard(res, '📊', sub);
+    cwsAbrirModal();
+  }
+  function cwsResumoCard(res, emoji, sub){
+    res.innerHTML='<div class="cmd-out"><div class="cws-inline-card">'
+      +'<span class="cws-inline-tit">'+emoji+' '+esc(CWS_CUR.titulo)+'</span>'
+      +(sub?'<span class="cws-inline-sub">'+esc(sub)+'</span>':'')
+      +'<button class="cws-copybtn" onclick="cwsAbrirModal()">📋 Abrir tabela</button>'
+      +'</div></div>';
+  }
+  function cwsBarHtml(){
+    const ph=(CWS_CUR&&CWS_CUR.placeholder)||'Buscar…';
+    return '<div class="cws-bar">'
+      +'<div class="cws-buscawrap"><input type="text" class="cws-busca" placeholder="🔎 '+esc(ph)+'" oninput="cwsFiltrar(this)"><span class="cws-count"></span></div>'
+      +'<div class="cws-menuwrap">'
+      +'<button class="cws-dots" onclick="cwsMenu(event)" title="Exportar / imprimir">⋮</button>'
+      +'<div class="cws-menu">'
+      +'<button onclick="cwsPrint()">🖨️ Imprimir</button>'
+      +'<button onclick="cwsBaixarHtml()">🌐 Baixar HTML</button>'
+      +'<button onclick="cwsBaixarExcel()">📊 Baixar Excel</button>'
+      +'<button onclick="cwsPdf()">📄 Baixar PDF</button>'
+      +'</div></div></div>';
+  }
+  function cwsEnsureModal(){
+    if(document.getElementById('cwsModal')) return;
+    const d=document.createElement('div'); d.id='cwsModal'; d.className='cws-modal';
+    d.onclick=function(e){ if(e.target===d) cwsFecharModal(); };
+    d.innerHTML='<div class="cws-modal-box"><button class="cws-x" onclick="cwsFecharModal()" title="Fechar">✕</button><div id="cwsModalHead" class="cws-modal-head"></div><div id="cwsModalBody"></div></div>';
+    document.body.appendChild(d);
+  }
+  function cwsFecharModal(){ const m=document.getElementById('cwsModal'); if(m) m.style.display='none'; }
+  // abre o resultado completo num modal amplo (sem scroll horizontal). quando = rótulo opcional
+  function cwsAbrirModal(quando){
+    if(!CWS_CUR){ toast('Gere o resultado primeiro'); return; }
+    cwsEnsureModal();
+    document.getElementById('cwsModalHead').innerHTML = quando ? ('📌 Última leitura — <b>'+esc(quando)+'</b>') : '';
+    const b=document.getElementById('cwsModalBody');
+    b.innerHTML=cwsBarHtml()+'<div class="cmd-out cws-out">'+mdToHtml(CWS_CUR.txt)+'</div>';
+    cwsPosProcessa(b);
+    const m=document.getElementById('cwsModal'); m.style.display='flex';
+    const box=m.querySelector('.cws-modal-box'); if(box) box.scrollTop=0;
+  }
+  function cwsSkip0(heads){ const h=heads[0]?heads[0].textContent.trim():''; return h==='#'||h===''; }   // pula a 1ª coluna só quando é "#"/vazia
+  // coluna de copiar por linha em TODAS as tabelas + botão "copiar todos" + inicia o contador da busca
+  function cwsPosProcessa(cont){
+    const out=cont.querySelector('.cws-out'); if(!out) return;
+    out.querySelectorAll('table').forEach(tbl=>{
+      const thr=tbl.querySelector('thead tr');
+      if(thr && !thr.querySelector('.cws-copycol')){ const th=document.createElement('th'); th.className='cws-copycol'; th.textContent='⧉'; thr.appendChild(th); }
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        if(tr.querySelector('.cws-copycol')) return;
+        const td=document.createElement('td'); td.className='cws-copycol';
+        td.innerHTML='<button class="cws-rowcopy" title="Copiar os dados desta linha" onclick="cwsCopiarLinha(this)">⧉</button>';
+        tr.appendChild(td);
+      });
+    });
+    if(out.querySelector('table') && !out.querySelector(':scope > .cws-copybar')){
+      const cb=document.createElement('div'); cb.className='cws-copybar';
+      cb.innerHTML='<button class="cws-copybtn" onclick="cwsCopiar(this)" title="Copiar tudo (cola no Excel/Sheets)">⧉ Copiar informações (todos)</button>';
+      out.appendChild(cb);
+    }
+    const inp=cont.querySelector('.cws-busca'); if(inp) cwsFiltrar(inp);
+  }
+  // copia UMA linha (1ª coluna = título; demais = "Cabeçalho: valor") — bom p/ colar em conversa/observação
+  function cwsCopiarLinha(btn){
+    const tr=btn.closest('tr'); const tbl=btn.closest('table'); if(!tr||!tbl) return;
+    const heads=[...tbl.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+    const skip0=cwsSkip0([...tbl.querySelectorAll('thead th')]);
+    const cells=[...tr.children]; const linhas=[]; let titulo=null;
+    for(let i=0;i<cells.length;i++){
+      if(cells[i].classList.contains('cws-copycol')) continue;
+      if(i===0 && skip0) continue;
+      const v=cells[i].textContent.trim();
+      if(titulo===null){ titulo=v; linhas.push(v); }
+      else if(v){ linhas.push((heads[i]||'')+': '+v); }
+    }
+    navigator.clipboard.writeText(linhas.join('\n')).then(()=>toast('Copiado — '+(titulo||'linha'))).catch(()=>toast('Não consegui copiar'));
+  }
+  // copia TODAS as linhas visíveis (TSV). Com várias tabelas, adiciona coluna "Grupo" (o título ### de cada seção).
+  function cwsCopiar(btn){
+    const out=btn.closest('.cws-out'); const tables=out?[...out.querySelectorAll('table')]:[];
+    if(!tables.length){ toast('Nada para copiar'); return; }
+    const multi=tables.length>1;
+    const head0=[...tables[0].querySelectorAll('thead th')]; const skip0=cwsSkip0(head0); const cols=[];
+    head0.forEach((th,i)=>{ if(th.classList.contains('cws-copycol')) return; if(i===0&&skip0) return; cols.push(i); });
+    const header=(multi?['Grupo']:[]).concat(cols.map(i=>head0[i].textContent.trim()));
+    const linhas=[header.join('\t')]; let n=0;
+    tables.forEach(tbl=>{
+      let grupo='';
+      if(multi){ let h=tbl.previousElementSibling; while(h && !/^H[1-6]$/.test(h.tagName)) h=h.previousElementSibling; if(h) grupo=h.textContent.replace(/\s+/g,' ').trim(); }
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        if(tr.style.display==='none') return;   // respeita o filtro de busca (copia só o visível)
+        const cells=[...tr.children];
+        linhas.push((multi?[grupo]:[]).concat(cols.map(i=>cells[i]?cells[i].textContent.trim():'')).join('\t')); n++;
+      });
+    });
+    if(!n){ toast('Nenhuma linha para copiar'); return; }
+    const u=(CWS_CUR&&CWS_CUR.unid)||['linha','linhas'];
+    navigator.clipboard.writeText(linhas.join('\n'))
+      .then(()=>toast('Copiado — '+n+' '+(n===1?u[0]:u[1]))).catch(()=>toast('Não consegui copiar'));
+  }
+  // busca: filtra linhas em TODAS as tabelas; esconde a seção (título ### + tabela) que ficar sem resultado
+  function cwsFiltrar(inp){
+    const q=inp.value.toLowerCase().trim();
+    const bar=inp.closest('.cws-bar'); if(!bar) return;
+    const out=bar.nextElementSibling; if(!out) return;
+    let vis=0,total=0;
+    out.querySelectorAll('table').forEach(tbl=>{
+      let any=false;
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        total++;
+        const show=!q || tr.textContent.toLowerCase().indexOf(q)>=0;
+        tr.style.display=show?'':'none';
+        if(show){ vis++; any=true; }
+      });
+      tbl.style.display=(any||!q)?'':'none';
+      let h=tbl.previousElementSibling; while(h && !/^H[1-6]$/.test(h.tagName)) h=h.previousElementSibling;
+      if(h) h.style.display=(any||!q)?'':'none';
+    });
+    const cnt=bar.querySelector('.cws-count'); const u=(CWS_CUR&&CWS_CUR.unid)||['linha','linhas'];
+    if(cnt) cnt.textContent = q ? (vis+' de '+total) : (total+' '+(total===1?u[0]:u[1]));
+  }
+  function cwsMenu(e){ e.stopPropagation();
+    const m=e.currentTarget.parentNode.querySelector('.cws-menu'); const was=m.classList.contains('open');
+    document.querySelectorAll('.cws-menu.open').forEach(x=>x.classList.remove('open'));
+    if(!was) m.classList.add('open');
+  }
+  document.addEventListener('click',()=>{ document.querySelectorAll('.cws-menu.open').forEach(x=>x.classList.remove('open')); });
+  function cwsTitulo(){ return (CWS_CUR&&CWS_CUR.titulo) ? CWS_CUR.titulo : richTitulo(CWS_CUR?CWS_CUR.txt:''); }
+  function cwsNomeArq(ext){ const base=(CWS_CUR&&CWS_CUR.arqbase)||'Tabela'; let t=cwsTitulo().replace(/[^0-9A-Za-zÀ-ÿ ]/g,'').trim().replace(/\s+/g,'-'); return base+'-'+(t||'dados')+'.'+ext; }
+  function cwsCss(){ return 'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:24px;}'
+      +'h1{font-size:19px;margin:0 0 4px;}h2{font-size:18px;margin:0 0 4px;}h3{font-size:14px;margin:18px 0 6px;}p{font-size:13px;margin:4px 0;}'
+      +'.q-wrap{margin:10px 0 14px;}#q{width:100%;max-width:520px;padding:8px 12px;font-size:14px;border:1px solid #bbb;border-radius:8px;box-sizing:border-box;}'
+      +'#cnt{margin-left:10px;color:#666;font-size:12px;}'
+      +'table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0;table-layout:auto;}'
+      +'th,td{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top;word-break:break-word;}th{background:#f0c84a;color:#000;}'
+      +'tr:nth-child(even) td{background:#f7f7f7;}ul{font-size:12px;padding-left:18px;}'
+      +'@media print{.q-wrap{display:none;}}'; }
+  // HTML/PDF exportado: campo de busca funcional no cabeçalho (filtra por qualquer coluna, em TODAS as tabelas) + contador
+  function cwsDocHtml(){ const inner=mdToHtml(CWS_CUR?CWS_CUR.txt:'');
+    const busca='<div class="q-wrap"><input id="q" type="text" placeholder="🔎 '+esc((CWS_CUR&&CWS_CUR.placeholder)||'Buscar…')+'" oninput="flt()"><span id="cnt"></span></div>';
+    const body=(inner.indexOf('<table')>=0) ? inner.replace('<table', busca+'<table') : (busca+inner);
+    const scr='<'+'script>function flt(){var q=(document.getElementById("q").value||"").toLowerCase();var ts=document.querySelectorAll("table");var n=0,tot=0;for(var j=0;j<ts.length;j++){var rs=ts[j].querySelectorAll("tbody tr");var any=false;for(var i=0;i<rs.length;i++){tot++;var ok=!q||rs[i].textContent.toLowerCase().indexOf(q)>=0;rs[i].style.display=ok?"":"none";if(ok){n++;any=true;}}ts[j].style.display=(any||!q)?"":"none";var h=ts[j].previousElementSibling;while(h&&!/^H[1-6]$/.test(h.tagName))h=h.previousElementSibling;if(h)h.style.display=(any||!q)?"":"none";}var c=document.getElementById("cnt");if(c)c.textContent=q?(n+" de "+tot):(tot+" linhas");}window.onload=flt;<'+'/script>';
+    return '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(cwsTitulo())+'</title><style>'+cwsCss()+'</style></head><body>'+body+scr+'</body></html>'; }
+  function cwsTabelaDoc(){ // título + TODAS as tabelas (com o grupo antes de cada, se houver) — Excel importa limpo
+    const tmp=document.createElement('div'); tmp.innerHTML=mdToHtml(CWS_CUR?CWS_CUR.txt:'');
+    const tables=[...tmp.querySelectorAll('table')]; let corpo='';
+    tables.forEach(t=>{ let h=t.previousElementSibling; while(h && !/^H[1-6]$/.test(h.tagName)) h=h.previousElementSibling; if(h && tables.length>1) corpo+='<h3>'+esc(h.textContent.trim())+'</h3>'; corpo+=t.outerHTML; });
+    return '<!doctype html><html><head><meta charset="utf-8"><style>'+cwsCss()+'</style></head><body><h2>'+esc(cwsTitulo())+'</h2>'+corpo+'</body></html>'; }
+  function cwsDownload(content,mime,ext){ const blob=new Blob([content],{type:mime});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=cwsNomeArq(ext);
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },600); }
+  function cwsBaixarHtml(){ if(!CWS_CUR){ toast('Nada para exportar'); return; } cwsDownload(cwsDocHtml(),'text/html;charset=utf-8','html'); toast('HTML baixado'); }
+  function cwsBaixarExcel(){ if(!CWS_CUR){ toast('Nada para exportar'); return; } cwsDownload('﻿'+cwsTabelaDoc(),'application/vnd.ms-excel','xls'); toast('Planilha (Excel) baixada'); }
+  function cwsImprimir(){ if(!CWS_CUR){ toast('Nada para imprimir'); return; }
+    const w=window.open('','_blank'); if(!w){ toast('Permita pop-ups para imprimir'); return; }
+    w.document.write(cwsDocHtml()); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} },350); }
+  function cwsPrint(){ cwsImprimir(); }
+  function cwsPdf(){ cwsImprimir(); toast('Na janela de impressão, escolha “Salvar como PDF”'); }
   function renderRelatorioTurma(txt,res){
     RT_DET={};
     let body=txt;
@@ -3237,7 +3461,9 @@
   function fecharModalTurma(){ const m=document.getElementById('rtModal'); if(m) m.style.display='none'; }
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){
     const pm=document.getElementById('rtModal');
+    const cw=document.getElementById('cwsModal');
     if(pm && pm.style.display==='flex'){ fecharModalTurma(); }   // detalhe da turma está por cima → fecha ele primeiro
+    else if(cw && cw.style.display==='flex'){ cwsFecharModal(); }// modal amplo da Confirmação WS
     else { rtFecharUltima(); }                                   // senão, fecha o modal da última tabela
     fecharCardMeta();
   } });

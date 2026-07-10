@@ -146,7 +146,7 @@ while ($listener.IsListening) {
         'movimentacao'    { $script='Movimentacao-Leads.ps1';     $psArgs=@('-Periodo',$per) }
         'negociacoes'     { $script='Negociacoes-Vitoria.ps1';    $psArgs=@(); if($con){$psArgs+=@('-Consultor',$con)}; if($fxs -match '^[\d]+-[\d]*(,[\d]+-[\d]*)*$'){$psArgs+=@('-Faixas',$fxs)} }
         'leituraTurma'    { $script='Leitura-Turma.ps1';          $psArgs=@('-Link',$lnk) }
-        'relatorioTurma'  { $script='Relatorio-Turma.ps1';        $psArgs=@('-Link',$lnk) }
+        'relatorioTurma'  { if ($lnk -match 'zsales\.com\.br' -and $lnk -match '/classes/\d+') { $script='Confirmacao-WS.ps1' } else { $script='Relatorio-Turma.ps1' }; $psArgs=@('-Link',$lnk) }
       }
       if (-not $script) {
         $res.StatusCode = 400; $res.ContentType = 'text/plain; charset=utf-8'

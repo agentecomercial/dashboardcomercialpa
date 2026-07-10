@@ -136,6 +136,13 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 5. **🔗 Cruzamento por CPF** — mesmo aluno em +1 turma (remarcações/duplicidades entre abas).
 6. **⚠️ Qualidade de dados** — status vazio/typo, duplicatas, divergência resumo×lista, aba com resumo mas lista nominal vazia.
 
+**➕ Segundo tipo de link — CONFIRMAÇÃO WS (turma do Sales Cube):** o **mesmo card** "Relatório de Turma" também aceita o link de uma **turma do Sales Cube** (`https://app.zsales.com.br/organization/2/classes/<ID>#students`). Quando o link contém `zsales.com.br` + `/classes/<ID>`, o `Servir.ps1` roteia para **`Confirmacao-WS.ps1`** em vez do `Relatorio-Turma.ps1`. Esse script lê a turma via **MCP do Sales Cube** (`get_class` + `list_class_enrollments` + `get_customer` por matrícula) e devolve:
+- Cabeçalho da turma (nome · data · modalidade · matriculados · pendentes de confirmação);
+- Tabela **`# · Nome · Telefone · CPF · Status · Responsável`** (telefone e CPF formatados; ⚠️ marca sem telefone/CPF e telefones possivelmente incompletos);
+- **Pontos de atenção** (sem telefone, sem CPF, telefone incompleto, sem consultor ativo/"Migração").
+
+A saída começa com o marcador `<!--CONFIRMACAO-WS-->`; o front (`renderTurma` → `renderConfirmacaoWS`) renderiza a tabela com um menu **⋮** de exportação: **Imprimir · Baixar HTML · Baixar Excel (.xls) · Baixar PDF**. Também **fica guardada** na mesma "última tabela" (`rt_ultima`) do Relatório de Turma — os botões **📌 Última tabela** e **🗑 Limpar** funcionam para os dois tipos. Token/URL do MCP em `Confirmacao-WS.ps1` (mesmo do `Leads-Vitoria.ps1`). Não passar `organization_id` nas chamadas — o token já é vinculado à org.
+
 ---
 
 ## 🏆 7. Meta Master
