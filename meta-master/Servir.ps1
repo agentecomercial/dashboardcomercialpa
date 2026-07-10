@@ -80,6 +80,7 @@ while ($listener.IsListening) {
       $leadsArgs = @('-Periodo', $per, '-Json')
       if ($lde)  { $leadsArgs += @('-De', $lde) }
       if ($late) { $leadsArgs += @('-Ate', $late) }
+      $lcamp = $req.QueryString['campanha']; if ($lcamp -match '^[a-z,]+$') { $leadsArgs += @('-Campanha', $lcamp) }
       $leadsScript = Join-Path (Split-Path $root -Parent) 'Leads-Vitoria-Campanha.ps1'
       $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $leadsScript @leadsArgs *>&1 | Out-String
       $code = $LASTEXITCODE
@@ -171,7 +172,7 @@ while ($listener.IsListening) {
       $raiz   = Split-Path $root -Parent
       $script = Join-Path $raiz 'Acoes-Leads-Vitoria.ps1'
       $acao   = $req.QueryString['acao']
-      if ($acao -notin 'equilibrio','equilibrioCampanha','transferencia','transferenciaCampanha') {
+      if ($acao -notin 'equilibrio','equilibrioCampanha','transferencia','transferenciaCampanha','transferenciaIndividual','transferenciaIndividualCampanha') {
         $res.StatusCode = 400; $res.ContentType = 'application/json; charset=utf-8'
         $b = [Text.Encoding]::UTF8.GetBytes((@{ erro = "Acao invalida: $acao" } | ConvertTo-Json -Compress))
         $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
@@ -192,6 +193,7 @@ while ($listener.IsListening) {
         $qDe  = $req.QueryString['de'];  if ($qDe  -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-De', $qDe) }
         $qAte = $req.QueryString['ate']; if ($qAte -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-Ate', $qAte) }
         if ($req.QueryString['base'])         { $psArgs += @('-Base', $req.QueryString['base']) }
+        if ($req.QueryString['cruzamento'] -eq '1') { $psArgs += @('-Cruzamento') }
         if ($req.QueryString['participantes']){ $psArgs += @('-Participantes', $req.QueryString['participantes']) }
         if ($req.QueryString['campanha'])     { $psArgs += @('-Campanha', $req.QueryString['campanha']) }
         if ($req.QueryString['ordem'])        { $psArgs += @('-Ordem', $req.QueryString['ordem']) }

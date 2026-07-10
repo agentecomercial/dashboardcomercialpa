@@ -98,6 +98,8 @@
   .ltbl .tot{color:#F0C84A;font-weight:900;}
   .ltbl .camp{background:#1a1c1a;color:#9fcf9f;border-left:1px solid #2f3a2f;}
   .ltbl th.camp{color:#7faf7f;}
+  .ltbl th.campfil:hover{color:#eafbea;background:#20301f;}
+  .ltbl th.campfil.on{background:#25451f;color:#c8f0b0;box-shadow:inset 0 -2px 0 #7fd98a;}
   .ltbl tr.total td{border-top:2px solid #444;border-bottom:none;font-weight:900;color:#eee;}
   .ltbl tbody tr:hover{background:#191919;}
   .leads-aviso{background:#161616;border:1px solid #5a3f3f;border-radius:8px;padding:10px 12px;font-size:12px;color:#d99;margin-top:14px;line-height:1.5;display:none;}
@@ -1440,7 +1442,8 @@
     try{
       const qs=(LEADS_PER.tipo==='periodo') ? ('?de='+encodeURIComponent(LEADS_PER.de)+'&ate='+encodeURIComponent(LEADS_PER.ate))
                                             : ('?periodo='+encodeURIComponent(LEADS_PER.periodo));
-      const r=await fetch('/api/leads'+qs,{cache:'no-store'});
+      const qsC=qs+(LEADS_CAMP?('&campanha='+encodeURIComponent(LEADS_CAMP)):'');   // filtro de campanha (clicando no cabeçalho MCIS/TCE/Outros)
+      const r=await fetch('/api/leads'+qsC,{cache:'no-store'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json();
       if(d.erro) throw new Error(d.erro);
@@ -1581,6 +1584,12 @@
 
   /* ---- período PRÓPRIO da aba Leads (independente da aba Card e dos Comandos) ---- */
   let LEADS_PER={tipo:'mes', periodo:hojeYM()};
+  // filtro de campanha da aba Leads (clique no cabeçalho MCIS/TCE/Outros): null = todas; 'mcis'|'tce'|'outros' = só aquela
+  let LEADS_CAMP=null;
+  function filtrarLeadsCampanha(key){
+    LEADS_CAMP = (LEADS_CAMP===key) ? null : key;   // clicar de novo na mesma campanha limpa o filtro
+    leadsCarregado=false; carregarLeads($('btnLeads'));
+  }
   function leadsPerLabel(){ if(LEADS_PER.tipo==='periodo') return dpFmtBR(LEADS_PER.de)+' a '+dpFmtBR(LEADS_PER.ate); const a=LEADS_PER.periodo.split('-'); return (MESES_PT[(+a[1])-1]||'')+'/'+a[0]; }
   function abrirLeadsPicker(ev){ if(ev) ev.stopPropagation();
     dpOpen('leadsPerDp', ['mes','periodo'], res=>{
@@ -1654,7 +1663,12 @@
     let h='<thead><tr><th '+clk('nome')+' data-curto="Cons." data-longo="Consultor">Consultor'+seta('nome')+'</th>';
     etapas.forEach(e=>h+='<th '+clk(e.num)+' data-curto="'+e.num+'" data-longo="'+e.curto+'">'+e.curto+seta(e.num)+'</th>');
     h+='<th '+clk('total')+' data-curto="TOT" data-longo="Total">Total'+seta('total')+'</th>';
-    camps.forEach(cp=>h+='<th class="camp" '+clk(cp.key)+'>'+cp.curto+seta(cp.key)+'</th>');
+    const ehLeads=(tblId==='leadsTbl');   // só na aba Leads o cabeçalho de campanha FILTRA a tabela (nas demais, ordena)
+    camps.forEach(cp=>{
+      if(ehLeads){ const on=(LEADS_CAMP===cp.key);
+        h+='<th class="camp campfil'+(on?' on':'')+'" onclick="filtrarLeadsCampanha(\''+cp.key+'\')" title="Filtrar só '+esc(cp.curto)+' (clique de novo para limpar)">'+cp.curto+(on?' ✓':'')+'</th>'; }
+      else h+='<th class="camp" '+clk(cp.key)+'>'+cp.curto+seta(cp.key)+'</th>';
+    });
     h+='</tr></thead><tbody>';
     cons.forEach(c=>{
       h+='<tr><td>'+c.nome+'</td>';
@@ -1674,7 +1688,8 @@
   function renderLeads(d){   // aba Leads
     LEADSCTX['leadsTbl']={ data:d, sort:{col:'total',dir:-1} };   // padrao: Total desc
     renderLeadsTabela('leadsTbl');
-    $('leadsMeta').innerHTML='Competência <b>'+(d.mes||'?')+'</b> · atualizado '+(d.geradoEm||'');
+    const campF = LEADS_CAMP ? (' · <span style="color:#7fd98a">campanha '+esc(CAMP_LBL[LEADS_CAMP]||LEADS_CAMP)+'</span> <span style="color:#9a9aa2;cursor:pointer;text-decoration:underline" onclick="filtrarLeadsCampanha(\''+LEADS_CAMP+'\')">✕ limpar</span>') : '';
+    $('leadsMeta').innerHTML='Competência <b>'+esc(leadsPerLabel())+'</b>'+campF+' · atualizado '+(d.geradoEm||'');   // reflete o período escolhido + filtro de campanha
   }
 
   /* ---------- ABA COMANDOS (executor) ---------- */
@@ -1730,6 +1745,10 @@
     {id:'transferenciaCampanha', cat:'🔁 Leads — Ações', label:'Transferência de Leads campanha', acao:'transferenciaCampanha',
       desc:'Igual à Transferência, mas só dos leads de uma campanha (MCIS / TCE / Outros): escolha origem(ns), destino(s), campanha, etapa de origem→destino, quantidade e ordem.',
       campos:['origem','destino','campanha','etapaOD','quantidade','ordem','periodo']},
+    {id:'transferenciaIndividual', cat:'🔁 Leads — Ações', label:'Transferência de Leads Individual', acao:'transferenciaIndividual',
+      desc:'Move leads entre as etapas do MESMO consultor (não muda de dono, só de etapa): escolha o consultor, etapa(s) de origem → etapa destino, quantidade e ordem.'},
+    {id:'transferenciaIndividualCampanha', cat:'🔁 Leads — Ações', label:'Transferência de Leads Individual campanha', acao:'transferenciaIndividualCampanha',
+      desc:'Igual à Transferência Individual, mas só dos leads de uma campanha (MCIS / TCE / Outros): consultor, campanha, etapa(s) de origem → etapa destino, quantidade e ordem.'},
     {id:'equilibrio', cat:'🔁 Leads — Ações', label:'Equilíbrio de Leads', acao:'equilibrio',
       desc:'Redistribui leads igualmente entre os consultores (move só o excedente). Base: Ativos 1–4 ou etapa específica. Pré-visualize antes/depois e aplique.',
       campos:['participantes','base','ordem','periodo']},
@@ -1914,12 +1933,15 @@
     }else if(c.acao==='transferenciaCampanha'){
       form.innerHTML='<div id="leadsAtualBox" class="leads-atual"></div><div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
       carregarTabelaAtual(); iniciarWizardTransferCamp();
+    }else if(c.acao==='transferenciaIndividual' || c.acao==='transferenciaIndividualCampanha'){
+      form.innerHTML='<div id="leadsAtualBox" class="leads-atual"></div><div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
+      carregarTabelaAtual(); iniciarWizardIndividual(c.acao==='transferenciaIndividualCampanha');
     }else if(c.acao==='equilibrio'){
-      form.innerHTML='<div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
-      iniciarWizardEq();
+      form.innerHTML='<div id="leadsAtualBox" class="leads-atual"></div><div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
+      carregarTabelaAtual(); iniciarWizardEq();
     }else if(c.acao==='equilibrioCampanha'){
-      form.innerHTML='<div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
-      iniciarWizardCamp();
+      form.innerHTML='<div id="leadsAtualBox" class="leads-atual"></div><div id="wizBox" class="wiz-box"></div><div id="acaoPrevia" class="acao-previa"></div>';
+      carregarTabelaAtual(); iniciarWizardCamp();
     }else if(c.acao==='cadastroMetas'){
       form.innerHTML='<div id="wizBox" class="wiz-box"></div>';
       iniciarWizardMetas();
@@ -2013,6 +2035,42 @@
     finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } prev.scrollIntoView({behavior:'smooth',block:'start'}); }
   }
 
+  // Projeta como a carteira ficaria APÓS aplicar as operações (2ª tabela, abaixo da prévia)
+  function projetarCarteira(baseData, ops){
+    const d=JSON.parse(JSON.stringify(baseData));
+    const byNome={}; (d.consultores||[]).forEach(c=>byNome[c.nome]=c);
+    ops.forEach(o=>{
+      const de=byNome[o.deNome], para=byNome[o.paraNome];
+      const eFrom=String(o.etapaNum||''), eTo=String(o.novoStageNum||o.etapaNum||''), camp=o.campanha;
+      if(de){
+        if(de.etapas&&eFrom&&de.etapas[eFrom]!=null) de.etapas[eFrom]=Math.max(0,de.etapas[eFrom]-1);
+        de.total=Math.max(0,(de.total||0)-1);
+        if(de.campanhas&&camp&&de.campanhas[camp]!=null) de.campanhas[camp]=Math.max(0,de.campanhas[camp]-1);
+      }
+      if(para){
+        if(para.etapas&&eTo) para.etapas[eTo]=(para.etapas[eTo]||0)+1;
+        para.total=(para.total||0)+1;
+        if(para.campanhas&&camp) para.campanhas[camp]=(para.campanhas[camp]||0)+1;
+      }
+    });
+    d.totaisEtapa={}; (d.etapas||[]).forEach(e=>{ d.totaisEtapa[e.num]=(d.consultores||[]).reduce((s,c)=>s+((c.etapas&&c.etapas[e.num])||0),0); });
+    d.totaisCampanha={}; (d.campanhas||[]).forEach(cp=>{ d.totaisCampanha[cp.key]=(d.consultores||[]).reduce((s,c)=>s+((c.campanhas&&c.campanhas[cp.key])||0),0); });
+    d.totalGeral=(d.consultores||[]).reduce((s,c)=>s+(c.total||0),0);
+    return d;
+  }
+  function anexarProjecaoCarteira(d){
+    const base = LEADSCTX['atualLeadsTbl'] && LEADSCTX['atualLeadsTbl'].data;
+    const prev=$('acaoPrevia'), ops=arrify(d&&d.operacoes);
+    if(!base || !prev || !ops.length) return;   // sem carteira carregada ou nada a mover → não projeta
+    const proj=projetarCarteira(base, ops);
+    const div=document.createElement('div'); div.className='proj-carteira';
+    div.innerHTML='<div class="cmd-leadshead" style="margin-top:16px">📊 Como a carteira ficaria depois <span style="color:#e0a96d">(projeção — ainda não aplicado)</span></div>'
+      +'<div class="md-tblwrap"><table class="ltbl" id="projLeadsTbl"></table></div>';
+    prev.appendChild(div);
+    LEADSCTX['projLeadsTbl']={ data:proj, sort:{col:'total',dir:-1} };
+    renderLeadsTabela('projLeadsTbl');
+  }
+
   function renderPreviaAcao(c, d){
     let h='<div class="acao-head">📋 <b>'+esc(d.titulo||'')+'</b></div>';
     h+='<div class="acao-sub">'+esc(d.baseLabel||'')+' · '+esc(d.periodoLabel||'')+' · cessão: '+esc(d.ordemLabel||'')+' · base lida: '+(d.totalLeads||0)+' leads</div>';
@@ -2069,29 +2127,78 @@
         falhas.forEach(f=>{ msg+='<tr><td>'+f.opportunity_id+'</td><td>'+esc(f.cliente||'')+'</td><td>'+esc(f.erro||'')+'</td></tr>'; });
         msg+='</tbody></table></div>';
       }
-      msg+='<div style="margin-top:8px">Clique em <b>👁 Pré-visualizar</b> de novo para ver a carteira já atualizada.</div></div>';
+      msg+='<div style="margin-top:8px">Quer conferir? <button class="btn btn-sec" style="width:auto;padding:8px 14px" onclick="rePreviewAcao(\''+id+'\',this)">👁 Ver a carteira já atualizada</button></div></div>';
       prev.innerHTML=msg;
       ACAO_PLANO=null;
       toast('CRM atualizado: '+(d.ok||0)+' de '+(d.total||0));
     }catch(e){ status.className='cmd-aviso'; status.innerHTML='Falhou ao aplicar: '+esc(e.message); }
     finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } }
   }
+  // Depois de aplicar: refaz a prévia (mostra a carteira já com os leads movidos) e recarrega a tabela do topo
+  function rePreviewAcao(id, btn){
+    if($('leadsAtualBox')){
+      if(id==='transferenciaCampanha') carregarTabelaAtual(WIZT&&WIZT.periodo, WIZT&&WIZT.campanhas);
+      else if(id==='equilibrioCampanha') carregarTabelaAtual(WIZC&&WIZC.periodo, WIZC&&WIZC.campanhas);
+      else if(id==='transferencia') carregarTabelaAtual(WIZ&&WIZ.periodo);
+      else if(id==='transferenciaIndividual') carregarTabelaAtual(WIZI&&WIZI.periodo);
+      else if(id==='transferenciaIndividualCampanha') carregarTabelaAtual(WIZI&&WIZI.periodo, WIZI&&WIZI.campanhas);
+    }
+    if(id==='equilibrioCampanha') previewCamp();
+    else if(id==='equilibrio') previewEq();
+    else if(id==='transferenciaCampanha') previewTransfCamp(btn);
+    else if(id==='transferencia') previewTransfer(btn);
+    else if(id==='transferenciaIndividual'||id==='transferenciaIndividualCampanha') previewIndividual(btn);
+  }
 
   // Tabela atual (matriz consultor × etapas + campanhas) mostrada no topo dos fluxos de transferência,
   // para o gestor ver a carteira antes de decidir a transferência. Reusa a MESMA tabela rica da aba Leads.
-  async function carregarTabelaAtual(){
+  // per (opcional) = {de, ate, label} do período escolhido; camps (opcional) = array ['mcis','tce','outros'] p/ filtrar a tabela inteira por campanha
+  const CAMP_LBL={mcis:'MCIS',tce:'TCE',outros:'Outros'};
+  let _carteiraSeq=0;
+  async function carregarTabelaAtual(per, camps){
     const box=$('leadsAtualBox'); if(!box) return;
     if(!isHttp){ box.innerHTML=avisoBox('⚠ A tabela atual precisa do servidor local (Servir.bat / Meta Master.vbs).'); return; }
-    box.innerHTML='<div class="cmd-loading">⏳ Carregando a carteira atual…</div>';
+    const seq=++_carteiraSeq;   // evita que uma resposta antiga sobrescreva a mais recente
+    const campLbl=(camps&&camps.length)?(' · campanha '+camps.map(c=>CAMP_LBL[c]||c).join('+')):'';
+    box.innerHTML='<div class="cmd-loading">⏳ Carregando a carteira'+(per&&per.label?' de '+esc(per.label):' atual')+esc(campLbl)+'…</div>';
     try{
-      const r=await fetch('/api/leads',{cache:'no-store'});
+      const qp=[];
+      if(per&&per.de)  qp.push('de='+encodeURIComponent(per.de));
+      if(per&&per.ate) qp.push('ate='+encodeURIComponent(per.ate));
+      if(camps&&camps.length) qp.push('campanha='+encodeURIComponent(camps.join(',')));
+      const r=await fetch('/api/leads'+(qp.length?('?'+qp.join('&')):''),{cache:'no-store'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json(); if(d.erro) throw new Error(d.erro);
-      box.innerHTML='<div class="cmd-leadshead">📊 Carteira atual · Competência <b>'+esc(d.mes||'')+'</b> · atualizado '+esc(d.geradoEm||'')+'</div>'
+      if(seq!==_carteiraSeq) return;   // já veio uma requisição mais nova; descarta esta
+      const compet=(per&&per.label)?per.label:(d.mes||'');
+      box.innerHTML='<div class="cmd-leadshead">📊 Carteira · Competência <b>'+esc(compet)+'</b>'+campLbl+' · atualizado '+esc(d.geradoEm||'')
+        +' <button class="btn btn-sec" style="width:auto;padding:5px 12px;font-size:12px;margin-left:8px" onclick="atualizarCarteira(this)">🔄 Atualizar</button></div>'
         +'<div class="md-tblwrap"><table class="ltbl" id="atualLeadsTbl"></table></div>';
       LEADSCTX['atualLeadsTbl']={ data:d, sort:{col:'total',dir:-1} };
       renderLeadsTabela('atualLeadsTbl');
-    }catch(e){ box.innerHTML=avisoBox('Não consegui carregar a carteira atual: '+esc(e.message)); }
+    }catch(e){ if(seq===_carteiraSeq) box.innerHTML=avisoBox('Não consegui carregar a carteira: '+esc(e.message)); }
+  }
+  // botão 🔄 Atualizar do cabeçalho da carteira: recarrega usando o período + campanha do wizard ativo
+  function atualizarCarteira(btn){
+    const id=CMD_ID; let per=null, camps=null;
+    if(id==='transferencia'){ per=WIZ&&WIZ.periodo; }
+    else if(id==='transferenciaCampanha'){ per=WIZT&&WIZT.periodo; camps=WIZT&&WIZT.campanhas; }
+    else if(id==='equilibrio'){ per=WIZE&&WIZE.periodo; }
+    else if(id==='equilibrioCampanha'){ per=WIZC&&WIZC.periodo; camps=WIZC&&WIZC.campanhas; }
+    else if(id==='transferenciaIndividual'){ per=WIZI&&WIZI.periodo; }
+    else if(id==='transferenciaIndividualCampanha'){ per=WIZI&&WIZI.periodo; camps=WIZI&&WIZI.campanhas; }
+    carregarTabelaAtual(per, camps);
+  }
+  // recarrega a carteira filtrando pelas campanhas marcadas no Passo 2 (com debounce p/ cliques rápidos)
+  let _campReloadT=null;
+  function recarregarCarteiraCamp(cls){
+    if(!$('leadsAtualBox')) return;
+    clearTimeout(_campReloadT);
+    _campReloadT=setTimeout(()=>{
+      const camps=[].slice.call(document.querySelectorAll('input.'+cls+':checked')).map(x=>x.value);
+      const W=(cls==='wizTCamp')?WIZT:(cls==='wizICamp')?WIZI:WIZC;
+      carregarTabelaAtual(W&&W.periodo, camps);
+    },250);
   }
 
   // ===== Wizard da Transferência de Leads (passo a passo, igual ao chat) =====
@@ -2112,7 +2219,7 @@
     return '<div class="dp-wrap" style="margin-top:4px"><div class="dp-field" onclick="abrirWizPicker(event,\''+qual+'\')">📅 <span>'+(cur?esc(cur.label):'clique para escolher o mês/período…')+'</span> <span class="car">▾</span></div><div id="wizPerDp"></div></div>';
   }
   function abrirWizPicker(ev, qual){ if(ev) ev.stopPropagation();
-    const alvo = qual==='transfer'?WIZ : qual==='eq'?WIZE : qual==='transfcamp'?WIZT : WIZC;
+    const alvo = qual==='transfer'?WIZ : qual==='eq'?WIZE : qual==='transfcamp'?WIZT : qual==='indiv'?WIZI : WIZC;
     const cur = alvo && alvo.periodo;
     const init = cur ? (cur.ym ? {tipo:'mes',periodo:cur.ym} : {tipo:'periodo',de:cur.de,ate:cur.ate}) : {tipo:'mes',periodo:hojeYM()};
     dpOpen('wizPerDp', ['ano','mes','dia','periodo'], res=>{
@@ -2120,7 +2227,12 @@
       if(qual==='transfer'){ WIZ.periodo=per; WIZ.step=2; renderWiz(); }
       else if(qual==='eq'){ WIZE.periodo=per; WIZE.step=2; renderWizE(); }
       else if(qual==='transfcamp'){ WIZT.periodo=per; WIZT.step=2; renderWizT(); }
+      else if(qual==='indiv'){ WIZI.periodo=per; WIZI.step=(WIZI.cc?2:3); renderWizI(); }
       else { WIZC.periodo=per; WIZC.step=2; renderWizC(); }
+      if($('leadsAtualBox')){                            // a carteira passa a refletir o período (mantendo a campanha já escolhida, se houver)
+        const cps = qual==='transfcamp' ? WIZT.campanhas : (qual==='camp' ? WIZC.campanhas : (qual==='indiv' ? WIZI.campanhas : null));
+        carregarTabelaAtual(per, cps);
+      }
     }, init);
   }
   async function fetchAcao(qs){
@@ -2153,7 +2265,8 @@
   function wizVoltarBtn(toStep){ return '<button type="button" class="wiz-back" onclick="WIZ.step='+toStep+';renderWiz()">‹ Voltar</button>'; }
   // multi-seleção (consultores/campanha) em tags com +/✕, "Todos/Limpar" e contador
   function tagItem(cls,value,labelHtml,on){ return '<label class="tag'+(on?' on':'')+'"><input type="checkbox" class="'+cls+'" value="'+esc(value)+'"'+(on?' checked':'')+' onchange="tagPick(this)"><span>'+labelHtml+'</span><span class="tag-x"></span></label>'; }
-  function tagPick(inp){ const l=inp.closest('label'); if(l) l.classList.toggle('on', inp.checked); tagCount(inp.className); }
+  function tagPick(inp){ const l=inp.closest('label'); if(l) l.classList.toggle('on', inp.checked); tagCount(inp.className);
+    if(inp.className==='wizTCamp'||inp.className==='wizCCamp'||inp.className==='wizICamp') recarregarCarteiraCamp(inp.className); }   // campanha do Passo 2 → filtra a carteira
   function tagsMulti(cls,itens,marcados,defaultAll){
     let h='<div class="tag-actions"><button type="button" class="tag-act" onclick="tagAll(\''+cls+'\',true)">✓ Todos</button>'
       +'<button type="button" class="tag-act" onclick="tagAll(\''+cls+'\',false)">✕ Limpar</button>'
@@ -2162,7 +2275,8 @@
     itens.forEach(it=>{ const on = usar ? (marcados.indexOf(it[0])>=0) : defaultAll; h+=tagItem(cls,it[0],it[1],on); });
     return h+'</div>';
   }
-  function tagAll(cls,v){ document.querySelectorAll('input.'+cls).forEach(x=>{ x.checked=v; const l=x.closest('label'); if(l) l.classList.toggle('on',v); }); tagCount(cls); }
+  function tagAll(cls,v){ document.querySelectorAll('input.'+cls).forEach(x=>{ x.checked=v; const l=x.closest('label'); if(l) l.classList.toggle('on',v); }); tagCount(cls);
+    if(cls==='wizTCamp'||cls==='wizCCamp'||cls==='wizICamp') recarregarCarteiraCamp(cls); }
   function tagCount(cls){ const el=$('cnt_'+cls); if(!el) return; const t=document.querySelectorAll('input.'+cls).length, n=document.querySelectorAll('input.'+cls+':checked').length; el.textContent=n+'/'+t+' selecionados'; }
   function consultoresItens(excluir){ const ex=Array.isArray(excluir)?excluir:(excluir?[excluir]:[]); return CONSULTORES.filter(c=>ex.indexOf(c.val)<0).map(c=>[c.val, esc(c.nome)]); }
 
@@ -2199,8 +2313,8 @@
         +'<div id="wizConta" class="wiz-info">⏳ contando os leads disponíveis…</div>'
         +'<label class="cmd-campo"><span>Quantos transferir no total? (vazio ou "todos" = todos)</span><input type="text" id="wizQtd" placeholder="todos" value="'+esc(W.quantidade||'')+'" style="width:150px"></label>'
         +'<div style="margin:12px 0 5px;font-size:12px;color:#bdbdc4">Ordem de seleção:</div><div class="wiz-opts">'
-        +wizOpt(1,'Mais antigos primeiro','wizSetOrdem(\'antigos\')',W.ordem==='antigos')
-        +wizOpt(2,'Mais recentes primeiro','wizSetOrdem(\'recentes\')',W.ordem==='recentes')
+        +wizOpt(1,'Mais antigos primeiro <i>(retira os de data de criação mais antiga)</i>','wizSetOrdem(\'antigos\')',W.ordem==='antigos')
+        +wizOpt(2,'Mais recentes primeiro <i>(retira os de data de criação mais recente)</i>','wizSetOrdem(\'recentes\')',W.ordem==='recentes')
         +'</div><div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="previewTransfer(this)">👁 Pré-visualizar</button>'+wizVoltarBtn(5)+'</div>';
     }
     h+=resumoWiz();
@@ -2239,18 +2353,19 @@
       const d=await fetchAcao(qsTransfer(true));
       ACAO_PLANO={acao:'transferencia', operacoes:d.operacoes};
       prev.innerHTML=renderPreviaAcao(CMDS.find(x=>x.id==='transferencia'), d);
+      anexarProjecaoCarteira(d);
     }catch(e){ prev.innerHTML=avisoBox('Falhou: '+esc(e.message)); ACAO_PLANO=null; }
     finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } prev.scrollIntoView({behavior:'smooth',block:'start'}); }
   }
 
   // ===== Wizard da Transferência de Leads por Campanha (transferência + filtro de campanha) =====
   let WIZT=null;
-  function iniciarWizardTransferCamp(){ WIZT={step:1,periodo:null,campanhas:[],origens:[],destino:[],etapaO:null,etapaD:null,quantidade:'',ordem:'antigos'}; renderWizT(); }
+  function iniciarWizardTransferCamp(){ WIZT={step:1,periodo:null,campanhas:[],origens:[],destino:[],etapasO:[],etapaD:null,quantidade:'',ordem:'antigos'}; renderWizT(); }
   function wizTBack(s){ return '<button type="button" class="wiz-back" onclick="WIZT.step='+s+';renderWizT()">‹ Voltar</button>'; }
   function qsTransfCamp(comQuantidade){
     const W=WIZT, qs=new URLSearchParams({acao:'transferenciaCampanha'});
     qs.set('campanha',W.campanhas.join(',')); qs.set('origem',W.origens.join(',')); qs.set('destino',W.destino.join(','));
-    qs.set('etapaOrigem',W.etapaO); qs.set('etapaDestino',W.etapaD); qs.set('ordem',W.ordem);
+    qs.set('etapaOrigem',W.etapasO.join(',')); qs.set('etapaDestino',W.etapaD); qs.set('ordem',W.ordem);
     if(comQuantidade && /^\d+$/.test(String(W.quantidade))) qs.set('quantidade',W.quantidade);
     if(W.periodo){ qs.set('de',W.periodo.de); qs.set('ate',W.periodo.ate); }
     return qs;
@@ -2261,8 +2376,8 @@
     if(W.campanhas.length) p.push('Campanhas '+W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '));
     if(W.origens.length) p.push('Origem '+W.origens.map(nomeCurto).join(' + '));
     if(W.destino.length) p.push('Destino '+W.destino.map(nomeCurto).join(' + '));
-    if(W.etapaO) p.push('pegar de '+etapaLabel(W.etapaO));
-    if(W.etapaD) p.push('entrar em '+etapaLabel(W.etapaD));
+    if(W.etapasO.length) p.push('pegar de '+W.etapasO.map(etapaLabel).join('+'));
+    if(W.etapaD) p.push('mandar para '+etapaLabel(W.etapaD));
     return p.length?('<div class="wiz-resumo">Resumo até aqui: <b>'+esc(p.join(' · '))+'</b></div>'):'';
   }
   function renderWizT(){
@@ -2291,20 +2406,21 @@
           +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizTSetDestino()">Continuar →</button>'+wizTBack(3)+'</div>';
       }
     }else if(W.step===5){
-      h+='<div class="wiz-titulo">Passo 4 de 5 — De qual etapa pegar os leads de '+esc(W.origens.map(nomeCurto).join(' + '))+'?</div><div class="wiz-opts">';
-      ETAPAS_ACAO.forEach((e,i)=>{ h+=wizOpt(i+1, esc(etapaLabel(e[0])), "wizTSetEtapaO('"+e[0]+"')", W.etapaO===e[0]); });
-      h+='</div><div class="wiz-nav">'+wizTBack(4)+'</div>';
+      h+='<div class="wiz-titulo">Passo 4 de 5 — De quais etapas pegar os leads de '+esc(W.origens.map(nomeCurto).join(' + '))+'?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Clique para marcar <b>uma ou várias</b> etapas.</div>'
+        +tagsMulti('wizTEtapaO', ETAPAS_ACAO, W.etapasO, false)
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizTSetEtapasO()">Continuar →</button>'+wizTBack(4)+'</div>';
     }else if(W.step===6){
-      h+='<div class="wiz-titulo">Passo 4 (continuação) — Em qual etapa os leads entram no destino?</div><div class="wiz-opts">';
-      ETAPAS_ACAO.forEach((e,i)=>{ const manter=(e[0]===W.etapaO)?' <i>(manter a mesma)</i>':''; h+=wizOpt(i+1, esc(etapaLabel(e[0]))+manter, "wizTSetEtapaD('"+e[0]+"')", W.etapaD===e[0]); });
+      h+='<div class="wiz-titulo">Passo 4 (continuação) — Para qual etapa mandar os leads?</div><div class="wiz-opts">';
+      ETAPAS_ACAO.forEach((e,i)=>{ const manter=(W.etapasO.indexOf(e[0])>=0)?' <i>(uma das de origem)</i>':''; h+=wizOpt(i+1, esc(etapaLabel(e[0]))+manter, "wizTSetEtapaD('"+e[0]+"')", W.etapaD===e[0]); });
       h+='</div><div class="wiz-nav">'+wizTBack(5)+'</div>';
     }else if(W.step===7){
       h+='<div class="wiz-titulo">Passo 5 de 5 — Quantos leads e em que ordem?</div>'
         +'<div id="wizTConta" class="wiz-info">⏳ contando os leads disponíveis…</div>'
         +'<label class="cmd-campo"><span>Quantos transferir no total? (vazio ou "todos" = todos)</span><input type="text" id="wizTQtd" placeholder="todos" value="'+esc(W.quantidade||'')+'" style="width:150px"></label>'
         +'<div style="margin:12px 0 5px;font-size:12px;color:#bdbdc4">Ordem de seleção:</div><div class="wiz-opts">'
-        +wizOpt(1,'Mais antigos primeiro','wizTSetOrdem(\'antigos\')',W.ordem==='antigos')
-        +wizOpt(2,'Mais recentes primeiro','wizTSetOrdem(\'recentes\')',W.ordem==='recentes')
+        +wizOpt(1,'Mais antigos primeiro <i>(retira os de data de criação mais antiga)</i>','wizTSetOrdem(\'antigos\')',W.ordem==='antigos')
+        +wizOpt(2,'Mais recentes primeiro <i>(retira os de data de criação mais recente)</i>','wizTSetOrdem(\'recentes\')',W.ordem==='recentes')
         +'</div><div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="previewTransfCamp(this)">👁 Pré-visualizar</button>'+wizTBack(6)+'</div>';
     }
     h+=resumoWizT();
@@ -2312,12 +2428,13 @@
     if(W.step===2) tagCount('wizTCamp');
     if(W.step===3) tagCount('wizTOrig');
     if(W.step===4) tagCount('wizTDest');
+    if(W.step===5) tagCount('wizTEtapaO');
     if(W.step===7) wizTContaOrigem();
   }
   function wizTSetCamp(){ const cs=[].slice.call(document.querySelectorAll('input.wizTCamp:checked')).map(x=>x.value); if(!cs.length){ toast('Escolha ao menos 1 campanha'); return; } WIZT.campanhas=cs; WIZT.step=3; renderWizT(); }
   function wizTSetOrigens(){ const os=[].slice.call(document.querySelectorAll('input.wizTOrig:checked')).map(x=>x.value); if(!os.length){ toast('Escolha ao menos 1 origem'); return; } WIZT.origens=os; WIZT.destino=WIZT.destino.filter(d=>os.indexOf(d)<0); WIZT.step=4; renderWizT(); }
   function wizTSetDestino(){ const ds=[].slice.call(document.querySelectorAll('input.wizTDest:checked')).map(x=>x.value); if(!ds.length){ toast('Escolha ao menos 1 destino'); return; } WIZT.destino=ds; WIZT.step=5; renderWizT(); }
-  function wizTSetEtapaO(n){ WIZT.etapaO=n; if(!WIZT.etapaD) WIZT.etapaD=n; WIZT.step=6; renderWizT(); }
+  function wizTSetEtapasO(){ const es=[].slice.call(document.querySelectorAll('input.wizTEtapaO:checked')).map(x=>x.value); if(!es.length){ toast('Escolha ao menos 1 etapa de origem'); return; } WIZT.etapasO=es; if(!WIZT.etapaD) WIZT.etapaD=es[0]; WIZT.step=6; renderWizT(); }
   function wizTSetEtapaD(n){ WIZT.etapaD=n; WIZT.step=7; renderWizT(); }
   function wizTSetOrdem(o){ const q=$('wizTQtd'); if(q) WIZT.quantidade=q.value.trim(); WIZT.ordem=o; renderWizT(); }
   async function wizTContaOrigem(){
@@ -2325,7 +2442,7 @@
     try{
       const d=await fetchAcao(qsTransfCamp(false));
       const n=d.qtdMovimenta||0;
-      el.innerHTML='Origem <b>'+esc(W.origens.map(nomeCurto).join(' + '))+'</b> · campanha <b>'+esc(W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '))+'</b>: <b>'+n+'</b> lead(s) em <b>'+esc(etapaLabel(W.etapaO))+'</b> ('+esc(W.periodo?W.periodo.label:'')+'). '
+      el.innerHTML='Origem <b>'+esc(W.origens.map(nomeCurto).join(' + '))+'</b> · campanha <b>'+esc(W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '))+'</b>: <b>'+n+'</b> lead(s) em <b>'+esc(W.etapasO.map(etapaLabel).join('+'))+'</b> → <b>'+esc(etapaLabel(W.etapaD))+'</b> ('+esc(W.periodo?W.periodo.label:'')+'). '
         +'Serão divididos igualmente entre <b>'+esc(W.destino.map(nomeCurto).join(' e '))+'</b>.';
     }catch(e){ el.innerHTML='Não consegui contar agora: '+esc(e.message); }
   }
@@ -2341,17 +2458,110 @@
       const d=await fetchAcao(qsTransfCamp(true));
       ACAO_PLANO={acao:'transferenciaCampanha', operacoes:d.operacoes};
       prev.innerHTML=renderPreviaAcao(CMDS.find(x=>x.id==='transferenciaCampanha'), d);
+      anexarProjecaoCarteira(d);
+    }catch(e){ prev.innerHTML=avisoBox('Falhou: '+esc(e.message)); ACAO_PLANO=null; }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } prev.scrollIntoView({behavior:'smooth',block:'start'}); }
+  }
+
+  // ===== Wizard da Transferência Individual (move entre as etapas do MESMO consultor; opcional por campanha) =====
+  let WIZI=null;
+  function iniciarWizardIndividual(cc){ WIZI={step:1,cc:!!cc,periodo:null,campanhas:[],consultor:null,etapasO:[],etapaD:null,quantidade:'',ordem:'antigos'}; renderWizI(); }
+  function wizIBack(s){ return '<button type="button" class="wiz-back" onclick="WIZI.step='+s+';renderWizI()">‹ Voltar</button>'; }
+  function wizITot(){ return WIZI.cc?6:5; }
+  function qsIndividual(comQuantidade){
+    const W=WIZI, qs=new URLSearchParams({acao: W.cc?'transferenciaIndividualCampanha':'transferenciaIndividual'});
+    qs.set('origem', W.consultor||''); qs.set('etapaOrigem', W.etapasO.join(',')); qs.set('etapaDestino', W.etapaD); qs.set('ordem', W.ordem);
+    if(W.cc) qs.set('campanha', W.campanhas.join(','));
+    if(comQuantidade && /^\d+$/.test(String(W.quantidade))) qs.set('quantidade', W.quantidade);
+    if(W.periodo){ qs.set('de',W.periodo.de); qs.set('ate',W.periodo.ate); }
+    return qs;
+  }
+  function resumoWizI(){
+    const W=WIZI, p=[];
+    if(W.periodo) p.push(W.periodo.label);
+    if(W.cc && W.campanhas.length) p.push('Campanhas '+W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '));
+    if(W.consultor) p.push('Consultor '+nomeCurto(W.consultor));
+    if(W.etapasO.length) p.push('de '+W.etapasO.map(etapaLabel).join('+'));
+    if(W.etapaD) p.push('para '+etapaLabel(W.etapaD));
+    return p.length?('<div class="wiz-resumo">Resumo até aqui: <b>'+esc(p.join(' · '))+'</b></div>'):'';
+  }
+  function renderWizI(){
+    const box=$('wizBox'); if(!box) return; const W=WIZI, N=wizITot(); let h='';
+    if(W.step===1){
+      h+='<div class="wiz-titulo">Passo 1 de '+N+' — Qual o mês dos leads?</div>'+wizCampoMes(W.periodo,'indiv');
+    }else if(W.step===2){   // só no modo campanha
+      h+='<div class="wiz-titulo">Passo 2 de '+N+' — Qual campanha?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Pode marcar mais de uma — a carteira acima filtra na hora.</div>'
+        +tagsMulti('wizICamp', CAMPANHAS_ACAO, W.campanhas, false)
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizISetCamp()">Continuar →</button>'+wizIBack(1)+'</div>';
+    }else if(W.step===3){
+      h+='<div class="wiz-titulo">Passo '+(W.cc?3:2)+' de '+N+' — Qual consultor?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">A transferência é entre as etapas dele mesmo (não muda de dono).</div><div class="wiz-opts">';
+      CONSULTORES.forEach((c,i)=>{ h+=wizOpt(i+1, esc(c.nome), "wizISetConsultor('"+c.val+"')", W.consultor===c.val); });
+      h+='</div><div class="wiz-nav">'+wizIBack(W.cc?2:1)+'</div>';
+    }else if(W.step===4){
+      h+='<div class="wiz-titulo">Passo '+(W.cc?4:3)+' de '+N+' — De quais etapas pegar os leads de '+esc(nomeCurto(W.consultor))+'?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Clique para marcar <b>uma ou várias</b> etapas.</div>'
+        +tagsMulti('wizIEtapaO', ETAPAS_ACAO, W.etapasO, false)
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizISetEtapasO()">Continuar →</button>'+wizIBack(3)+'</div>';
+    }else if(W.step===5){
+      h+='<div class="wiz-titulo">Passo '+(W.cc?5:4)+' de '+N+' — Para qual etapa mandar?</div><div class="wiz-opts">';
+      ETAPAS_ACAO.forEach((e,i)=>{ const mesma=(W.etapasO.indexOf(e[0])>=0)?' <i>(uma das de origem)</i>':''; h+=wizOpt(i+1, esc(etapaLabel(e[0]))+mesma, "wizISetEtapaD('"+e[0]+"')", W.etapaD===e[0]); });
+      h+='</div><div class="wiz-nav">'+wizIBack(4)+'</div>';
+    }else if(W.step===6){
+      h+='<div class="wiz-titulo">Passo '+N+' de '+N+' — Quantos leads e em que ordem?</div>'
+        +'<div id="wizIConta" class="wiz-info">⏳ contando os leads disponíveis…</div>'
+        +'<label class="cmd-campo"><span>Quantos transferir no total? (vazio ou "todos" = todos)</span><input type="text" id="wizIQtd" placeholder="todos" value="'+esc(W.quantidade||'')+'" style="width:150px"></label>'
+        +'<div style="margin:12px 0 5px;font-size:12px;color:#bdbdc4">Ordem de seleção:</div><div class="wiz-opts">'
+        +wizOpt(1,'Mais antigos primeiro <i>(retira os de data de criação mais antiga)</i>','wizISetOrdem(\'antigos\')',W.ordem==='antigos')
+        +wizOpt(2,'Mais recentes primeiro <i>(retira os de data de criação mais recente)</i>','wizISetOrdem(\'recentes\')',W.ordem==='recentes')
+        +'</div><div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="previewIndividual(this)">👁 Pré-visualizar</button>'+wizIBack(5)+'</div>';
+    }
+    h+=resumoWizI();
+    box.innerHTML=h;
+    if(W.step===2) tagCount('wizICamp');
+    if(W.step===4) tagCount('wizIEtapaO');
+    if(W.step===6) wizIContaOrigem();
+  }
+  function wizISetCamp(){ const cs=[].slice.call(document.querySelectorAll('input.wizICamp:checked')).map(x=>x.value); if(!cs.length){ toast('Escolha ao menos 1 campanha'); return; } WIZI.campanhas=cs; WIZI.step=3; renderWizI(); }
+  function wizISetConsultor(v){ WIZI.consultor=v; WIZI.step=4; renderWizI(); }
+  function wizISetEtapasO(){ const es=[].slice.call(document.querySelectorAll('input.wizIEtapaO:checked')).map(x=>x.value); if(!es.length){ toast('Escolha ao menos 1 etapa de origem'); return; } WIZI.etapasO=es; if(!WIZI.etapaD) WIZI.etapaD=es[0]; WIZI.step=5; renderWizI(); }
+  function wizISetEtapaD(n){ WIZI.etapaD=n; WIZI.step=6; renderWizI(); }
+  function wizISetOrdem(o){ const q=$('wizIQtd'); if(q) WIZI.quantidade=q.value.trim(); WIZI.ordem=o; renderWizI(); }
+  async function wizIContaOrigem(){
+    const el=$('wizIConta'); if(!el) return; const W=WIZI;
+    try{
+      const d=await fetchAcao(qsIndividual(false));
+      const n=d.qtdMovimenta||0;
+      el.innerHTML='<b>'+esc(nomeCurto(W.consultor))+'</b>'+(W.cc?(' · campanha <b>'+esc(W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '))+'</b>'):'')+': <b>'+n+'</b> lead(s) em <b>'+esc(W.etapasO.map(etapaLabel).join('+'))+'</b> → <b>'+esc(etapaLabel(W.etapaD))+'</b> ('+esc(W.periodo?W.periodo.label:'')+').';
+    }catch(e){ el.innerHTML='Não consegui contar agora: '+esc(e.message); }
+  }
+  async function previewIndividual(btn){
+    const prev=$('acaoPrevia'), W=WIZI;
+    const qtdRaw=(valEl('wizIQtd')||'').toLowerCase();
+    if(qtdRaw && qtdRaw!=='todos' && !/^\d+$/.test(qtdRaw)){ prev.innerHTML=avisoBox('Quantidade inválida: digite um número ou deixe "todos".'); return; }
+    W.quantidade=(!qtdRaw||qtdRaw==='todos')?'':qtdRaw;
+    const lbl0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳ Calculando…'; }
+    prev.innerHTML='<div class="cmd-loading">⏳ Calculando a prévia (sem gravar nada)…</div>';
+    prev.scrollIntoView({behavior:'smooth',block:'start'});
+    try{
+      const d=await fetchAcao(qsIndividual(true));
+      const acaoId = W.cc?'transferenciaIndividualCampanha':'transferenciaIndividual';
+      ACAO_PLANO={acao:acaoId, operacoes:d.operacoes};
+      prev.innerHTML=renderPreviaAcao(CMDS.find(x=>x.id===acaoId), d);
+      anexarProjecaoCarteira(d);
     }catch(e){ prev.innerHTML=avisoBox('Falhou: '+esc(e.message)); ACAO_PLANO=null; }
     finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } prev.scrollIntoView({behavior:'smooth',block:'start'}); }
   }
 
   // ===== Wizard do Equilíbrio de Leads (passo a passo, igual ao chat) =====
   let WIZE=null;
-  function iniciarWizardEq(){ WIZE={step:1,periodo:null,participantes:[],base:'ativos',baseSet:false,ordem:'recentes'}; renderWizE(); }
+  function iniciarWizardEq(){ WIZE={step:1,periodo:null,participantes:[],base:'ativos',baseSet:false,ordem:'recentes',cruzamento:false}; renderWizE(); }
   function wizEBack(s){ return '<button type="button" class="wiz-back" onclick="WIZE.step='+s+';renderWizE()">‹ Voltar</button>'; }
   function qsEquilibrio(){
     const W=WIZE, qs=new URLSearchParams({acao:'equilibrio'});
     qs.set('participantes', W.participantes.join(',')); qs.set('base', W.base); qs.set('ordem', W.ordem);
+    if(W.cruzamento) qs.set('cruzamento','1');
     if(W.periodo){ qs.set('de',W.periodo.de); qs.set('ate',W.periodo.ate); }
     return qs;
   }
@@ -2360,22 +2570,33 @@
     if(W.periodo) p.push(W.periodo.label);
     if(W.participantes.length) p.push('Equilíbrio entre '+W.participantes.map(nomeCurto).join(' + '));
     if(W.baseSet) p.push('base '+(W.base==='ativos'?'Ativos 1–4':('etapa '+etapaLabel(W.base))));
+    if(W.step>=4) p.push('retira os mais '+(W.ordem==='antigos'?'antigos':'recentes'));
+    if(W.cruzamento) p.push('🔀 cruzamento');
     return p.length?('<div class="wiz-resumo">Resumo até aqui: <b>'+esc(p.join(' · '))+'</b></div>'):'';
   }
   function renderWizE(){
     const box=$('wizBox'); if(!box) return; const W=WIZE; let h='';
     if(W.step===1){
-      h+='<div class="wiz-titulo">Passo 1 de 3 — Qual o mês?</div>'+wizCampoMes(W.periodo,'eq');
+      h+='<div class="wiz-titulo">Passo 1 de 4 — Qual o mês?</div>'+wizCampoMes(W.periodo,'eq');
     }else if(W.step===2){
-      h+='<div class="wiz-titulo">Passo 2 de 3 — Quais consultores entram no equilíbrio?</div>'
+      h+='<div class="wiz-titulo">Passo 2 de 4 — Quais consultores entram no equilíbrio?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Os leads serão redistribuídos igualmente entre os escolhidos. Marque ao menos 2.</div>'
         +tagsMulti('wizEPart', consultoresItens(), W.participantes, true)
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizESetPart()">Continuar →</button>'+wizEBack(1)+'</div>';
     }else if(W.step===3){
-      h+='<div class="wiz-titulo">Passo 3 de 3 — Qual a base do equilíbrio?</div><div class="wiz-opts">'
+      h+='<div class="wiz-titulo">Passo 3 de 4 — Qual a base do equilíbrio?</div><div class="wiz-opts">'
         +wizOpt(1,'Ativos <i>(etapas 1 a 4: Novo + Farmer + Conversa + Negociação)</i>',"wizESetBase('ativos')",W.baseSet&&W.base==='ativos')
         +wizOpt(2,'Uma etapa específica','wizEBaseEtapa()')
         +'</div><div id="wizExtra"></div><div class="wiz-nav">'+wizEBack(2)+'</div>';
+    }else if(W.step===4){
+      h+='<div class="wiz-titulo">Passo 4 de 4 — De quais leads tirar (ordem de retirada)?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Quem está acima da média cede primeiro os leads de qual data de criação?</div><div class="wiz-opts">'
+        +wizOpt(1,'Mais antigos primeiro <i>(retira os de data de criação mais antiga)</i>',"wizESetOrdem('antigos')",W.ordem==='antigos')
+        +wizOpt(2,'Mais recentes primeiro <i>(retira os de data de criação mais recente)</i>',"wizESetOrdem('recentes')",W.ordem==='recentes')
+        +'</div>'
+        +'<div style="margin-top:14px"><button type="button" class="tag tag-btn'+(W.cruzamento?' on':'')+'" onclick="wizEToggleCruz()">🔀 Cruzamento '+(W.cruzamento?'ATIVADO ✓':'(ativar)')+'</button>'
+        +'<div style="font-size:11.5px;color:#9a9aa2;margin-top:6px"><b>Cruzamento:</b> todos os leads trocam de dono — ninguém fica com nenhum lead que já era seu (redistribuição total e equilibrada, jamais para o responsável de origem).</div></div>'
+        +'<div class="wiz-nav">'+wizEBack(3)+'</div>';
     }
     h+=resumoWizE();
     box.innerHTML=h;
@@ -2386,7 +2607,9 @@
   function wizEConfMes(){ const v=valEl('wizMonth'); if(!/^\d{4}-\d{2}$/.test(v)){ toast('Escolha um mês válido'); return; } wizESetMes(v); }
   function wizESetPart(){ const ps=[].slice.call(document.querySelectorAll('input.wizEPart:checked')).map(x=>x.value); if(ps.length<2){ toast('Escolha ao menos 2 consultores'); return; } WIZE.participantes=ps; WIZE.step=3; renderWizE(); }
   function wizEBaseEtapa(){ const ex=$('wizExtra'); if(!ex) return; let h='<div class="wiz-opts" style="margin-top:8px">'; ETAPAS_ACAO.forEach((e,i)=>{ h+=wizOpt(i+1,esc(etapaLabel(e[0])),"wizESetBase('"+e[0]+"')",WIZE.baseSet&&WIZE.base===e[0]); }); h+='</div>'; ex.innerHTML=h; }
-  function wizESetBase(b){ WIZE.base=b; WIZE.baseSet=true; renderWizE(); previewEq(); }
+  function wizESetBase(b){ WIZE.base=b; WIZE.baseSet=true; WIZE.step=4; renderWizE(); }
+  function wizESetOrdem(o){ WIZE.ordem=o; renderWizE(); previewEq(); }
+  function wizEToggleCruz(){ WIZE.cruzamento=!WIZE.cruzamento; renderWizE(); previewEq(); }
   function wizEInverteOrdem(){ WIZE.ordem=(WIZE.ordem==='recentes')?'antigos':'recentes'; previewEq(); }
   async function previewEq(){
     const prev=$('acaoPrevia');
@@ -2396,6 +2619,7 @@
       const d=await fetchAcao(qsEquilibrio());
       ACAO_PLANO={acao:'equilibrio', operacoes:d.operacoes};
       prev.innerHTML=renderPreviaEq(d,'equilibrio');
+      anexarProjecaoCarteira(d);
     }catch(e){ prev.innerHTML=avisoBox('Falhou: '+esc(e.message)); ACAO_PLANO=null; }
     finally{ prev.scrollIntoView({behavior:'smooth',block:'start'}); }
   }
@@ -2456,11 +2680,13 @@
   let WIZC=null;
   const CAMPANHAS_ACAO=[['mcis','MCIS <i>(Meta Ads MCIS 250 - Vitória)</i>'],['tce','TCE <i>(Meta Ads TCE Cresc. Empresarial - Teresina)</i>'],['outros','Outros <i>(sem campanha + WhatsApp)</i>']];
   const CAMP_CURTO={mcis:'MCIS',tce:'TCE',outros:'Outros'};
-  function iniciarWizardCamp(){ WIZC={step:1,periodo:null,campanhas:[],participantes:[],base:'ativos',baseSet:false,ordem:'recentes'}; renderWizC(); }
+  function iniciarWizardCamp(){ WIZC={step:1,periodo:null,campanhas:[],participantes:[],bases:['1','2','3','4'],etapaDest:'',destSet:false,ordem:'recentes',cruzamento:false}; renderWizC(); }
   function wizCBack(s){ return '<button type="button" class="wiz-back" onclick="WIZC.step='+s+';renderWizC()">‹ Voltar</button>'; }
   function qsCampanha(){
     const W=WIZC, qs=new URLSearchParams({acao:'equilibrioCampanha'});
-    qs.set('campanha', W.campanhas.join(',')); qs.set('participantes', W.participantes.join(',')); qs.set('base', W.base); qs.set('ordem', W.ordem);
+    qs.set('campanha', W.campanhas.join(',')); qs.set('participantes', W.participantes.join(',')); qs.set('base', W.bases.join(',')); qs.set('ordem', W.ordem);
+    if(W.etapaDest) qs.set('etapaDestino', W.etapaDest);
+    if(W.cruzamento) qs.set('cruzamento','1');
     if(W.periodo){ qs.set('de',W.periodo.de); qs.set('ate',W.periodo.ate); }
     return qs;
   }
@@ -2469,42 +2695,60 @@
     if(W.periodo) p.push(W.periodo.label);
     if(W.campanhas.length) p.push('Campanhas '+W.campanhas.map(c=>CAMP_CURTO[c]).join(' + '));
     if(W.participantes.length) p.push('entre '+W.participantes.map(nomeCurto).join(' + '));
-    if(W.baseSet) p.push('base '+(W.base==='ativos'?'Ativos 1–4':('etapa '+etapaLabel(W.base))));
+    if(W.destSet) p.push('base etapas '+W.bases.map(etapaLabel).join('+')+(W.etapaDest?(' → '+etapaLabel(W.etapaDest)):' (manter etapa)'));
+    if(W.step>=6) p.push('retira os mais '+(W.ordem==='antigos'?'antigos':'recentes'));
+    if(W.cruzamento) p.push('🔀 cruzamento');
     return p.length?('<div class="wiz-resumo">Resumo até aqui: <b>'+esc(p.join(' · '))+'</b></div>'):'';
   }
   function renderWizC(){
     const box=$('wizBox'); if(!box) return; const W=WIZC; let h='';
     if(W.step===1){
-      h+='<div class="wiz-titulo">Passo 1 de 4 — Qual o mês?</div>'+wizCampoMes(W.periodo,'camp');
+      h+='<div class="wiz-titulo">Passo 1 de 6 — Qual o mês?</div>'+wizCampoMes(W.periodo,'camp');
     }else if(W.step===2){
-      h+='<div class="wiz-titulo">Passo 2 de 4 — Qual campanha?</div>'
+      h+='<div class="wiz-titulo">Passo 2 de 6 — Qual campanha?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Pode marcar mais de uma — elas entram somadas como base do equilíbrio.</div>'
         +tagsMulti('wizCCamp', CAMPANHAS_ACAO, W.campanhas, false)
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizCSetCamp()">Continuar →</button>'+wizCBack(1)+'</div>';
     }else if(W.step===3){
-      h+='<div class="wiz-titulo">Passo 3 de 4 — Quais consultores entram no equilíbrio?</div>'
+      h+='<div class="wiz-titulo">Passo 3 de 6 — Quais consultores entram no equilíbrio?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Marque ao menos 2.</div>'
         +tagsMulti('wizCPart', consultoresItens(), W.participantes, true)
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizCSetPart()">Continuar →</button>'+wizCBack(2)+'</div>';
     }else if(W.step===4){
-      h+='<div class="wiz-titulo">Passo 4 de 4 — Qual a base do equilíbrio (etapas)?</div><div class="wiz-opts">'
-        +wizOpt(1,'Ativos <i>(etapas 1 a 4: Novo + Farmer + Conversa + Negociação)</i>',"wizCSetBase('ativos')",W.baseSet&&W.base==='ativos')
-        +wizOpt(2,'Só Novo Lead <i>(etapa 1)</i>',"wizCSetBase('1')",W.baseSet&&W.base==='1')
-        +wizOpt(3,'Uma etapa específica','wizCBaseEtapa()')
-        +'</div><div id="wizExtra"></div><div class="wiz-nav">'+wizCBack(3)+'</div>';
+      h+='<div class="wiz-titulo">Passo 4 de 6 — De quais etapas pegar os leads (base)?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Clique para marcar <b>uma ou várias</b> etapas (ex.: 1+2+3+4 = ativos).</div>'
+        +tagsMulti('wizCBase', ETAPAS_ACAO, W.bases, false)
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizCSetBases()">Continuar →</button>'+wizCBack(3)+'</div>';
+    }else if(W.step===5){
+      h+='<div class="wiz-titulo">Passo 5 de 6 — Para qual etapa mandar os leads redistribuídos?</div><div class="wiz-opts">'
+        +wizOpt(0,'Manter a etapa atual <i>(não mudar de etapa)</i>',"wizCSetDest('')",W.destSet&&W.etapaDest==='')
+        +ETAPAS_ACAO.map((e,i)=>wizOpt(i+1, esc(etapaLabel(e[0])), "wizCSetDest('"+e[0]+"')", W.destSet&&W.etapaDest===e[0])).join('')
+        +'</div><div class="wiz-nav">'+wizCBack(4)+'</div>';
+    }else if(W.step===6){
+      h+='<div class="wiz-titulo">Passo 6 de 6 — De quais leads tirar (ordem de retirada)?</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Quem está acima da média cede primeiro os leads de qual data de criação?</div><div class="wiz-opts">'
+        +wizOpt(1,'Mais antigos primeiro <i>(retira os de data de criação mais antiga)</i>',"wizCSetOrdem('antigos')",W.ordem==='antigos')
+        +wizOpt(2,'Mais recentes primeiro <i>(retira os de data de criação mais recente)</i>',"wizCSetOrdem('recentes')",W.ordem==='recentes')
+        +'</div>'
+        +'<div style="margin-top:14px"><button type="button" class="tag tag-btn'+(W.cruzamento?' on':'')+'" onclick="wizCToggleCruz()">🔀 Cruzamento '+(W.cruzamento?'ATIVADO ✓':'(ativar)')+'</button>'
+        +'<div style="font-size:11.5px;color:#9a9aa2;margin-top:6px"><b>Cruzamento:</b> todos os leads trocam de dono — ninguém fica com nenhum lead que já era seu (redistribuição total e equilibrada, jamais para o responsável de origem).</div></div>'
+        +'<div class="wiz-nav">'+wizCBack(5)+'</div>';
     }
     h+=resumoWizC();
     box.innerHTML=h;
     if(W.step===2) tagCount('wizCCamp');
     if(W.step===3) tagCount('wizCPart');
+    if(W.step===4) tagCount('wizCBase');
   }
   function wizCSetMes(ym){ WIZC.periodo=mesParaPeriodo(ym); WIZC.step=2; renderWizC(); }
   function wizCOutroMes(){ const ex=$('wizExtra'); if(!ex) return; ex.innerHTML='<div class="wiz-info"><label>Escolha o mês: <input type="month" id="wizMonth" value="'+hojeYM()+'"></label> &nbsp;<button type="button" class="btn btn-ouro" style="width:auto;padding:6px 14px" onclick="wizCConfMes()">OK →</button></div>'; }
   function wizCConfMes(){ const v=valEl('wizMonth'); if(!/^\d{4}-\d{2}$/.test(v)){ toast('Escolha um mês válido'); return; } wizCSetMes(v); }
   function wizCSetCamp(){ const cs=[].slice.call(document.querySelectorAll('input.wizCCamp:checked')).map(x=>x.value); if(!cs.length){ toast('Escolha ao menos 1 campanha'); return; } WIZC.campanhas=cs; WIZC.step=3; renderWizC(); }
   function wizCSetPart(){ const ps=[].slice.call(document.querySelectorAll('input.wizCPart:checked')).map(x=>x.value); if(ps.length<2){ toast('Escolha ao menos 2 consultores'); return; } WIZC.participantes=ps; WIZC.step=4; renderWizC(); }
-  function wizCBaseEtapa(){ const ex=$('wizExtra'); if(!ex) return; let h='<div class="wiz-opts" style="margin-top:8px">'; ETAPAS_ACAO.forEach((e,i)=>{ h+=wizOpt(i+1,esc(etapaLabel(e[0])),"wizCSetBase('"+e[0]+"')",WIZC.baseSet&&WIZC.base===e[0]); }); h+='</div>'; ex.innerHTML=h; }
-  function wizCSetBase(b){ WIZC.base=b; WIZC.baseSet=true; renderWizC(); previewCamp(); }
+  function wizCSetBases(){ const bs=[].slice.call(document.querySelectorAll('input.wizCBase:checked')).map(x=>x.value); if(!bs.length){ toast('Escolha ao menos 1 etapa de base'); return; } WIZC.bases=bs; WIZC.step=5; renderWizC(); }
+  function wizCSetDest(n){ WIZC.etapaDest=n; WIZC.destSet=true; WIZC.step=6; renderWizC(); }
+  function wizCSetOrdem(o){ WIZC.ordem=o; renderWizC(); previewCamp(); }
+  function wizCToggleCruz(){ WIZC.cruzamento=!WIZC.cruzamento; renderWizC(); previewCamp(); }
   async function previewCamp(){
     const prev=$('acaoPrevia');
     prev.innerHTML='<div class="cmd-loading">⏳ Calculando a prévia do equilíbrio por campanha (sem gravar nada)…</div>';
@@ -2513,6 +2757,7 @@
       const d=await fetchAcao(qsCampanha());
       ACAO_PLANO={acao:'equilibrioCampanha', operacoes:d.operacoes};
       prev.innerHTML=renderPreviaEq(d,'equilibrioCampanha');
+      anexarProjecaoCarteira(d);
     }catch(e){ prev.innerHTML=avisoBox('Falhou: '+esc(e.message)); ACAO_PLANO=null; }
     finally{ prev.scrollIntoView({behavior:'smooth',block:'start'}); }
   }
