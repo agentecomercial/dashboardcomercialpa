@@ -323,6 +323,7 @@ function lcAtualizarMassaBar(){
   var bar   = document.getElementById('lcMassaBar');
   var cnt   = document.getElementById('lcMassaCount');
   var btn   = document.getElementById('lcBtnExcluirDin');
+  var btnRC = document.getElementById('lcBtnRemoverCons');
 
   if(!bar) return;
 
@@ -334,6 +335,14 @@ function lcAtualizarMassaBar(){
       btn.innerHTML = sels===total && total>0
         ? '🗑 Remover Todos ('+total+')'
         : '🗑 Remover selecionados ('+sels+')';
+    }
+    if(btnRC){
+      var _arr = (typeof data!=='undefined'&&Array.isArray(data))?data:[];
+      var _comCons = Array.from(document.querySelectorAll('.lc-row-chk:checked')).filter(function(c){
+        var d=_arr[parseInt(c.dataset.idx)]; return d && (d.consultor||'')!=='';
+      }).length;
+      btnRC.innerHTML = '🚫 Remover consultor'+(_comCons?' ('+_comCons+')':'');
+      btnRC.style.opacity = _comCons ? '1' : '.5';
     }
     // Popular selects De/Para com listas dinâmicas
     var _consLst  = (typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
@@ -437,6 +446,34 @@ function lcAplicarMassa(){
   if(typeof renderConsultor==='function') renderConsultor();
 
   if(typeof _showToast==='function') _showToast('✅ '+alterados+' registro'+(alterados!==1?'s':'')+' alterado'+(alterados!==1?'s':'')+'!','var(--accent)');
+}
+
+/* Remover o consultor dos clientes selecionados (deixa "sem consultor").
+   Útil logo após importar: zera todos e depois atribui um único via "Para". */
+function lcRemoverConsultorSelecionados(){
+  var sels = Array.from(document.querySelectorAll('.lc-row-chk:checked')).map(function(c){ return parseInt(c.dataset.idx); });
+  if(!sels.length){
+    if(typeof _showToast==='function') _showToast('Selecione ao menos um cliente.','var(--amber)');
+    return;
+  }
+  var comCons = sels.filter(function(idx){ return Array.isArray(data)&&data[idx]&&(data[idx].consultor||'')!==''; });
+  if(!comCons.length){
+    if(typeof _showToast==='function') _showToast('Os selecionados já estão sem consultor.','var(--muted)');
+    return;
+  }
+  if(!confirm('Remover o consultor de '+sels.length+' cliente'+(sels.length!==1?'s':'')+' selecionado'+(sels.length!==1?'s':'')+'?\n\nEles ficarão SEM consultor — depois você pode atribuir um único a todos pelo campo "Para".')) return;
+
+  comCons.forEach(function(idx){ data[idx].consultor = ''; });
+
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+
+  lcDeselecionarTodos();
+  lcRenderizar((document.getElementById('lcSearchInput')||{}).value||'');
+  if(typeof renderAll==='function') renderAll();
+  if(typeof renderConsultor==='function') renderConsultor();
+
+  if(typeof _showToast==='function') _showToast('🚫 Consultor removido de '+comCons.length+' cliente'+(comCons.length!==1?'s':'')+'!','var(--accent)');
 }
 
 /* Excluir linha individual */
