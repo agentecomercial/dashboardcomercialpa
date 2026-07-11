@@ -229,7 +229,7 @@
   .md-tbl tbody tr.rt-click:hover{background:rgba(240,200,74,.13);}
   .md-tbl tbody tr.rt-click:hover td:first-child{text-decoration-color:#F0C84A;}
   /* Confirmação WS: barra + busca + menu de 3 pontinhos (imprimir / html / excel / pdf) */
-  .cws-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;flex-wrap:wrap;}
+  .cws-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;padding-right:96px;flex-wrap:wrap;}
   .cws-buscawrap{display:flex;align-items:center;gap:8px;flex:1;min-width:220px;}
   .cws-busca{flex:1;max-width:460px;background:#151410;border:1px solid #4a4436;border-radius:8px;color:#eee;padding:7px 12px;font-size:13px;}
   .cws-busca:focus{outline:none;border-color:#F0C84A;}
@@ -254,9 +254,10 @@
   .cws-modal-box .cws-out{overflow-x:hidden;}
   .cws-modal-box table{width:100%;table-layout:auto;}
   .cws-modal-box td,.cws-modal-box th{white-space:normal;word-break:break-word;}
-  .cws-x{position:absolute;top:12px;right:14px;background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;z-index:3;}
+  .cws-topctrls{position:absolute;top:12px;right:14px;display:flex;align-items:center;gap:8px;z-index:4;}
+  .cws-x{background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;}
   .cws-x:hover{background:#3a3a44;}
-  .cws-modal-head{font-size:12.5px;color:#9a9aa2;margin:0 44px 12px 0;}
+  .cws-modal-head{font-size:12.5px;color:#9a9aa2;margin:0 96px 12px 0;}
   .cws-modal-head b{color:#c9b98a;}
   .cws-copycol{width:46px;text-align:center;white-space:nowrap;}
   .cws-rowcopy{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:6px;font-size:13px;padding:3px 9px;cursor:pointer;line-height:1;}
@@ -3201,7 +3202,7 @@
      Usada por: Confirmação WS (link Sales Cube) e Negociações Vitória. Suporta VÁRIAS tabelas (uma por consultor).
      CWS_CUR = {txt, titulo, placeholder, arqbase, unid:[singular,plural]}. ===== */
   let CWS_CUR=null;
-  function richTitulo(txt){ const m=(txt||'').match(/^#{1,6}\s*(.+)$/m); return m ? m[1].replace(/[*#]/g,'').trim() : 'Tabela'; }
+  function richTitulo(txt){ const m=(txt||'').match(/^#{1,6}\s*(.+)$/m); return m ? m[1].replace(/[*#]/g,'').replace(/^[^0-9A-Za-zÀ-ÿ]+/,'').trim() : 'Tabela'; }
   // Confirmação WS: card mostra resumo + botão que abre o modal amplo (a tabela completa mora no modal)
   function renderConfirmacaoWS(txt,res){
     const body=txt.replace('<!--CONFIRMACAO-WS-->','').trim();
@@ -3230,6 +3231,14 @@
     const ph=(CWS_CUR&&CWS_CUR.placeholder)||'Buscar…';
     return '<div class="cws-bar">'
       +'<div class="cws-buscawrap"><input type="text" class="cws-busca" placeholder="🔎 '+esc(ph)+'" oninput="cwsFiltrar(this)"><span class="cws-count"></span></div>'
+      +'</div>';
+  }
+  function cwsEnsureModal(){
+    if(document.getElementById('cwsModal')) return;
+    const d=document.createElement('div'); d.id='cwsModal'; d.className='cws-modal';
+    d.onclick=function(e){ if(e.target===d) cwsFecharModal(); };
+    d.innerHTML='<div class="cws-modal-box">'
+      +'<div class="cws-topctrls">'
       +'<div class="cws-menuwrap">'
       +'<button class="cws-dots" onclick="cwsMenu(event)" title="Exportar / imprimir">⋮</button>'
       +'<div class="cws-menu">'
@@ -3237,13 +3246,10 @@
       +'<button onclick="cwsBaixarHtml()">🌐 Baixar HTML</button>'
       +'<button onclick="cwsBaixarExcel()">📊 Baixar Excel</button>'
       +'<button onclick="cwsPdf()">📄 Baixar PDF</button>'
-      +'</div></div></div>';
-  }
-  function cwsEnsureModal(){
-    if(document.getElementById('cwsModal')) return;
-    const d=document.createElement('div'); d.id='cwsModal'; d.className='cws-modal';
-    d.onclick=function(e){ if(e.target===d) cwsFecharModal(); };
-    d.innerHTML='<div class="cws-modal-box"><button class="cws-x" onclick="cwsFecharModal()" title="Fechar">✕</button><div id="cwsModalHead" class="cws-modal-head"></div><div id="cwsModalBody"></div></div>';
+      +'</div></div>'
+      +'<button class="cws-x" onclick="cwsFecharModal()" title="Fechar">✕</button>'
+      +'</div>'
+      +'<div id="cwsModalHead" class="cws-modal-head"></div><div id="cwsModalBody"></div></div>';
     document.body.appendChild(d);
   }
   function cwsFecharModal(){ const m=document.getElementById('cwsModal'); if(m) m.style.display='none'; }
