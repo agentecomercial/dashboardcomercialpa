@@ -93,6 +93,20 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 
 ---
 
+## 🎓 4B. Treinamento (aba própria "Treinamento")
+**Script:** `Buscar-Treinamento.ps1` (token → gitignore) · **App:** aba **Treinamento** do Meta Master (rota `/api/treinamento`).
+
+Fluxo: **Passo 1** busca o treinamento por nome (`list_products`) → **Passo 2** escolhe o modo:
+
+| Modo | O que faz |
+|---|---|
+| **💰 Vendas (quem lançou)** | Quem comprou o treinamento: Cliente · Turma · Consultor · Situação · Valor + ranking por consultor + total. Filtros: só ganhas (padrão) / todas · consultor |
+| **🔀 Cross-sell por turma** | Cola o link/ID de uma turma do Sales Cube → cruza quem dela **JÁ tem** o treinamento × quem **NÃO tem** (lista de oportunidade) |
+
+**Como lê:** report `enrollments-with-students-and-opportunity` (liga cliente↔produto↔oportunidade: consultor, situação/outcome, valor) filtrado por **`product__id`** (ID do produto — evita mojibake de acento na URL). Cross-sell soma `list_class_enrollments` da turma. Resultado renderizado na **camada de tabela rica** (modal + busca + exportar Imprimir/HTML/Excel/PDF). **Pegadinhas:** `list_class_enrollments` tem `limit` máx **200**; no Servir.ps1 **não usar `$pid`** (colide com o `$PID` read-only) — usar `$qProdId`.
+
+---
+
 ## 🚀 5. Deploy / Publicação
 
 | Comando | O que faz |

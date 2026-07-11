@@ -51,6 +51,8 @@ Meta-Vitoria.ps1
 Movimentacao-Leads.ps1
 Negociacoes-Vitoria.ps1
 Confirmacao-WS.ps1
+Buscar-Treinamento.ps1
+Mover-Etapa-Vitoria.ps1
 meta-master/Gerar-Dados-MetaMaster.ps1
 
 # Meta Master — dados de negócio + credenciais (NUNCA publicar)

@@ -1,4 +1,4 @@
-<#
+﻿<#
   Servir.ps1
   Servidor local para o gerador Meta Master.
   - Serve os arquivos estaticos da pasta (index.html, dados.js, fotos, etc.)
@@ -96,6 +96,41 @@ while ($listener.IsListening) {
       $res.Close()
       $stamp = (Get-Date -Format 'HH:mm:ss')
       Write-Host "[$stamp] /api/leads periodo=$per -> $($res.StatusCode)" -ForegroundColor Cyan
+      continue
+    }
+
+    if ($path -eq '/api/treinamento') {
+      # aba Treinamento: busca produto (JSON) / vendas / cross-sell (Markdown) via Buscar-Treinamento.ps1
+      $raiz = Split-Path $root -Parent
+      $script = Join-Path $raiz 'Buscar-Treinamento.ps1'
+      $acao = $req.QueryString['acao']
+      if ($acao -notin 'buscar','vendas','crosssell') {
+        $res.StatusCode = 400; $res.ContentType = 'application/json; charset=utf-8'
+        $b = [Text.Encoding]::UTF8.GetBytes((@{ erro = "Acao invalida: $acao" } | ConvertTo-Json -Compress))
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
+      $psArgs = @('-Acao', $acao)
+      if ($req.QueryString['query'])     { $psArgs += @('-Query', $req.QueryString['query']) }
+      if ($req.QueryString['produto'])   { $psArgs += @('-Produto', $req.QueryString['produto']) }
+      $qProdId = $req.QueryString['produtoid']; if ($qProdId -match '^\d+$') { $psArgs += @('-ProdutoId', $qProdId) }
+      $qtDe = $req.QueryString['de'];  if ($qtDe  -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-De', $qtDe) }
+      $qtAte = $req.QueryString['ate']; if ($qtAte -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-Ate', $qtAte) }
+      if ($req.QueryString['consultor']) { $psArgs += @('-Consultor', $req.QueryString['consultor']) }
+      if ($req.QueryString['link'])      { $psArgs += @('-Link', $req.QueryString['link']) }
+      $cid = $req.QueryString['classid']; if ($cid -match '^\d+$') { $psArgs += @('-ClassId', $cid) }
+      if ($req.QueryString['todas'] -eq '1') { $psArgs += @('-TodasSituacoes') }
+      $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      if ($acao -eq 'buscar') {
+        $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
+        $body = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '{"erro":"sem resposta"}' }
+        $res.ContentType = 'application/json; charset=utf-8'
+      } else {
+        $body = $out.Trim()
+        $res.ContentType = 'text/markdown; charset=utf-8'
+      }
+      $res.StatusCode = 200
+      $buf = [Text.Encoding]::UTF8.GetBytes($body); $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
+      Write-Host "[$((Get-Date -Format 'HH:mm:ss'))] /api/treinamento acao=$acao -> 200" -ForegroundColor Green
       continue
     }
 
@@ -215,6 +250,32 @@ while ($listener.IsListening) {
       $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
       $stamp = (Get-Date -Format 'HH:mm:ss')
       Write-Host "[$stamp] /api/acao $($req.HttpMethod) acao=$acao -> $($res.StatusCode)" -ForegroundColor Magenta
+      continue
+    }
+
+    if ($path -eq '/api/mover-etapa') {
+      # Move oportunidades para uma etapa do funil (escrita no CRM). POST { stageId, ids:[...] }.
+      if ($req.HttpMethod -ne 'POST') {
+        $res.StatusCode = 405; $res.ContentType = 'application/json; charset=utf-8'
+        $b = [Text.Encoding]::UTF8.GetBytes((@{ erro = 'use POST' } | ConvertTo-Json -Compress))
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
+      $reader = New-Object System.IO.StreamReader($req.InputStream, $req.ContentEncoding)
+      $body = $reader.ReadToEnd(); $reader.Close()
+      $tmp = Join-Path $env:TEMP ('mover_etapa_' + [Guid]::NewGuid().ToString('N') + '.json')
+      [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($false)))
+      $raiz   = Split-Path $root -Parent
+      $script = Join-Path $raiz 'Mover-Etapa-Vitoria.ps1'
+      $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -PlanoFile $tmp *>&1 | Out-String
+      Remove-Item $tmp -ErrorAction SilentlyContinue
+      $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
+      $jsonTxt = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '' }
+      $res.StatusCode = if ($jsonTxt) { 200 } else { 500 }
+      $res.ContentType = 'application/json; charset=utf-8'
+      $body2 = if ($jsonTxt) { $jsonTxt } else { (@{ erro = ($out.Trim()) } | ConvertTo-Json -Compress) }
+      $buf = [Text.Encoding]::UTF8.GetBytes($body2)
+      $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
+      Write-Host "[$((Get-Date -Format 'HH:mm:ss'))] /api/mover-etapa -> $($res.StatusCode)" -ForegroundColor Magenta
       continue
     }
 

@@ -82,10 +82,10 @@
   .splash-btn{font-size:18px;padding:18px 44px;border-radius:16px;animation:splashPulse 2.4s infinite;}
   @keyframes splashIn{from{opacity:0;}to{opacity:1;}}
   @keyframes splashPulse{0%{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 0 rgba(240,200,74,.45);}70%{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 16px rgba(240,200,74,0);}100%{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 0 rgba(240,200,74,0);}}
-  .view-leads{width:100%;display:flex;justify-content:center;}
+  .view-leads{width:100%;display:flex;flex-direction:column;align-items:center;}
 
   /* ===== ABA LEADS ===== */
-  .leads-panel{width:1040px;max-width:100%;background:#1f1f1f;border:1px solid #3a3a3a;border-radius:14px;padding:18px;}
+  .leads-panel{width:var(--mm-panel-w,1380px);max-width:100%;background:#1f1f1f;border:1px solid #3a3a3a;border-radius:14px;padding:18px;}
   .leads-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
   .leads-head h2{font-size:18px;font-weight:900;letter-spacing:.5px;}
   .leads-head .meta{font-size:12px;color:#9a9a9a;flex:1;min-width:160px;}
@@ -108,7 +108,7 @@
 
   /* ===== ABA COMANDOS (executor) ===== */
   .view-comandos{width:100%;display:flex;justify-content:center;}
-  .cmd-panel{width:1040px;max-width:100%;background:#1f1f1f;border:1px solid #3a3a3a;border-radius:14px;padding:18px;}
+  .cmd-panel{width:var(--mm-panel-w,1380px);max-width:100%;background:#1f1f1f;border:1px solid #3a3a3a;border-radius:14px;padding:18px;}
   .cmd-head{margin-bottom:14px;}
   .cmd-head h2{font-size:18px;font-weight:900;letter-spacing:.5px;}
   .cmd-head .cmd-sub{display:block;font-size:12px;color:#9a9a9a;margin-top:3px;}
@@ -123,6 +123,49 @@
   .acao-chk{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#dcdce0;cursor:pointer;white-space:nowrap;}
   .acao-previa{margin-top:14px;}
   .leads-atual{margin:2px 0 16px;padding:12px 14px;border:1px solid #2a2a30;background:#16161a;border-radius:10px;}
+  .tr-filtros{border:1px solid #2a2a30;background:#16161a;border-radius:12px;padding:14px 16px;margin:8px 0 4px;display:flex;flex-direction:column;gap:14px;}
+  .tr-fgroup{display:flex;flex-direction:column;gap:7px;}
+  .tr-flabel{font-size:12px;font-weight:800;color:#dcdce0;text-transform:uppercase;letter-spacing:.4px;}
+  .tr-fhint{font-weight:600;color:#8a8a92;text-transform:none;letter-spacing:0;font-size:11.5px;}
+  .tr-chk{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:#dcdce0;cursor:pointer;}
+  .tr-chk input{width:16px;height:16px;accent-color:#F0C84A;cursor:pointer;}
+  .tr-clear{background:none;border:none;color:#c98;font-size:12px;cursor:pointer;text-decoration:underline;padding:2px 0;margin-top:4px;align-self:flex-start;}
+  /* ===== painel de conversão (2ª tabela da aba Leads) ===== */
+  .conv-panel{margin-top:22px;}
+  .conv-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .conv-head h2{font-size:15px;margin:0;letter-spacing:.3px;}
+  .conv-sub{font-size:12px;color:#8a8a92;}
+  .conv-ctrls{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+  .conv-ctrls .crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .conv-ctrls .clbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#888;min-width:90px;}
+  .cchip{border:1px solid #3a3a3a;background:#1a1a1f;color:#cfcfd4;border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.12s;}
+  .cchip:hover{border-color:#555;} .cchip.on{background:#F0C84A;color:#111;border-color:#F0C84A;}
+  .seg-wrap{display:inline-flex;background:#141418;border:1px solid #2a2a2a;border-radius:10px;padding:3px;gap:3px;}
+  .seg-wrap .cchip{border:none;background:none;border-radius:7px;padding:6px 11px;}
+  .conv-meta{width:64px;background:#141418;border:1px solid #3a3a3a;color:#F0C84A;font-weight:800;border-radius:8px;padding:6px 8px;font-size:13px;text-align:center;}
+  .conv-tbl{width:100%;border-collapse:collapse;}
+  .conv-tbl th,.conv-tbl td{padding:10px 9px;text-align:center;border-bottom:1px solid #2a2a2a;white-space:nowrap;}
+  .conv-tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#888;font-weight:800;cursor:pointer;user-select:none;}
+  .conv-tbl th:hover{color:#F0C84A;} .conv-tbl td:first-child,.conv-tbl th:first-child{text-align:left;font-weight:700;}
+  .conv-tbl .ctot td{font-weight:800;color:#F0C84A;border-top:2px solid #333;border-bottom:none;}
+  .conv-goldn{color:#F0C84A;font-weight:800;} .conv-rate .n{color:#8a8a92;font-weight:600;font-size:11px;}
+  .cv .pct{font-size:15px;font-weight:900;} .cv .bar{height:5px;border-radius:4px;background:#242424;margin-top:5px;overflow:hidden;} .cv .bar i{display:block;height:100%;}
+  .h-hi{color:#7fd98a;} .h-hi .bar i{background:linear-gradient(90deg,#3fa85a,#7fd98a);}
+  .h-md{color:#e2c878;} .h-md .bar i{background:linear-gradient(90deg,#b8923a,#e2c878);}
+  .h-lo{color:#e89090;} .h-lo .bar i{background:linear-gradient(90deg,#a04a4a,#e89090);}
+  .cdelta{font-size:10px;font-weight:800;margin-left:5px;} .cup{color:#7fd98a;} .cdn{color:#e89090;}
+  .below{font-size:10px;font-weight:800;color:#e89090;margin-left:6px;}
+  .conv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px;}
+  .conv-card{background:#16161a;border:1px solid #262626;border-radius:12px;padding:14px 15px;}
+  .conv-card h3{margin:0 0 8px;font-size:13.5px;}
+  .conv-card .big{font-size:28px;font-weight:900;line-height:1;} .conv-card .biglbl{font-size:11px;color:#8a8a92;margin-bottom:10px;}
+  .conv-card .m{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px solid #232323;} .conv-card .m .v{font-weight:800;}
+  .cwin{color:#111;background:#F0C84A;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:6px;}
+  .conv-funil{display:flex;flex-direction:column;gap:8px;}
+  .cfrow{display:flex;align-items:center;gap:10px;} .cfnome{width:110px;font-weight:700;font-size:12.5px;}
+  .cfbars{display:flex;gap:3px;height:24px;} .cfseg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#0c0c0c;border-radius:4px;min-width:18px;overflow:hidden;}
+  .conv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#8a8a92;margin-top:12px;} .conv-leg span{display:inline-flex;align-items:center;gap:6px;} .conv-leg .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .conv-diag{font-size:12px;color:#8a8a92;line-height:1.6;margin-top:12px;background:#16161a;border:1px solid #232323;border-radius:10px;padding:12px 14px;} .conv-diag b{color:#c9b98a;}
   .acao-head{font-size:14px;font-weight:800;color:#f0e6c8;margin-bottom:2px;}
   .acao-sub{font-size:11.5px;color:#9a9aa2;margin-bottom:10px;}
   .acao-aplicar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
@@ -251,9 +294,13 @@
   .cws-inline-sub{color:#9a9384;font-size:13px;}
   .cws-modal{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.74);align-items:flex-start;justify-content:center;padding:24px 14px;}
   .cws-modal-box{position:relative;background:#15151b;border:1px solid #33333e;border-radius:14px;width:97vw;max-width:1440px;max-height:92vh;overflow-y:auto;overflow-x:hidden;padding:22px 26px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
-  .cws-modal-box .cws-out{overflow-x:hidden;}
-  .cws-modal-box table{width:100%;table-layout:auto;}
-  .cws-modal-box td,.cws-modal-box th{white-space:normal;word-break:break-word;}
+  .cws-out{overflow-x:auto;}
+  .cws-out table{width:100%;table-layout:auto;}
+  .cws-out td,.cws-out th{white-space:nowrap;}                                    /* colunas curtas (Criado/Cliente/Telefone/Valor) NÃO quebram — vale inline e no modal */
+  .cws-out td.cws-wrap,.cws-out th.cws-wrap{white-space:normal;word-break:break-word;min-width:240px;}  /* só a coluna longa (Anotação) quebra */
+  .cws-baractions{display:flex;align-items:center;gap:8px;}
+  .cws-abrir{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:8px;font-size:13px;padding:7px 14px;cursor:pointer;font-weight:700;white-space:nowrap;}
+  .cws-abrir:hover{background:#2c2920;border-color:#F0C84A;}
   .cws-topctrls{position:absolute;top:12px;right:14px;display:flex;align-items:center;gap:8px;z-index:4;}
   .cws-x{background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;}
   .cws-x:hover{background:#3a3a44;}
@@ -262,6 +309,29 @@
   .cws-copycol{width:46px;text-align:center;white-space:nowrap;}
   .cws-rowcopy{background:#211f1a;color:#F0C84A;border:1px solid #4a4436;border-radius:6px;font-size:13px;padding:3px 9px;cursor:pointer;line-height:1;}
   .cws-rowcopy:hover{background:#F0C84A;color:#000;}
+  /* Coluna "Mover p/ Nutrição" (seleção) + botão aplicar + modal de preview */
+  .cws-movcol{width:56px;text-align:center;white-space:nowrap;}
+  .cws-movbtn{background:#1a1f1a;color:#8bd48b;border:1px solid #3a5a3a;border-radius:6px;font-size:14px;padding:3px 10px;cursor:pointer;line-height:1;}
+  .cws-movbtn:hover{background:#2a3a2a;}
+  .cws-movbtn.on{background:#3fae3f;color:#fff;border-color:#3fae3f;}
+  .cws-selrow td{background:rgba(63,174,63,.13)!important;}
+  .cws-aplicar{background:#2f7d2f;color:#fff;border:1px solid #3fae3f;border-radius:8px;font-size:13px;padding:7px 14px;cursor:pointer;font-weight:700;white-space:nowrap;}
+  .cws-aplicar:hover:not(:disabled){background:#3fae3f;}
+  .cws-aplicar:disabled{opacity:.45;cursor:not-allowed;}
+  .mv-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:20px;}
+  .mv-box{background:#15151b;border:1px solid #33333e;border-radius:14px;max-width:640px;width:100%;max-height:88vh;overflow:auto;padding:22px 24px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
+  .mv-head{font-weight:800;color:#F0C84A;font-size:16px;margin-bottom:12px;}
+  .mv-p{color:#e8e2d2;font-size:13px;margin:0 0 12px;line-height:1.5;}
+  .mv-tblwrap{overflow:auto;border:1px solid #2a2a33;border-radius:8px;max-height:52vh;}
+  .mv-tbl{border-collapse:collapse;width:100%;font-size:12.5px;}
+  .mv-tbl th,.mv-tbl td{border-bottom:1px solid #2a2a33;padding:7px 10px;text-align:left;color:#ddd;white-space:nowrap;}
+  .mv-tbl th{background:#20202a;color:#F0C84A;position:sticky;top:0;}
+  .mv-acts{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+  .mv-cancel{background:#2a2a33;color:#eee;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:13px;}
+  .mv-cancel:hover{background:#3a3a44;}
+  .mv-confirm{background:#2f7d2f;color:#fff;border:1px solid #3fae3f;border-radius:8px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:700;}
+  .mv-confirm:hover:not(:disabled){background:#3fae3f;}
+  .mv-confirm:disabled{opacity:.5;cursor:not-allowed;}
   .rt-modal{display:none;position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:20px;}
   .rt-modal-box{position:relative;background:#15151b;border:1px solid #33333e;border-radius:14px;max-width:820px;width:100%;max-height:86vh;overflow:auto;padding:24px 26px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
   .rt-x{position:absolute;top:12px;right:14px;background:#2a2a33;color:#eee;border:none;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;line-height:1;z-index:2;}
@@ -580,7 +650,7 @@
     body.hub-on #viewCard > .painel,
     body.hub-on #viewCard > .preview-wrap,
     body.hub-on #viewCard > .mob-bar{display:none !important;}
-    body.hub-on #mobHub{display:block;width:100%;max-width:900px;}
+    body.hub-on #mobHub{display:block;width:100%;max-width:var(--mm-panel-w,1380px);}
     /* barra "voltar ao ranking" no topo do editor (só quando NÃO está no hub) */
     body:not(.hub-on) #viewCard > .hub-back{display:flex;align-items:center;gap:7px;flex-basis:100%;width:100%;
       justify-content:flex-start;background:#1a1a1f;border:1px solid #2e2e2e;color:#F0C84A;
@@ -690,6 +760,7 @@
     <button class="tab active" data-view="card" onclick="trocarAba('card')">🏆 Card</button>
     <button class="tab" data-view="leads" onclick="trocarAba('leads')">📊 Leads</button>
     <button class="tab" data-view="comandos" onclick="trocarAba('comandos')">📋 Comandos</button>
+    <button class="tab" data-view="treinamento" onclick="trocarAba('treinamento')">🎓 Treinamento</button>
   </div>
 
   <div id="viewCard" class="view-card">
@@ -813,6 +884,33 @@
       <table class="ltbl" id="leadsTbl"><tbody><tr><td>Abra a aba para carregar…</td></tr></tbody></table>
       <div class="leads-aviso" id="leadsAviso"></div>
     </div>
+
+    <div class="leads-panel conv-panel" id="convPanel" style="display:none">
+      <div class="conv-head">
+        <h2>📈 TAXA DE CONVERSÃO POR CONSULTOR</h2>
+        <span class="conv-sub" id="convSub"></span>
+      </div>
+      <div class="conv-ctrls">
+        <div class="crow"><span class="clbl">Consultores</span><div id="convChips"></div><button class="cchip" id="convTodos" onclick="convTodos()">Todos</button></div>
+        <div class="crow"><span class="clbl">Modo</span>
+          <div class="seg-wrap" id="convModoSeg">
+            <button class="cchip" data-m="retrato" onclick="convSetModo('retrato')">📊 Retrato (estado)</button>
+            <button class="cchip" data-m="movimentacao" onclick="convSetModo('movimentacao')">🎬 Movimentação</button>
+          </div>
+          <span class="clbl" style="min-width:auto;margin-left:8px">Visão</span>
+          <div class="seg-wrap" id="convViewSeg">
+            <button class="cchip" data-v="tabela" onclick="convSetView('tabela')">📋 Tabela</button>
+            <button class="cchip" data-v="comparar" onclick="convSetView('comparar')">⚖️ Comparar</button>
+            <button class="cchip" data-v="funil" onclick="convSetView('funil')">🫧 Funil</button>
+          </div>
+          <span class="clbl" style="min-width:auto;margin-left:8px">Meta</span>
+          <input type="number" id="convMeta" class="conv-meta" value="15" min="0" max="100" step="1" oninput="renderConversao()"> <span class="clbl" style="min-width:auto">% conversão</span>
+        </div>
+      </div>
+      <div id="convView"></div>
+      <div class="conv-leg" id="convLeg"></div>
+      <div class="conv-diag" id="convDiag"></div>
+    </div>
   </div>
 
   <div id="viewComandos" class="view-comandos" style="display:none">
@@ -825,6 +923,17 @@
       <div id="cmdDesc" class="cmd-descbox" style="display:none"></div>
       <div id="cmdForm" class="cmd-form" style="display:none"></div>
       <div id="cmdResultado" class="cmd-resultado"></div>
+    </div>
+  </div>
+
+  <div id="viewTreinamento" class="view-comandos" style="display:none">
+    <div class="cmd-panel">
+      <div class="cmd-head">
+        <h2>🎓 TREINAMENTO</h2>
+        <span class="cmd-sub">Busque um treinamento e veja quem já comprou (vendas) ou cruze com uma turma (cross-sell).</span>
+      </div>
+      <div id="trBox" class="wiz-box"></div>
+      <div id="trResultado" class="cmd-resultado"></div>
     </div>
   </div>
 
@@ -1455,10 +1564,12 @@
   function entrarApp(){ const s=$('splash'); if(s) s.classList.add('hide'); }   // tela de abertura -> entra no app (abas)
   function trocarAba(v){
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
-    $('viewCard').style.display     = v==='card'     ? 'flex' : 'none';
-    $('viewLeads').style.display    = v==='leads'    ? 'flex' : 'none';
-    $('viewComandos').style.display = v==='comandos' ? 'flex' : 'none';
+    $('viewCard').style.display        = v==='card'        ? 'flex' : 'none';
+    $('viewLeads').style.display       = v==='leads'       ? 'flex' : 'none';
+    $('viewComandos').style.display    = v==='comandos'    ? 'flex' : 'none';
+    $('viewTreinamento').style.display = v==='treinamento' ? 'flex' : 'none';
     if(v==='leads'){ const lv=$('leadsPerVal'); if(lv) lv.textContent=leadsPerLabel(); if(!leadsCarregado) carregarLeads(); }
+    if(v==='treinamento' && !TR_INIT){ TR_INIT=true; iniciarTreinamento(); }
     if(v==='card' && MM.consultores.length) abrirHub();   // aba Card abre no hub (mobile e desktop)
     else if(v!=='card') document.body.classList.remove('hub-on');
   }
@@ -1726,7 +1837,108 @@
     renderLeadsTabela('leadsTbl');
     const campF = LEADS_CAMP ? (' · <span style="color:#7fd98a">campanha '+esc(CAMP_LBL[LEADS_CAMP]||LEADS_CAMP)+'</span> <span style="color:#9a9aa2;cursor:pointer;text-decoration:underline" onclick="filtrarLeadsCampanha(\''+LEADS_CAMP+'\')">✕ limpar</span>') : '';
     $('leadsMeta').innerHTML='Competência <b>'+esc(leadsPerLabel())+'</b>'+campF+' · atualizado '+(d.geradoEm||'');   // reflete o período escolhido + filtro de campanha
+    renderConversao();   // 2ª tabela: taxa de conversão (derivada dos mesmos dados)
   }
+
+  /* ===== 2ª tabela — Taxa de conversão por consultor (derivada de LEADSCTX['leadsTbl']) ===== */
+  const CONV={ sel:null, sort:'conversao', view:'tabela', modo:'retrato' };
+  function convPct(a,b){ return b>0? a/b*100 : 0; }
+  function convF1(n){ return (Math.round(n*10)/10).toString().replace('.',','); }
+  function convHeat(p, meta){ if(p>=Math.max(meta,15)) return 'h-hi'; if(p>=Math.max(meta*0.55,8)) return 'h-md'; return 'h-lo'; }
+  function convMetrics(){
+    const d=(LEADSCTX['leadsTbl']||{}).data; if(!d||!d.consultores) return [];
+    return d.consultores.map(c=>{
+      const e=c.etapas||{}; const g=k=>+(e[k]||0);
+      const novo=g('1'),far=g('2'),conv=g('3'),neg=g('4'),ven=g('5'),nut=g('6');
+      const tot=c.total!=null?c.total:(novo+far+conv+neg+ven+nut);
+      const trab=tot-novo, emNeg=neg+ven;
+      return { nome:c.nome, e:[novo,far,conv,neg,ven,nut], tot, novo, trab, trabP:convPct(trab,tot),
+        emNeg, emNegP:convPct(emNeg,tot), mov:trab, movP:convPct(trab,tot), parados:novo,
+        ven, aprov:(neg+ven)>0?convPct(ven,neg+ven):0, conversao:convPct(ven,tot) };
+    });
+  }
+  function convGeral(M){ const s=(k)=>M.reduce((a,r)=>a+r[k],0); const tot=s('tot'),ven=s('ven'),emNeg=s('emNeg'),trab=s('trab');
+    return { tot, ven, emNeg, trab, conversao:convPct(ven,tot), trabP:convPct(trab,tot), emNegP:convPct(emNeg,tot), movP:convPct(trab,tot), aprov:emNeg>0?convPct(ven,emNeg):0 }; }
+  function convSelRows(M){ if(!CONV.sel) CONV.sel=new Set(M.map((_,i)=>i));
+    return M.map((r,i)=>({r,i})).filter(x=>CONV.sel.has(x.i)).map(x=>x.r).sort((a,b)=> (CONV.sort==='nome')? String(a.nome).localeCompare(b.nome,'pt-BR') : (b[CONV.sort]-a[CONV.sort])); }
+  const ETL=['Novo','Farmer','Conversa','Negociação','Venda','Nutrição'], ETCOR=['#8a8a92','#b9a86a','#7fb8f0','#e2a15a','#7fd98a','#9a7fd9'];
+  function convDelta(v,g){ const dd=v-g; if(Math.abs(dd)<0.05) return ''; return '<span class="cdelta '+(dd>0?'cup':'cdn')+'">'+(dd>0?'▲':'▼')+convF1(Math.abs(dd))+'</span>'; }
+
+  function convTabela(M,G,meta){
+    const rows=convSelRows(M); const melhor=Math.max(...rows.map(r=>r.conversao));
+    const clk=c=>'onclick="convSetSort(\''+c+'\')"';
+    let h='<table class="conv-tbl"><thead><tr><th '+clk('nome')+'>Consultor</th>';
+    if(CONV.modo==='movimentacao'){
+      h+='<th '+clk('tot')+'>Recebidos</th><th '+clk('mov')+'>🚀 Movimentou</th><th '+clk('parados')+'>⛔ Parados (Novo)</th><th '+clk('movP')+'>% Mov</th><th '+clk('conversao')+'>🎯 % Conversão</th></tr></thead><tbody>';
+      rows.forEach(r=>{ const cls=convHeat(r.conversao,meta),w=Math.min(100,r.conversao*3.5),med=(r.conversao===melhor&&r.conversao>0)?' 🏅':'', bel=(r.conversao<meta)?'<span class="below">🔴</span>':'';
+        h+='<tr><td>'+esc(r.nome)+'</td><td class="conv-goldn">'+r.tot+'</td><td>'+r.mov+'</td><td>'+r.parados+'</td><td class="conv-rate">'+convF1(r.movP)+'%</td>'
+          +'<td class="cv '+cls+'"><span class="pct">'+convF1(r.conversao)+'%'+med+bel+convDelta(r.conversao,G.conversao)+'</span><div class="bar"><i style="width:'+w+'%"></i></div></td></tr>'; });
+      h+='<tr class="ctot"><td>GERAL</td><td>'+G.tot+'</td><td>'+G.trab+'</td><td>'+(G.tot-G.trab)+'</td><td>'+convF1(G.movP)+'%</td><td>'+convF1(G.conversao)+'%</td></tr>';
+    } else {
+      h+='<th '+clk('tot')+'>Total</th><th '+clk('trabP')+'>💼 Trabalhados</th><th '+clk('emNegP')+'>🤝 Em Negoc.</th><th '+clk('ven')+'>✅ Vendas</th><th '+clk('aprov')+'>⭐ Aproveit.</th><th '+clk('conversao')+'>🎯 Conversão</th></tr></thead><tbody>';
+      rows.forEach(r=>{ const cls=convHeat(r.conversao,meta),w=Math.min(100,r.conversao*3.5),med=(r.conversao===melhor&&r.conversao>0)?' 🏅':'', bel=(r.conversao<meta)?'<span class="below">🔴</span>':'';
+        h+='<tr><td>'+esc(r.nome)+'</td><td class="conv-goldn">'+r.tot+'</td><td class="conv-rate">'+r.trab+' <span class="n">('+convF1(r.trabP)+'%)</span></td>'
+          +'<td class="conv-rate">'+r.emNeg+' <span class="n">('+convF1(r.emNegP)+'%)</span></td><td>'+r.ven+'</td><td class="conv-rate">'+convF1(r.aprov)+'%</td>'
+          +'<td class="cv '+cls+'"><span class="pct">'+convF1(r.conversao)+'%'+med+bel+convDelta(r.conversao,G.conversao)+'</span><div class="bar"><i style="width:'+w+'%"></i></div></td></tr>'; });
+      h+='<tr class="ctot"><td>GERAL</td><td>'+G.tot+'</td><td>'+G.trab+' ('+convF1(G.trabP)+'%)</td><td>'+G.emNeg+' ('+convF1(G.emNegP)+'%)</td><td>'+G.ven+'</td><td>'+convF1(G.aprov)+'%</td><td>'+convF1(G.conversao)+'%</td></tr>';
+    }
+    return h+'</tbody></table>';
+  }
+  function convComparar(M,G,meta){
+    const rows=convSelRows(M); const best={}; ['conversao','trabP','emNegP','aprov','ven','movP'].forEach(k=>best[k]=Math.max(...rows.map(r=>r[k])));
+    let h='<div class="conv-cards">';
+    rows.forEach(r=>{ const cls=convHeat(r.conversao,meta);
+      const m=(lbl,val,k)=>'<div class="m"><span>'+lbl+'</span><span class="v">'+val+(r[k]===best[k]&&r[k]>0?'<span class="cwin">1º</span>':'')+'</span></div>';
+      let fn='<div style="display:flex;gap:2px;height:8px;margin:2px 0 10px;border-radius:4px;overflow:hidden">'; r.e.forEach((v,i)=>{ if(v>0) fn+='<i style="flex:'+v+';background:'+ETCOR[i]+'"></i>'; }); fn+='</div>';
+      h+='<div class="conv-card"><h3>'+esc(r.nome)+'</h3><div class="big '+cls+'">'+convF1(r.conversao)+'%</div><div class="biglbl">conversão'+convDelta(r.conversao,G.conversao)+'</div>'+fn
+        +m('Total',r.tot,'tot')+m('💼 Trabalhados',r.trab+' ('+convF1(r.trabP)+'%)','trabP')+m('🤝 Em negociação',r.emNeg+' ('+convF1(r.emNegP)+'%)','emNegP')+m('✅ Vendas',r.ven,'ven')+m('⭐ Aproveit.',convF1(r.aprov)+'%','aprov')+'</div>'; });
+    return h+'</div>';
+  }
+  function convFunil(M){
+    const rows=convSelRows(M); const maxTot=Math.max(1,...rows.map(r=>r.tot)); let h='<div class="conv-funil">';
+    rows.forEach(r=>{ h+='<div class="cfrow"><div class="cfnome">'+esc(r.nome)+'</div><div class="cfbars" style="width:'+(r.tot/maxTot*100)+'%">';
+      r.e.forEach((v,i)=>{ if(v>0) h+='<div class="cfseg" style="flex:'+v+';background:'+ETCOR[i]+'" title="'+ETL[i]+': '+v+'">'+v+'</div>'; });
+      h+='</div><div style="width:52px;text-align:right;color:#F0C84A;font-weight:800">'+r.tot+'</div></div>'; });
+    return h+'</div>';
+  }
+  function convDiag(M,G){
+    const rows=convSelRows(M); if(!rows.length) return '';
+    const parts=rows.map(r=>{ let t; const pn=esc(r.nome.split(' ')[0]);
+      if(r.tot>0 && r.trabP<40) t='leads parados no topo → <b>ativação</b>';
+      else if(r.emNeg>0 && r.aprov<45) t='negocia mas fecha pouco → <b>fechamento</b>';
+      else if(r.conversao>=G.conversao) t='acima da média ✅';
+      else t='avanço ok, converter mais';
+      return '<b>'+pn+':</b> '+t; });
+    return '<b>Diagnóstico (onde trava):</b><br>'+parts.join(' · ');
+  }
+  function renderConversao(){
+    const panel=$('convPanel'); if(!panel) return;
+    const M=convMetrics();
+    if(!M.length){ panel.style.display='none'; return; }
+    panel.style.display='block';
+    if(!CONV.sel) CONV.sel=new Set(M.map((_,i)=>i));
+    else { const valid=new Set(M.map((_,i)=>i)); CONV.sel=new Set([...CONV.sel].filter(i=>valid.has(i))); if(!CONV.sel.size) CONV.sel=new Set(M.map((_,i)=>i)); }
+    const G=convGeral(M); const meta=Math.max(0,+($('convMeta').value||15));
+    // chips
+    $('convChips').innerHTML=M.map((r,i)=>'<button class="cchip'+(CONV.sel.has(i)?' on':'')+'" onclick="convToggle('+i+')">'+esc(r.nome.split(' ')[0])+'</button>').join('');
+    $('convTodos').classList.toggle('on', CONV.sel.size===M.length);
+    document.querySelectorAll('#convModoSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.m===CONV.modo));
+    document.querySelectorAll('#convViewSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.v===CONV.view));
+    const sel=convSelRows(M);
+    $('convSub').innerHTML=(CONV.sel.size===M.length?'todos os consultores':CONV.sel.size+' selecionado(s): '+sel.map(r=>esc(r.nome.split(' ')[0])).join(', '))
+      +' · <b>'+(CONV.modo==='movimentacao'?'Movimentação (coorte do período)':'Retrato (estado do funil)')+'</b> · meta '+meta+'%'
+      +' · <span style="color:#7fd98a">'+esc(leadsPerLabel())+(LEADS_CAMP?(' · '+(CAMP_LBL[LEADS_CAMP]||LEADS_CAMP)):'')+'</span>';
+    $('convView').innerHTML = CONV.view==='comparar'?convComparar(M,G,meta) : CONV.view==='funil'?convFunil(M) : convTabela(M,G,meta);
+    $('convLeg').innerHTML = CONV.view==='funil'
+      ? ETL.map((e,i)=>'<span><i class="dot" style="background:'+ETCOR[i]+'"></i> '+e+'</span>').join('')
+      : '<span><i class="dot" style="background:#7fd98a"></i> ≥ meta/15%</span><span><i class="dot" style="background:#e2c878"></i> média</span><span><i class="dot" style="background:#e89090"></i> baixa</span><span style="margin-left:auto">▲/▼ vs média · 🔴 abaixo da meta</span>';
+    $('convDiag').innerHTML=convDiag(M,G);
+  }
+  function convTodos(){ const M=convMetrics(); CONV.sel=new Set(M.map((_,i)=>i)); renderConversao(); }
+  function convToggle(i){ if(!CONV.sel) CONV.sel=new Set(); if(CONV.sel.has(i)){ if(CONV.sel.size>1) CONV.sel.delete(i); } else CONV.sel.add(i); renderConversao(); }
+  function convSetSort(k){ CONV.sort=k; renderConversao(); }
+  function convSetModo(m){ CONV.modo=m; renderConversao(); }
+  function convSetView(v){ CONV.view=v; renderConversao(); }
 
   /* ---------- ABA COMANDOS (executor) ---------- */
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2259,7 +2471,7 @@
     return '<div class="dp-wrap" style="margin-top:4px"><div class="dp-field" onclick="abrirWizPicker(event,\''+qual+'\')">📅 <span>'+(cur?esc(cur.label):'clique para escolher o mês/período…')+'</span> <span class="car">▾</span></div><div id="wizPerDp"></div></div>';
   }
   function abrirWizPicker(ev, qual){ if(ev) ev.stopPropagation();
-    const alvo = qual==='transfer'?WIZ : qual==='eq'?WIZE : qual==='transfcamp'?WIZT : qual==='indiv'?WIZI : WIZC;
+    const alvo = qual==='transfer'?WIZ : qual==='eq'?WIZE : qual==='transfcamp'?WIZT : qual==='indiv'?WIZI : qual==='trein'?WIZTR : WIZC;
     const cur = alvo && alvo.periodo;
     const init = cur ? (cur.ym ? {tipo:'mes',periodo:cur.ym} : {tipo:'periodo',de:cur.de,ate:cur.ate}) : {tipo:'mes',periodo:hojeYM()};
     dpOpen('wizPerDp', ['ano','mes','dia','periodo'], res=>{
@@ -2268,6 +2480,7 @@
       else if(qual==='eq'){ WIZE.periodo=per; WIZE.step=2; renderWizE(); }
       else if(qual==='transfcamp'){ WIZT.periodo=per; WIZT.step=2; renderWizT(); }
       else if(qual==='indiv'){ WIZI.periodo=per; WIZI.step=(WIZI.cc?2:3); renderWizI(); }
+      else if(qual==='trein'){ WIZTR.periodo=per; renderTr(); }
       else { WIZC.periodo=per; WIZC.step=2; renderWizC(); }
       if($('leadsAtualBox')){                            // a carteira passa a refletir o período (mantendo a campanha já escolhida, se houver)
         const cps = qual==='transfcamp' ? WIZT.campanhas : (qual==='camp' ? WIZC.campanhas : (qual==='indiv' ? WIZI.campanhas : null));
@@ -2306,7 +2519,8 @@
   // multi-seleção (consultores/campanha) em tags com +/✕, "Todos/Limpar" e contador
   function tagItem(cls,value,labelHtml,on){ return '<label class="tag'+(on?' on':'')+'"><input type="checkbox" class="'+cls+'" value="'+esc(value)+'"'+(on?' checked':'')+' onchange="tagPick(this)"><span>'+labelHtml+'</span><span class="tag-x"></span></label>'; }
   function tagPick(inp){ const l=inp.closest('label'); if(l) l.classList.toggle('on', inp.checked); tagCount(inp.className);
-    if(inp.className==='wizTCamp'||inp.className==='wizCCamp'||inp.className==='wizICamp') recarregarCarteiraCamp(inp.className); }   // campanha do Passo 2 → filtra a carteira
+    if(inp.className==='wizTCamp'||inp.className==='wizCCamp'||inp.className==='wizICamp') recarregarCarteiraCamp(inp.className);   // campanha do Passo 2 → filtra a carteira
+    if(inp.className==='trCons') WIZTR.consultores=[].slice.call(document.querySelectorAll('input.trCons:checked')).map(x=>x.value); }
   function tagsMulti(cls,itens,marcados,defaultAll){
     let h='<div class="tag-actions"><button type="button" class="tag-act" onclick="tagAll(\''+cls+'\',true)">✓ Todos</button>'
       +'<button type="button" class="tag-act" onclick="tagAll(\''+cls+'\',false)">✕ Limpar</button>'
@@ -2316,7 +2530,8 @@
     return h+'</div>';
   }
   function tagAll(cls,v){ document.querySelectorAll('input.'+cls).forEach(x=>{ x.checked=v; const l=x.closest('label'); if(l) l.classList.toggle('on',v); }); tagCount(cls);
-    if(cls==='wizTCamp'||cls==='wizCCamp'||cls==='wizICamp') recarregarCarteiraCamp(cls); }
+    if(cls==='wizTCamp'||cls==='wizCCamp'||cls==='wizICamp') recarregarCarteiraCamp(cls);
+    if(cls==='trCons' && typeof WIZTR!=='undefined' && WIZTR) WIZTR.consultores=[].slice.call(document.querySelectorAll('input.trCons:checked')).map(x=>x.value); }
   function tagCount(cls){ const el=$('cnt_'+cls); if(!el) return; const t=document.querySelectorAll('input.'+cls).length, n=document.querySelectorAll('input.'+cls+':checked').length; el.textContent=n+'/'+t+' selecionados'; }
   function consultoresItens(excluir){ const ex=Array.isArray(excluir)?excluir:(excluir?[excluir]:[]); return CONSULTORES.filter(c=>ex.indexOf(c.val)<0).map(c=>[c.val, esc(c.nome)]); }
 
@@ -3198,39 +3413,134 @@
     if(/<!--CONFIRMACAO-WS-->/.test(txt)) renderConfirmacaoWS(txt,res);
     else renderRelatorioTurma(txt,res);
   }
+  /* ===== Aba Treinamento: buscar produto → Vendas (quem lançou) | Cross-sell por turma ===== */
+  let TR_INIT=false, WIZTR=null, TR_BUSCA_T=null;
+  function iniciarTreinamento(){ WIZTR={step:1,produto:null,modo:null,periodo:null,todas:false,consultores:[]}; renderTr(); }
+  function renderTr(){
+    const box=$('trBox'); if(!box) return; const W=WIZTR; let h='';
+    if(!isHttp){ box.innerHTML=avisoBox('⚠ Abra a página pelo <b>Servir.bat</b> / <b>Meta Master.vbs</b> (servidor local) para usar o Treinamento.'); return; }
+    if(W.step===1){
+      h+='<div class="wiz-titulo">Passo 1 — Buscar o treinamento</div>'
+        +'<label class="cmd-campo"><span>Nome do treinamento (ex.: BHP, MCIS, Segredo…)</span>'
+        +'<input type="text" id="trQuery" placeholder="digite ao menos 2 letras…" oninput="trBuscaDebounce(this.value)" style="width:100%;min-width:320px" autocomplete="off"></label>'
+        +'<div id="trResultsBusca" style="margin-top:8px"></div>';
+    }else if(W.step===2){
+      h+='<div class="wiz-titulo">Passo 2 — Treinamento: '+esc(W.produto.name)+'</div>'
+        +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">O que você quer ver?</div><div class="wiz-opts">'
+        +'<button type="button" class="tag tag-btn'+(W.modo==='vendas'?' on':'')+'" onclick="trSetModo(\'vendas\')">💰 Vendas (quem lançou)</button>'
+        +'<button type="button" class="tag tag-btn'+(W.modo==='crosssell'?' on':'')+'" onclick="trSetModo(\'crosssell\')">🔀 Cross-sell por turma</button>'
+        +'</div><div class="wiz-nav"><button type="button" class="wiz-back" onclick="WIZTR.step=1;renderTr()">‹ Trocar treinamento</button></div>';
+    }else if(W.step===3 && W.modo==='vendas'){
+      h+='<div class="wiz-titulo">Passo 3 — Vendas de '+esc(W.produto.name)+'</div>'
+        +'<div class="tr-filtros">'
+        +'<div class="tr-fgroup"><div class="tr-flabel">📅 Período <span class="tr-fhint">(data da matrícula — vazio = todas as datas)</span></div>'
+        +wizCampoMes(W.periodo,'trein')+(W.periodo?' <button type="button" class="tr-clear" onclick="WIZTR.periodo=null;renderTr()">✕ limpar período</button>':'')+'</div>'
+        +'<div class="tr-fgroup"><label class="tr-chk"><input type="checkbox" id="trTodas" onchange="WIZTR.todas=this.checked" '+(W.todas?'checked':'')+'> Incluir também as não-ganhas <span class="tr-fhint">(perdidas/canceladas)</span></label></div>'
+        +'<div class="tr-fgroup"><div class="tr-flabel">👥 Consultor <span class="tr-fhint">(nenhum marcado = todos)</span></div>'
+        +tagsMulti('trCons', CONSULTORES.map(c=>[c.nome, esc(c.nome)]), W.consultores, false)+'</div>'
+        +'</div>'
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="trExecVendas(this)">▶ Levantar vendas</button>'
+        +'<button type="button" class="wiz-back" onclick="WIZTR.step=2;renderTr()">‹ Voltar</button></div>';
+    }else if(W.step===3 && W.modo==='crosssell'){
+      h+='<div class="wiz-titulo">Passo 3 — Cross-sell de '+esc(W.produto.name)+'</div>'
+        +'<label class="cmd-campo"><span>Turma (cole o link do Sales Cube .../classes/&lt;id&gt; ou só o ID)</span>'
+        +'<input type="text" id="trTurma" placeholder="https://app.zsales.com.br/organization/2/classes/255#students" style="width:100%;min-width:320px"></label>'
+        +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="trExecCross(this)">▶ Cruzar turma</button>'
+        +'<button type="button" class="wiz-back" onclick="WIZTR.step=2;renderTr()">‹ Voltar</button></div>';
+    }
+    box.innerHTML=h;
+    if(W.step===1){ const q=$('trQuery'); if(q) setTimeout(()=>q.focus(),30); }
+    if(W.step===3 && W.modo==='vendas') tagCount('trCons');
+  }
+  function trBuscaDebounce(v){ clearTimeout(TR_BUSCA_T); TR_BUSCA_T=setTimeout(()=>trBuscar(v),350); }
+  async function trBuscar(v){
+    const el=$('trResultsBusca'); if(!el) return; v=(v||'').trim();
+    if(v.length<2){ el.innerHTML=''; return; }
+    el.innerHTML='<div class="cmd-loading">⏳ Buscando…</div>';
+    try{
+      const r=await fetch('/api/treinamento?acao=buscar&query='+encodeURIComponent(v),{cache:'no-store'});
+      const d=await r.json(); if(d.erro) throw new Error(d.erro);
+      const ps=arrify(d.produtos);
+      if(!ps.length){ el.innerHTML='<div class="wiz-info">Nenhum treinamento encontrado para “'+esc(v)+'”.</div>'; return; }
+      el.innerHTML='<div class="wiz-opts">'+ps.map(p=>'<button type="button" class="tag tag-btn" onclick="trPickProduto('+p.id+',this)" data-nome="'+esc(p.name)+'">'+esc(p.name)+'</button>').join('')+'</div>';
+    }catch(e){ el.innerHTML=avisoBox('Falhou: '+esc(e.message)); }
+  }
+  function trPickProduto(id,btn){ WIZTR.produto={id:id, name:btn.getAttribute('data-nome')}; WIZTR.modo=null; WIZTR.step=2; renderTr(); $('trResultado').innerHTML=''; }
+  function trSetModo(m){ WIZTR.modo=m; WIZTR.step=3; renderTr(); }
+  function trRender(txt, tit, ph, arqbase){
+    const res=$('trResultado');
+    CWS_CUR={txt:txt, titulo:(tit||richTitulo(txt)), placeholder:ph, arqbase:arqbase, unid:['linha','linhas']};
+    cwsRenderIn(res, true);   // tabela rica inline + botão "Abrir tabela" (modal amplo) + busca + exportar
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  async function trExecVendas(btn){
+    const res=$('trResultado'), W=WIZTR;
+    const qs=new URLSearchParams({acao:'vendas', produtoid:W.produto.id});
+    if($('trTodas') && $('trTodas').checked) qs.set('todas','1');
+    const cons=[].slice.call(document.querySelectorAll('input.trCons:checked')).map(x=>x.value);
+    if(cons.length) qs.set('consultor',cons.join(','));
+    if(W.periodo && W.periodo.de) qs.set('de',W.periodo.de);
+    if(W.periodo && W.periodo.ate) qs.set('ate',W.periodo.ate);
+    const lbl0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳ Consultando…'; }
+    res.innerHTML='<div class="cmd-loading">⏳ Levantando as vendas de '+esc(W.produto.name)+'… (alguns segundos)</div>';
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+    try{
+      const r=await fetch('/api/treinamento?'+qs.toString(),{cache:'no-store'});
+      const txt=await r.text(); if(!r.ok) throw new Error(txt||('HTTP '+r.status));
+      trRender(txt, 'Vendas — '+W.produto.name, 'Buscar por cliente, turma, consultor…', 'Vendas-'+W.produto.name.replace(/[^A-Za-z0-9]+/g,'-'));
+    }catch(e){ res.innerHTML=avisoBox('Falhou: '+esc(e.message)); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } }
+  }
+  async function trExecCross(btn){
+    const res=$('trResultado'), W=WIZTR;
+    const turma=valEl('trTurma'); if(!turma){ res.innerHTML=avisoBox('Cole o <b>link ou o ID</b> da turma.'); return; }
+    const qs=new URLSearchParams({acao:'crosssell', produtoid:W.produto.id});
+    if(/^\d+$/.test(turma)) qs.set('classid',turma); else qs.set('link',turma);
+    const lbl0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳ Cruzando…'; }
+    res.innerHTML='<div class="cmd-loading">⏳ Cruzando a turma com '+esc(W.produto.name)+'… (pode levar alguns segundos)</div>';
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+    try{
+      const r=await fetch('/api/treinamento?'+qs.toString(),{cache:'no-store'});
+      const txt=await r.text(); if(!r.ok) throw new Error(txt||('HTTP '+r.status));
+      trRender(txt, 'Cross-sell — '+W.produto.name, 'Buscar por cliente…', 'CrossSell-'+W.produto.name.replace(/[^A-Za-z0-9]+/g,'-'));
+    }catch(e){ res.innerHTML=avisoBox('Falhou: '+esc(e.message)); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=lbl0; } }
+  }
+
   /* ===== Tabela rica reutilizável: modal amplo + busca + copiar (linha e todos) + menu ⋮ (imprimir/html/excel/pdf)
      Usada por: Confirmação WS (link Sales Cube) e Negociações Vitória. Suporta VÁRIAS tabelas (uma por consultor).
      CWS_CUR = {txt, titulo, placeholder, arqbase, unid:[singular,plural]}. ===== */
   let CWS_CUR=null;
   function richTitulo(txt){ const m=(txt||'').match(/^#{1,6}\s*(.+)$/m); return m ? m[1].replace(/[*#]/g,'').replace(/^[^0-9A-Za-zÀ-ÿ]+/,'').trim() : 'Tabela'; }
-  // Confirmação WS: card mostra resumo + botão que abre o modal amplo (a tabela completa mora no modal)
+  // Confirmação WS / Negociações: renderiza a tabela rica INLINE no card. O modal amplo é opcional (botão "Abrir tabela").
   function renderConfirmacaoWS(txt,res){
     const body=txt.replace('<!--CONFIRMACAO-WS-->','').trim();
-    const nAlunos=(body.match(/^\|\s*\d+\s*\|/gm)||[]).length;
     CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por nome, telefone, CPF, status ou responsável…', arqbase:'Confirmacao-WS', unid:['aluno','alunos']};
-    cwsResumoCard(res, '📱', nAlunos+' matriculados');
-    cwsAbrirModal();
+    cwsRenderIn(res, true);
   }
-  // Negociações Vitória: mesma camada rica (várias tabelas por consultor; a coluna Anotação longa cabe no modal amplo)
+  let CWS_SEL=new Set();   // opportunity_ids selecionados p/ mover de etapa (Negociações)
   function renderNegociacoes(txt,res){
-    const body=(txt||'').trim();
-    const mm=body.match(/\*\*(\d+)\s+negocia\w*\*\*([^\n]*)/i);
-    const sub=mm ? ((mm[1]+' negociações')+(mm[2]?(' '+mm[2].replace(/\*\*/g,'').trim()):'')) : '';
-    CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por cliente, valor, data ou anotação…', arqbase:'Negociacoes-Vitoria', unid:['negociação','negociações']};
-    cwsResumoCard(res, '📊', sub);
-    cwsAbrirModal();
+    let body=(txt||'').trim(); let negIds=[];
+    const m=body.match(/<!--NEG-IDS:([\s\S]*?)-->/);
+    if(m){ try{ negIds=JSON.parse(m[1]); }catch(e){ negIds=[]; } body=body.replace(m[0],'').trim(); }
+    CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por cliente, valor, data ou anotação…', arqbase:'Negociacoes-Vitoria', unid:['negociação','negociações'], mover:true, negIds:negIds};
+    CWS_SEL.clear();
+    cwsRenderIn(res, true);
   }
-  function cwsResumoCard(res, emoji, sub){
-    res.innerHTML='<div class="cmd-out"><div class="cws-inline-card">'
-      +'<span class="cws-inline-tit">'+emoji+' '+esc(CWS_CUR.titulo)+'</span>'
-      +(sub?'<span class="cws-inline-sub">'+esc(sub)+'</span>':'')
-      +'<button class="cws-copybtn" onclick="cwsAbrirModal()">📋 Abrir tabela</button>'
-      +'</div></div>';
+  // monta a camada rica (barra de busca + tabela + copiar) em QUALQUER container. showOpen = inclui o botão "Abrir tabela" (modal amplo)
+  function cwsRenderIn(container, showOpen){
+    if(!CWS_CUR) return;
+    container.innerHTML=cwsBarHtml(showOpen)+'<div class="cmd-out cws-out">'+mdToHtml(CWS_CUR.txt)+'</div>';
+    cwsPosProcessa(container);
   }
-  function cwsBarHtml(){
+  function cwsBarHtml(showOpen){
     const ph=(CWS_CUR&&CWS_CUR.placeholder)||'Buscar…';
+    const acts=[];
+    if(CWS_CUR&&CWS_CUR.mover) acts.push('<button class="cws-aplicar" onclick="cwsAplicarPreview()" disabled>Mover p/ Nutrição (0)</button>');
+    if(showOpen) acts.push('<button class="cws-abrir" onclick="cwsAbrirModal()">🔍 Abrir tabela (tela ampla)</button>');
     return '<div class="cws-bar">'
       +'<div class="cws-buscawrap"><input type="text" class="cws-busca" placeholder="🔎 '+esc(ph)+'" oninput="cwsFiltrar(this)"><span class="cws-count"></span></div>'
+      +(acts.length?'<div class="cws-baractions">'+acts.join('')+'</div>':'')
       +'</div>';
   }
   function cwsEnsureModal(){
@@ -3258,9 +3568,7 @@
     if(!CWS_CUR){ toast('Gere o resultado primeiro'); return; }
     cwsEnsureModal();
     document.getElementById('cwsModalHead').innerHTML = quando ? ('📌 Última leitura — <b>'+esc(quando)+'</b>') : '';
-    const b=document.getElementById('cwsModalBody');
-    b.innerHTML=cwsBarHtml()+'<div class="cmd-out cws-out">'+mdToHtml(CWS_CUR.txt)+'</div>';
-    cwsPosProcessa(b);
+    cwsRenderIn(document.getElementById('cwsModalBody'), false);
     const m=document.getElementById('cwsModal'); m.style.display='flex';
     const box=m.querySelector('.cws-modal-box'); if(box) box.scrollTop=0;
   }
@@ -3277,13 +3585,92 @@
         td.innerHTML='<button class="cws-rowcopy" title="Copiar os dados desta linha" onclick="cwsCopiarLinha(this)">⧉</button>';
         tr.appendChild(td);
       });
+      // deixa quebrar SÓ a(s) coluna(s) longa(s) (ex.: Anotação); as curtas (Criado/Cliente/Telefone/Valor) ficam nowrap
+      const hcells=[...tbl.querySelectorAll('thead tr th')]; const brows=[...tbl.querySelectorAll('tbody tr')];
+      hcells.forEach((th,ci)=>{
+        if(th.classList.contains('cws-copycol')) return;
+        let maxLen=th.textContent.trim().length;
+        brows.forEach(tr=>{ const c=tr.children[ci]; if(c){ const L=c.textContent.trim().length; if(L>maxLen) maxLen=L; } });
+        if(maxLen>60){ th.classList.add('cws-wrap'); brows.forEach(tr=>{ if(tr.children[ci]) tr.children[ci].classList.add('cws-wrap'); }); }
+      });
     });
     if(out.querySelector('table') && !out.querySelector(':scope > .cws-copybar')){
       const cb=document.createElement('div'); cb.className='cws-copybar';
       cb.innerHTML='<button class="cws-copybtn" onclick="cwsCopiar(this)" title="Copiar tudo (cola no Excel/Sheets)">⧉ Copiar informações (todos)</button>';
       out.appendChild(cb);
     }
+    if(CWS_CUR && CWS_CUR.mover) cwsMontarColMover(out);
     const inp=cont.querySelector('.cws-busca'); if(inp) cwsFiltrar(inp);
+  }
+  // ===== Mover negociação → 6. Lead não qualificado/Nutrição (seleciona → preview → aplica) =====
+  const NUTRICAO_STAGE=5000542;   // id da etapa 6 no funil FEBRACIS ES
+  // acrescenta a coluna "Nutrir" (ao lado da de copiar) e associa cada linha ao seu opportunity_id (por ordem)
+  function cwsMontarColMover(out){
+    const ids=(CWS_CUR&&CWS_CUR.negIds)||[]; let gi=0;
+    out.querySelectorAll('table').forEach(tbl=>{
+      const thr=tbl.querySelector('thead tr');
+      if(thr && !thr.querySelector('.cws-movcol')){ const th=document.createElement('th'); th.className='cws-movcol'; th.textContent='Nutrir'; thr.appendChild(th); }
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        const rec=ids[gi]||{}; gi++;
+        if(rec.id) tr.dataset.oppId=String(rec.id);
+        if(!tr.querySelector('.cws-movcol')){
+          const sel = rec.id && CWS_SEL.has(String(rec.id));
+          if(sel) tr.classList.add('cws-selrow');
+          const td=document.createElement('td'); td.className='cws-movcol';
+          td.innerHTML='<button class="cws-movbtn'+(sel?' on':'')+'" title="Selecionar p/ mover a Lead não qualificado/Nutrição" onclick="cwsMovToggle(this)">'+(sel?'☑':'◻')+'</button>';
+          tr.appendChild(td);
+        }
+      });
+    });
+    cwsAtualizarAplicar();
+  }
+  function cwsMovToggle(btn){
+    const tr=btn.closest('tr'); const id=tr&&tr.dataset.oppId; if(!id) return;
+    if(CWS_SEL.has(id)){ CWS_SEL.delete(id); tr.classList.remove('cws-selrow'); btn.classList.remove('on'); btn.textContent='◻'; }
+    else { CWS_SEL.add(id); tr.classList.add('cws-selrow'); btn.classList.add('on'); btn.textContent='☑'; }
+    cwsAtualizarAplicar();
+  }
+  function cwsAtualizarAplicar(){
+    const n=CWS_SEL.size;
+    document.querySelectorAll('.cws-aplicar').forEach(b=>{ b.disabled=(n===0); b.textContent='Mover p/ Nutrição ('+n+')'; });
+  }
+  // PREVIEW antes de aplicar: lista os selecionados com "De: Negociação → Para: Lead não qualificado/Nutrição"
+  function cwsAplicarPreview(){
+    if(!CWS_SEL.size){ toast('Selecione ao menos 1 negociação (coluna Nutrir)'); return; }
+    const sel=((CWS_CUR&&CWS_CUR.negIds)||[]).filter(r=>CWS_SEL.has(String(r.id)));
+    cwsMovEnsureModal();
+    let rows='';
+    sel.forEach(r=>{ rows+='<tr><td>'+esc(r.cli||'')+'</td><td>R$ '+esc(r.val||'')+'</td><td>'+esc(r.resp||'')+'</td><td>'+esc(r.criado||'')+'</td></tr>'; });
+    document.getElementById('cwsMovBody').innerHTML=
+      '<p class="mv-p">Estas <b>'+sel.length+'</b> negociação(ões) serão movidas de <b>Negociação</b> para <b>6. Lead não qualificado/Nutrição</b>.<br>Confira antes de confirmar — a alteração é feita direto no Sales Cube.</p>'
+      +'<div class="mv-tblwrap"><table class="mv-tbl"><thead><tr><th>Cliente</th><th>Valor</th><th>Consultor</th><th>Criado</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    document.getElementById('cwsMovModal').style.display='flex';
+  }
+  function cwsMovEnsureModal(){
+    if(document.getElementById('cwsMovModal')) return;
+    const d=document.createElement('div'); d.id='cwsMovModal'; d.className='mv-modal';
+    d.onclick=function(e){ if(e.target===d) cwsMovFechar(); };
+    d.innerHTML='<div class="mv-box"><div class="mv-head">📥 Mover para “6. Lead não qualificado/Nutrição”</div>'
+      +'<div id="cwsMovBody"></div>'
+      +'<div class="mv-acts"><button class="mv-cancel" onclick="cwsMovFechar()">Cancelar</button>'
+      +'<button class="mv-confirm" onclick="cwsMovAplicar(this)">✓ Confirmar e mover</button></div></div>';
+    document.body.appendChild(d);
+  }
+  function cwsMovFechar(){ const m=document.getElementById('cwsMovModal'); if(m) m.style.display='none'; }
+  async function cwsMovAplicar(btn){
+    const ids=[...CWS_SEL];
+    if(!ids.length){ cwsMovFechar(); return; }
+    const lbl0=btn.textContent; btn.disabled=true; btn.textContent='⏳ Movendo…';
+    try{
+      const r=await fetch('/api/mover-etapa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stageId:NUTRICAO_STAGE, ids:ids})});
+      const j=await r.json();
+      if(j.erro) throw new Error(j.erro);
+      cwsMovFechar(); cwsFecharModal();
+      const nErr=(j.erros&&j.erros.length)||0;
+      toast('Movidas '+j.ok+' de '+j.total+(nErr?(' · '+nErr+' erro(s)'):'')+' → Nutrição');
+      CWS_SEL.clear();
+      executarComando('negociacoes');   // re-executa: os movidos saem da etapa 4 e a tabela se atualiza
+    }catch(e){ btn.disabled=false; btn.textContent=lbl0; toast('Falha ao mover: '+e.message); }
   }
   // copia UMA linha (1ª coluna = título; demais = "Cabeçalho: valor") — bom p/ colar em conversa/observação
   function cwsCopiarLinha(btn){
@@ -3357,11 +3744,22 @@
       +'.q-wrap{margin:10px 0 14px;}#q{width:100%;max-width:520px;padding:8px 12px;font-size:14px;border:1px solid #bbb;border-radius:8px;box-sizing:border-box;}'
       +'#cnt{margin-left:10px;color:#666;font-size:12px;}'
       +'table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0;table-layout:auto;}'
-      +'th,td{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top;word-break:break-word;}th{background:#f0c84a;color:#000;}'
+      +'th,td{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top;white-space:nowrap;}th{background:#f0c84a;color:#000;}'
+      +'td.cws-wrap,th.cws-wrap{white-space:normal;word-break:break-word;min-width:240px;}'
       +'tr:nth-child(even) td{background:#f7f7f7;}ul{font-size:12px;padding-left:18px;}'
       +'@media print{.q-wrap{display:none;}}'; }
   // HTML/PDF exportado: campo de busca funcional no cabeçalho (filtra por qualquer coluna, em TODAS as tabelas) + contador
-  function cwsDocHtml(){ const inner=mdToHtml(CWS_CUR?CWS_CUR.txt:'');
+  function cwsDocHtml(){
+    const tmp=document.createElement('div'); tmp.innerHTML=mdToHtml(CWS_CUR?CWS_CUR.txt:'');
+    tmp.querySelectorAll('table').forEach(tbl=>{   // marca só a(s) coluna(s) longa(s) → nowrap nas curtas, wrap só na Anotação
+      const hcells=[...tbl.querySelectorAll('thead tr th')]; const brows=[...tbl.querySelectorAll('tbody tr')];
+      hcells.forEach((th,ci)=>{
+        let maxLen=th.textContent.trim().length;
+        brows.forEach(tr=>{ const c=tr.children[ci]; if(c){ const L=c.textContent.trim().length; if(L>maxLen) maxLen=L; } });
+        if(maxLen>60){ th.classList.add('cws-wrap'); brows.forEach(tr=>{ if(tr.children[ci]) tr.children[ci].classList.add('cws-wrap'); }); }
+      });
+    });
+    const inner=tmp.innerHTML;
     const busca='<div class="q-wrap"><input id="q" type="text" placeholder="🔎 '+esc((CWS_CUR&&CWS_CUR.placeholder)||'Buscar…')+'" oninput="flt()"><span id="cnt"></span></div>';
     const body=(inner.indexOf('<table')>=0) ? inner.replace('<table', busca+'<table') : (busca+inner);
     const scr='<'+'script>function flt(){var q=(document.getElementById("q").value||"").toLowerCase();var ts=document.querySelectorAll("table");var n=0,tot=0;for(var j=0;j<ts.length;j++){var rs=ts[j].querySelectorAll("tbody tr");var any=false;for(var i=0;i<rs.length;i++){tot++;var ok=!q||rs[i].textContent.toLowerCase().indexOf(q)>=0;rs[i].style.display=ok?"":"none";if(ok){n++;any=true;}}ts[j].style.display=(any||!q)?"":"none";var h=ts[j].previousElementSibling;while(h&&!/^H[1-6]$/.test(h.tagName))h=h.previousElementSibling;if(h)h.style.display=(any||!q)?"":"none";}var c=document.getElementById("cnt");if(c)c.textContent=q?(n+" de "+tot):(tot+" linhas");}window.onload=flt;<'+'/script>';
@@ -3687,7 +4085,24 @@
     return html;
   }
 
+  /* ---------- tamanho do layout: aplica as preferências definidas na página de preview (previews-tamanho.html) ----------
+     Prefs em localStorage 'mm_ui_prefs' = { scale:%(60-140), width:px(760-1600) }. Sem controle visível — calibra-se no preview. */
+  const MM_PREFS_KEY='mm_ui_prefs';
+  function mmApplyPrefs(p){
+    p=p||{};
+    const scale=Math.max(60,Math.min(140, +p.scale||100))/100;
+    ['viewCard','viewLeads','viewComandos'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.zoom=scale; });
+    const tb=document.querySelector('.tabs'); if(tb) tb.style.zoom=scale;
+    const w=(+p.width>=600 && +p.width<=2400) ? (+p.width) : 1040;
+    document.documentElement.style.setProperty('--mm-panel-w', w+'px');
+  }
+  const MM_PREFS_DEFAULT={scale:115,width:1380};   // padrão definitivo (calibrado no preview); localStorage sobrepõe se houver
+  function mmLoadPrefs(){ let p=Object.assign({},MM_PREFS_DEFAULT); try{ const s=JSON.parse(localStorage.getItem(MM_PREFS_KEY)||'null'); if(s) p=Object.assign(p,s); }catch(e){} mmApplyPrefs(p); }
+  window.mmApplyPrefs=mmApplyPrefs;   // chamada ao vivo pela página de preview (mesmo domínio, via iframe)
+  window.mmGetPrefs=function(){ try{ return Object.assign({},MM_PREFS_DEFAULT, JSON.parse(localStorage.getItem(MM_PREFS_KEY)||'{}')); }catch(e){ return Object.assign({},MM_PREFS_DEFAULT); } };
+
   /* ---------- start ---------- */
+  mmLoadPrefs();
   popularSelect(); preencherInfo(); detectarNovos(); ajustarEscala(); syncAdv();
   if(MM.consultores.length){ aoSelecionar(); } else { ph.innerHTML='SELECIONE<br>MANUAL'; setNome(); setSelo(); }
   if(MM.consultores.length) abrirHub();   // abre a tela inicial (hub) em vez do card (mobile e desktop)
