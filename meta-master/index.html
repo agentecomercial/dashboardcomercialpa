@@ -156,11 +156,12 @@
   .conv-sub{font-size:12px;color:#8a8a92;}
   .conv-ctrls{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
   .conv-ctrls .crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .conv-ctrls .clbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#888;min-width:90px;}
+  .conv-ctrls .clbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#b6b6be;min-width:90px;}
   .cchip{border:1px solid #3a3a3a;background:#1a1a1f;color:#cfcfd4;border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.12s;}
   .cchip:hover{border-color:#555;} .cchip.on{background:#F0C84A;color:#111;border-color:#F0C84A;}
   .seg-wrap{display:inline-flex;background:#141418;border:1px solid #2a2a2a;border-radius:10px;padding:3px;gap:3px;}
-  .seg-wrap .cchip{border:none;background:none;border-radius:7px;padding:6px 11px;}
+  .seg-wrap .cchip{border:none;background:none;color:#cfcfd4;border-radius:7px;padding:6px 11px;}
+  .seg-wrap .cchip.on{background:#F0C84A;color:#111;}   /* selecionado: dourado (senao ficava texto escuro em fundo escuro = invisivel) */
   .conv-meta{width:64px;background:#141418;border:1px solid #3a3a3a;color:#F0C84A;font-weight:800;border-radius:8px;padding:6px 8px;font-size:13px;text-align:center;}
   .conv-tbl{width:100%;border-collapse:collapse;}
   .conv-tbl th,.conv-tbl td{padding:10px 9px;text-align:center;border-bottom:1px solid #2a2a2a;white-space:nowrap;}
@@ -2089,13 +2090,14 @@
     if(!M.length){ panel.style.display='none'; return; }
     panel.style.display='block';
     if(!CONV.sel) CONV.sel=new Set(M.map((_,i)=>i));
-    else { const valid=new Set(M.map((_,i)=>i)); CONV.sel=new Set([...CONV.sel].filter(i=>valid.has(i))); if(!CONV.sel.size) CONV.sel=new Set(M.map((_,i)=>i)); }
+    else { const valid=new Set(M.map((_,i)=>i)); CONV.sel=new Set([...CONV.sel].filter(i=>valid.has(i))); }   // não refaz sozinho quando vazio (permite desmarcar todos)
     const G=convGeral(M); const meta=Math.max(0,+($('convMeta').value||15));
     // chips
     $('convChips').innerHTML=M.map((r,i)=>'<button class="cchip'+(CONV.sel.has(i)?' on':'')+'" onclick="convToggle('+i+')">'+esc(r.nome.split(' ')[0])+'</button>').join('');
     $('convTodos').classList.toggle('on', CONV.sel.size===M.length);
     document.querySelectorAll('#convModoSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.m===CONV.modo));
     document.querySelectorAll('#convViewSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.v===CONV.view));
+    if(!CONV.sel.size){ $('convSub').textContent='Nenhum consultor selecionado — clique num chip ou em "Todos".'; $('convView').innerHTML='<div class="wiz-info">Selecione ao menos um consultor para ver a conversão.</div>'; $('convLeg').innerHTML=''; $('convDiag').innerHTML=''; const db=$('convDrillBox'); if(db) db.innerHTML=''; return; }
     const sel=convSelRows(M);
     $('convSub').innerHTML=(CONV.sel.size===M.length?'todos os consultores':CONV.sel.size+' selecionado(s): '+sel.map(r=>esc(r.nome.split(' ')[0])).join(', '))
       +' · <b>'+(CONV.modo==='movimentacao'?'Movimentação (coorte do período)':'Retrato (estado do funil)')+'</b> · meta '+meta+'%'
@@ -2107,8 +2109,8 @@
       : '<span><i class="dot" style="background:#7fd98a"></i> ≥ meta/15%</span><span><i class="dot" style="background:#e2c878"></i> média</span><span><i class="dot" style="background:#e89090"></i> baixa</span><span style="margin-left:auto">▲/▼ vs média · 🔴 abaixo da meta</span>';
     $('convDiag').innerHTML=convDiag(M,G);
   }
-  function convTodos(){ const M=convMetrics(); CONV.sel=new Set(M.map((_,i)=>i)); renderConversao(); }
-  function convToggle(i){ if(!CONV.sel) CONV.sel=new Set(); if(CONV.sel.has(i)){ if(CONV.sel.size>1) CONV.sel.delete(i); } else CONV.sel.add(i); renderConversao(); }
+  function convTodos(){ const M=convMetrics(); const all=M.map((_,i)=>i); CONV.sel = (CONV.sel && CONV.sel.size===all.length) ? new Set() : new Set(all); renderConversao(); }   // toggle: marca todos / desmarca todos
+  function convToggle(i){ if(!CONV.sel) CONV.sel=new Set(); if(CONV.sel.has(i)) CONV.sel.delete(i); else CONV.sel.add(i); renderConversao(); }   // toggle livre (pode chegar a zero)
   function convSetSort(k){ CONV.sort=k; renderConversao(); }
   function convSetModo(m){ CONV.modo=m; renderConversao(); }
   function convSetView(v){ CONV.view=v; renderConversao(); }
