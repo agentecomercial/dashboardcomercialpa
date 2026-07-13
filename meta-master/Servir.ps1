@@ -99,6 +99,29 @@ while ($listener.IsListening) {
       continue
     }
 
+    if ($path -eq '/api/carteira-leads') {
+      # leads individuais da carteira (drill-down da Transferencia): acao=leads (lista) | detalhe (telefone+anotacao de 1 lead)
+      $raiz = Split-Path $root -Parent
+      $script = Join-Path $raiz 'Carteira-Leads-Vitoria.ps1'
+      $acao = $req.QueryString['acao']; if ($acao -notin 'leads','detalhe') { $acao = 'leads' }
+      $psArgs = @('-Acao', $acao)
+      $qd = $req.QueryString['de'];  if ($qd  -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-De', $qd) }
+      $qa = $req.QueryString['ate']; if ($qa -match '^\d{4}-\d{2}-\d{2}$') { $psArgs += @('-Ate', $qa) }
+      if ($req.QueryString['campanha'])  { $psArgs += @('-Campanha', $req.QueryString['campanha']) }
+      if ($req.QueryString['consultor']) { $psArgs += @('-Consultor', $req.QueryString['consultor']) }
+      if ($req.QueryString['busca'])     { $psArgs += @('-Busca', $req.QueryString['busca']) }
+      $qe = $req.QueryString['etapa']; if ($qe -match '^[1-6]$') { $psArgs += @('-Etapa', $qe) }
+      $qes = $req.QueryString['etapas']; if ($qes -match '^[1-6](,[1-6])*$') { $psArgs += @('-Etapas', $qes) }
+      $qo = $req.QueryString['oppid']; if ($qo -match '^\d+$') { $psArgs += @('-OppId', $qo) }
+      $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
+      $body = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '{"erro":"sem resposta"}' }
+      $res.StatusCode = 200; $res.ContentType = 'application/json; charset=utf-8'
+      $buf = [Text.Encoding]::UTF8.GetBytes($body); $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
+      Write-Host "[$((Get-Date -Format 'HH:mm:ss'))] /api/carteira-leads acao=$acao -> 200" -ForegroundColor DarkYellow
+      continue
+    }
+
     if ($path -eq '/api/treinamento') {
       # aba Treinamento: busca produto (JSON) / vendas / cross-sell (Markdown) via Buscar-Treinamento.ps1
       $raiz = Split-Path $root -Parent
