@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajuste de tamanho — Meta Master</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:#0e0e12;color:#e8e2d2;height:100vh;overflow:hidden;}
+  .wrap{display:flex;height:100vh;}
+  /* painel de controles */
+  .ctrl{width:320px;flex:0 0 320px;background:#15151b;border-right:1px solid #2a2a33;padding:20px 20px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+  .ctrl h1{font-size:17px;margin:0;color:#F0C84A;font-weight:800;}
+  .ctrl .sub{font-size:12.5px;color:#9a9aa2;line-height:1.5;margin:-6px 0 4px;}
+  .grp{background:#1b1b22;border:1px solid #2c2c36;border-radius:10px;padding:12px 13px;}
+  .grp label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:700;color:#cfcfd8;margin-bottom:9px;}
+  .grp label b{color:#F0C84A;font-size:14px;font-weight:800;}
+  input[type=range]{width:100%;accent-color:#F0C84A;cursor:pointer;height:22px;}
+  .hint{font-size:11px;color:#7d7d87;margin-top:7px;line-height:1.4;}
+  .ver{display:flex;align-items:center;gap:6px;font-size:12px;color:#9a9aa2;flex-wrap:wrap;}
+  .ver button{background:#22222c;border:1px solid #34343f;color:#cfcfd8;font-size:12px;padding:5px 11px;border-radius:16px;cursor:pointer;font-weight:700;}
+  .ver button:hover{background:#2c2c38;color:#fff;}
+  .ver button.on{background:#F0C84A;color:#000;border-color:#F0C84A;}
+  .acts{display:flex;flex-direction:column;gap:9px;margin-top:auto;}
+  .apply{background:#2f7d2f;color:#fff;border:1px solid #3fae3f;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;}
+  .apply:hover{background:#3fae3f;}
+  .reset{background:#22222c;color:#cfcfd8;border:1px solid #34343f;border-radius:10px;padding:9px;font-size:12.5px;cursor:pointer;}
+  .reset:hover{background:#2c2c38;color:#fff;}
+  .msg{min-height:18px;font-size:12px;color:#8bd48b;text-align:center;opacity:0;transition:opacity .2s;}
+  .msg.on{opacity:1;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;}
+  .presets button{flex:1;background:#22222c;border:1px solid #34343f;color:#cfcfd8;font-size:11.5px;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;}
+  .presets button:hover{background:#2c2c38;color:#F0C84A;}
+  /* palco com o app real */
+  .stage{flex:1;position:relative;background:#0a0a0d;display:flex;flex-direction:column;}
+  .stage .bar{height:34px;flex:0 0 34px;background:#111;border-bottom:1px solid #222;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:12px;color:#8a8a92;}
+  .stage .bar .dot{width:9px;height:9px;border-radius:50%;background:#3fae3f;}
+  iframe{flex:1;width:100%;border:0;background:#161616;}
+  @media(max-width:820px){ .wrap{flex-direction:column;} .ctrl{width:100%;flex:0 0 auto;max-height:46vh;} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="ctrl">
+      <h1>📐 Ajuste de tamanho</h1>
+      <div class="sub">Mexa nos controles e veja o app real mudar ao lado. Quando gostar, clique em <b>Aplicar em definitivo</b> — o Meta Master passa a abrir sempre neste tamanho.</div>
+
+      <div class="grp">
+        <label>Tamanho geral <span>(display + fonte)</span> <b id="vScale">115%</b></label>
+        <input id="sScale" type="range" min="60" max="140" step="5" value="115">
+        <div class="hint">Aumenta/diminui tudo proporcionalmente — textos, tabelas, botões.</div>
+      </div>
+
+      <div class="grp">
+        <label>Largura do conteúdo <b id="vWidth">1380px</b></label>
+        <input id="sWidth" type="range" min="760" max="1600" step="20" value="1380">
+        <div class="hint">Quão largos ficam os painéis das abas Leads e Comandos.</div>
+      </div>
+
+      <div class="grp">
+        <div class="presets">
+          <button data-s="80" data-w="960">Compacto</button>
+          <button data-s="100" data-w="1040">Padrão</button>
+          <button data-s="115" data-w="1240">Confortável</button>
+          <button data-s="130" data-w="1440">Grande</button>
+        </div>
+      </div>
+
+      <div class="ver">Ver aba:
+        <button data-v="card">Card</button>
+        <button data-v="leads">Leads</button>
+        <button data-v="comandos" class="on">Comandos</button>
+      </div>
+
+      <div class="acts">
+        <button class="apply" id="btnApply">✓ Aplicar em definitivo</button>
+        <button class="reset" id="btnReset">↺ Restaurar padrão (115% · 1380px)</button>
+        <div class="msg" id="msg"></div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="bar"><span class="dot"></span> Pré-visualização do app real (localhost:8765/index.html)</div>
+      <iframe id="app" src="index.html"></iframe>
+    </main>
+  </div>
+
+<script>
+  var $=function(id){ return document.getElementById(id); };
+  var frame=$('app');
+  var PREFS_KEY='mm_ui_prefs';
+  function cur(){ return { scale:parseInt($('sScale').value,10), width:parseInt($('sWidth').value,10) }; }
+  function win(){ try{ return frame.contentWindow; }catch(e){ return null; } }
+  function aplicarVivo(){ var w=win(); if(w && w.mmApplyPrefs){ try{ w.mmApplyPrefs(cur()); }catch(e){} } }
+  function refletir(){ $('vScale').textContent=$('sScale').value+'%'; $('vWidth').textContent=$('sWidth').value+'px'; aplicarVivo(); }
+  function salvar(){ try{ localStorage.setItem(PREFS_KEY, JSON.stringify(cur())); }catch(e){} }
+  function msg(t){ var m=$('msg'); m.textContent=t; m.classList.add('on'); setTimeout(function(){ m.classList.remove('on'); },3200); }
+
+  $('sScale').addEventListener('input',refletir);
+  $('sWidth').addEventListener('input',refletir);
+
+  // presets
+  var pbtns=document.querySelectorAll('.presets button');
+  for(var i=0;i<pbtns.length;i++){ pbtns[i].addEventListener('click',function(){ $('sScale').value=this.getAttribute('data-s'); $('sWidth').value=this.getAttribute('data-w'); refletir(); }); }
+
+  // trocar aba dentro do iframe
+  var vbtns=document.querySelectorAll('.ver button');
+  for(var j=0;j<vbtns.length;j++){ vbtns[j].addEventListener('click',function(){
+    for(var k=0;k<vbtns.length;k++) vbtns[k].classList.remove('on');
+    this.classList.add('on');
+    var w=win(); if(w){ try{ if(w.entrarApp) w.entrarApp(); if(w.trocarAba) w.trocarAba(this.getAttribute('data-v')); }catch(e){} }
+    setTimeout(aplicarVivo,60);
+  }); }
+
+  $('btnApply').addEventListener('click',function(){ salvar(); aplicarVivo(); msg('✓ Aplicado! O app abrirá sempre neste tamanho.'); });
+  $('btnReset').addEventListener('click',function(){ $('sScale').value=115; $('sWidth').value=1380; refletir(); salvar(); msg('Restaurado ao padrão (115% · 1380px).'); });
+
+  frame.addEventListener('load',function(){
+    var w=win();
+    // carrega nos sliders o que já estiver salvo
+    var p=null;
+    try{ p = (w && w.mmGetPrefs) ? w.mmGetPrefs() : JSON.parse(localStorage.getItem(PREFS_KEY)||'null'); }catch(e){}
+    if(p){ if(p.scale){ $('sScale').value=Math.max(60,Math.min(140,p.scale)); } if(p.width){ $('sWidth').value=Math.max(760,Math.min(1600,p.width)); } }
+    // entra no app e mostra a aba Comandos (onde a densidade é mais visível)
+    try{ if(w.entrarApp) w.entrarApp(); if(w.trocarAba) w.trocarAba('comandos'); }catch(e){}
+    setTimeout(refletir,80);
+  });
+</script>
+</body>
+</html>

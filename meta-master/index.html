@@ -2564,7 +2564,12 @@
   // per (opcional) = {de, ate, label} do período escolhido; camps (opcional) = array ['mcis','tce','outros'] p/ filtrar a tabela inteira por campanha
   const CAMP_LBL={mcis:'MCIS',tce:'TCE',outros:'Outros'};
   let _carteiraSeq=0;
+  // filtro de campanha da CARTEIRA: clicar no cabeçalho MCIS/TCE/Outros filtra a matriz toda (toggle), igual à aba Leads
+  let CART_CAMP=null, _cartCampReload=false;
+  function cartWizCampsAtual(){ const id=CMD_ID; if(id==='transferenciaCampanha') return WIZT&&WIZT.campanhas; if(id==='equilibrioCampanha') return WIZC&&WIZC.campanhas; if(id==='transferenciaIndividualCampanha') return WIZI&&WIZI.campanhas; return null; }
+  function cartFiltrarCampanha(key){ CART_CAMP=(CART_CAMP===key)?null:key; _cartCampReload=true; carregarTabelaAtual(cartPeriodo(), CART_CAMP?[CART_CAMP]:cartWizCampsAtual()); }
   async function carregarTabelaAtual(per, camps){
+    if(!_cartCampReload) CART_CAMP=null; _cartCampReload=false;   // qualquer recarga externa limpa o filtro de campanha da carteira
     const box=$('leadsAtualBox'); if(!box) return;
     if(!isHttp){ box.innerHTML=avisoBox('⚠ A tabela atual precisa do servidor local (Servir.bat / Meta Master.vbs).'); return; }
     const seq=++_carteiraSeq;   // evita que uma resposta antiga sobrescreva a mais recente
@@ -2616,10 +2621,12 @@
     const tbl=$('atualLeadsTbl'); if(!tbl) return;
     const d=(LEADSCTX['atualLeadsTbl']||{}).data; if(!d) return;
     const etapas=d.etapas||[], camps=d.campanhas||[], nE=etapas.length;
-    // cabeçalho de campanha → todos os leads da campanha
+    // cabeçalho de campanha → FILTRA a carteira inteira por aquela campanha (toggle), igual ao cabeçalho da aba Leads
     tbl.querySelectorAll('thead th.camp').forEach(th=>{
-      const t=th.textContent.replace(/[▲▼\s]/g,'').toUpperCase(); const key=t.indexOf('MCIS')>=0?'mcis':t.indexOf('TCE')>=0?'tce':'outros';
-      th.style.cursor='pointer'; th.title='Ver os leads desta campanha'; th.onclick=function(){ cartDrill({campanha:key}, '📣 Leads · campanha '+(CAMP_LBL[key]||key)); };
+      const t=th.textContent.replace(/[▲▼✓\s]/g,'').toUpperCase(); const key=t.indexOf('MCIS')>=0?'mcis':t.indexOf('TCE')>=0?'tce':'outros';
+      th.style.cursor='pointer'; th.classList.add('campfil'); th.classList.toggle('on', CART_CAMP===key);
+      th.title=(CART_CAMP===key)?('Remover filtro de campanha ('+(CAMP_LBL[key]||key)+')'):('Filtrar a carteira só '+(CAMP_LBL[key]||key)+' (clique de novo para limpar)');
+      th.onclick=function(){ cartFiltrarCampanha(key); };
     });
     tbl.querySelectorAll('tbody tr').forEach(tr=>{
       if(tr.classList.contains('total')) return;
