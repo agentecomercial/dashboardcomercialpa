@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Imagem/Texto da lista de leads</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:#0e0e12;color:#e8e2d2;min-height:100vh;}
+  .wrap{display:flex;min-height:100vh;}
+  .ctrl{width:340px;flex:0 0 340px;background:#15151b;border-right:1px solid #2a2a33;padding:20px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+  .ctrl h1{font-size:16px;margin:0;color:#F0C84A;font-weight:800;}
+  .ctrl .sub{font-size:12px;color:#9a9aa2;line-height:1.5;margin:-8px 0 2px;}
+  .grp{background:#1b1b22;border:1px solid #2c2c36;border-radius:10px;padding:12px 13px;}
+  .grp .t{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8f8f98;font-weight:800;margin-bottom:9px;}
+  .opt{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:#dcdce0;cursor:pointer;padding:5px 0;}
+  .opt input{width:16px;height:16px;accent-color:#F0C84A;cursor:pointer;}
+  .presets,.segs{display:flex;gap:6px;flex-wrap:wrap;}
+  .presets button,.segs button{background:#22222c;border:1px solid #34343f;color:#cfcfd8;font-size:11.5px;padding:6px 10px;border-radius:16px;cursor:pointer;font-weight:700;}
+  .presets button:hover,.segs button:hover{background:#2c2c38;color:#F0C84A;}
+  .segs button.on{background:#F0C84A;color:#000;border-color:#F0C84A;}
+  .acts{display:flex;flex-direction:column;gap:8px;margin-top:auto;}
+  .acts button{border-radius:9px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;border:1px solid #34343f;}
+  .b-png{background:#2f7d2f;color:#fff;border-color:#3fae3f;} .b-png:hover{background:#3fae3f;}
+  .b-sec{background:#22222c;color:#e8e2d2;} .b-sec:hover{background:#2c2c38;}
+  .msg{min-height:16px;font-size:12px;color:#8bd48b;text-align:center;}
+  .stage{flex:1;padding:22px;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:10px;background:#0a0a0d;}
+  .stage .hint{font-size:12px;color:#7d7d87;align-self:flex-start;}
+  /* área capturada — visual do app */
+  #cap{background:#1b1b22;border:1px solid #2f2f39;border-radius:12px;padding:18px 20px;max-width:100%;color:#e8e8ea;}
+  #cap .tit{font-weight:800;font-size:15px;color:#F0C84A;margin-bottom:2px;}
+  #cap .titsub{font-size:12px;color:#9a9aa2;margin-bottom:12px;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  th,td{text-align:left;padding:8px 10px;vertical-align:top;}
+  thead th{color:#8f8f98;text-transform:uppercase;font-size:10px;letter-spacing:.5px;border-bottom:1px solid #33333e;}
+  tbody tr{border-bottom:1px solid #26262e;}
+  td.nome{font-weight:700;color:#fff;white-space:nowrap;}
+  td.tel,td.data{white-space:nowrap;}
+  td.nota{color:#cfcfd4;line-height:1.45;min-width:280px;}
+  /* modo tabela com grade */
+  #cap.grade table{border:1px solid #33333e;}
+  #cap.grade th,#cap.grade td{border:1px solid #2f2f39;}
+  /* modo lista (blocos) */
+  #cap.lista .lead{border-bottom:1px solid #2a2a33;padding:10px 0;}
+  #cap.lista .lead:last-child{border-bottom:none;}
+  #cap.lista .lnome{font-weight:800;color:#fff;font-size:14px;}
+  #cap.lista .lcampos{font-size:12px;color:#9fb0c0;margin:2px 0;}
+  #cap.lista .lnota{font-size:12.5px;color:#cfcfd4;line-height:1.45;margin-top:3px;}
+  @media(max-width:820px){ .wrap{flex-direction:column;} .ctrl{width:100%;flex:0 0 auto;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="ctrl">
+    <h1>🖼️ Imagem / texto da lista</h1>
+    <div class="sub">Escolha as colunas e o formato. O preview ao lado atualiza na hora. Depois é só <b>Baixar PNG</b>, <b>Copiar imagem</b> ou <b>Copiar texto</b>.</div>
+
+    <div class="grp">
+      <div class="t">Colunas na imagem</div>
+      <label class="opt"><input type="checkbox" data-col="num"> Nº</label>
+      <label class="opt"><input type="checkbox" data-col="nome" checked> Nome</label>
+      <label class="opt"><input type="checkbox" data-col="tel"> Telefone</label>
+      <label class="opt"><input type="checkbox" data-col="camp"> Campanha</label>
+      <label class="opt"><input type="checkbox" data-col="data"> Data</label>
+      <label class="opt"><input type="checkbox" data-col="nota" checked> Anotação</label>
+    </div>
+
+    <div class="grp">
+      <div class="t">Atalhos</div>
+      <div class="presets">
+        <button data-p="nome,nota">Nome + Anotação</button>
+        <button data-p="nome,tel,nota">Nome + Tel + Anotação</button>
+        <button data-p="num,nome,tel,camp,data,nota">Completo</button>
+        <button data-p="num,nome,tel,camp,data">Completo S/ Anotação</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="t">Formato</div>
+      <div class="segs" id="segFmt">
+        <button data-f="lista" class="on">📄 Lista (WhatsApp)</button>
+        <button data-f="grade">▦ Tabela (grade)</button>
+      </div>
+      <label class="opt" style="margin-top:8px"><input type="checkbox" id="okTitulo" checked> Incluir título (consultor · etapa)</label>
+      <label class="opt"><input type="checkbox" id="okHead" checked> Cabeçalho das colunas (modo tabela)</label>
+    </div>
+
+    <div class="acts">
+      <button class="b-png" id="btnPng">⬇ Baixar PNG</button>
+      <button class="b-sec" id="btnCopyImg">⧉ Copiar imagem</button>
+      <button class="b-sec" id="btnCopyTxt">📋 Copiar texto selecionado</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="hint">Pré-visualização (exemplo com os leads da sua imagem):</div>
+    <div id="cap" class="lista"></div>
+  </main>
+</div>
+
+<script>
+  // dados de exemplo (os 2 leads da imagem enviada)
+  var TITULO='Milene Moraes · 4 Negociação', SUB='2 leads';
+  var LEADS=[
+    { num:1, nome:'Dhiago Henrique', tel:'(89) 99454-3670', camp:'TCE', data:'12/07/2026 20:08',
+      nota:'Empresa de rastreamento veicular, possivelmente Dhiago, sua esposa Luana e seu sócio Alberto participaram pois abriram recente 3 meses de operação, buscando por visão sistêmica para tocar seu negócio com direcionamento. (Amanhã 15hs-14/7) Decidindo com eles a forma de pgt e o setor Ouro ou Bronze. — 13/07/2026 15:20 · Milene Silva Moraes' },
+    { num:2, nome:'Viviane de Deus', tel:'(86) 99943-4155', camp:'TCE', data:'11/06/2026 13:50',
+      nota:'Não atendeu às 17hs, enviei mensagem no whats, aguardando. Definir juntamente com esposo em qual setor fará mais sentido pra ela, Back ou ouro e a possibilidade dele fazer junto. — 13/07/2026 17:17 · Milene Silva Moraes' }
+  ];
+  var COLS=[
+    {key:'num', th:'#'}, {key:'nome', th:'Nome do lead'}, {key:'tel', th:'Telefone'},
+    {key:'camp', th:'Campanha'}, {key:'data', th:'Data de criação'}, {key:'nota', th:'Última anotação'}
+  ];
+  var $=function(s){return document.querySelector(s);};
+  var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
+  var FMT='lista';
+
+  function selCols(){ var set={}; $$('.opt input[data-col]').forEach(function(c){ set[c.getAttribute('data-col')]=c.checked; }); return set; }
+  function colsAtivas(){ var s=selCols(); return COLS.filter(function(c){ return s[c.key]; }); }
+
+  function render(){
+    var cap=$('#cap'); var cols=colsAtivas(); var s=selCols();
+    cap.className=FMT+(FMT==='grade'?' grade':'');
+    var h='';
+    if($('#okTitulo').checked){ h+='<div class="tit">'+esc(TITULO)+'</div><div class="titsub">'+esc(SUB)+'</div>'; }
+    if(!cols.length){ h+='<div style="color:#9a9aa2;font-size:12px">Selecione ao menos uma coluna.</div>'; cap.innerHTML=h; return; }
+    if(FMT==='grade'){
+      h+='<table>';
+      if($('#okHead').checked){ h+='<thead><tr>'+cols.map(function(c){return '<th>'+esc(c.th)+'</th>';}).join('')+'</tr></thead>'; }
+      h+='<tbody>';
+      LEADS.forEach(function(l){ h+='<tr>'+cols.map(function(c){ return '<td class="'+c.key+'">'+esc(String(l[c.key]))+'</td>'; }).join('')+'</tr>'; });
+      h+='</tbody></table>';
+    } else {
+      LEADS.forEach(function(l){
+        h+='<div class="lead">';
+        if(s.nome) h+='<div class="lnome">'+(s.num?(l.num+'. '):'')+esc(l.nome)+'</div>';
+        else if(s.num) h+='<div class="lnome">Lead '+l.num+'</div>';
+        if(s.tel) h+='<div class="lcampos">📞 '+esc(l.tel)+'</div>';
+        var cd=[]; if(s.camp) cd.push('🏷️ '+esc(l.camp)); if(s.data) cd.push('📅 '+esc(l.data));
+        if(cd.length) h+='<div class="lcampos">'+cd.join('  ·  ')+'</div>';
+        if(s.nota) h+='<div class="lnota">📝 '+esc(l.nota)+'</div>';
+        h+='</div>';
+      });
+    }
+    cap.innerHTML=h;
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];}); }
+
+  // texto para copiar (só colunas selecionadas)
+  function texto(){
+    var s=selCols(); var out=[];
+    if($('#okTitulo').checked){ var tp=TITULO.split(' · ').map(function(p){return '*'+p+'*';}).join(' · '); out.push(tp+' · '+SUB, ''); }
+    LEADS.forEach(function(l){
+      var linhas=[];
+      var titl=(s.num?(l.num+'. '):'')+(s.nome?l.nome:('Lead '+l.num));
+      linhas.push('*'+titl+'*');                       // nome em *negrito* (WhatsApp)
+      if(s.tel) linhas.push('📞 '+l.tel);              // telefone numa linha
+      var cd=[]; if(s.camp) cd.push('🏷️ '+l.camp); if(s.data) cd.push('📅 '+l.data);
+      if(cd.length) linhas.push(cd.join(' · '));       // campanha · data embaixo
+      if(s.nota) linhas.push('📝 '+l.nota);
+      out.push(linhas.join('\n'), '');
+    });
+    return out.join('\n').trim();
+  }
+
+  function msg(t){ var m=$('#msg'); m.textContent=t; setTimeout(function(){ if(m.textContent===t) m.textContent=''; },3000); }
+  async function gerarCanvas(){ return await html2canvas($('#cap'),{scale:2,backgroundColor:'#1b1b22'}); }
+  async function baixarPng(){ try{ var c=await gerarCanvas(); var a=document.createElement('a'); a.download='leads-milene-moraes.png'; a.href=c.toDataURL('image/png'); a.click(); msg('PNG baixado!'); }catch(e){ msg('Falhou: '+e.message);} }
+  async function copiarImg(){ try{ var c=await gerarCanvas(); var b=await new Promise(function(r){c.toBlob(r,'image/png');}); await navigator.clipboard.write([new ClipboardItem({'image/png':b})]); msg('Imagem copiada!'); }catch(e){ msg('Cópia de imagem não suportada aqui — use Baixar.'); } }
+  async function copiarTxt(){ try{ await navigator.clipboard.writeText(texto()); msg('Texto copiado!'); }catch(e){ msg('Não consegui copiar o texto.'); } }
+
+  // eventos
+  $$('.opt input[data-col]').forEach(function(c){ c.addEventListener('change',render); });
+  $('#okTitulo').addEventListener('change',render); $('#okHead').addEventListener('change',render);
+  $$('.presets button').forEach(function(b){ b.addEventListener('click',function(){
+    var keys=this.getAttribute('data-p').split(',');
+    $$('.opt input[data-col]').forEach(function(c){ c.checked=keys.indexOf(c.getAttribute('data-col'))>=0; });
+    render();
+  }); });
+  $$('#segFmt button').forEach(function(b){ b.addEventListener('click',function(){
+    $$('#segFmt button').forEach(function(x){x.classList.remove('on');}); this.classList.add('on'); FMT=this.getAttribute('data-f'); render();
+  }); });
+  $('#btnPng').addEventListener('click',baixarPng);
+  $('#btnCopyImg').addEventListener('click',copiarImg);
+  $('#btnCopyTxt').addEventListener('click',copiarTxt);
+  render();
+</script>
+</body>
+</html>
