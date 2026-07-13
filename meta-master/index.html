@@ -2066,6 +2066,7 @@
       +'<div class="mv-acts"><button class="mv-cancel" onclick="leadsImgFechar()">Fechar</button>'
       +'<button class="mv-cancel" onclick="leadsImgCopiarTexto()">📋 Copiar texto</button>'
       +'<button class="mv-cancel" onclick="leadsImgCopiar()">⧉ Copiar imagem</button>'
+      +'<button class="mv-cancel" onclick="leadsImgCopiarTudo(this)" title="Copia a imagem e o texto de uma vez">🖼️📝 Copiar imagem e texto</button>'
       +'<button class="mv-confirm" onclick="leadsImgBaixar()">⬇ Baixar PNG</button></div></div>';
     document.body.appendChild(d);
   }
@@ -2116,6 +2117,24 @@
   async function leadsImgBaixar(){ try{ const c=await leadsImgCanvas(); const a=document.createElement('a'); a.download=leadsImgNome()+'.png'; a.href=c.toDataURL('image/png'); a.click(); toast('Imagem baixada!'); }catch(e){ toast('Falhou: '+(e.message||e)); } }
   async function leadsImgCopiar(){ try{ const c=await leadsImgCanvas(); const blob=await new Promise(r=>c.toBlob(r,'image/png')); await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); toast('Imagem copiada — cole no WhatsApp!'); }catch(e){ toast('Cópia de imagem não suportada — use Baixar.'); } }
   async function leadsImgCopiarTexto(){ try{ await navigator.clipboard.writeText(leadsImgTexto()); toast('Texto copiado — cole no WhatsApp!'); }catch(e){ toast('Não consegui copiar o texto.'); } }
+  // imagem + texto num clique: tenta copiar os dois no mesmo clipboard; se não der, baixa a imagem e copia o texto
+  async function leadsImgCopiarTudo(btn){
+    const l0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
+    try{
+      const c=await leadsImgCanvas();
+      const imgBlob=await new Promise(r=>c.toBlob(r,'image/png'));
+      const txt=leadsImgTexto();
+      try{
+        await navigator.clipboard.write([new ClipboardItem({'image/png':imgBlob, 'text/plain':new Blob([txt],{type:'text/plain'})})]);
+        toast('Imagem + texto copiados! No WhatsApp o Ctrl+V cola a imagem; o texto fica copiado p/ colar na legenda.');
+      }catch(e){   // navegador não aceita os 2 juntos → baixa a imagem e copia o texto
+        const a=document.createElement('a'); a.download=leadsImgNome()+'.png'; a.href=c.toDataURL('image/png'); a.click();
+        try{ await navigator.clipboard.writeText(txt); }catch(_){}
+        toast('Imagem baixada + texto copiado — anexe a imagem e cole o texto como legenda.');
+      }
+    }catch(e){ toast('Falhou: '+(e.message||e)); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=l0; } }
+  }
   // 1ª tabela da aba Leads (matriz consultor × etapa + campanha): células clicáveis → 3ª tabela (mesmo padrão da carteira na Transferência)
   function leadsWireDrills(){
     const tbl=$('leadsTbl'); if(!tbl) return;
