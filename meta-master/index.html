@@ -901,6 +901,7 @@
         <span class="meta" id="leadsMeta">—</span>
         <div class="dp-wrap"><div class="dp-field" id="leadsPerFld" onclick="abrirLeadsPicker(event)">📅 <span id="leadsPerVal">mês vigente</span> <span class="car">▾</span></div><div id="leadsPerDp"></div></div>
         <button class="btn btn-ouro" style="width:auto;padding:9px 16px;font-size:12px" id="btnLeads" onclick="carregarLeads(this)">↻ Atualizar agora</button>
+        <input type="text" id="leadsBusca" class="cart-busca" placeholder="🔎 buscar lead por nome…" oninput="leadsBuscarDebounce(this.value)" autocomplete="off">
       </div>
       <table class="ltbl" id="leadsTbl"><tbody><tr><td>Abra a aba para carregar…</td></tr></tbody></table>
       <div class="leads-aviso" id="leadsAviso"></div>
@@ -1943,6 +1944,20 @@
     return {};
   }
   function leadsDrillFechar(){ const b=$('convDrillBox'); if(b) b.innerHTML=''; }
+  // busca de lead por nome na aba Leads (igual à carteira da Transferência) → 3ª tabela; busca em toda a equipe, sem filtro de data
+  let _leadsBuscaT=null;
+  function leadsBuscarDebounce(v){ clearTimeout(_leadsBuscaT); _leadsBuscaT=setTimeout(()=>{ v=(v||'').trim(); const b=$('convDrillBox'); if(v.length<2){ if(b) b.innerHTML=''; return; } leadsBuscar(v); }, 400); }
+  async function leadsBuscar(q){
+    const body=$('convDrillBox'); if(!body) return;
+    body.innerHTML='<div class="cmd-loading">⏳ Buscando…</div>';
+    body.scrollIntoView({behavior:'smooth',block:'start'});
+    try{
+      const r=await fetch('/api/carteira-leads?'+new URLSearchParams({acao:'leads', busca:q}).toString(),{cache:'no-store'});
+      const d=await r.json(); if(d.erro) throw new Error(d.erro);
+      const leads=Array.isArray(d.leads)?d.leads:(d.leads?[d.leads]:[]);
+      leadsDrillRender(leads, '🔎 Busca: "'+esc(q)+'"');
+    }catch(e){ body.innerHTML='<div class="cmd-aviso">Falhou: '+esc(e.message)+'</div>'; }
+  }
   async function leadsDrill(cons, etapas, lbl, campOverride){
     const body=$('convDrillBox'); if(!body) return;
     body.innerHTML='<div class="cmd-loading">⏳ Carregando leads…</div>';
