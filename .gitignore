@@ -54,6 +54,7 @@ Confirmacao-WS.ps1
 Buscar-Treinamento.ps1
 Mover-Etapa-Vitoria.ps1
 Carteira-Leads-Vitoria.ps1
+Buscar-Clientes-Vitoria.ps1
 meta-master/Gerar-Dados-MetaMaster.ps1
 
 # Meta Master — dados de negócio + credenciais (NUNCA publicar)

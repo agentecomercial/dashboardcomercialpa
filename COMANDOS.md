@@ -89,7 +89,7 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 | `Equilíbrio de Leads` | Redistribui leads **igualmente** entre os consultores escolhidos, **movendo só o excedente** (quem está acima da média cede p/ quem está abaixo; sobra por ordem alfabética). Base: Ativos 1–4 ou etapa específica. Padrão = pipeline atual (todas as datas) |
 | `Equilíbrio de Leads campanha [mês]` | Igual ao Equilíbrio, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Base com atalho extra "Só Novo Lead" |
 
-**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Milene 17269.
+**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Milene 17269 · Pablo 28.
 
 ---
 
@@ -183,6 +183,18 @@ Modificador: `por fechamento` (padrão) / `por faturamento` (`-Por`). Atalhos pr
 
 **Parâmetros diretos:** `-Incluir 'Nome Exato' -Id <user_id> [-Val Apelido]` · `-Excluir <número da lista ou parte do nome>` · sem `-Aplicar` = só prévia.
 Metas não são tocadas (`metas-vitoria.json`): consultor novo entra sem meta ("—") — cadastrar depois com `Atualizar Meta`.
+
+---
+
+## 📇 9. Buscar clientes (lista) — telefone · CPF · consultor
+**Script:** `Buscar-Clientes-Vitoria.ps1` · **App:** card **"Buscar clientes (lista)"** na aba Comandos (`/api/cmd?id=buscarClientes`).
+
+Cole uma **lista** (um por linha) de **nomes, CPFs ou telefones** no campo → tabela **`Cliente · Telefone · CPF · Consultor · Situação`**. Detecta o tipo de cada linha:
+- **Nome** → `list_customers(search)` (traz tel/CPF/consultor) + fallback `search_contacts`;
+- **CPF** (valida dígito verificador) → `list_customers(search=cpf só dígitos)` — busca reversa por documento;
+- **Telefone** → `search_contacts(telefone)` → nome → `list_customers` p/ CPF/consultor.
+
+Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · ❌ não localizado. Resultado na **camada rica** (busca, copiar, exportar ⋮). **Pegadinha:** o `lista` (querystring) chega em Latin1 no HttpListener → ler da query bruta com `[Uri]::UnescapeDataString(...Replace('+','%20'))` e passar via arquivo temp UTF-8 (`-ListaFile`). Script tem o token → `.gitignore`.
 
 ---
 

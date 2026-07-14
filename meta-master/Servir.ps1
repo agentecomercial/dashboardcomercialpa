@@ -192,6 +192,8 @@ while ($listener.IsListening) {
       $det = $req.QueryString['detalhe']
       $lnk = $req.QueryString['link']
       $fxs = $req.QueryString['faixas']
+      $lst = $req.QueryString['lista']
+      $tmpLista = $null
       $raiz = Split-Path $root -Parent
       $script = $null; $psArgs = @()
       switch ($id) {
@@ -205,6 +207,7 @@ while ($listener.IsListening) {
         'negociacoes'     { $script='Negociacoes-Vitoria.ps1';    $psArgs=@(); if($con){$psArgs+=@('-Consultor',$con)}; if($fxs -match '^[\d]+-[\d]*(,[\d]+-[\d]*)*$'){$psArgs+=@('-Faixas',$fxs)} }
         'leituraTurma'    { $script='Leitura-Turma.ps1';          $psArgs=@('-Link',$lnk) }
         'relatorioTurma'  { if ($lnk -match 'zsales\.com\.br' -and $lnk -match '/classes/\d+') { $script='Confirmacao-WS.ps1' } else { $script='Relatorio-Turma.ps1' }; $psArgs=@('-Link',$lnk) }
+        'buscarClientes'  { $script='Buscar-Clientes-Vitoria.ps1'; $listaTxt=''; try { $mq=[regex]::Match($req.Url.Query,'(?:^\?|&)lista=([^&]*)'); if($mq.Success){ $listaTxt=[Uri]::UnescapeDataString($mq.Groups[1].Value.Replace('+','%20')) } } catch {}; $tmpLista = Join-Path $env:TEMP ('busca_' + [Guid]::NewGuid().ToString('N') + '.txt'); [System.IO.File]::WriteAllText($tmpLista, $listaTxt, (New-Object System.Text.UTF8Encoding($true))); $psArgs=@('-ListaFile',$tmpLista) }
       }
       if (-not $script) {
         $res.StatusCode = 400; $res.ContentType = 'text/plain; charset=utf-8'
@@ -215,6 +218,7 @@ while ($listener.IsListening) {
       $full = Join-Path $raiz $script
       $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $full @psArgs *>&1 | Out-String
       $code = $LASTEXITCODE
+      if ($tmpLista) { Remove-Item $tmpLista -ErrorAction SilentlyContinue }
       $okCmd = ($code -eq 0 -or $null -eq $code)
       $res.StatusCode = if ($okCmd) { 200 } else { 500 }
       $res.ContentType = 'text/plain; charset=utf-8'
