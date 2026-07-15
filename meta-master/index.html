@@ -336,6 +336,10 @@
   .cws-movbtn{background:#1a1f1a;color:#8bd48b;border:1px solid #3a5a3a;border-radius:6px;font-size:14px;padding:3px 10px;cursor:pointer;line-height:1;}
   .cws-movbtn:hover{background:#2a3a2a;}
   .cws-movbtn.on{background:#3fae3f;color:#fff;border-color:#3fae3f;}
+  .cws-movhead{cursor:pointer;user-select:none;}
+  .cws-movhead:hover{color:#8bd48b;}
+  .cws-movhead.on{color:#3fae3f;}
+  .cws-movhead .cws-allbox{font-size:13px;}
   .cws-selrow td{background:rgba(63,174,63,.13)!important;}
   .cws-aplicar{background:#2f7d2f;color:#fff;border:1px solid #3fae3f;border-radius:8px;font-size:13px;padding:7px 14px;cursor:pointer;font-weight:700;white-space:nowrap;}
   .cws-aplicar:hover:not(:disabled){background:#3fae3f;}
@@ -2351,7 +2355,7 @@
     dd.querySelector('#pConsultor').value=vals.join(',');
     const txt=dd.querySelector('.cbx-txt');
     if(vals.length===0) txt.textContent='Todos os consultores';
-    else if(vals.length===1){ const c=CONSULTORES.find(x=>x.val===vals[0]); txt.textContent = c ? c.nome : vals[0]; }
+    else if(vals.length===1){ const c=CONSULTORES.find(x=>x.val===vals[0]); txt.textContent = c ? nomeExib(c.nome) : vals[0]; }
     else txt.textContent = vals.length+' consultores selecionados';
   }
   function cbxPick(row){
@@ -2499,13 +2503,13 @@
     let h='<div class="cmd-campos">';
     if(c.campos.includes('origem'))
       h+='<label class="cmd-campo"><span>Consultor de origem</span><select id="aOrigem">'
-        +CONSULTORES.map(x=>'<option value="'+esc(x.val)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>';
+        +CONSULTORES.map(x=>'<option value="'+esc(x.val)+'">'+esc(nomeExib(x.nome))+'</option>').join('')+'</select></label>';
     if(c.campos.includes('destino'))
       h+='<div class="cmd-campo" style="flex:1 1 100%"><span>Consultores de destino (marque 1 ou mais)</span><div class="acao-chks">'
-        +CONSULTORES.map(x=>'<label class="acao-chk"><input type="checkbox" class="aDestino" value="'+esc(x.val)+'"> '+esc(x.nome)+'</label>').join('')+'</div></div>';
+        +CONSULTORES.map(x=>'<label class="acao-chk"><input type="checkbox" class="aDestino" value="'+esc(x.val)+'"> '+esc(nomeExib(x.nome))+'</label>').join('')+'</div></div>';
     if(c.campos.includes('participantes'))
       h+='<div class="cmd-campo" style="flex:1 1 100%"><span>Consultores no rateio (todos por padrão)</span><div class="acao-chks">'
-        +CONSULTORES.map(x=>'<label class="acao-chk"><input type="checkbox" class="aPart" value="'+esc(x.val)+'" checked> '+esc(x.nome)+'</label>').join('')+'</div></div>';
+        +CONSULTORES.map(x=>'<label class="acao-chk"><input type="checkbox" class="aPart" value="'+esc(x.val)+'" checked> '+esc(nomeExib(x.nome))+'</label>').join('')+'</div></div>';
     if(c.campos.includes('base'))
       h+='<label class="cmd-campo"><span>Base</span><select id="aBase"><option value="ativos">Ativos (etapas 1–4)</option>'+optsEtapas()+'</select></label>';
     if(c.campos.includes('etapaOD')){
@@ -2836,7 +2840,10 @@
   // ===== Wizard da Transferência de Leads (passo a passo, igual ao chat) =====
   let WIZ=null;
   const MESES_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  function nomeCurto(val){ const c=CONSULTORES.find(x=>x.val===val); if(!c) return val; const p=c.nome.trim().split(/\s+/); return p.length>=2?(p[0]+' '+p[p.length-1]):c.nome; }
+  // Normaliza nome cru para exibição: palavra 100% MAIÚSCULA -> Title Case (PABLO MARTINS CORREIA -> Pablo Martins Correia);
+  // preposições (de/da/do…) ficam minúsculas. NÃO altera a chave enviada ao backend, só o rótulo mostrado.
+  function nomeExib(s){ const prep=['de','da','do','dos','das','e']; return String(s||'').split(' ').map(w=>{ if(/^[A-ZÀ-ÖØ-Þ]{2,}$/.test(w)){ const t=w.charAt(0)+w.slice(1).toLowerCase(); return prep.indexOf(t.toLowerCase())>=0?t.toLowerCase():t; } return w; }).join(' '); }
+  function nomeCurto(val){ const c=CONSULTORES.find(x=>x.val===val); if(!c) return nomeExib(val); const p=c.nome.trim().split(/\s+/); return nomeExib(p.length>=2?(p[0]+' '+p[p.length-1]):c.nome); }
   function etapaLabel(num){ const e=ETAPAS_ACAO.find(x=>x[0]===String(num)); return e?e[1].replace(/^\d+\s/,''):num; }
   function mesParaPeriodo(ym){ const a=ym.split('-'),y=+a[0],m=+a[1]; const ult=new Date(y,m,0).getDate(); return {ym, de:ym+'-01', ate:ym+'-'+String(ult).padStart(2,'0'), label:MESES_PT[m-1]+'/'+y}; }
   // converte o resultado do date picker num período dos wizards {ym?, de, ate, label}
@@ -2913,7 +2920,7 @@
     if(cls==='wizTCamp'||cls==='wizCCamp'||cls==='wizICamp') recarregarCarteiraCamp(cls);
     if(cls==='trCons' && typeof WIZTR!=='undefined' && WIZTR) WIZTR.consultores=[].slice.call(document.querySelectorAll('input.trCons:checked')).map(x=>x.value); }
   function tagCount(cls){ const el=$('cnt_'+cls); if(!el) return; const t=document.querySelectorAll('input.'+cls).length, n=document.querySelectorAll('input.'+cls+':checked').length; el.textContent=n+'/'+t+' selecionados'; }
-  function consultoresItens(excluir){ const ex=Array.isArray(excluir)?excluir:(excluir?[excluir]:[]); return CONSULTORES.filter(c=>ex.indexOf(c.val)<0).map(c=>[c.val, esc(c.nome)]); }
+  function consultoresItens(excluir){ const ex=Array.isArray(excluir)?excluir:(excluir?[excluir]:[]); return CONSULTORES.filter(c=>ex.indexOf(c.val)<0).map(c=>[c.val, esc(nomeExib(c.nome))]); }
 
   function renderWiz(){
     const box=$('wizBox'); if(!box) return; const W=WIZ; let h='';
@@ -2922,7 +2929,7 @@
     }else if(W.step===2){
       h+='<div class="wiz-titulo">Passo 2 de 4 — De qual(is) consultor(es) tirar os leads (origem)?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Marque um ou vários.</div>'
-        +tagsMulti('wizOrig', CONSULTORES.map(c=>[c.val, esc(c.nome)]), W.origens, false)
+        +tagsMulti('wizOrig', CONSULTORES.map(c=>[c.val, esc(nomeExib(c.nome))]), W.origens, false)
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizSetOrigens()">Continuar →</button>'+wizVoltarBtn(1)+'</div>';
     }else if(W.step===3){
       const cand=consultoresItens(W.origens);
@@ -3027,7 +3034,7 @@
     }else if(W.step===3){
       h+='<div class="wiz-titulo">Passo 3 de 5 — De qual(is) consultor(es) tirar os leads (origem)?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">Marque um ou vários.</div>'
-        +tagsMulti('wizTOrig', CONSULTORES.map(c=>[c.val, esc(c.nome)]), W.origens, false)
+        +tagsMulti('wizTOrig', CONSULTORES.map(c=>[c.val, esc(nomeExib(c.nome))]), W.origens, false)
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:8px 16px" onclick="wizTSetOrigens()">Continuar →</button>'+wizTBack(2)+'</div>';
     }else if(W.step===4){
       const cand=consultoresItens(W.origens);
@@ -3132,7 +3139,7 @@
     }else if(W.step===3){
       h+='<div class="wiz-titulo">Passo '+(W.cc?3:2)+' de '+N+' — Qual consultor?</div>'
         +'<div style="font-size:12px;color:#9a9aa2;margin-bottom:10px">A transferência é entre as etapas dele mesmo (não muda de dono).</div><div class="wiz-opts">';
-      CONSULTORES.forEach((c,i)=>{ h+=wizOpt(i+1, esc(c.nome), "wizISetConsultor('"+c.val+"')", W.consultor===c.val); });
+      CONSULTORES.forEach((c,i)=>{ h+=wizOpt(i+1, esc(nomeExib(c.nome)), "wizISetConsultor('"+c.val+"')", W.consultor===c.val); });
       h+='</div><div class="wiz-nav">'+wizIBack(W.cc?2:1)+'</div>';
     }else if(W.step===4){
       h+='<div class="wiz-titulo">Passo '+(W.cc?4:3)+' de '+N+' — De quais etapas pegar os leads de '+esc(nomeCurto(W.consultor))+'?</div>'
@@ -3825,7 +3832,7 @@
         +wizCampoMes(W.periodo,'trein')+(W.periodo?' <button type="button" class="tr-clear" onclick="WIZTR.periodo=null;renderTr()">✕ limpar período</button>':'')+'</div>'
         +'<div class="tr-fgroup"><label class="tr-chk"><input type="checkbox" id="trTodas" onchange="WIZTR.todas=this.checked" '+(W.todas?'checked':'')+'> Incluir também as não-ganhas <span class="tr-fhint">(perdidas/canceladas)</span></label></div>'
         +'<div class="tr-fgroup"><div class="tr-flabel">👥 Consultor <span class="tr-fhint">(nenhum marcado = todos)</span></div>'
-        +tagsMulti('trCons', CONSULTORES.map(c=>[c.nome, esc(c.nome)]), W.consultores, false)+'</div>'
+        +tagsMulti('trCons', CONSULTORES.map(c=>[c.nome, esc(nomeExib(c.nome))]), W.consultores, false)+'</div>'
         +'</div>'
         +'<div class="wiz-nav"><button type="button" class="btn btn-ouro" style="width:auto;padding:9px 18px" onclick="trExecVendas(this)">▶ Levantar vendas</button>'
         +'<button type="button" class="wiz-back" onclick="WIZTR.step=2;renderTr()">‹ Voltar</button></div>';
@@ -4024,7 +4031,7 @@
     const ids=(CWS_CUR&&CWS_CUR.negIds)||[]; let gi=0;
     out.querySelectorAll('table').forEach(tbl=>{
       const thr=tbl.querySelector('thead tr');
-      if(thr && !thr.querySelector('.cws-movcol')){ const th=document.createElement('th'); th.className='cws-movcol'; th.textContent='Nutrir'; thr.appendChild(th); }
+      if(thr && !thr.querySelector('.cws-movcol')){ const th=document.createElement('th'); th.className='cws-movcol cws-movhead'; th.title='Clique p/ selecionar ou desmarcar todos desta lista'; th.setAttribute('onclick','cwsMovTodos(this)'); th.innerHTML='<span class="cws-allbox">◻</span> Nutrir'; thr.appendChild(th); }
       tbl.querySelectorAll('tbody tr').forEach(tr=>{
         const rec=ids[gi]||{}; gi++;
         if(rec.id) tr.dataset.oppId=String(rec.id);
@@ -4045,9 +4052,30 @@
     else { CWS_SEL.add(id); tr.classList.add('cws-selrow'); btn.classList.add('on'); btn.textContent='☑'; }
     cwsAtualizarAplicar();
   }
+  // marca/desmarca TODAS as linhas da mesma tabela do botão (toggle): se todas já selecionadas -> limpa; senão -> seleciona todas
+  function cwsMovTodos(btn){
+    const tbl=btn.closest('table'); if(!tbl) return;
+    const trs=[...tbl.querySelectorAll('tbody tr[data-opp-id]')];
+    const ids=trs.map(tr=>tr.dataset.oppId).filter(Boolean);
+    const todosSel=ids.length>0 && ids.every(id=>CWS_SEL.has(id));
+    trs.forEach(tr=>{ const id=tr.dataset.oppId; if(!id) return; const b=tr.querySelector('.cws-movbtn');
+      if(todosSel){ CWS_SEL.delete(id); tr.classList.remove('cws-selrow'); if(b){ b.classList.remove('on'); b.textContent='◻'; } }
+      else { CWS_SEL.add(id); tr.classList.add('cws-selrow'); if(b){ b.classList.add('on'); b.textContent='☑'; } }
+    });
+    cwsAtualizarAplicar();
+  }
   function cwsAtualizarAplicar(){
     const n=CWS_SEL.size;
     document.querySelectorAll('.cws-aplicar').forEach(b=>{ b.disabled=(n===0); b.textContent='Mover p/ Nutrição ('+n+')'; });
+    // estado do cabeçalho Nutrir por tabela: ◻ (nenhum) · ▣ (parcial) · ☑ (tudo marcado)
+    document.querySelectorAll('table').forEach(tbl=>{ const hd=tbl.querySelector('.cws-movhead'); if(!hd) return;
+      const box=hd.querySelector('.cws-allbox');
+      const trs=[...tbl.querySelectorAll('tbody tr[data-opp-id]')]; const tot=trs.length;
+      const selN=trs.filter(tr=>CWS_SEL.has(tr.dataset.oppId)).length;
+      if(tot>0 && selN===tot){ if(box) box.textContent='☑'; hd.classList.add('on'); }
+      else if(selN>0){ if(box) box.textContent='▣'; hd.classList.remove('on'); }
+      else { if(box) box.textContent='◻'; hd.classList.remove('on'); }
+    });
   }
   // PREVIEW antes de aplicar: lista os selecionados com "De: Negociação → Para: Lead não qualificado/Nutrição"
   function cwsAplicarPreview(){
