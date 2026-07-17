@@ -268,6 +268,57 @@
   .cmd-aviso{font-size:13px;color:#e79;padding:14px;background:#1c1414;border:1px solid #5a3f3f;border-radius:10px;line-height:1.5;}
   .cmd-aviso b{color:#F0C84A;}
   .cmd-out{font-size:13.5px;color:#ddd;line-height:1.5;}
+  /* Pesquisa Socioeconômica: bloco do pacote (prompt + dados) p/ colar numa IA */
+  .ps-box{margin-top:14px;}
+  .ps-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+  .ps-hint{font-size:12px;color:#9a9aa2;}
+  .ps-ta{width:100%;min-height:240px;max-height:440px;background:#0f0f14;color:#cfcfd6;border:1px solid #33333e;border-radius:10px;padding:12px;font:12px/1.5 ui-monospace,Consolas,'Courier New',monospace;white-space:pre;overflow:auto;resize:vertical;box-sizing:border-box;}
+  .ps-ta:focus{outline:1px solid #F0C84A;}
+  /* fluxo 2 passos */
+  .ps-step{border:1px solid #2a2a33;border-radius:12px;padding:14px 16px;margin-top:14px;background:#111117;}
+  .ps-step .ps-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .ps-step .ps-badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;background:#222;color:#F0C84A;border:1px solid #3a3a2a;border-radius:999px;padding:3px 10px;}
+  .ps-voltar{padding:5px 12px !important;font-size:12px !important;font-weight:700 !important;}
+  .ps-step.ps-done .ps-badge{color:#3fae3f;border-color:#2f5a2f;background:#16211a;}
+  .ps-desc{font-size:12.5px;color:#9a9aa2;margin:2px 0 10px;}
+  .ps-amostra{margin-top:8px;}
+  .ps-amostra-h{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#9a9aa2;margin:6px 0 4px;}
+  /* Leitura de Turma: números clicáveis da Tabela 1 → tabela 3 */
+  .lt-num{cursor:pointer;color:#F0C84A;font-weight:800;text-decoration:underline;text-underline-offset:2px;user-select:none;}
+  .lt-num:hover{background:rgba(240,200,74,.14);}
+  .lt-num.sel{background:#F0C84A;color:#221c00;border-radius:6px;text-decoration:none;box-shadow:0 0 0 2px rgba(240,200,74,.35) inset;}
+  .lt-colhead{cursor:pointer;user-select:none;text-decoration:underline;text-underline-offset:2px;}
+  .lt-colhead:hover{color:#F0C84A;}
+  .lt-colhead.partsel{color:#F0C84A;}
+  .lt-colhead.allsel{color:#221c00;background:#F0C84A;}
+  .lt-drillbox{margin-top:12px;}
+  th.lt-ccol{text-align:center;min-width:64px;line-height:1.3;}
+  .lt-pill{display:inline-block;border-radius:20px;padding:0 7px;font-size:9px;font-weight:800;color:#fff;}
+  .lt-pill.lt-adq{background:#2f7d2f;} .lt-pill.lt-pen{background:#a07a10;}
+  td.lt-cell{text-align:center;color:#3a3a44;}
+  td.lt-cell.on.okv{color:#7fe6a0;background:rgba(63,174,63,.16);font-weight:800;}
+  td.lt-cell.on.okp{color:#ffd66b;background:rgba(201,151,0,.18);font-weight:800;}
+  .lt-cap{background:#15151b;padding:12px 14px;border-radius:10px;}
+  .lt-cap-tit{font-weight:800;color:#F0C84A;font-size:13px;margin-bottom:9px;}
+  /* aplicado só ao gerar a imagem: fonte maior + espaços menores p/ melhor leitura */
+  .lt-cap-shot .lt-cap-tit{font-size:18px;margin-bottom:12px;}
+  .lt-cap-shot table{font-size:16px;}
+  .lt-cap-shot th,.lt-cap-shot td{padding:5px 11px !important;}
+  .lt-cap-shot td.lt-al,.lt-cap-shot td.lt-cons{font-size:16px;font-weight:700;}
+  .lt-cap-shot td.lt-cell{font-size:20px;line-height:1;}
+  .lt-cap-shot th.lt-ccol{font-size:13.5px;}
+  .lt-cap-shot .lt-pill{font-size:11px;padding:1px 9px;}
+  .lt-cap-shot .lt-legend{font-size:13.5px;margin-top:12px;}
+  td.lt-al{white-space:nowrap;}
+  td.lt-cons{white-space:nowrap;color:#c8a24a;font-weight:600;}
+  td.lt-cell.no{color:#4a4a55;}
+  .lt-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid #2a2a33;font-size:11.5px;color:#9a9aa2;}
+  .lt-legend .lt-dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+  .lt-consfilt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:9px 0;font-size:12px;color:#9a9aa2;}
+  .lt-chip{background:#20202a;color:#dfe0e6;border:1px solid #34343f;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;}
+  .lt-chip:hover{background:#2a2a35;}
+  .lt-chip.on{background:#F0C84A;color:#221c00;border-color:#F0C84A;}
+  .lt-chip-clr{border-style:dashed;color:#c98;}
   .cmd-out .md-h{color:#F0C84A;margin:14px 0 8px;font-weight:900;letter-spacing:.3px;}
   .cmd-out h3.md-h{font-size:16px;border-bottom:1px solid #3a3a3a;padding-bottom:6px;}
   .cmd-out h4.md-h{font-size:14px;color:#e2c878;}
@@ -2293,6 +2344,9 @@
     {id:'relatorioTurma', cat:'📚 Leitura de Turma', label:'Relatório de Turma', exec:true,
       desc:'Aceita 2 tipos de link. (1) Google Sheets de confirmação de presença → lê TODAS as abas (turmas) via .xlsx: panorama + Meta 70% + follow-up + transferências + cruzamento por CPF. (2) Link de turma do Sales Cube (…/classes/ID) → CONFIRMAÇÃO WS: tabela Nome · Telefone · CPF · Status · Responsável (com menu ⋮ para imprimir / HTML / Excel / PDF).', campos:['link']},
 
+    {id:'pesqSocio', cat:'📚 Leitura de Turma', label:'Pesquisa Socioeconômica - Relatório', exec:true,
+      desc:'3 passos: (1) link da Pesquisa Socioeconômica; (2) link do Mapeamento da Turma (ADQUIRIDO × PENDENTE — opcional, p/ não indicar o que a pessoa já comprou); (3) "Trazer relatório" → monta o PACOTE (prompt de analista comercial + as duas bases) para colar numa IA, que gera o Relatório Estratégico da Turma + indicação individual de treinamento + PDF.', campos:['linkPesq','linkMapa']},
+
     {id:'buscarClientes', cat:'📇 Clientes', label:'Buscar clientes (lista)', exec:true,
       desc:'Cole uma lista (um por linha) de nomes, CPFs ou telefones → tabela Cliente · Telefone · CPF · Consultor. Detecta o tipo de cada linha e busca no Sales Cube (busca reversa por CPF/telefone). Resultado com busca, copiar e exportar (⋮).', campos:['lista']},
   ];
@@ -2408,6 +2462,8 @@
     const per=(window.MM&&MM.periodo)||hojeYM();
     let h='<div class="cmd-campos">';
     if(c.campos.includes('link')) h+='<label class="cmd-campo" style="flex:1 1 100%"><span>Link da planilha (Google Sheets — público)</span><input type="text" id="pLink" placeholder="https://docs.google.com/spreadsheets/d/…/edit?gid=…" style="width:100%;min-width:420px"></label>';
+    if(c.campos.includes('linkPesq')) h+='<label class="cmd-campo" style="flex:1 1 100%"><span>① Passo 1 — Link da Pesquisa Socioeconômica <span style="color:#8a8a92">(Google Sheets público)</span></span><input type="text" id="pLinkPesq" placeholder="https://docs.google.com/spreadsheets/d/…" style="width:100%;min-width:420px"></label>';
+    if(c.campos.includes('linkMapa')) h+='<label class="cmd-campo" style="flex:1 1 100%"><span>② Passo 2 — Link do Mapeamento da Turma <span style="color:#8a8a92">(ADQUIRIDO × PENDENTE — opcional)</span></span><input type="text" id="pLinkMapa" placeholder="https://docs.google.com/spreadsheets/d/…  (deixe vazio se não tiver)" style="width:100%;min-width:420px"></label>';
     if(c.campos.includes('lista')) h+='<label class="cmd-campo" style="flex:1 1 100%"><span>Cole a lista — um nome, CPF ou telefone por linha</span><textarea id="pLista" rows="8" placeholder="Rosangela de Barcelos&#10;043.290.056-03&#10;(27) 99663-6946&#10;…" style="width:100%;min-width:420px;font-family:inherit;font-size:13px;padding:9px 11px;background:#141418;border:1px solid #3a3a3a;color:#e8e8ea;border-radius:8px;resize:vertical"></textarea></label>';
     if(c.campos.includes('periodo')) h+='<div class="cmd-campo cmd-periodo" style="flex:1 1 100%"><span>Período</span>'
       +'<input type="hidden" id="pDe"><input type="hidden" id="pAte">'
@@ -3620,6 +3676,12 @@
       if(!lk){ res.innerHTML='<div class="cmd-aviso">Cole o <b>link público</b> do Google Sheets da turma antes de executar.</div>'; res.scrollIntoView({behavior:'smooth',block:'start'}); return; }
       qs.set('link', lk);
     }
+    if(c.campos.includes('linkPesq')){
+      const lk=valEl('pLinkPesq');
+      if(!lk){ res.innerHTML='<div class="cmd-aviso">Cole o <b>link da Pesquisa Socioeconômica</b> (Passo 1) antes de executar.</div>'; res.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+      qs.set('link', lk);
+      const lm=valEl('pLinkMapa'); if(lm) qs.set('linkMapa', lm);   // Passo 2 opcional
+    }
     if(c.campos.includes('lista')){
       const lst=($('pLista')?$('pLista').value:'').trim();
       if(!lst){ res.innerHTML='<div class="cmd-aviso">Cole a <b>lista</b> (um nome, CPF ou telefone por linha) antes de executar.</div>'; res.scrollIntoView({behavior:'smooth',block:'start'}); return; }
@@ -3637,6 +3699,8 @@
       if(id==='relatorioTurma'){ renderTurma(txt,res); rtSalvarUltima(valEl('pLink'),txt); rtAtualizarHint(); }   // nova leitura substitui a "última tabela" guardada (aceita Relatório de Turma OU Confirmação WS)
       else if(id==='negociacoes'){ renderNegociacoes(txt,res); }   // camada rica: modal amplo + busca + copiar + exportar
       else if(id==='buscarClientes'){ renderBuscarClientes(txt,res); }   // camada rica
+      else if(id==='pesqSocio'){ renderPesqSocio(txt,res); }   // pacote (prompt fixo + dados) p/ colar numa IA
+      else if(id==='leituraTurma'){ renderLeituraTurma(txt,res); }   // Tabela 1 clicável (Pendente/Adquirido) → tabela 3 de alunos
       else if(id==='metaConsultores'||id==='metaUnidade'||id==='metaGeral'){ renderMetaCards(txt,res); }
       else { res.innerHTML='<div class="cmd-out">'+mdToHtml(txt)+'</div>'; aplicarMobileTabelas(); }   // mobile: densidade + foco por coluna
       cmdFlash(res, snap);   // destaca por 5s as células que mudaram
@@ -3922,11 +3986,196 @@
     CWS_SEL.clear();
     cwsRenderIn(res, true);
   }
+  // Leitura de Turma: Tabela 1 (Pendente/Adquirido) = SELEÇÃO MÚLTIPLA (toggle) → matriz de alunos (Tabela 3)
+  let LT_DET={}, LT_CONS={}, LT_SEL=new Set(), LT_CONSFILT=new Set();
+  const LT_PREP=['de','da','do','dos','das','e','di','du','del','della','van','von'];
+  function ltNM(s){ return String(s||'').replace(/\s+/g,' ').trim().toLowerCase().split(' ').map(function(w,i){ return (i>0&&LT_PREP.indexOf(w)>=0)?w:(w.charAt(0).toUpperCase()+w.slice(1)); }).join(' '); }
+  function renderLeituraTurma(txt,res){
+    const m=(txt||'').match(/<!--LT-DET:([\s\S]*?)-->/);
+    LT_DET={}; LT_CONS={}; LT_SEL=new Set(); LT_CONSFILT=new Set();
+    if(m){ try{ const j=JSON.parse(m[1]); if(j&&j.det){ LT_DET=j.det; LT_CONS=j.cons||{}; } else { LT_DET=j||{}; } }catch(e){ LT_DET={}; } }
+    const body=(txt||'').replace(/<!--LT-DET:[\s\S]*?-->/,'').trim();
+    res.innerHTML='<div class="cmd-out">'+mdToHtml(body)+'</div><div id="ltDrillBox" class="lt-drillbox"></div>';
+    if(typeof aplicarMobileTabelas==='function') aplicarMobileTabelas();
+    // 1ª tabela = Tabela 1 (por treinamento): Pendente (col 1) e Adquirido (col 3) viram clicáveis (toggle)
+    const tbl=res.querySelector('table'); if(!tbl) return;
+    tbl.querySelectorAll('tbody tr').forEach(tr=>{
+      const tds=tr.children; if(tds.length<5) return;
+      const treino=(tds[0].textContent||'').trim();
+      [[1,'pen'],[3,'adq']].forEach(pair=>{
+        const td=tds[pair[0]]; const n=parseInt((td.textContent||'').replace(/\D/g,''),10)||0;
+        if(n>0){ td.classList.add('lt-num'); td.dataset.treino=treino; td.dataset.st=pair[1]; td.title='Selecionar / remover'; td.onclick=function(){ ltToggle(this); }; }
+      });
+    });
+    // cabeçalhos PENDENTE (th[1]) e ADQUIRIDO (th[3]) = selecionar/limpar TODOS daquela coluna
+    const ths=tbl.querySelectorAll('thead th');
+    [[1,'pen'],[3,'adq']].forEach(function(pair){ const th=ths[pair[0]]; if(!th) return;
+      th.classList.add('lt-colhead'); th.dataset.st=pair[1]; th.title='Selecionar / limpar todos desta coluna'; th.onclick=function(){ ltToggleCol(pair[1]); }; });
+  }
+  function ltToggle(td){
+    const k=td.dataset.treino+'|'+td.dataset.st;
+    if(LT_SEL.has(k)){ LT_SEL.delete(k); td.classList.remove('sel'); }
+    else { LT_SEL.add(k); td.classList.add('sel'); }
+    ltAtualizaCabecalhos(); ltRenderMatriz();
+  }
+  // cabeçalho da coluna: seleciona/limpa TODOS os treinamentos daquela situação (pen/adq)
+  function ltToggleCol(status){
+    const tds=[...document.querySelectorAll('.lt-num')].filter(function(td){ return td.dataset.st===status; });
+    if(!tds.length) return;
+    const todos=tds.every(function(td){ return LT_SEL.has(td.dataset.treino+'|'+status); });
+    tds.forEach(function(td){ const k=td.dataset.treino+'|'+status;
+      if(todos){ LT_SEL.delete(k); td.classList.remove('sel'); }
+      else { LT_SEL.add(k); td.classList.add('sel'); } });
+    ltAtualizaCabecalhos(); ltRenderMatriz();
+  }
+  function ltAtualizaCabecalhos(){
+    ['pen','adq'].forEach(function(st){
+      const th=document.querySelector('.lt-colhead[data-st="'+st+'"]'); if(!th) return;
+      const tds=[...document.querySelectorAll('.lt-num')].filter(function(td){ return td.dataset.st===st; });
+      const sel=tds.filter(function(td){ return LT_SEL.has(td.dataset.treino+'|'+st); }).length;
+      th.classList.toggle('allsel', tds.length>0 && sel===tds.length);
+      th.classList.toggle('partsel', sel>0 && sel<tds.length);
+    });
+  }
+  // Tabela 3 = matriz: linhas = alunos únicos (alfabético), colunas = seleções (treino+situação), ✓ onde se aplica
+  function ltRenderMatriz(){
+    const box=document.getElementById('ltDrillBox'); if(!box) return;
+    const cols=[...LT_SEL].map(k=>{ const p=k.split('|'); return {t:p[0], st:p[1], k}; });
+    if(!cols.length){ box.innerHTML=''; return; }
+    const has={}; const set=new Set();
+    cols.forEach(c=>{ const arr=(c.st==='adq'?(LT_DET[c.t]||{}).adq:(LT_DET[c.t]||{}).pen)||[]; has[c.k]=new Set(arr); arr.forEach(n=>set.add(n)); });
+    let alunos=[...set].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    const temCons=alunos.some(function(n){ return LT_CONS[n]; });
+    // consultores presentes na seleção + aplica o filtro de consultor (se houver)
+    const consultores=[...new Set(alunos.map(function(n){ return LT_CONS[n]||''; }).filter(Boolean))].sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+    if(LT_CONSFILT.size){ alunos=alunos.filter(function(n){ return LT_CONSFILT.has(LT_CONS[n]||''); }); }
+    let h='<div class="cart-dethead">🎓 Seleção · <b>'+alunos.length+'</b> aluno(s) · <b>'+cols.length+'</b> coluna(s)'
+      +'<button class="cart-loadall ld-noprint" onclick="ltMatrizImagem(this)" title="Gerar imagem para o consultor">📷 imagem</button>'
+      +'<button class="cart-loadall ld-noprint" onclick="ltMatrizCopiar(\'tab\')" title="Copiar tabela (cola no Excel)">⧉ tabela</button>'
+      +'<button class="cart-loadall ld-noprint" onclick="ltMatrizCopiar(\'lst\')" title="Copiar lista (WhatsApp)">📝 lista</button>'
+      +'<button class="cart-x ld-noprint" onclick="ltMatrizLimpar()" title="Limpar seleção">✕ limpar</button></div>';
+    if(consultores.length>1){ h+='<div class="lt-consfilt ld-noprint"><span>Filtrar consultor:</span>';
+      consultores.forEach(function(cn){ h+='<button class="lt-chip'+(LT_CONSFILT.has(cn)?' on':'')+'" onclick="ltFiltCons(\''+String(cn).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')">'+esc(ltNM(cn))+'</button>'; });
+      if(LT_CONSFILT.size){ h+='<button class="lt-chip lt-chip-clr" onclick="ltFiltConsLimpar()">✕ todos</button>'; }
+      h+='</div>'; }
+    h+='<div id="ltMatrizCap" class="lt-cap"><div class="lt-cap-tit">🎓 Leitura de Turma — '+alunos.length+' aluno(s) · '+cols.length+' treinamento(s)'+(LT_CONSFILT.size?(' · Consultor: '+[...LT_CONSFILT].map(ltNM).join(', ')):'')+'</div>';
+    h+='<div class="md-tblwrap"><table class="ltbl cart-dettbl" id="ltMatriz"><thead><tr><th>#</th><th>Aluno</th>'+(temCons?'<th>Consultor</th>':'');
+    cols.forEach(c=>{ const pill=c.st==='adq'?'<span class="lt-pill lt-adq">Adq.</span>':'<span class="lt-pill lt-pen">Pend.</span>';
+      h+='<th class="lt-ccol">'+esc(c.t)+'<br>'+pill+'</th>'; });
+    h+='</tr></thead><tbody>';
+    alunos.forEach(function(n,i){ h+='<tr><td>'+(i+1)+'</td><td class="lt-al">'+esc(ltNM(n))+'</td>'+(temCons?'<td class="lt-cons">'+esc(ltNM(LT_CONS[n]||''))+'</td>':'');
+      cols.forEach(c=>{ const on=has[c.k].has(n); const cl=on?('lt-cell on '+(c.st==='adq'?'okv':'okp')):'lt-cell no';
+        h+='<td class="'+cl+'">'+(on?'✓':'–')+'</td>'; });
+      h+='</tr>'; });
+    h+='</tbody></table></div>';
+    h+='<div class="lt-legend"><span><i class="lt-dot" style="background:#e0b93b"></i>✓ Pendente = ainda não possui</span><span><i class="lt-dot" style="background:#4fbf76"></i>✓ Adquirido = já possui</span></div>';
+    box.innerHTML=h+'</div>';
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  // copiar em 2 formatos: 'tab' = tabela (Excel, cabeçalhos limpos + Consultor) · 'lst' = lista (WhatsApp)
+  function ltMatrizCopiar(kind){
+    const cols=[...LT_SEL].map(function(k){ const p=k.split('|'); return {t:p[0], st:p[1], k}; });
+    if(!cols.length) return;
+    const has={}; const set=new Set();
+    cols.forEach(function(c){ const arr=(c.st==='adq'?(LT_DET[c.t]||{}).adq:(LT_DET[c.t]||{}).pen)||[]; has[c.k]=new Set(arr); arr.forEach(function(n){ set.add(n); }); });
+    const alunos=[...set].sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+    const temCons=alunos.some(function(n){ return LT_CONS[n]; });
+    const stLbl=function(st){ return st==='adq'?'Adq.':'Pend.'; };
+    let txt;
+    if(kind==='lst'){
+      const out=['📚 Leitura de Turma — '+alunos.length+' aluno(s)',''];
+      alunos.forEach(function(n,i){ out.push((i+1)+'. '+ltNM(n)+((temCons&&LT_CONS[n])?('  ·  Consultor: '+ltNM(LT_CONS[n])):''));
+        const itens=cols.filter(function(c){ return has[c.k].has(n); }).map(function(c){ return c.t+' ('+stLbl(c.st)+')'; });
+        out.push('   '+(itens.length?itens.join(', '):'—')); });
+      txt=out.join('\n');
+    } else {
+      const head=['#','Aluno'].concat(temCons?['Consultor']:[]).concat(cols.map(function(c){ return c.t+' ('+stLbl(c.st)+')'; }));
+      const linhas=[head.join('\t')];
+      alunos.forEach(function(n,i){ const row=[i+1, ltNM(n)].concat(temCons?[ltNM(LT_CONS[n]||'')]:[]).concat(cols.map(function(c){ return has[c.k].has(n)?'✓':'–'; })); linhas.push(row.join('\t')); });
+      txt=linhas.join('\n');
+    }
+    navigator.clipboard.writeText(txt).then(function(){ toast(kind==='lst'?'Lista copiada!':'Tabela copiada!'); }).catch(function(){ toast('Não consegui copiar.'); });
+  }
+  // 📷 gera a imagem da matriz (título + tabela) → copia p/ WhatsApp; se não der, baixa PNG
+  async function ltMatrizImagem(btn){
+    if(typeof html2canvas==='undefined'){ toast('html2canvas não carregou (precisa de internet).'); return; }
+    const cap=document.getElementById('ltMatrizCap'); if(!cap) return;
+    const wrap=cap.querySelector('.md-tblwrap'); const oldOv=wrap?wrap.style.overflow:'';
+    if(wrap) wrap.style.overflow='visible';
+    cap.classList.add('lt-cap-shot'); void cap.offsetHeight;   // fonte maior + espaços menores só na imagem
+    const l0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
+    try{
+      const c=await html2canvas(cap,{scale:3, backgroundColor:'#15151b', useCORS:true, windowWidth:Math.max(cap.scrollWidth+40, 900)});
+      const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+      try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); toast('Imagem copiada — cole no WhatsApp!'); }
+      catch(e){ const a=document.createElement('a'); a.download='leitura-turma-selecao.png'; a.href=c.toDataURL('image/png'); a.click(); toast('Imagem baixada!'); }
+    }catch(e){ toast('Falhou: '+(e.message||e)); }
+    finally{ cap.classList.remove('lt-cap-shot'); if(wrap) wrap.style.overflow=oldOv; if(btn){ btn.disabled=false; btn.textContent=l0; } }
+  }
+  function ltMatrizLimpar(){ LT_SEL.clear(); LT_CONSFILT.clear(); document.querySelectorAll('.lt-num.sel').forEach(td=>td.classList.remove('sel')); ltAtualizaCabecalhos(); const b=document.getElementById('ltDrillBox'); if(b) b.innerHTML=''; }
+  // filtro por consultor (toggle): mostra só os alunos daquele(s) consultor(es)
+  function ltFiltCons(cons){ if(LT_CONSFILT.has(cons)) LT_CONSFILT.delete(cons); else LT_CONSFILT.add(cons); ltRenderMatriz(); }
+  function ltFiltConsLimpar(){ LT_CONSFILT.clear(); ltRenderMatriz(); }
   // Buscar clientes (lista) — camada rica (busca + copiar + exportar)
   function renderBuscarClientes(txt,res){
     const body=(txt||'').replace('<!--BUSCA-CLIENTES-->','').trim();
     CWS_CUR={txt:body, titulo:richTitulo(body), placeholder:'Buscar por nome, telefone, CPF ou consultor…', arqbase:'Clientes', unid:['cliente','clientes']};
     cwsRenderIn(res, true);
+  }
+  // Pesquisa Socioeconômica — 3 passos: (1) Pesquisa + (2) Mapeamento lidos ao Executar (resumo + amostras);
+  // (3) "Trazer relatório" revela o pacote (prompt fixo + as bases) p/ copiar e colar numa IA.
+  function renderPesqSocio(txt,res){
+    const MA='<!--PESQ-AMOSTRA-->', MM='<!--PESQ-MAPA-->', MP='<!--PESQ-PACOTE-->';
+    let s=(txt||'').replace('<!--PESQ-SOCIO-->',''); let resumo='', amostra='', mapa='', pacote='';
+    const iP=s.indexOf(MP); if(iP>=0){ pacote=s.substring(iP+MP.length).trim(); s=s.substring(0,iP); }
+    const iM=s.indexOf(MM); if(iM>=0){ mapa=s.substring(iM+MM.length).trim(); s=s.substring(0,iM); }
+    const iA=s.indexOf(MA); if(iA>=0){ amostra=s.substring(iA+MA.length).trim(); resumo=s.substring(0,iA).trim(); } else { resumo=s.trim(); }
+    if(!pacote){ res.innerHTML='<div class="cmd-out">'+mdToHtml(resumo||txt)+'</div>'; return; }   // erro/aviso do backend
+    PESQ_PACOTE=pacote;
+    res.innerHTML=
+        '<div class="ps-step ps-done"><div class="ps-head"><span class="ps-badge">✔ Passos 1–2 · Bases lidas</span>'
+        +'<button class="btn btn-sec ps-voltar" onclick="pesqVoltar(this)" title="Limpar e ler outras planilhas">← Voltar</button></div>'
+        +'<div class="cmd-out">'+mdToHtml(resumo)+'</div>'
+        +(amostra?'<div class="ps-amostra"><div class="ps-amostra-h">① Pesquisa — amostra (até 8)</div><div class="cmd-out">'+mdToHtml(amostra)+'</div></div>':'')
+        +(mapa?'<div class="ps-amostra"><div class="ps-amostra-h">② Mapeamento — amostra (até 8)</div><div class="cmd-out">'+mdToHtml(mapa)+'</div></div>':'')
+        +'</div>'
+        +'<div class="ps-step" id="pesqStep2"><span class="ps-badge">③ Passo 3 · Trazer o relatório</span>'
+        +'<div class="ps-desc">Monta o pacote (prompt de analista comercial + Pesquisa'+(mapa?' + Mapeamento':'')+') pronto para colar numa IA → Relatório Estratégico + indicação individual de treinamento + PDF.</div>'
+        +'<div class="ps-actions"><button class="btn btn-verde" onclick="pesqGerar(this)">📊 Trazer relatório</button></div>'
+        +'<div id="pesqRelBox" class="ps-box" style="display:none">'
+        +'<div class="ps-actions">'
+        +'<button class="btn btn-ouro" onclick="pesqCopiar(this)">📋 Copiar tudo (prompt + dados)</button>'
+        +'<button class="btn btn-sec" onclick="pesqBaixar()">⤓ Baixar .txt</button>'
+        +'<span class="ps-hint">'+(pacote.length.toLocaleString('pt-BR'))+' caracteres — cole numa IA (Claude/ChatGPT).</span>'
+        +'</div><textarea id="pesqPacote" class="ps-ta" readonly spellcheck="false">'+esc(pacote)+'</textarea></div>'
+        +'</div>';
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function pesqGerar(btn){
+    const box=document.getElementById('pesqRelBox'); if(!box) return;
+    box.style.display='block';
+    const st=document.getElementById('pesqStep2'); if(st) st.classList.add('ps-done');
+    if(btn){ btn.disabled=true; btn.textContent='✔ Relatório gerado'; }
+    box.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  // volta ao passo 1: limpa o resultado e devolve o foco ao campo de link p/ ler outra planilha
+  function pesqVoltar(btn){
+    PESQ_PACOTE='';
+    const step=btn.closest('.ps-step'); const cont=step?step.parentElement:null;
+    if(cont) cont.innerHTML='';
+    const lk=document.getElementById('pLinkPesq');
+    if(lk){ lk.focus(); lk.select(); lk.scrollIntoView({behavior:'smooth',block:'center'}); }
+  }
+  let PESQ_PACOTE='';
+  function pesqCopiar(btn){
+    const ta=document.getElementById('pesqPacote'); const val=(ta?ta.value:PESQ_PACOTE)||'';
+    const ok=()=>{ if(btn){ const l=btn.textContent; btn.textContent='✅ Copiado!'; setTimeout(()=>btn.textContent=l,1600); } toast('Pacote copiado — cole numa IA para gerar o relatório!'); };
+    navigator.clipboard.writeText(val).then(ok).catch(()=>{ if(ta){ ta.focus(); ta.select(); try{document.execCommand('copy'); ok();}catch(_){ toast('Selecione o texto e copie manualmente.'); } } });
+  }
+  function pesqBaixar(){
+    const val=PESQ_PACOTE||''; if(!val){ toast('Nada para baixar.'); return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([val],{type:'text/plain;charset=utf-8'}));
+    a.download='pesquisa-socioeconomica.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('Arquivo baixado.');
   }
   // monta a camada rica (barra de busca + tabela + copiar) em QUALQUER container. showOpen = inclui o botão "Abrir tabela" (modal amplo)
   function cwsRenderIn(container, showOpen){

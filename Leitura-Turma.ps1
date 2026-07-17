@@ -48,6 +48,8 @@ if ($trainCols.Count -eq 0) { Write-Output "Nao encontrei colunas de treinamento
 # coluna do nome do aluno = primeira coluna que NAO e de treinamento
 $nomeCol = ($headers | Where-Object { $trainCols -notcontains $_ } | Select-Object -First 1)
 if (-not $nomeCol) { $nomeCol = $headers[0] }
+# coluna do CONSULTOR (opcional): header casa consultor/responsavel/vendedor/closer/assessor
+$consCol = ($headers | Where-Object { $trainCols -notcontains $_ -and $_ -match '(?i)consultor|respons|vendedor|closer|assessor' } | Select-Object -First 1)
 
 $total = $csv.Count
 $linhas = New-Object System.Collections.Generic.List[string]
@@ -78,14 +80,18 @@ $linhas.Add('## TABELA 2 - LEITURA DOS ALUNOS: QUAIS TREINAMENTOS JÁ POSSUI E Q
 $linhas.Add('')
 $linhas.Add('| ALUNO | JÁ POSSUI | NÃO POSSUI |')
 $linhas.Add('|---|---|---|')
+# detalhe p/ o drill (tabela 3): por treinamento, quem tem ADQUIRIDO e quem tem PENDENTE; e consultor por aluno
+$detAdq = @{}; $detPen = @{}; $consMap = [ordered]@{}
+foreach ($c in $trainCols) { $detAdq[$c.Trim()] = @(); $detPen[$c.Trim()] = @() }
 foreach ($row in $csv) {
   $nome = ([string]$row.$nomeCol).Trim()
   if (-not $nome) { continue }
+  if ($consCol -and -not $consMap.Contains($nome)) { $consMap[$nome] = ([string]$row.$consCol).Trim() }
   $possui = @(); $naoPossui = @()
   foreach ($c in $trainCols) {
     $v = [string]$row.$c
-    if ($v -match 'ADQUIR') { $possui += $c.Trim() }
-    elseif ($v -match 'PENDEN') { $naoPossui += $c.Trim() }
+    if ($v -match 'ADQUIR') { $possui += $c.Trim(); $detAdq[$c.Trim()] += $nome }
+    elseif ($v -match 'PENDEN') { $naoPossui += $c.Trim(); $detPen[$c.Trim()] += $nome }
   }
   $sPossui = if ($possui.Count) { $possui -join ', ' } else { '-' }
   $sNao    = if ($naoPossui.Count) { $naoPossui -join ', ' } else { '-' }
@@ -109,4 +115,11 @@ if ($saturados.Count) {
 $totPend = ($stats | Measure-Object -Property Pendente -Sum).Sum
 $linhas.Add("- **Total de pendências na turma:** $totPend (somando todos os treinamentos).")
 
-Write-Output ($linhas -join "`r`n")
+# detalhe p/ o drill (tabela 3): { det:{ "TREINO":{adq:[],pen:[]} }, cons:{ "Aluno":"Consultor" } }
+$det = [ordered]@{}
+foreach ($c in $trainCols) { $t = $c.Trim(); $det[$t] = [ordered]@{ adq = @($detAdq[$t]); pen = @($detPen[$t]) } }
+$outDet = [ordered]@{ det = $det; cons = $consMap }
+$jsonDet = $outDet | ConvertTo-Json -Compress -Depth 6
+if ([string]::IsNullOrWhiteSpace($jsonDet)) { $jsonDet = '{}' }
+
+Write-Output (($linhas -join "`r`n") + "`r`n`r`n<!--LT-DET:" + $jsonDet + "-->")
