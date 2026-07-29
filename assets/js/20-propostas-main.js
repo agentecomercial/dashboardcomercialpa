@@ -777,6 +777,17 @@ function gerarPropostaPDF(modo, loteCtx, loteDoc){
   })();
   var _docRef = '2026/PROP/'+String(Date.now()).slice(-6);
 
+  // Data de término da validade = emissão + N dias (mesmo formato da emissão)
+  var _validNum = parseInt(_valid, 10);
+  if(isNaN(_validNum) || _validNum < 1) _validNum = 30;
+  var _dataFim = (function(){
+    var d = new Date();
+    d.setDate(d.getDate() + _validNum);
+    var dd = String(d.getDate()).padStart(2,'0');
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    return dd + ' · ' + mm + ' · ' + d.getFullYear();
+  })();
+
   // ── FAIXA OURO TOPO (5px) ────────────────────────
   doc.setFillColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
   doc.rect(0, 0, W, 2, 'F');
@@ -799,17 +810,20 @@ function gerarPropostaPDF(modo, loteCtx, loteDoc){
   doc.setTextColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
   doc.text('COMERCIAL', mg, 33);
 
-  // Emissão direita
+  // Emissão + término da validade (direita)
   doc.setFont('helvetica','bold');
   doc.setFontSize(6.5);
   doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.text('EMISSÃO', W - mg, 25, {align:'right'});
+  doc.text('EMISSÃO', W - mg, 21, {align:'right'});
   doc.setFontSize(SZ_BODY);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text(_dataAgora, W - mg, 29, {align:'right'});
+  doc.text(_dataAgora, W - mg, 25, {align:'right'});
   doc.setFontSize(6.5);
   doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.text('VALIDADE ' + _valid + ' DIAS', W - mg, 33, {align:'right'});
+  doc.text('VÁLIDA ATÉ · ' + _validNum + ' DIAS', W - mg, 29, {align:'right'});
+  doc.setFontSize(SZ_BODY);
+  doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+  doc.text(_dataFim, W - mg, 33, {align:'right'});
 
   // Linha divisória do header
   doc.setDrawColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
@@ -1033,38 +1047,46 @@ function gerarPropostaPDF(modo, loteCtx, loteDoc){
   y += notaH + GAP_SEC;
 
   // ── SEÇÃO III · Formas de Pagamento (cards) ──
+  /* O título III sempre sai. O checkbox "Mostrar cards de forma de pagamento"
+     liga/desliga os cards CARTÃO / PIX; desmarcado, sobra o espaço em branco
+     (mesma altura) para escrever à mão. No lote/preview sem modal, o default é mostrar. */
+  var _chkFP = document.getElementById('propMostrarFormasPgto');
+  var _mostrarFormasPgto = _chkFP ? _chkFP.checked : true;
   _h2('III', 'Formas de Pagamento');
   var fpH = ALT_CARD;
   var fpGap = 4;
   var fpW = (maxW - fpGap) / 2;
   _quebraPagina(fpH + 3);
-  // Card 1: Cartão
-  doc.setFillColor(240, 245, 251);
-  doc.rect(mg, y, fpW, fpH, 'F');
-  doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
-  doc.rect(mg, y, 1.5, fpH, 'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(SZ_BODY * 0.85);
-  doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text('CARTÃO DE CRÉDITO', mg + 4, y + fpH * 0.4);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(SZ_BODY);
-  doc.setTextColor(40, 40, 40);
-  doc.text('Em até 12x', mg + 4, y + fpH * 0.78);
-  // Card 2: PIX
-  var xf2 = mg + fpW + fpGap;
-  doc.setFillColor(240, 245, 251);
-  doc.rect(xf2, y, fpW, fpH, 'F');
-  doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
-  doc.rect(xf2, y, 1.5, fpH, 'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(SZ_BODY * 0.85);
-  doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text('PIX À VISTA', xf2 + 4, y + fpH * 0.4);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(SZ_BODY);
-  doc.setTextColor(40, 40, 40);
-  doc.text('Com prioridade de acesso', xf2 + 4, y + fpH * 0.78);
+  if(_mostrarFormasPgto){
+    // Card 1: Cartão
+    doc.setFillColor(240, 245, 251);
+    doc.rect(mg, y, fpW, fpH, 'F');
+    doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
+    doc.rect(mg, y, 1.5, fpH, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(SZ_BODY * 0.85);
+    doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+    doc.text('CARTÃO DE CRÉDITO', mg + 4, y + fpH * 0.4);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(SZ_BODY);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Em até 12x', mg + 4, y + fpH * 0.78);
+    // Card 2: PIX
+    var xf2 = mg + fpW + fpGap;
+    doc.setFillColor(240, 245, 251);
+    doc.rect(xf2, y, fpW, fpH, 'F');
+    doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
+    doc.rect(xf2, y, 1.5, fpH, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(SZ_BODY * 0.85);
+    doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+    doc.text('PIX À VISTA', xf2 + 4, y + fpH * 0.4);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(SZ_BODY);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Com prioridade de acesso', xf2 + 4, y + fpH * 0.78);
+  }
+  // Avança o mesmo espaço em ambos os casos (cards ou branco para escrita)
   y += fpH + GAP_SEC;
 
   // ── ASSINATURAS DUPLAS ────────────────────────────

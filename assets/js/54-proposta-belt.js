@@ -642,7 +642,7 @@
       var temCI = _loteTemCI(rec);
       var pend = rec ? _lotePendBase(rec) : [];
       var tem = rec ? Object.keys(rec.status).filter(function(k){ return rec.status[k] === 'ADQUIRIDO'; }) : [];
-      return { nome: nome, rec: rec, temCI: temCI, pend: pend, tem: tem, incluir: [], modalidade: 'elite' };
+      return { nome: nome, rec: rec, temCI: temCI, pend: pend, tem: tem, incluir: [], qtd: {}, modalidade: 'elite' };
     });
     _lote = { consultor: consultor, pagamento: pag, pagLabel: pagLabel, modo: 'elite', clientes: clientes };
     _loteGarantirOverlay();
@@ -655,6 +655,7 @@
   function _loteSetModo(m){
     _lote.modo = m;
     _lote.clientes.forEach(function(c){
+      c.qtd = {}; /* troca de modo reconstrói a lista → zera as quantidades (tudo volta a 1) */
       if(!c.rec){ c.incluir = []; c.modalidade = 'elite'; return; }
       if(m === 'elite'){      c.modalidade = 'elite';  c.incluir = c.pend.slice(); }
       else if(m === 'legacy'){c.modalidade = 'legacy';
@@ -667,10 +668,36 @@
     _loteRender();
   }
 
-  function _loteToggleTreino(idx, cod){
+  /* Quantidade de um treinamento incluído (default 1 quando presente). */
+  function _loteQtd(c, cod){
+    if(c.incluir.indexOf(cod) === -1) return 0;
+    return (c.qtd && c.qtd[cod]) ? c.qtd[cod] : 1;
+  }
+  /* Clique no card do seletor: 1ª vez inclui (×1); cliques seguintes somam +1. */
+  function _loteIncTreino(idx, cod){
+    var c = _lote.clientes[idx]; if(!c) return;
+    if(!c.qtd) c.qtd = {};
+    if(c.incluir.indexOf(cod) === -1){ c.incluir.push(cod); c.qtd[cod] = 1; }
+    else { c.qtd[cod] = (c.qtd[cod] || 1) + 1; }
+    _loteRender();
+    if(document.getElementById('beltSelOverlay') && document.getElementById('beltSelOverlay').classList.contains('open')) _loteSelGrid();
+  }
+  /* Remove por completo o treinamento (✕). */
+  function _loteRemoveTreino(idx, cod){
     var c = _lote.clientes[idx]; if(!c) return;
     var k = c.incluir.indexOf(cod);
-    if(k === -1) c.incluir.push(cod); else c.incluir.splice(k, 1);
+    if(k !== -1) c.incluir.splice(k, 1);
+    if(c.qtd) delete c.qtd[cod];
+    _loteRender();
+    if(document.getElementById('beltSelOverlay') && document.getElementById('beltSelOverlay').classList.contains('open')) _loteSelGrid();
+  }
+
+  function _loteToggleTreino(idx, cod){
+    var c = _lote.clientes[idx]; if(!c) return;
+    if(!c.qtd) c.qtd = {};
+    var k = c.incluir.indexOf(cod);
+    if(k === -1){ c.incluir.push(cod); c.qtd[cod] = 1; }
+    else { c.incluir.splice(k, 1); delete c.qtd[cod]; }
     _loteRender();
     if(document.getElementById('beltSelOverlay') && document.getElementById('beltSelOverlay').classList.contains('open')) _loteSelGrid();
   }
@@ -687,11 +714,20 @@
       var nome = meta.nome || cod;
       var jaTem = c.tem.indexOf(cod) !== -1;
       var incluso = c.incluir.indexOf(cod) !== -1;
+      var n = _loteQtd(c, cod);
       var b = document.createElement('button');
-      /* No Manual tudo é clicável — inclusive os já possuídos (permite readicionar o CI). */
+      /* No Manual tudo é clicável — inclusive os já possuídos (permite readicionar o CI).
+         Clique no card = +1 quantidade; clique no ✕ = remove. */
       b.className = 'belt-topt' + (incluso ? ' inc' : '');
-      b.innerHTML = cod + '<small>' + (incluso ? 'incluído ✓' : (jaTem ? 'já possui · add' : nome.slice(0,16))) + '</small>';
-      b.onclick = function(){ _loteToggleTreino(_loteSelIdx, cod); };
+      var sub = incluso ? ('×' + n + ' · clique p/ +1') : (jaTem ? 'já possui · add' : nome.slice(0,16));
+      b.innerHTML = cod + '<small>' + sub + '</small>' + (incluso ? '<span class="belt-qx" title="Remover">✕</span>' : '');
+      b.onclick = function(ev){
+        if(ev && ev.target && ev.target.classList && ev.target.classList.contains('belt-qx')){
+          _loteRemoveTreino(_loteSelIdx, cod);
+        } else {
+          _loteIncTreino(_loteSelIdx, cod);
+        }
+      };
       grid.appendChild(b);
     });
   }
@@ -705,7 +741,7 @@
       /* Gera quem tiver treinamentos a incluir — no Manual isso vale até para
          quem não está na grade (montado manualmente). */
       if(!c.incluir.length){ pulados.push(c.nome + ' — ' + (c.rec ? 'sem treinamentos a incluir' : 'sem treinamentos (não estava no mapeamento)')); return; }
-      var selec = c.incluir.map(function(cod){ return { nome: cod, val: _lotePreco(cod, pag), qty: 1 }; });
+      var selec = c.incluir.map(function(cod){ var q = _loteQtd(c, cod); return { nome: cod, val: _lotePreco(cod, pag) * q, qty: q }; });
       var total = selec.reduce(function(a,s){ return a + (s.val||0); }, 0);
       lista.push({
         cliente: c.nome, consultor: _lote.consultor, pagamento: pag, pagLabel: pagLabel,
@@ -721,6 +757,28 @@
     if(pulados.length) msg += '\n\nPulados (' + pulados.length + '):\n• ' + pulados.join('\n• ');
     _loteFechar();
     setTimeout(function(){ window.alert(msg); }, 300);
+  }
+
+  /* Gera 1 PDF apenas do cliente do índice (botão "Gerar só este"). */
+  function _loteGerarUm(idx){
+    var c = _lote && _lote.clientes ? _lote.clientes[idx] : null;
+    if(!c) return;
+    if(!c.incluir.length){
+      if(window._showToast) _showToast('⚠️ ' + c.nome + ' — sem treinamentos a incluir.','var(--amber)');
+      return;
+    }
+    var pag = _lote.pagamento, pagLabel = _lote.pagLabel;
+    var selec = c.incluir.map(function(cod){ var q = _loteQtd(c, cod); return { nome: cod, val: _lotePreco(cod, pag) * q, qty: q }; });
+    var total = selec.reduce(function(a,s){ return a + (s.val||0); }, 0);
+    var item = {
+      cliente: c.nome, consultor: _lote.consultor, pagamento: pag, pagLabel: pagLabel,
+      selecionados: selec, total: total,
+      txtIntro: (_BELT_TEXTOS[c.modalidade] || null)
+    };
+    if(typeof window.gerarPropostaLotePDF === 'function'){
+      window.gerarPropostaLotePDF([item], 'Proposta ' + String(c.nome).toUpperCase() + '.pdf');
+    }
+    if(window._showToast) _showToast('📄 Proposta de ' + c.nome + ' gerada.','var(--accent)');
   }
 
   function _loteRender(){
@@ -754,16 +812,25 @@
       var incChips;
       if(manual){
         incChips = (c.incluir.length
-          ? c.incluir.map(function(t){ return '<span class="belt-chip c-inc edit '+(t==='CI'?'c-ci':'')+'" onclick="_beltLoteToggleTreino('+i+',\''+t+'\')" title="remover">'+t+' ✕</span>'; }).join('')
+          ? c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip c-inc edit '+(t==='CI'?'c-ci':'')+'" onclick="_beltLoteToggleTreino('+i+',\''+t+'\')" title="remover">'+t+(q>1?' ×'+q:'')+' ✕</span>'; }).join('')
           : '<span style="color:var(--muted);font-size:10px;">nenhum</span>')
           + ' <span class="belt-chip c-add" onclick="_beltLoteAddTreino('+i+')">+ treino</span>';
       } else {
-        incChips = c.incluir.map(function(t){ return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+'</span>'; }).join('');
+        incChips = c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+(q>1?' ×'+q:'')+'</span>'; }).join('');
       }
-      html += '<div class="belt-cli">'
-        + '<div class="belt-cli-nome">'+c.nome+' '+badge+'</div>'
-        + '<div class="belt-chips" style="margin-bottom:4px;"><span class="belt-lbl">tem</span>'+temChips+'</div>'
-        + '<div class="belt-chips"><span class="belt-lbl">incluir</span>'+incChips+'</div>'
+      /* Botão "Gerar só este": gera 1 PDF apenas deste cliente.
+         Desabilitado quando não há treinamentos a incluir (nada pra gerar). */
+      var podeGerarUm = c.incluir.length > 0;
+      var btnUm = '<button class="belt-cli-gerar" '+(podeGerarUm?'':'disabled')+' '
+        + 'onclick="event.stopPropagation();_beltLoteGerarUm('+i+')" '
+        + 'title="'+(podeGerarUm?'Gerar só a proposta deste cliente':'Sem treinamentos a incluir')+'">📄 Gerar só este</button>';
+      html += '<div class="belt-cli" style="display:flex;align-items:flex-start;gap:10px;">'
+        + '<div style="flex:1;min-width:0;">'
+        +   '<div class="belt-cli-nome">'+c.nome+' '+badge+'</div>'
+        +   '<div class="belt-chips" style="margin-bottom:4px;"><span class="belt-lbl">tem</span>'+temChips+'</div>'
+        +   '<div class="belt-chips"><span class="belt-lbl">incluir</span>'+incChips+'</div>'
+        + '</div>'
+        + btnUm
         + '</div>';
     });
     if(!html) html = '<div style="padding:16px;color:var(--muted);font-size:12px;text-align:center;">Nenhum cliente.</div>';
@@ -776,7 +843,7 @@
     document.getElementById('beltLotePulados').innerHTML = pulHtml;
     document.getElementById('beltLotePuladosCont').textContent = pul.length;
     document.getElementById('beltLoteResumo').innerHTML = 'Serão geradas <b>'+geraveis+' propostas</b> em <b>1 PDF</b>'+(pul.length?(' · '+pul.length+' puladas'):'');
-    document.getElementById('beltLoteBtnGerar').textContent = '📄 Gerar PDF do lote ('+geraveis+')';
+    document.getElementById('beltLoteBtnGerar').textContent = '📄 Gerar todos ('+geraveis+')';
   }
 
   /* Cria os overlays (lote + seletor) uma única vez */
@@ -810,6 +877,9 @@
       +'.belt-chip.c-has{background:rgba(86,211,100,.12);color:#56d364;}.belt-chip.c-inc{background:rgba(240,180,40,.16);color:#f0b429;}.belt-chip.c-ci{background:rgba(167,139,250,.18);color:#a78bfa;}'
       +'.belt-chip.edit{cursor:pointer;}.belt-chip.edit:hover{filter:brightness(1.25);}'
       +'.belt-chip.c-add{background:none;border:1px dashed var(--border2);color:var(--muted);cursor:pointer;}.belt-chip.c-add:hover{border-color:var(--accent);color:var(--accent);}'
+      +'.belt-cli-gerar{flex-shrink:0;align-self:center;background:rgba(200,240,90,.10);border:1px solid rgba(200,240,90,.35);color:var(--accent);font-size:10.5px;font-weight:700;padding:6px 11px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}'
+      +'.belt-cli-gerar:hover{background:rgba(200,240,90,.2);}'
+      +'.belt-cli-gerar:disabled{opacity:.4;cursor:not-allowed;}'
       +'.belt-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:4px;}'
       +'.belt-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;border-top:1px solid var(--border);}'
       +'.belt-foot .r{font-size:12px;color:var(--muted);}.belt-foot .r b{color:var(--text);}'
@@ -818,7 +888,9 @@
       +'.belt-sel-card{width:720px;max-width:96vw;background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.6);}'
       +'.belt-sel-h{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:800;}'
       +'.belt-sel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px;max-height:56vh;overflow:auto;}'
-      +'.belt-topt{border-radius:8px;padding:8px 5px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:inherit;}'
+      +'.belt-topt{position:relative;border-radius:8px;padding:8px 5px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:inherit;}'
+      +'.belt-qx{position:absolute;top:2px;right:3px;width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;}'
+      +'.belt-qx:hover{background:rgba(255,95,87,.55);}'
       +'.belt-topt:hover{border-color:var(--accent);color:var(--accent);}'
       +'.belt-topt.inc{background:rgba(240,180,40,.16);border-color:rgba(240,180,40,.5);color:#f0b429;}'
       +'.belt-topt.has{opacity:.45;cursor:not-allowed;}'
@@ -870,6 +942,7 @@
   window._beltLoteAddTreino    = _loteAddTreino;
   window._beltLoteSelFechar    = _loteSelFechar;
   window._beltLoteGerar        = _loteGerar;
+  window._beltLoteGerarUm      = _loteGerarUm;
   window._beltLoteFechar       = _loteFechar;
   window._beltLerLink       = _beltLerLink;
   window._beltArquivoChange = _beltArquivoChange;
