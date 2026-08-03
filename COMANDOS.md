@@ -35,6 +35,20 @@ Saída sempre em 2 blocos: **1)** Detalhe por consultor (Criado \| Cliente \| Va
 
 ---
 
+## 📋 1C. Painel de Turmas (nº de pessoas por turma)
+**Script:** `Painel-Vitoria.ps1` · **App:** aba Comandos (categoria `📋 Painel`, id `painel`, campo **Turmas**).
+
+| Comando | O que faz |
+|---|---|
+| `Painel` (padrão) | **Próximas turmas** (de hoje p/ frente, inclui o resto deste mês): tabela `# · Turma · Início · Fim · Pessoas` + total, ordenada pela data de início |
+| `Painel -Status scheduled` | Todas as agendadas (inclui as já passadas não encerradas) |
+| `Painel -Status completed` | Turmas concluídas |
+| `Painel -Status todas` | Todos os status (agendadas + em andamento + concluídas + canceladas), com coluna Status |
+
+Fonte: MCP **`list_classes`** — cada turma já traz `enrolled_count` (nº de pessoas matriculadas). Padrão `proximas` = junta `scheduled`+`active` e mantém só `end_date >= hoje` (descarta agendadas antigas nunca fechadas). Saída inclui o marcador oculto `<!--PAINEL:{…}-->` que alimenta o **card de imagem** (`renderPainel`/`drawPainelCard`): barra por lotação, turmas com 0 inscritos em vermelho, total em destaque — Copiar imagem / Baixar PNG (mesmo modal dos cards de Meta/Negociações).
+
+---
+
 ## 🎯 2. Metas
 **Script:** `Meta-Vitoria.ps1` + cadastro em `metas-vitoria.json`
 
@@ -89,7 +103,7 @@ Executam **direto no app** (não no chat): formulário → botão **👁 Pré-vi
 | `Equilíbrio de Leads` | Redistribui leads **igualmente** entre os consultores escolhidos, **movendo só o excedente** (quem está acima da média cede p/ quem está abaixo; sobra por ordem alfabética). Base: Ativos 1–4 ou etapa específica. Padrão = pipeline atual (todas as datas) |
 | `Equilíbrio de Leads campanha [mês]` | Igual ao Equilíbrio, mas só dos leads de **uma ou mais campanhas somadas** (MCIS / TCE / Outros). Base com atalho extra "Só Novo Lead" |
 
-**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Milene 17269 · Pablo 28.
+**Mapa de consultores → user_id** (no topo do script): Gabriela 76 · Natalia 77 · Karla 16314 · Pablo 28 · Heverton 79.
 
 ---
 
@@ -205,3 +219,18 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 | `serve-agenda.ps1` | Servidor HTTP local em `http://127.0.0.1:5500` para servir o HTML |
 | `scripts/bump-cache.ps1` | Bump de cache (renova `?v=` no dashboard.html) — usado pelo `Deploy` |
 | `scripts/check-js-syntax.ps1` | Checagem de sintaxe JS |
+
+---
+
+## 🎫 APP CHAMADO — abrir chamado pelo IDE
+**Script:** `chamados/Abrir-Chamado.ps1` · **App:** APP CHAMADO (servidor `chamados/Servir.ps1`, porta 8790).
+
+| Comando | O que faz |
+|---|---|
+| `Abrir chamado` | **Fluxo guiado:** eu listo os usuários (`-Listar`) e **pergunto quem solicita** e **para quem enviar** (opções numeradas), além de **título · assunto · relato · prioridade**. Depois crio via API. |
+
+Fluxo interno (o IDE monta por você):
+1. `Abrir-Chamado.ps1 -Listar -Json` → devolve os usuários ativos (login/nome/perfil) para mostrar as opções.
+2. `Abrir-Chamado.ps1 -De <login/nome> -Para <login/nome> -Assunto <..> -Prioridade <Baixa|Média|Alta|Urgente> -Titulo "..." -Relato "..." -Json` → cria o chamado e devolve `{ok,numero,...}`.
+
+Detalhes: loga com conta de serviço (`adm`/`adm123`, sobrescrevível em `abrir-chamado.config.json`) e abre **em nome do solicitante escolhido** — o servidor só aceita isso quando quem loga é **ADM/Gestor** (consultor não personifica). Assunto ∈ {Comercial, CRM, Matrículas, Financeiro, Marketing, Eventos, Tecnologia, Outros}. O chamado aparece no painel na hora (auto-refresh 8s). **Pré-requisito:** APP CHAMADO rodando (`Abrir Chamados.vbs`). Script BOM UTF-8 (acentos). `.gitignore` cobre `dados/` e a config.
