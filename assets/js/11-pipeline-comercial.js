@@ -64,6 +64,16 @@
   function _dmShort(d){
     return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
   }
+  /* Conta dias úteis (seg-sex) no intervalo, inclusivo */
+  function _contaDiasUteis(ini, fim){
+    var n = 0, d = new Date(ini);
+    while(d <= fim){
+      var w = d.getDay();
+      if(w >= 1 && w <= 5) n++;
+      d.setDate(d.getDate()+1);
+    }
+    return n;
+  }
   function _semanasDoMes(ano, mes){
     /* mes = 1-12. Se houver config manual salva pra este mês, usa ela. */
     var mk = ano+'-'+String(mes).padStart(2,'0');
@@ -76,13 +86,17 @@
         var ini = new Date(+iniM[1], +iniM[2]-1, +iniM[3]);
         var fim = new Date(+fimM[1], +fimM[2]-1, +fimM[3]);
         if(isNaN(ini) || isNaN(fim) || fim < ini) return null;
-        var dias = Math.round((fim - ini) / 86400000) + 1;
+        /* dias = o mesmo número exibido no painel de janelas (respeita corridos/úteis) */
+        var tipo = j.tipo === 'uteis' ? 'uteis' : 'corridos';
+        var dias = tipo === 'uteis'
+          ? _contaDiasUteis(ini, fim)
+          : Math.round((fim - ini) / 86400000) + 1;
         return {
           num: idx+1,
           iniDate: ini, fimDate: fim,
           ini: j.ini, fim: j.fim,
           iniLabel: _dmShort(ini), fimLabel: _dmShort(fim),
-          dias: dias,
+          dias: dias, tipo: tipo,
           label: 'Semana '+String(idx+1).padStart(2,'0')+' ('+_dmShort(ini)+' a '+_dmShort(fim)+')'
         };
       }).filter(Boolean);
@@ -146,7 +160,7 @@
         iniDate: ini, fimDate: fimSemana,
         ini: _ymd(ini), fim: _ymd(fimSemana),
         iniLabel: _dmShort(ini), fimLabel: _dmShort(fimSemana),
-        dias: dias,
+        dias: dias, tipo: 'corridos',
         label: 'Semana '+String(n).padStart(2,'0')+' ('+_dmShort(ini)+' a '+_dmShort(fimSemana)+')'
       });
       /* Próximo cursor: segunda da próxima semana */
@@ -2411,6 +2425,35 @@
         + '.np-sem-grid .np-sem-list{display:flex;flex-direction:column;gap:5px;min-width:0;}'
         + '.np-sem-grid .np-sem-cons-row{display:grid;grid-template-columns:24px 18px 28px minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;}'
         + '@media(max-width:780px){.np-sem-grid{grid-template-columns:1fr;}.np-sem-grid .np-sem-batch{position:static;}}'
+        /* Resumo inferior: Σ semanas × meta mensal, nos 3 tiers */
+        + '.np-sem-res{padding:10px 16px;border-top:1px solid var(--border2);background:rgba(0,0,0,.25);}'
+        + '.np-sem-res-cap{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px;}'
+        + '.np-sem-res-cap em{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;font-size:9.5px;opacity:.75;}'
+        + '.np-sem-res-hh,.np-sem-res-r{display:grid;grid-template-columns:88px minmax(0,1fr) 14px 122px 122px 172px;gap:9px;align-items:center;}'
+        + '.np-sem-res-hh{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#5a5a5a;padding-bottom:5px;border-bottom:1px solid var(--border2);margin-bottom:3px;}'
+        + '.np-sem-res-hh > span:nth-child(4),.np-sem-res-hh > span:nth-child(5){text-align:right;}'
+        + '.np-sem-res-hh > span:nth-child(6){text-align:center;}'
+        + '.np-sem-res-r{padding:5px 0;}'
+        + '.np-sem-res-r + .np-sem-res-r{border-top:1px dashed rgba(255,255,255,.06);}'
+        + '.np-sem-res-k{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;}'
+        + '.np-sem-res-k.min{color:#ffe000;} .np-sem-res-k.bas{color:#ff5252;} .np-sem-res-k.mas{color:#c8f05a;}'
+        + '.np-sem-res-chips{display:flex;gap:4px;flex-wrap:wrap;min-width:0;}'
+        + '.np-sem-res-chip{font-size:9.5px;font-variant-numeric:tabular-nums;padding:3px 8px;border-radius:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);white-space:nowrap;}'
+        + '.np-sem-res-chip b{color:var(--text);font-weight:700;}'
+        + '.np-sem-res-chip.vazia{border-color:rgba(255,95,87,.28);background:rgba(255,95,87,.06);}'
+        + '.np-sem-res-chip.vazia b{color:#ff8b85;}'
+        + '.np-sem-res-chip.curr{border-color:rgba(212,165,116,.45);background:rgba(212,165,116,.10);}'
+        + '.np-sem-res-eq{color:#4a4a4a;font-size:12px;text-align:center;}'
+        + '.np-sem-res-v{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;min-width:0;}'
+        + '.np-sem-res-v b{font-weight:800;color:var(--text);}'
+        + '.np-sem-res-v.goal b{color:var(--accent);}'
+        + '.np-sem-res-v small{display:block;font-size:7.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}'
+        + '.np-sem-res-st{font-size:10px;font-weight:800;padding:5px 10px;border-radius:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+        + '.np-sem-res-st.ok{background:rgba(52,211,153,.15);color:#86efac;border:1px solid rgba(52,211,153,.35);}'
+        + '.np-sem-res-st.lo{background:rgba(255,183,64,.15);color:#fbbf24;border:1px solid rgba(255,183,64,.35);}'
+        + '.np-sem-res-st.hi{background:rgba(255,95,87,.15);color:#ff8b85;border:1px solid rgba(255,95,87,.35);}'
+        + '.np-sem-res-st.na{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border2);}'
+        + '@media(max-width:900px){.np-sem-res-hh{display:none;}.np-sem-res-r{grid-template-columns:1fr;gap:5px;}.np-sem-res-eq{display:none;}.np-sem-res-v{text-align:left;}}'
         /* Footer */
         + '.np-sem-f{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border2);gap:10px;}'
         + '.np-sem-f .info{font-size:10px;color:var(--muted);}'
@@ -2432,7 +2475,7 @@
     var stepperHtml = semanas.map(function(s){
       return '<button class="np-sem-step'+(s.num===_npSemModalSel?' curr':'')+(s.num===semAtual?' atual':'')+'" data-step-n="'+s.num+'">'
         +'S'+String(s.num).padStart(2,'0')
-        +'<small>'+s.iniLabel+' a '+s.fimLabel+'</small>'
+        +'<small>'+s.iniLabel+' a '+s.fimLabel+' · '+s.dias+(s.tipo==='uteis'?'du':'d')+'</small>'
         +'</button>';
     }).join('');
 
@@ -2492,12 +2535,13 @@
       +         '<div class="np-sem-batch-acts">'
       +           '<button class="np-sem-batch-btn primary" id="npSemAplicar" disabled>Aplicar aos selecionados</button>'
       +           '<button class="np-sem-batch-btn" id="npSemCopiarAnt">↺ Copiar semana anterior</button>'
-      +           '<button class="np-sem-batch-btn" id="npSemCopiarMensal" title="Divide a meta mensal proporcionalmente">⥥ Da meta mensal (÷'+semanas.length+')</button>'
+      +           '<button class="np-sem-batch-btn" id="npSemCopiarMensal" title="Divide a meta mensal proporcionalmente aos dias de cada semana">⥥ Da meta mensal</button>'
       +         '</div>'
       +       '</aside>'
       +       '<div class="np-sem-list" id="npSemList">'+listaHtml+'</div>'
       +     '</div>'
       +   '</div>'
+      +   '<div class="np-sem-res" id="npSemResumo"></div>'
       +   '<div class="np-sem-f">'
       +     '<div class="info">💡 Mudou no Firebase ao clicar <b>Aplicar</b>. Cada venda conta para semanal E mensal.</div>'
       +     '<div class="actions">'
@@ -2521,6 +2565,8 @@
       var lst = ov.querySelector('#npSemList');
       lst.innerHTML = consList.map(_consRowHtml).join('');
       _atualizarContador();
+      _lblCopiarMensal(); /* % do rateio muda conforme a semana selecionada */
+      _atualizarResumo(); /* Σ das semanas × meta mensal */
     }
     /* Click stepper */
     ov.querySelectorAll('[data-step-n]').forEach(function(b){
@@ -2658,7 +2704,28 @@
       ov.querySelector('#npSemBatchMas').value = _fmt(ref.mas);
       if(typeof _showToast==='function') _showToast('📋 Valores da Semana '+semAnt+' ('+refNome+') copiados — clique Aplicar.','var(--accent)');
     });
-    /* Copiar da meta mensal — divide ÷ nº semanas */
+    /* Copiar da meta mensal — rateio PROPORCIONAL aos dias da semana selecionada.
+       Semana de 6 dias leva mais meta que uma de 4. Cai no ÷N igualitário se as
+       janelas não tiverem dias válidos. */
+    function _totalDiasSemanas(){
+      return semanas.reduce(function(s,x){ return s + (+x.dias || 0); }, 0);
+    }
+    function _pesoSemana(num){
+      var tot = _totalDiasSemanas();
+      var s = semanas.filter(function(x){ return x.num === num; })[0];
+      if(!tot || !s || !s.dias) return semanas.length ? 1/semanas.length : 0;
+      return s.dias / tot;
+    }
+    function _lblCopiarMensal(){
+      var b = ov.querySelector('#npSemCopiarMensal'); if(!b) return;
+      var s = semanas.filter(function(x){ return x.num === _npSemModalSel; })[0];
+      var tot = _totalDiasSemanas();
+      var pct = Math.round(_pesoSemana(_npSemModalSel)*1000)/10;
+      b.textContent = '⥥ Da meta mensal ('+pct+'%)';
+      b.title = (s && tot)
+        ? 'Rateio proporcional aos dias — S'+String(s.num).padStart(2,'0')+' tem '+s.dias+' de '+tot+' dias'+(s.tipo==='uteis'?' (úteis)':'')+' = '+pct+'% da meta mensal'
+        : 'Divide a meta mensal proporcionalmente aos dias de cada semana';
+    }
     ov.querySelector('#npSemCopiarMensal').addEventListener('click', function(){
       var sel = Array.prototype.map.call(ov.querySelectorAll('[data-sem-ck]:checked'), function(c){ return c.dataset.semCk; });
       var refNome = sel[0] || consList[0];
@@ -2670,13 +2737,89 @@
         if(typeof _showToast==='function') _showToast('Sem meta mensal pra '+refNome+'.','var(--amber)');
         return;
       }
-      var nS = semanas.length;
+      var peso = _pesoSemana(_npSemModalSel);
+      var semSel = semanas.filter(function(x){ return x.num === _npSemModalSel; })[0];
       function _fmt(v){ if(!v) return ''; return _npMoneyMask(String((+v).toFixed(2)).replace('.','')); }
-      ov.querySelector('#npSemBatchMin').value = _fmt(mMin/nS);
-      ov.querySelector('#npSemBatchBas').value = _fmt(mBas/nS);
-      ov.querySelector('#npSemBatchMas').value = _fmt(mMas/nS);
-      if(typeof _showToast==='function') _showToast('📋 Meta mensal de '+refNome+' dividida em '+nS+' semanas — clique Aplicar.','var(--accent)');
+      ov.querySelector('#npSemBatchMin').value = _fmt(mMin*peso);
+      ov.querySelector('#npSemBatchBas').value = _fmt(mBas*peso);
+      ov.querySelector('#npSemBatchMas').value = _fmt(mMas*peso);
+      if(typeof _showToast==='function'){
+        var det = semSel && _totalDiasSemanas()
+          ? ' ('+semSel.dias+' de '+_totalDiasSemanas()+' dias = '+(Math.round(peso*1000)/10)+'%)'
+          : '';
+        _showToast('📋 Meta mensal de '+refNome+' rateada pros dias da S'+String(_npSemModalSel).padStart(2,'0')+det+' — clique Aplicar.','var(--accent)');
+      }
     });
+    /* ── Resumo inferior: Σ das semanas × meta mensal, nos 3 tiers ──
+       Soma as metas semanais de TODOS os consultores da lista e confronta com a
+       soma das metas mensais deles. Serve pra bater o olho e ver se a conta fecha. */
+    var RES_TIERS = [
+      { k:'min', ico:'🥈', nm:'Mínima' },
+      { k:'bas', ico:'🥉', nm:'Básica' },
+      { k:'mas', ico:'🥇', nm:'Master' }
+    ];
+    /* Mesma cascata de fallback usada no rateio da meta mensal */
+    function _metaMensalCons(nome){
+      var g = (_npGoals && _npGoals[nome]) || {};
+      var mMin = +(g.metaMinima || g.metaValor || 0);
+      var mBas = +(g.metaBasica || mMin);
+      var mMas = +(g.metaMaster || mBas);
+      return { min:mMin, bas:mBas, mas:mMas };
+    }
+    function _fmtKR(v){
+      v = +v || 0;
+      if(Math.abs(v) >= 1000) return (v/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'k';
+      return v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+    }
+    function _atualizarResumo(){
+      var box = ov.querySelector('#npSemResumo'); if(!box) return;
+      var porSem = semanas.map(function(){ return { min:0, bas:0, mas:0 }; });
+      var mensal = { min:0, bas:0, mas:0 };
+      consList.forEach(function(nome){
+        var mm = _metaMensalCons(nome);
+        mensal.min += mm.min; mensal.bas += mm.bas; mensal.mas += mm.mas;
+        var gs = (_npGoalsSem && _npGoalsSem[nome]) || {};
+        semanas.forEach(function(s, i){
+          var v = gs[s.num] || {};
+          porSem[i].min += +(v.min||0);
+          porSem[i].bas += +(v.bas||0);
+          porSem[i].mas += +(v.mas||0);
+        });
+      });
+      var linhas = RES_TIERS.map(function(t){
+        var soma = porSem.reduce(function(a,p){ return a + p[t.k]; }, 0);
+        var meta = mensal[t.k];
+        var d = soma - meta;
+        var stCls, stTxt;
+        if(!meta){ stCls='na'; stTxt='— sem meta mensal'; }
+        else if(Math.abs(d) < 1){ stCls='ok'; stTxt='✅ Fecha certo'; }   /* tolerância de R$ 1 por centavos */
+        else if(d < 0){ stCls='lo'; stTxt='⚠ Faltam '+_fmtR(-d); }
+        else { stCls='hi'; stTxt='❗ Excede '+_fmtR(d); }
+        var chips = semanas.map(function(s, i){
+          var v = porSem[i][t.k];
+          return '<span class="np-sem-res-chip'+(v?'':' vazia')+(s.num===_npSemModalSel?' curr':'')+'"'
+            + ' title="Semana '+s.num+' ('+s.iniLabel+' a '+s.fimLabel+' · '+s.dias+(s.tipo==='uteis'?' dias úteis':' dias')+') — '+t.nm+': '+_fmtR(v)+'">'
+            + 'S'+String(s.num).padStart(2,'0')+' <b>'+_fmtKR(v)+'</b></span>';
+        }).join('');
+        return '<div class="np-sem-res-r">'
+          + '<span class="np-sem-res-k '+t.k+'">'+t.ico+' '+t.nm+'</span>'
+          + '<div class="np-sem-res-chips">'+chips+'</div>'
+          + '<span class="np-sem-res-eq">=</span>'
+          + '<div class="np-sem-res-v"><b>'+_fmtR(soma)+'</b><small>Σ semanas</small></div>'
+          + '<div class="np-sem-res-v goal"><b>'+_fmtR(meta)+'</b><small>meta mensal</small></div>'
+          + '<span class="np-sem-res-st '+stCls+'" title="'+stTxt.replace(/"/g,'')+'">'+stTxt+'</span>'
+          + '</div>';
+      }).join('');
+      box.innerHTML = ''
+        + '<div class="np-sem-res-cap">'
+        +   '<span>Σ Somatória das semanas × meta mensal</span>'
+        +   '<em>'+consList.length+' consultor'+(consList.length!==1?'es':'')+' · '+semanas.length+' semana'+(semanas.length!==1?'s':'')+'</em>'
+        + '</div>'
+        + '<div class="np-sem-res-hh"><span>Tier</span><span>Por semana</span><span></span><span>Σ Semanas</span><span>Meta mensal</span><span>Situação</span></div>'
+        + linhas;
+    }
+    _lblCopiarMensal();
+    _atualizarResumo();
 
     /* ── Configurar janelas das semanas (modo manual) ── */
     var cfgPanel = ov.querySelector('#npSemCfgPanel');
@@ -2729,6 +2872,10 @@
       var fim = new Date(a); fim.setDate(a.getDate() + n - 1);
       return _ymd(fim);
     }
+    /* Dias de uma janela respeitando o modo (corridos/úteis) — é o número mostrado na coluna Dias */
+    function _diasJanela(j){
+      return j.tipo === 'uteis' ? _diffUteis(j.ini, j.fim) : _diff(j.ini, j.fim);
+    }
     function _renderCfgPanel(){
       var modo = cfgEditando ? 'manual' : 'auto';
       /* Calendário visual: pinta cada dia do mês com cor da semana correspondente */
@@ -2754,7 +2901,7 @@
       });
       /* Lista de linhas */
       var listaHtml = cfgLocal.map(function(j, i){
-        var dias = j.tipo === 'uteis' ? _diffUteis(j.ini, j.fim) : _diff(j.ini, j.fim);
+        var dias = _diasJanela(j);
         var tipoLbl = j.tipo === 'uteis' ? 'ÚTEIS' : 'DIAS';
         var pillCls = j.tipo === 'uteis' ? ' uteis' : '';
         var pillTxt = j.tipo === 'uteis' ? '💼 Úteis' : '📅 Corridos';
@@ -2772,7 +2919,7 @@
           + '</div>';
       }).join('');
       /* Sumário */
-      var totalDias = cfgLocal.reduce(function(s,j){ return s + _diff(j.ini, j.fim); }, 0);
+      var totalDias = cfgLocal.reduce(function(s,j){ return s + _diasJanela(j); }, 0);
       cfgPanel.innerHTML = ''
         + '<div class="np-sem-cfg-tit">⚙ Configurar janelas das semanas · '+_mesLabel()+'</div>'
         + '<div class="np-sem-cfg-sub">Use o modo manual para definir datas customizadas. Sistema usa essa configuração no lugar da automática.</div>'
