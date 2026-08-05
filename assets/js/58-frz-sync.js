@@ -14,10 +14,12 @@
    ──────────────────────────────
    • Só entram os consultores listados em CONSULTORES (hoje: Gabriela).
      Para incluir outro, basta acrescentar a linha "Nome no HUD": "NOME NO APP".
-   • Status: FECHADO → pago, ABERTO → aberto. PROJEÇÃO não é importada.
-   • ESPELHO FIEL: o HUD manda. Editou lá → atualiza aqui; apagou lá (ou
-     virou PROJEÇÃO) → some daqui. Vendas importadas ficam com _frz:true e
-     NÃO devem ser editadas no app — a próxima sincronização sobrescreve.
+   • Status: FECHADO → pago, ABERTO → aberto, PROJEÇÃO → negociação
+     (entra no KPI "Potencial total", que soma só o que está em negociação).
+   • ESPELHO FIEL: o HUD manda. Editou lá → atualiza aqui; apagou lá → some
+     daqui. Mudou de status lá → muda aqui. Vendas importadas ficam com
+     _frz:true e NÃO devem ser editadas no app — a próxima sincronização
+     sobrescreve.
    • Só roda quando se clica em "⟳ Sincronizar FRZ" (nada automático).
    • SÓ o mês vigente (hoje = agosto/2026). Com a tela em qualquer outro mês
      o botão recusa e avisa — julho e anteriores ficam intocados, tanto para
@@ -47,8 +49,21 @@
     'Heverton Leonardo': 'HEVERTON LEONARDO' /* liberado em 05/08/2026 */
   };
 
-  /* Status do HUD → status da Pipeline. Ausente = não importa. */
-  var STATUS = { 'FECHADO':'pago', 'ABERTO':'aberto' };
+  /* Status do HUD → status da Pipeline. Ausente = não importa.
+     PROJEÇÃO virou "negociação" em 05/08/2026 — é o status que o app soma
+     no KPI "Potencial total". */
+  var STATUS = { 'FECHADO':'pago', 'ABERTO':'aberto', 'PROJEÇÃO':'negociacao' };
+
+  /* A comparação do status é feita sem acento e em maiúsculas, senão um
+     "Projeção" digitado diferente no HUD passa batido sem erro nenhum.
+     NFD separa a letra do acento; o replace tira tudo que não é ASCII,
+     que depois da decomposição é só o acento solto. */
+  function _stKey(s){
+    return String(s||'').normalize('NFD').replace(/[^\x00-\x7F]/g,'').toUpperCase().trim();
+  }
+  var _STATUS_N = {};
+  Object.keys(STATUS).forEach(function(k){ _STATUS_N[_stKey(k)] = STATUS[k]; });
+  function _statusApp(s){ return _STATUS_N[_stKey(s)]; }
 
   var LS_ULTIMA = 'frzSyncUltima';
   var _rodando = false;
@@ -59,11 +74,23 @@
   }
 
   /* Data: o HUD já grava data_iso (AAAA-MM-DD). Sem ela, monta a partir de
-     "dd/mm" + o ano/mês da chave do mês. */
+     "dd/mm" + o ano/mês da chave do mês. Lançamento em PROJEÇÃO em geral vem
+     SEM data nenhuma (ainda não tem venda), então cai no created_at — melhor
+     que jogar todo mundo no dia 01. Se o created_at for de outro mês, aí sim
+     usa o dia 01 pra não vazar a venda pra fora do mês sincronizado. */
   function _data(e, mk){
     if(e.data_iso && /^\d{4}-\d{2}-\d{2}$/.test(e.data_iso)) return e.data_iso;
     var m = /^(\d{2})\/(\d{2})$/.exec(String(e.data||''));
     if(m) return mk.slice(0,4) + '-' + m[2] + '-' + m[1];
+    if(e.created_at){
+      var d = new Date(e.created_at);
+      if(!isNaN(d.getTime())){
+        var iso = d.getFullYear() + '-'
+                + String(d.getMonth()+1).padStart(2,'0') + '-'
+                + String(d.getDate()).padStart(2,'0');
+        if(iso.slice(0,7) === mk) return iso;
+      }
+    }
     return mk + '-01';
   }
 
@@ -77,7 +104,7 @@
       consultorNome: CONSULTORES[e.consultant],
       produto:       produto,
       valor:         +(e.valor||0),
-      status:        STATUS[e.status],
+      status:        _statusApp(e.status),
       data:          _data(e, mk),
       origemManual:  'FRZ HUD' + (e.origem ? ' · ' + e.origem : ''),
       obs:           '',
@@ -162,7 +189,7 @@
 
         /* 1) HUD → app: cria ou atualiza */
         remotos.forEach(function(e){
-          if(!CONSULTORES[e.consultant] || !STATUS[e.status]) return;
+          if(!CONSULTORES[e.consultant] || !_statusApp(e.status)) return;
           var id = 'frz_' + e.id;
           var novo = _venda(e, mk);
           var atual = locais[id];
@@ -172,7 +199,7 @@
           ops.push(window._fbSave('pipelineSales/' + mk + '/' + id, novo));
         });
 
-        /* 2) Apagado no HUD (ou virou PROJEÇÃO) → remove aqui.
+        /* 2) Apagado no HUD (ou com status fora do mapa) → remove aqui.
               Só mexe no que veio do FRZ e é de consultor do escopo — venda
               lançada à mão no app nunca é tocada. */
         var vivos = {};

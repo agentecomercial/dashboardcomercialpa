@@ -225,8 +225,8 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 | `FRZ metas <consultor> [mês]` | As metas mínima/básica/master lançadas no HUD (tabela `pipeline_metas`) |
 
 **Consultores no HUD:** Darley · Daniel · Carlos · Natália · Gabriela · Karla · Iara · Cairo · Maria Clara (Rudinei é gestor de Iara/Cairo/Maria Clara). **Heverton ainda não tem acesso criado no HUD** — está no escopo do `FRZ todos`, mas só vai retornar dados quando o login dele for criado lá.
-**Sincronizados para a Pipeline Comercial:** só **Gabriela** e **Karla** (mapa `CONSULTORES` no `58-frz-sync.js`; incluir outro = uma linha nova).
-**Regras do sync:** só o **mês vigente** · `FECHADO`→PAGO, `ABERTO`→ABERTO, **PROJEÇÃO não entra** · espelho fiel (edita/apaga lá → reflete aqui) · id `frz_<id>` evita duplicar · valor vai cheio (a divisão de "C.I" pela metade é regra do gauge deles) · `und > 1` vira sufixo no produto ("MASTER COACHING ×2").
+**Sincronizados para a Pipeline Comercial:** **Gabriela**, **Karla** e **Heverton** (mapa `CONSULTORES` no `58-frz-sync.js`; incluir outro = uma linha nova). ⚠️ A chave tem que ser **idêntica** ao campo `consultant` do Supabase — a maioria é só o primeiro nome, mas o Heverton está como `Heverton Leonardo`. Chave errada = consultor sumido do sync, **sem erro nenhum**. Falta a **Natália** (nome no HUD: `Natália`).
+**Regras do sync:** só o **mês vigente** · `FECHADO`→PAGO, `ABERTO`→ABERTO, `PROJEÇÃO`→**NEGOCIAÇÃO** (entra no KPI *Potencial total*; sem data no HUD, usa o `created_at`) · espelho fiel (edita/apaga/muda status lá → reflete aqui) · id `frz_<id>` evita duplicar · valor vai cheio (a divisão de "C.I" pela metade é regra do gauge deles) · `und > 1` vira sufixo no produto ("MASTER COACHING ×2").
 **⚠️ Segurança:** o login do HUD é client-side — usuário e senha de todos os consultores estão em texto claro no fonte da página, e a tabela aceita leitura anônima.
 
 ---
