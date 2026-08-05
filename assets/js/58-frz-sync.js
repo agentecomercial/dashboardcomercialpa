@@ -36,10 +36,15 @@
   var SB_URL = 'https://mnfxnepsfdfcmoglmgec.supabase.co/rest/v1/pipeline_entries';
   var SB_KEY = 'sb_publishable_hbmxtsjNBloNR6CYBXZ8Zw_FQeMZXOC';
 
-  /* Nome no HUD  →  nome do consultor no app (Gestão de Usuários) */
+  /* Nome no HUD  →  nome do consultor no app (Gestão de Usuários)
+     ⚠️ A chave tem que ser IGUALZINHA ao campo `consultant` do Supabase —
+     lá a maioria é só o primeiro nome, mas o Heverton está com nome e
+     sobrenome. Errou a chave, o filtro não casa e o consultor some do
+     sync sem dar erro nenhum. */
   var CONSULTORES = {
-    'Gabriela': 'GABRIELA SOUZA',
-    'Karla':    'KARLA FERREIRA'   /* liberada em 03/08/2026 */
+    'Gabriela':          'GABRIELA SOUZA',
+    'Karla':             'KARLA FERREIRA',   /* liberada em 03/08/2026 */
+    'Heverton Leonardo': 'HEVERTON LEONARDO' /* liberado em 05/08/2026 */
   };
 
   /* Status do HUD → status da Pipeline. Ausente = não importa. */
