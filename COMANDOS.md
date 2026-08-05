@@ -212,6 +212,25 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 
 ---
 
+## 🟠 10. FRZ HUD (pipeline individual do consultor)
+**Fonte:** `frz-pipeline-hud.vercel.app` → Supabase `pipeline_entries` (leitura anônima, **não precisa de login**) · **App:** botão **⟳ Sincronizar FRZ** na aba Vendas (`assets/js/58-frz-sync.js`).
+
+| Comando | O que faz |
+|---|---|
+| `FRZ <consultor>` | Lançamentos do consultor no **mês vigente**: `Data · Aluno · Curso · Valor · Status · Origem` + totais por status |
+| `FRZ <consultor> [mês]` | Idem num mês específico (ex.: "FRZ Karla julho") |
+| `FRZ todos [mês]` | **Equipe Vitória**, agrupada por pessoa: **Gabriela · Karla · Heverton · Natália** (definido em 03/08/2026). Quem não tiver lançamento no mês aparece como "sem lançamentos" |
+| `FRZ geral [mês]` | Aí sim os **9 consultores** do HUD (inclui Teresina/Belém) |
+| `FRZ resumo [mês]` | Só os totais (Fechado / Aberto / Projeção) por consultor, sem listar lançamento |
+| `FRZ metas <consultor> [mês]` | As metas mínima/básica/master lançadas no HUD (tabela `pipeline_metas`) |
+
+**Consultores no HUD:** Darley · Daniel · Carlos · Natália · Gabriela · Karla · Iara · Cairo · Maria Clara (Rudinei é gestor de Iara/Cairo/Maria Clara). **Heverton ainda não tem acesso criado no HUD** — está no escopo do `FRZ todos`, mas só vai retornar dados quando o login dele for criado lá.
+**Sincronizados para a Pipeline Comercial:** só **Gabriela** e **Karla** (mapa `CONSULTORES` no `58-frz-sync.js`; incluir outro = uma linha nova).
+**Regras do sync:** só o **mês vigente** · `FECHADO`→PAGO, `ABERTO`→ABERTO, **PROJEÇÃO não entra** · espelho fiel (edita/apaga lá → reflete aqui) · id `frz_<id>` evita duplicar · valor vai cheio (a divisão de "C.I" pela metade é regra do gauge deles) · `und > 1` vira sufixo no produto ("MASTER COACHING ×2").
+**⚠️ Segurança:** o login do HUD é client-side — usuário e senha de todos os consultores estão em texto claro no fonte da página, e a tabela aceita leitura anônima.
+
+---
+
 ## 🔧 Utilitários (não-Vitória, execução direta, sem gatilho de chat)
 
 | Script | O que faz |
