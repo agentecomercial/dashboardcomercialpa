@@ -915,7 +915,8 @@
         +'<div class="np-meta-foot-v2">'
         +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')">⚙ Configurar metas</button>'
         +'<button class="np-meta-edit np-meta-edit-sem" onclick="event.stopPropagation();npAbrirModalSemanal(\''+_escJS2(nome)+'\')" title="Configurar metas semanais">📅 Semanal</button>'
-        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">📸 Copiar</button>'
+        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')" title="Copiar imagem do card (só o mês)">📸 Copiar</button>'
+        +'<button class="np-meta-edit np-meta-copy-sem" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\',true)" title="Copiar imagem do card com o bloco da semana">📸📅 c/ semana</button>'
         +'</div>'
         +'</div>';
       return {nome:nome,i:i,cor:cor,real:real,pct:pct,col:col,tier:tierInfo,
@@ -987,7 +988,8 @@
         +'<td><div class="np-lista-acts" onclick="event.stopPropagation();">'
           +'<button class="np-meta-edit" title="Configurar metas" onclick="event.stopPropagation();npAbrirModalMeta(\''+nm+'\')">&#x2699;</button>'
           +'<button class="np-meta-edit np-meta-edit-sem" title="Metas semanais" onclick="event.stopPropagation();npAbrirModalSemanal(\''+nm+'\')">&#x1F4C5;</button>'
-          +'<button class="np-meta-edit np-meta-copy-img" title="Copiar imagem do card" onclick="event.stopPropagation();npCopiarMetaImg(\''+nm+'\')">&#x1F4F8;</button>'
+          +'<button class="np-meta-edit np-meta-copy-img" title="Copiar imagem do card (só o mês)" onclick="event.stopPropagation();npCopiarMetaImg(\''+nm+'\')">&#x1F4F8;</button>'
+          +'<button class="np-meta-edit np-meta-copy-sem" title="Copiar imagem com o bloco da semana" onclick="event.stopPropagation();npCopiarMetaImg(\''+nm+'\',true)">&#x1F4F8;&#x1F4C5;</button>'
         +'</div></td>'
         +'</tr>';
     }).join('');
@@ -1329,7 +1331,8 @@
     _npToastCopy('⬇ Imagem salva!');
   }
 
-  window.npCopiarMetaImg = function(nome) {
+  /* comSemanal=true → acrescenta o bloco "📅 SEMANA N" no rodapé (layout B) */
+  window.npCopiarMetaImg = function(nome, comSemanal) {
     var g    = window._npGoals[nome] || {};
     var todas = typeof window._npTodasVendas === 'function' ? window._npTodasVendas() : [];
     var rank  = typeof window._npPorConsultor === 'function' ? window._npPorConsultor(todas, '', 'pago') : [];
@@ -1366,11 +1369,44 @@
     var pending = tiers.filter(function(t) { return t.val > 0 && t.pct < 100; });
     var configured = tiers.filter(function(t) { return t.val > 0; });
 
+    /* ── Dados da semana (só no botão "Copiar c/ semana") ──
+       Mesma semana que o card da tela está mostrando (_npSemSelV2),
+       caindo pra semana atual / última do mês quando não há escolha. */
+    var sem = null;
+    var SEMU = window._npSemUtil || null;
+    if (comSemanal && SEMU) {
+      var _semanas = SEMU.semanas() || [];
+      if (_semanas.length) {
+        var _semSel = (window._npSemSelV2 || {})[nome] || SEMU.semanaAtual() || _semanas[_semanas.length - 1].num;
+        var _jan = _semanas.find(function(s) { return s.num === _semSel; }) || _semanas[0];
+        var _gs  = (((SEMU.goals() || {})[nome]) || {})[_jan.num] || {};
+        var _fatSem = SEMU.faturado(todas, nome, _jan);
+        var _semTiers = [
+          { ico: '🥈', lbl: 'Mínima', val: +(_gs.min || 0) },
+          { ico: '🥉', lbl: 'Básica', val: +(_gs.bas || 0) },
+          { ico: '🥇', lbl: 'Master', val: +(_gs.mas || 0) }
+        ];
+        _semTiers.forEach(function(t) {
+          t.pct   = t.val ? Math.min(999, Math.round(_fatSem / t.val * 100)) : 0;
+          t.falta = Math.max(0, t.val - _fatSem);
+        });
+        sem = {
+          jan:  _jan,
+          fat:  _fatSem,
+          dias: SEMU.diasUteisRestantes(_jan),
+          cfg:  _semTiers.filter(function(t) { return t.val > 0; }),
+          pend: _semTiers.filter(function(t) { return t.val > 0 && t.pct < 100; })
+        };
+      }
+    }
+
     /* ── Canvas · Layout Dark Gradient ── */
     var W = 520;
     var bandRows = pending.length > 0 ? pending.length : 1;
-    var H = 54 + 14 + (configured.length * 36) + 20 + (bandRows * 24) + 14;
-    if (H < 230) H = 230;
+    var Hbase = 54 + 14 + (configured.length * 36) + 20 + (bandRows * 24) + 14;
+    if (Hbase < 230) Hbase = 230;
+    var extraSem = sem ? (38 + (sem.pend.length || 1) * 24) : 0;
+    var H = Hbase + extraSem;
     var DPR = 2, px = 20;
     var cv = document.createElement('canvas');
     cv.width = W * DPR; cv.height = H * DPR;
@@ -1473,15 +1509,51 @@
       });
     }
 
+    /* ── Bloco 📅 SEMANA N (layout B) — mesma estética da banda acima, em azul ── */
+    if (sem) {
+      var yb = Hbase;
+      lnH(yb + 2, px, W - px, 'rgba(56,189,248,0.25)');
+      ctx.font = '700 11px ' + SAN; ctx.fillStyle = '#38bdf8'; ctx.textBaseline = 'middle';
+      ctx.fillText('📅 SEMANA ' + sem.jan.num + ' (' + sem.jan.iniLabel + '–' + sem.jan.fimLabel + ')', px, yb + 18);
+      ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b'; ctx.textAlign = 'right';
+      ctx.fillText('· ' + sem.dias + (sem.dias === 1 ? ' dia útil' : ' dias úteis') + ' · faturado ' + _npFmtR(sem.fat), W - px, yb + 18);
+      ctx.textAlign = 'left';
+      var yS = yb + 40;
+      if (!sem.cfg.length) {
+        ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#636e7b';
+        ctx.textAlign = 'center'; ctx.fillText('Sem meta semanal configurada', W / 2, yS); ctx.textAlign = 'left';
+      } else if (!sem.pend.length) {
+        ctx.font = '700 12px ' + SAN; ctx.fillStyle = '#56d364';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏆 Semana batida! +' + _npFmtR(sem.fat - sem.cfg[sem.cfg.length - 1].val), W / 2, yS);
+        ctx.textAlign = 'left';
+      } else {
+        sem.pend.forEach(function(p) {
+          var ritmoS = sem.dias > 0 ? Math.round(p.falta / sem.dias) : 0;
+          ctx.font = '12px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
+          ctx.fillText(p.ico + ' ' + p.lbl, px, yS);
+          ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
+          ctx.fillText('faltam', px + 82, yS);
+          ctx.font = '700 12px ' + SAN; ctx.fillStyle = '#7cc4f5';
+          ctx.fillText(_npFmtR(p.falta), px + 124, yS);
+          var pwS = 120, phS = 18, ppxS = W - px - pwS;
+          ctx.fillStyle = 'rgba(56,189,248,0.14)'; _npRRect(ctx, ppxS, yS - phS / 2, pwS, phS, 5); ctx.fill();
+          ctx.font = '700 10px ' + SAN; ctx.fillStyle = '#38bdf8';
+          ctx.textAlign = 'center'; ctx.fillText(_npFmtR(ritmoS) + ' / dia', ppxS + pwS / 2, yS + 0.5); ctx.textAlign = 'left';
+          yS += 24;
+        });
+      }
+    }
+
     /* cópia */
     cv.toBlob(function(blob) {
       if (!blob) return;
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
         navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
           .then(function() { _npToastCopy('📋 Imagem copiada!'); })
-          .catch(function() { _npDownloadMetaImg(blob, nome); });
+          .catch(function() { _npDownloadMetaImg(blob, nome + (sem ? ' semana' : '')); });
       } else {
-        _npDownloadMetaImg(blob, nome);
+        _npDownloadMetaImg(blob, nome + (sem ? ' semana' : ''));
       }
     }, 'image/png');
   };
