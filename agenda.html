@@ -696,6 +696,8 @@
       margin: 0;
     }
     .check-actions {
+      display: flex;
+      gap: 4px;
       padding: 6px 4px 2px;
       border-top: 1px solid var(--border);
       margin-top: 4px;
@@ -915,9 +917,11 @@
                 <label class="check-row"><input type="checkbox" value="BRUNA">BRUNA</label>
                 <label class="check-row"><input type="checkbox" value="THIAGO">THIAGO</label>
                 <label class="check-row"><input type="checkbox" value="MATHEUS">MATHEUS</label>
+                <label class="check-row"><input type="checkbox" value="MATEUS">MATEUS</label>
                 <label class="check-row"><input type="checkbox" value="ALBERTO">ALBERTO</label>
                 <label class="check-row"><input type="checkbox" value="NONE">Sem treinador</label>
                 <div class="check-actions">
+                  <button type="button" class="check-clear" onclick="marcarTodosTreinadores()">Selecionar todos</button>
                   <button type="button" class="check-clear" onclick="limparTreinadores()">Limpar seleção</button>
                 </div>
               </div>
@@ -967,7 +971,9 @@
     BEL: { nome: 'Belém',    cor: '#ffb84f' },
     THE: { nome: 'Teresina', cor: '#ff6b9d' }
   };
-  const TREINADORES = ['FILIPE', 'RAFAEL', 'BRUNA', 'THIAGO', 'MATHEUS', 'ALBERTO'];
+  // MATHEUS antes de MATEUS: nomes distintos (grafia com e sem "TH") e a ordem
+  // evita que a alternância do regex de limpeza case o menor primeiro
+  const TREINADORES = ['FILIPE', 'RAFAEL', 'BRUNA', 'THIAGO', 'MATHEUS', 'MATEUS', 'ALBERTO'];
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const MESES_LONG = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const ICON_COPY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -1602,9 +1608,20 @@
       label.textContent = arr.map(t => t === 'NONE' ? 'Sem treinador' : t).join(', ');
       btn.classList.add('has-value');
     } else {
-      label.textContent = arr.length + ' selecionados';
+      const total = document.querySelectorAll('#treinador-panel input[type="checkbox"]').length;
+      label.textContent = arr.length === total ? 'Todos os treinadores' : arr.length + ' selecionados';
       btn.classList.add('has-value');
     }
+  }
+  function marcarTodosTreinadores() {
+    const arr = [];
+    document.querySelectorAll('#treinador-panel input[type="checkbox"]').forEach(cb => {
+      cb.checked = true;
+      arr.push(cb.value);
+    });
+    filtros.treinador = arr;
+    atualizarLabelTreinador();
+    aplicarFiltros();
   }
   function limparTreinadores() {
     filtros.treinador = [];
