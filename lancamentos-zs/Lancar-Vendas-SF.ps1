@@ -20,6 +20,7 @@
 param(
   [ValidateSet('previa','cadastro','vendas','status')][string]$Acao = 'previa',
   [string]$Arquivo = '',
+  [string]$Venda   = '',            # venda avulsa: Id da Opportunity (006...) ou o link do Lightning
   [string]$Rodada  = '',            # NAO criar variavel local chamada $rodada: colide com este param
                                      # tipado (PS e case-insensitive) e o objeto vira string.
   [switch]$Aplicar,
@@ -259,6 +260,34 @@ function Ler-Relatorio($path) {
   return ,$out
 }
 
+# ---- venda avulsa: mesma estrutura do relatorio, lida direto da Opportunity ----
+# Aceita o Id (006...) ou o link do Lightning (.../Opportunity/<id>/view).
+function Ler-VendaSF($idOuUrl) {
+  $id = "$idOuUrl".Trim()
+  $m = [regex]::Match($id, '(006[A-Za-z0-9]{12,15})')
+  if (-not $m.Success) { throw "Nao reconheci o Id da venda em '$idOuUrl' (esperado 006... ou o link do Salesforce)." }
+  $id = $m.Groups[1].Value
+  $recs = SF-Soql ("SELECT Id, Name, StageName, Amount, CloseDate, Account.Name, Account.CPFun__c, Account.PersonMobilePhone " +
+                   "FROM Opportunity WHERE Id = '$(SoqlEsc $id)'")
+  if (@($recs).Count -eq 0) { throw "Venda $id nao encontrada no Salesforce (ou sem acesso)." }
+  $o = @($recs)[0]
+  $cpf = OnlyDigits $o.Account.CPFun__c
+  if ($cpf.Length -ne 11) { throw "O cliente '$($o.Account.Name)' esta sem CPF valido no Salesforce — cadastre antes de lancar." }
+  # a turma sai da Forma de Pag. Venda (campo Turma__c), que e o mesmo que o relatorio traz
+  $fs = SF-Soql "SELECT Turma__c FROM Forma_Pag_Venda__c WHERE Venda__c = '$(SoqlEsc $id)' AND Turma__c != null LIMIT 1"
+  $turma = $(if (@($fs).Count) { "$(@($fs)[0].Turma__c)" } else { '' })
+  if (-not $turma) { throw "Nao achei a turma na Forma de Pag. Venda de '$($o.Name)'." }
+  return ,@([pscustomobject]@{
+    nome       = "$($o.Account.Name)"
+    cpf        = $cpf
+    telefone   = "$($o.Account.PersonMobilePhone)"
+    turma      = $turma
+    venda_nome = "$($o.Name)"
+    valor_rel  = "$($o.Amount)"
+    criado     = "$($o.CloseDate)"
+  })
+}
+
 # ============================ FORMAS DE PAGAMENTO (anexo 1) ============================
 $FPV_CAMPOS = "Id, Name, RecordType.Name, Unidade__r.Name, Forma_de_Pagamento__r.Name, Valor_cada_Parcela__c, " +
               "Data_de_Vencimento_Inicial__c, DataContrato__c, EmailCliente__c, Promocao__c, Id_Form_Pag_Completo__c, " +
@@ -288,11 +317,22 @@ function Resolver-Turma($turmaSf) {
     return [ordered]@{ ok=$true; product_id=[int]$m.product_id; class_id=[int]$m.class_id; class_name="$($m.class_name)"; origem='config.json' }
   }
   $t = ($chave -replace '^\s*\d{4}\s*-\s*','').Trim()          # tira o "2026 - "
-  $m = [regex]::Match($t, '^([A-Za-zÀ-ÿ]+)\s*-?\s*(\d+)')
+  # lazy + hifen: separa "BHP19"->BHP/19, "FCIS31"->FCIS/31 e tambem "CIS-GL252"->CIS-GL/252
+  $m = [regex]::Match($t, '^([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\-]*?)\s*-?\s*(\d+)')
   if (-not $m.Success) { return [ordered]@{ ok=$false; motivo="Nao consegui separar sigla/numero de '$turmaSf'." } }
-  $sigla = $m.Groups[1].Value.ToUpper(); $num = $m.Groups[2].Value
+  $sigla = $m.Groups[1].Value.ToUpper().TrimEnd('-'); $num = $m.Groups[2].Value
+
+  # apelidos: a sigla do SF nem sempre e a do ZS (ex.: CIS-GL252 no SF = MCIS 252 no ZS,
+  # produto "Método CIS - Global" — cujo nome nem contem "MCIS", por isso o product_id vem junto)
+  $prodFixo = 0
+  if ($CFG.siglas -and $CFG.siglas.PSObject.Properties.Name -contains $sigla) {
+    $ap = $CFG.siglas.$sigla
+    if ($ap.turma)      { $sigla = "$($ap.turma)".ToUpper() }
+    if ($ap.product_id) { $prodFixo = [int]$ap.product_id }
+  }
   $busca = "$sigla $num"
-  $prods = @(ZS 'search_opportunity_products' @{ query=$sigla; limit=10 })
+  $prods = if ($prodFixo -gt 0) { @([pscustomobject]@{ id=$prodFixo; name="(config) produto $prodFixo" }) }
+           else { @(ZS 'search_opportunity_products' @{ query=$sigla; limit=10 }) }
   $cands = @()
   foreach ($p in $prods) {
     if ($p.__erro -or -not $p.id) { continue }
@@ -429,14 +469,20 @@ if ($Acao -eq 'status') {
 
 # ============================ ACAO: PREVIA ============================
 if ($Acao -eq 'previa') {
-  if (-not $Arquivo) {
+  if (-not $Arquivo -and -not $Venda) {
     $ult = Get-ChildItem "$env:USERPROFILE\Downloads" -Filter 'report*.xls' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($ult) { $Arquivo = $ult.FullName; Write-Host "Usando o relatorio mais recente de Downloads: $($ult.Name)" -ForegroundColor Cyan }
-    else { throw 'Informe -Arquivo "<caminho do relatorio .xls>".' }
+    else { throw 'Informe -Arquivo "<relatorio .xls>" ou -Venda "<link/Id da venda no SF>".' }
   }
   Titulo 'ETAPA 1 — LEITURA E CONFERENCIA (nada e gravado)'
-  $rel = Ler-Relatorio $Arquivo
-  Write-Host "Relatorio: $($rel.Count) venda(s)."
+  if ($Venda) {
+    $rel = Ler-VendaSF $Venda
+    $Arquivo = "venda avulsa: $($rel[0].venda_nome)"
+    Write-Host "Venda avulsa: $($rel[0].venda_nome)"
+  } else {
+    $rel = Ler-Relatorio $Arquivo
+    Write-Host "Relatorio: $($rel.Count) venda(s)."
+  }
 
   Write-Host 'Lendo as formas de pagamento no Salesforce...'
   $formasTodas = Formas-Da-Venda @($rel | ForEach-Object { $_.venda_nome })

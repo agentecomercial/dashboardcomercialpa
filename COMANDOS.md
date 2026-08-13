@@ -318,13 +318,19 @@ harrison | maestria | 85000 | neg
 ---
 
 ## 💳 10E. Lançar vendas do relatório do SF no ZS (fluxo padronizado)
-**Pasta:** `lancamentos-zs/` · **Script:** `Lancar-Vendas-SF.ps1` · **Atalho:** `Lancar Vendas ZS.vbs` (duplo clique) · **Gatilho:** `Lançar vendas do SF` · **Destino:** Zsales Vitória (org 2).
+**Pasta:** `lancamentos-zs/` · **Script:** `Lancar-Vendas-SF.ps1` · **Atalho:** `Lancar Vendas ZS.vbs` (duplo clique) · **Destino:** Zsales Vitória (org 2).
 
-Entrada = o relatório de vendas exportado do Salesforce (**Exportar → Detalhes apenas → .xls**). Saída = clientes cadastrados + vendas lançadas e fechadas como ganhas.
+**Gatilhos no chat:**
+- `Lançar vendas do SF` — lote; sem caminho, usa o `report*.xls` mais recente de Downloads
+- `Lançar vendas do SF: <caminho do .xls>` — lote de um arquivo específico
+- `Lançar venda do SF: <link ou Id da Opportunity>` — **venda avulsa**, sem precisar de relatório
+
+Entrada = o relatório de vendas exportado do Salesforce (**Exportar → Detalhes apenas → .xls**) ou o link de uma venda. Saída = clientes cadastrados + vendas lançadas e fechadas como ganhas.
 
 | Comando | O que faz |
 |---|---|
 | `.\Lancar-Vendas-SF.ps1 -Arquivo "<...>.xls"` | **Etapa 1 — prévia.** Lê o relatório, cruza SF × ZS e gera `previas\previa-<data>.html`. **Nada é gravado.** Sem `-Arquivo`, pega o `report*.xls` mais recente de Downloads |
+| `-Venda "<link ou Id>"` | Mesma etapa 1, para **uma venda só** — lê a Opportunity, o cliente e a turma direto do SF |
 | `-Acao cadastro` / `-Acao cadastro -Aplicar` | **Etapa 2 — clientes.** Cria quem não existe e completa só campo vazio (via `Ponte-ZS.ps1`) |
 | `-Acao vendas` / `-Acao vendas -Aplicar` | **Etapa 3 — vendas.** Oportunidade + produto + pagamento + anotações + fecha como ganha |
 | `-Acao status` | Testa Salesforce, Zsales e API web antes de começar |
@@ -337,7 +343,8 @@ Entrada = o relatório de vendas exportado do Salesforce (**Exportar → Detalhe
 - **Pagamento:** `Cartão de crédito`/`PIX` + instituição **BCO ITAUBANK S.A.** + gateway **CISPay** + data do SF; parcelas no protocolo (`4x`).
 - **Anotação:** texto fixo + link da venda no SF + um bloco por forma de pagamento, campo a campo (layout da tela "Forma de Pag. Venda").
 - **Responsável:** a venda herda o do cliente; cliente novo nasce com o `responsavel_padrao_id` do config.
-- **Turma:** resolvida automaticamente (`FCIS31` → "FCIS 31 - 1º Módulo"); havendo módulos, usa o 1º; se ficar ambígua, **bloqueia** e você resolve no `config.json`.
+- **Turma:** resolvida automaticamente (`FCIS31` → "FCIS 31 - 1º Módulo"); havendo módulos, usa o 1º; se ficar ambígua, **bloqueia** e você resolve no `config.json`. Quando a sigla muda entre os sistemas, use o de-para `siglas` do config — é o caso de `CIS-GL252` (SF) = `MCIS 252` (ZS), produto *Método CIS - Global* (262).
+- **Venda que não existe no SF** (só comprovante, ex.: link da Rede): o script não cobre — o lançamento é manual, com `gateway: Rede` e a anotação montada a partir do comprovante, que vai anexado à oportunidade.
 - **Anti-duplicidade:** consulta as vendas do cliente na API web; quem já tem venda com o mesmo valor ou a mesma turma é pulado. Rodar duas vezes não duplica.
 - **Sem endereço no cliente o ZS recusa fechar** — a venda fica lançada e **aberta**, e aparece no resumo com o link.
 

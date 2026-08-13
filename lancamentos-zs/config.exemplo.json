@@ -17,8 +17,14 @@
   "texto_anotacao": "Anotação - Clientes que vieram do presencial.",
   "texto_cashback": "Cliente fez uso do cashback no produto lançado. Segue o link do cashback.",
 
+  "siglas": {
+    "_comentario": "Quando a sigla da turma no SF NAO e a mesma do ZS. 'turma' = prefixo usado no ZS; 'product_id' e obrigatorio quando o nome do produto nao contem a sigla (caso do Metodo CIS - Global, que abriga as turmas MCIS).",
+    "CIS-GL": { "turma": "MCIS", "product_id": 262 },
+    "CISGL":  { "turma": "MCIS", "product_id": 262 }
+  },
+
   "turmas": {
-    "_comentario": "So preencha quando a previa acusar turma AMBIGUA ou NAO ENCONTRADA. O de-para manual vence a busca automatica.",
+    "_comentario": "De-para de UMA turma especifica. So preencha quando a previa acusar turma AMBIGUA ou NAO ENCONTRADA — vence a busca automatica e o mapa de siglas.",
     "2026 - FCIS31": { "product_id": 32, "class_id": 113, "class_name": "FCIS 31 - 1º Módulo - Vitória" },
     "2026 - FCIS32": { "product_id": 32, "class_id": 37,  "class_name": "FCIS 32 - 1º Módulo - Vitória" }
   }
