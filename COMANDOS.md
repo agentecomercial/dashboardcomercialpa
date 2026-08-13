@@ -231,6 +231,120 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 
 ---
 
+## 🎒 10B. Pipeline → Turma (lançar o que está no HUD nas vendas da turma)
+**Script:** `Turma-Lancar-FRZ.ps1` (raiz) · **De:** `frz-pipeline-hud.vercel.app` (tabela `pipeline_entries`) · **Para:** `frz-sistema-v2.vercel.app` (tabela `vendas`, por turma). Mesmo projeto Supabase, leitura e escrita anônimas — **não precisa de login nem do Servir.ps1**.
+
+| Comando | O que faz |
+|---|---|
+| `Turmas` | Lista as turmas cadastradas no sistema (id · nome · tipo · cidade · início · meta) |
+| `Lançar turma <turma>` | **Prévia** dos lançamentos de **hoje** que iriam para a turma (aceita id ou nome: `10` ou `"CIS 251"`) |
+| `Lançar turma <turma> <AAAA-MM-DD>` | Prévia de um dia específico |
+| `Lançar turma <turma> <AAAA-MM>` | Prévia do mês inteiro |
+| `Lançar turma <turma> <data> aplicar` | **Grava** as vendas na turma (só depois de você ver a prévia) |
+
+**Parâmetros:** `-Turma` (id ou nome) · `-Data` (`AAAA-MM-DD` ou `AAAA-MM`; vazio = hoje) · `-Consultores` (CSV; default **Gabriela · Karla · Natália · Heverton Leonardo** = Pipeline Vitória) · `-Todos` (os 9 do HUD) · `-Aplicar` (grava).
+
+**Regras:**
+- **Nada é gravado sem `-Aplicar`.** Sem o switch é só prévia, com a coluna `Ação` dizendo o que aconteceria.
+- **Não duplica e não sobrescreve:** compara `aluno+curso+valor` com o que já está na turma e só insere o que falta — inclusive contra o que foi lançado **à mão** no sistema. O script nunca faz UPDATE nem DELETE, então ajuste manual na turma fica de pé (é o contrário do `58-frz-sync.js`, que é espelho fiel).
+- **Status:** `FECHADO`→**PAGAMENTO FINALIZADO** · `ABERTO`→**PAGO COM ENTRADA** · `PROJEÇÃO`→**NEGOCIAÇÃO**.
+- **Liquidez:** igual ao valor, exceto `Coaching Individual*`, que entra **pela metade** — mesma conta do `calcLiq` do sistema da turma. Por isso o de-para de `CI` tem que continuar começando com "Coaching Individual", senão a liquidez sai dobrada.
+- **De-para de curso:** o HUD é campo livre ("tce bronze", "Livrão", "CI"), o sistema tem nomes canônicos. A tabela `$DE_PARA` no script faz a tradução; curso sem correspondência passa com o texto original e sai marcado `⚠ curso sem de-para` na prévia — é o sinal de que falta uma linha lá.
+- **Sem data no HUD não entra** (lançamento em PROJEÇÃO costuma vir sem data): aparece listado no rodapé como ignorado.
+- CPF e link do Salesforce ficam **vazios** — o HUD não guarda esses campos.
+
+**Pegadinha:** `data_iso` é coluna `date` no Postgres, então filtro de mês tem que ser `gte`/`lte`; `like.2026-08*` devolve **404**.
+
+---
+
+## 🔍 10D. Conferir Pipeline × ZS (rotina de batimento por consultor)
+**Script:** `Conferir-Pipeline-ZS.ps1` (raiz) · **Gatilho:** `Conferir <consultor>` / `Pipeline x ZS <consultor> [mês]`
+
+| Comando | O que faz |
+|---|---|
+| `-Consultor Heverton` | Bate HUD × ZS do mês vigente: as duas listas, o que só existe de cada lado e o total real |
+| `-Consultor Natália -Periodo 2026-07` | Mesmo batimento em outro mês |
+| `-Todos` | Equipe Vitória (Gabriela · Karla · Natália · Heverton Leonardo) |
+| `-Csv` | Exporta as duas listas pareadas para CSV no %TEMP% |
+| *(sem parâmetro)* | Lista as grafias de consultor existentes no HUD |
+
+**Regras:**
+- **PROJEÇÃO fica fora da conta.** No HUD, projeção é negociação, não faturamento — comparar com o ZS só `FECHADO`/`ABERTO`, senão a "divergência" vira ruído de pipeline futuro. A projeção sai numa tabela à parte.
+- **Pareamento = valor igual + nome compatível.** Valor sozinho **não** é prova (duas pessoas fecham o mesmo preço de tabela o tempo todo): quando só o valor bate, a linha sai como **⚠ duvidosa**, nunca como casada. Foi o que separou `Iasmin Brambilla` de `Kamila Barbara`, ambas R$ 1.997,00 em 04/08.
+- **Nome:** o HUD guarda nome curto (`MAIKEL SILVA`, `SABRINA`) e o ZS o completo (`Maikel Da Silva Simão`). Casa por **token de 4+ letras em comum**, ignorando sobrenomes genéricos (Silva, Souza, Santos…) — resolve `Stéfany Godoy` × `Sté**ph**any Godoy` e `STÉFANY KUBIT` × `Sthefany Kubit Teixeira`.
+- **Sem `data_iso` no HUD** entra no total, mas sai marcado: nenhuma sincronização enxerga esse lançamento.
+
+**⚠️ PEGADINHAS (as duas custaram caro):**
+1. **Acento quebra o `ilike`:** `consultant=ilike.*natal*` devolve **zero** para "Natália" — e zero parece "consultora sem vendas", não erro. O script lê as grafias reais do HUD e casa por nome normalizado.
+2. **`$_` é sobrescrito:** chamar uma função que usa pipeline **dentro** de um `Where-Object` corrompe o `$_` do bloco externo (o pareamento dava 0 sempre). Calcular em variáveis antes e usar `foreach`, não `Where-Object`.
+
+---
+
+## 🧾 10C. Lançar venda na turma (lote guiado)
+**Script:** `Lancar-Venda-Turma.ps1` (raiz) · **Gatilho:** `Lançar venda na turma` · **Destino:** `frz-sistema-v2.vercel.app` → Supabase tabela `vendas` (escrita anônima, sem login) · **Alunos:** ZS (`Painel-Vitoria.ps1` → `class_id`; `Painel-Turma.ps1 -ClassId N`).
+
+| Comando | O que faz |
+|---|---|
+| `Lancar-Venda-Turma.ps1` | Lista as turmas cadastradas e sai |
+| `-Turma <id>` | **Painel da turma:** totais, quantos têm Presença Confirmada e **quem já tem venda lançada** (a duplicata aparece ANTES de digitar qualquer coisa) |
+| `-Turma <id> -LinhasFile lote.txt` | **Prévia** do lote — resolve aluno/curso/CPF/consultor e marca ⚠ |
+| `-Turma <id> -LinhasFile lote.txt -Aplicar` | **Grava** todas as linhas de uma vez |
+| `-Atualizar` | Ignora o cache e reconsulta o ZS |
+| `-TodosAlunos` | Aceita também quem não está com Presença Confirmada |
+
+**Uma linha por venda:** `nome | curso | [qtd] | valor | status`
+```
+isabely | IF | 2 | 2998,50 | pago
+sabrina | livrao | 2000 | pago
+harrison | maestria | 85000 | neg
+```
+- **nome** = qualquer pedaço/começo do nome; 2+ candidatos → a linha para com `ambíguo: A // B` (nunca escolhe sozinho).
+- **curso** = apelido (`IF`, `CIS`, `GGB`, `livrao`, `TAV`, `BHP`, `CEOP`, `FGPC`…) ou pedaço do nome; catálogo vem da `TIPOS_LIST` do HTML do app + `PITCH LIVRAO` e `Coaching Individual`.
+- **status** = `pago` · `entrada` · `neg`. **qtd** é opcional (default 1).
+- ⚠️ **valor é o TOTAL da venda, não o unitário.**
+
+**Regras:**
+- **Prévia obrigatória** — sem `-Aplicar` nada vai para o banco.
+- **Nada de default em dinheiro:** valor e status são sempre explícitos. O valor que destoa (< metade ou > dobro da média do curso na turma) vira ⚠, não é corrigido sozinho.
+- **Duplicata** = mesmo aluno + mesmo curso na turma, casando por **CPF** e, quando a venda antiga está sem CPF, por 2+ tokens do nome — os nomes entram abreviados ("ISABELY VICENTIM" × "Isabely Vicentim de Oliveira") e comparação exata não pega.
+- **Só Presença Confirmada** entra por padrão; quem está na turma com outro status é recusado com o motivo ("Pendente de Confirmação").
+- **CPF** sai do cadastro do ZS; **consultor** vem do responsável do aluno, normalizado para a grafia que a turma já pratica (`Karla Ferreira de Oliveira` → `Karla`).
+- **Liquidez** = valor, exceto `Coaching Individual*` (metade) — mesma conta do `calcLiq`.
+- **Cache** em `%LOCALAPPDATA%\MetaMaster\turmas`: `class-map.json` é permanente, alunos e cursos valem o dia. A idade do dado aparece no painel. **~18s a frio × ~2,5s com cache.**
+- Turma do sistema ≠ turma do ZS: o nome casa ("MCIS 251 · VITÓRIA" = `class_id` 112), mas os ids são independentes.
+
+**Escrita:** `POST /rest/v1/vendas` com `Prefer: return=representation`. Corrigir/mover venda existente = `PATCH /rest/v1/vendas?id=eq.<id>`.
+
+---
+
+## 💳 10E. Lançar vendas do relatório do SF no ZS (fluxo padronizado)
+**Pasta:** `lancamentos-zs/` · **Script:** `Lancar-Vendas-SF.ps1` · **Atalho:** `Lancar Vendas ZS.vbs` (duplo clique) · **Gatilho:** `Lançar vendas do SF` · **Destino:** Zsales Vitória (org 2).
+
+Entrada = o relatório de vendas exportado do Salesforce (**Exportar → Detalhes apenas → .xls**). Saída = clientes cadastrados + vendas lançadas e fechadas como ganhas.
+
+| Comando | O que faz |
+|---|---|
+| `.\Lancar-Vendas-SF.ps1 -Arquivo "<...>.xls"` | **Etapa 1 — prévia.** Lê o relatório, cruza SF × ZS e gera `previas\previa-<data>.html`. **Nada é gravado.** Sem `-Arquivo`, pega o `report*.xls` mais recente de Downloads |
+| `-Acao cadastro` / `-Acao cadastro -Aplicar` | **Etapa 2 — clientes.** Cria quem não existe e completa só campo vazio (via `Ponte-ZS.ps1`) |
+| `-Acao vendas` / `-Acao vendas -Aplicar` | **Etapa 3 — vendas.** Oportunidade + produto + pagamento + anotações + fecha como ganha |
+| `-Acao status` | Testa Salesforce, Zsales e API web antes de começar |
+| `-Abrir` | Abre a prévia HTML no navegador |
+| `-Rodada <arquivo.json>` | Usa uma rodada específica (por padrão, a mais recente) |
+
+**Regras do lançamento (definidas em 12–13/08/2026):**
+- **Nome da oportunidade = nome do cliente**, sem prefixo de turma.
+- **Valor = só o que entrou pelo CISPay.** O **cashback fica fora** do produto, do valor e dos pagamentos — vira a 2ª anotação com o link do registro no SF.
+- **Pagamento:** `Cartão de crédito`/`PIX` + instituição **BCO ITAUBANK S.A.** + gateway **CISPay** + data do SF; parcelas no protocolo (`4x`).
+- **Anotação:** texto fixo + link da venda no SF + um bloco por forma de pagamento, campo a campo (layout da tela "Forma de Pag. Venda").
+- **Responsável:** a venda herda o do cliente; cliente novo nasce com o `responsavel_padrao_id` do config.
+- **Turma:** resolvida automaticamente (`FCIS31` → "FCIS 31 - 1º Módulo"); havendo módulos, usa o 1º; se ficar ambígua, **bloqueia** e você resolve no `config.json`.
+- **Anti-duplicidade:** consulta as vendas do cliente na API web; quem já tem venda com o mesmo valor ou a mesma turma é pulado. Rodar duas vezes não duplica.
+- **Sem endereço no cliente o ZS recusa fechar** — a venda fica lançada e **aberta**, e aparece no resumo com o link.
+
+**Config:** copie `config.exemplo.json` para `config.json` (org, responsável padrão, instituição/gateway, de-para de turmas). O `config.json` e a pasta `previas/` são gitignored.
+
+---
+
 ## 🔧 Utilitários (não-Vitória, execução direta, sem gatilho de chat)
 
 | Script | O que faz |

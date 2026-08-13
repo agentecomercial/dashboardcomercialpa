@@ -1,0 +1,6 @@
+# config real (pode conter ids/ajustes locais) — versionar so o exemplo
+config.json
+
+# rodadas e relatorios gerados: dados de cliente, nao vao para o repositorio
+previas/
+.tmp/

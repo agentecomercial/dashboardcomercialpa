@@ -1,0 +1,25 @@
+{
+  "_comentario": "Copie para config.json e ajuste. O config.json e ignorado pelo git.",
+
+  "org": 2,
+  "_org": "1 = Belem, 2 = Vitoria, 3 = Teresina",
+
+  "responsavel_padrao_id": 28,
+  "_responsavel_padrao_id": "Quem fica como responsavel do CLIENTE novo. A VENDA sempre herda o responsavel do cliente. 28 = PABLO MARTINS CORREIA, 76 = Gabriela Souza de Jesus, 77 = Natalia Cunha, 16314 = Karla Ferreira",
+
+  "instituicao": "BCO ITAUBANK S.A.",
+  "gateway": "CISPay",
+  "_pagamento": "Aplicados a toda forma CISPay do relatorio (cartao/pix)",
+
+  "funnel_stage_id": 5000532,
+  "_funnel_stage_id": "5. Venda Feita/Convertido (funil FEBRACIS ES)",
+
+  "texto_anotacao": "Anotação - Clientes que vieram do presencial.",
+  "texto_cashback": "Cliente fez uso do cashback no produto lançado. Segue o link do cashback.",
+
+  "turmas": {
+    "_comentario": "So preencha quando a previa acusar turma AMBIGUA ou NAO ENCONTRADA. O de-para manual vence a busca automatica.",
+    "2026 - FCIS31": { "product_id": 32, "class_id": 113, "class_name": "FCIS 31 - 1º Módulo - Vitória" },
+    "2026 - FCIS32": { "product_id": 32, "class_id": 37,  "class_name": "FCIS 32 - 1º Módulo - Vitória" }
+  }
+}
