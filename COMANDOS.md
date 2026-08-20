@@ -1,4 +1,4 @@
-# 🗂️ Comandos do Projeto — Vitória (Sales Cube / MCP)
+﻿# 🗂️ Comandos do Projeto — Vitória (Sales Cube / MCP)
 
 Todos os scripts `.ps1` ficam na raiz do projeto e rodam contra o **MCP Sales Cube**.
 Sintaxe dos parâmetros: `[mês]` = nome ("junho") ou `-Periodo AAAA-MM`; `<nome>` = parte do nome do consultor.
@@ -258,7 +258,7 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 ---
 
 ## 🔍 10D. Conferir Pipeline × ZS (rotina de batimento por consultor)
-**Script:** `Conferir-Pipeline-ZS.ps1` (raiz) · **Gatilho:** `Conferir <consultor>` / `Pipeline x ZS <consultor> [mês]`
+**Script:** `Conferir-Pipeline-ZS.ps1` (raiz) · **Gatilho:** `Pipeline x ZS` (equipe) · `Pipeline x ZS <consultor>` · `Pipeline x ZS atualizar` (mesma coisa, só reforça que é para reler tudo)
 
 | Comando | O que faz |
 |---|---|
@@ -267,6 +267,26 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 | `-Todos` | Equipe Vitória (Gabriela · Karla · Natália · Heverton Leonardo) |
 | `-Csv` | Exporta as duas listas pareadas para CSV no %TEMP% |
 | *(sem parâmetro)* | Lista as grafias de consultor existentes no HUD |
+
+### 📐 FORMATO DA RESPOSTA (fixado em 18/08/2026 — seguir sempre)
+
+**1. Tabela-resumo** com uma linha por consultor + **linha de TOTAL**, colunas: `HUD (líquido) · ZS bruto · ZS líquido · Pendências`. Abaixo dela, o **faturamento real da equipe** e a prova da conta (`HUD − pendências = ZS líquido`).
+
+**2. Uma seção por consultor, com TUDO** — nunca resumir. Para cada um: tabela completa do HUD (todas as linhas, coluna `No ZS?`), tabela completa do ZS (todas as linhas, coluna `No HUD?` **e o link da venda em cada linha**) e as projeções em tabela à parte. **Todas as tabelas em ordem de VALOR decrescente**, não por data.
+
+**3. Bloco "O que parece divergência e está certo"** — venda agrupada no ZS (CI+IF, IF+CEOP, CI+BHP) e matrículas de R$ 0,00.
+
+**4. 🔴 PENDÊNCIAS por último**, em tabela única **agrupada por consultor** (ordem alfabética; dentro do consultor, por valor decrescente), com colunas consultor · data · aluno · curso · valor · ação · **link da venda**.
+
+**5. 🛠️ Menu numerado de correções que EU consigo executar** — coluna `#`, por consultor e cliente. O usuário responde só com os números e eu executo. Entram: fechar como Ganho, trocar assignee, corrigir valor/nome/data/curso no HUD, unificar grafias. Não entram: lançar venda inexistente ou decidir valor divergente.
+
+**6. Bloco copiável** (```) com as pendências agrupadas por consultor, uma linha por item com data · aluno · curso · valor · link — só para quem TEM pendência.
+
+**7. Depois de aplicar qualquer correção do menu, RODAR O `-Todos` DE NOVO** e entregar o relatório completo já atualizado (fixado em 19/08/2026). Entre duas leituras o ZS muda sozinho: venda nova do dia, troca de responsável, oportunidade fechada por outra pessoa. Confirmar "aplicado" em cima de números velhos engana.
+
+**8. FECHAR SEMPRE COM O `⟳ Sincronizar FRZ`** (fixado em 19/08/2026). Todo `Pipeline x ZS` termina rodando `Sincronizar-FRZ.ps1 -Aplicar` — o mesmo que o botão do app faz, só que pelo terminal. Sem isso a Pipeline Comercial fica com o quadro velho: lançamento novo no HUD não aparece e venda que trocou de dono continua duplicada dos dois lados. Antes dele, se mexeu em venda do Pablo, rode `Sync-Extraclasse-ZS.ps1 -Aplicar` — o sync lê o EXTRACLASSE daquele arquivo, e um arquivo velho **ressuscita** a venda que saiu do Pablo.
+
+**O Pablo entra pela Turma FRZ × ZS**, não pelo HUD — ver a memória `feedback_pablo_sem_pipeline`.
 
 **Regras:**
 - **PROJEÇÃO fica fora da conta.** No HUD, projeção é negociação, não faturamento — comparar com o ZS só `FECHADO`/`ABERTO`, senão a "divergência" vira ruído de pipeline futuro. A projeção sai numa tabela à parte.
@@ -277,6 +297,13 @@ Situação: ✅ exato · ⚠️ aproximado · ⚠️ só contato (sem CPF) · �
 **⚠️ PEGADINHAS (as duas custaram caro):**
 1. **Acento quebra o `ilike`:** `consultant=ilike.*natal*` devolve **zero** para "Natália" — e zero parece "consultora sem vendas", não erro. O script lê as grafias reais do HUD e casa por nome normalizado.
 2. **`$_` é sobrescrito:** chamar uma função que usa pipeline **dentro** de um `Where-Object` corrompe o `$_` do bloco externo (o pareamento dava 0 sempre). Calcular em variáveis antes e usar `foreach`, não `Where-Object`.
+
+**⚠️ O QUE O SCRIPT NÃO ENXERGA (completar sempre por fora, via API REST):**
+- **O script só lê Vitória (org 2).** Venda em **Teresina (org 3)** não aparece — somar à mão no ZS bruto do consultor. Acontece direto com TCE TOUR PV.
+- **"Falta lançar no ZS" quase nunca é isso:** a oportunidade existe em `outcome=negotiating` na etapa "5. Venda Feita/Convertido". A ação é **fechar como Ganho**, não lançar. Confirmar um a um por `/api/opportunities/{id}/` antes de escrever a pendência.
+- **Fechar como Ganho pela API:** `PATCH /api/opportunities/{id}/ {"outcome":"won"}` funciona em Vitória; **em Teresina reverte sozinho** em minutos — esses ficam fora do menu de correções (ver `reference_fechar_ganho_api_zs`).
+- **IDs de oportunidade não são globais:** o mesmo número existe em orgs diferentes com clientes diferentes. Sempre conferir o nome do cliente ao montar o link.
+- **Cliente do HUD com nome truncado/apelido** ("Meia Nathalia", "Jonas/ Daniela 5586999791999") — procurar no ZS pelas oportunidades recentes do consultor, não só pelo nome.
 
 ---
 
