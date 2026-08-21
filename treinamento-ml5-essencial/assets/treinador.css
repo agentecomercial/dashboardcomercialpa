@@ -1,0 +1,317 @@
+/* ═══════════════════════════════════════════════════════════════
+   MODO TREINADOR — duas janelas
+   ───────────────────────────────────────────────────────────────
+   Janela 1 (sem ?role): o deck limpo, que vai para o telão/projetor.
+   Janela 2 (?role=console): o painel do apresentador, que fica só na
+   tela do treinador.
+
+   O roteiro (.tnote) NUNCA aparece no deck — ele existe no HTML
+   apenas para o console ler e exibir do lado de cá.
+   ═══════════════════════════════════════════════════════════════ */
+
+.tnote { display: none; }
+
+/* Botão do HUD que inicia o modo treinador (só no deck avulso) */
+.hud .t-btn {
+  background: rgba(155,180,255,0.14);
+  border-color: rgba(155,180,255,0.45);
+  color: #cfd9ff;
+}
+.hud .t-btn:hover { background: rgba(155,180,255,0.26); }
+
+/* Aviso rápido no topo */
+.t-toast {
+  position: fixed; left: 50%; top: 26px; transform: translateX(-50%);
+  background: rgba(10,7,3,0.94); border: 1px solid rgba(155,180,255,0.5);
+  color: #dfe6ff; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 9px 18px; border-radius: 999px; z-index: 60;
+  opacity: 0; transition: opacity .18s ease; pointer-events: none;
+  max-width: 80vw; text-align: center; line-height: 1.5;
+}
+.t-toast.on { opacity: 1; }
+
+/* ---------- O PALCO (?role=palco) ----------
+   É a janela do projetor. Nada pode denunciar que existe um roteiro do
+   outro lado: sem botão de treinador, sem selo de "console ativo".
+   O JS já não cria nenhum dos dois — estas regras são a rede de
+   segurança, caso algum deles volte a ser injetado. */
+html.is-palco .t-btn,
+html.is-palco .t-live,
+html.is-palco .t-toast { display: none !important; }
+
+/* Convite de tela cheia: só aparece quando o navegador recusa o
+   requestFullscreen automático. Some no instante em que entra. */
+.palco-convite {
+  position: fixed; inset: 0; z-index: 90;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(10,7,3,.93); cursor: pointer;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif; text-align: center;
+  animation: conviteEntra .25s ease both;
+}
+.palco-convite.on { display: flex; }
+.palco-convite b {
+  font-size: clamp(20px, 3.4vw, 40px); font-weight: 900; color: var(--cis-yellow);
+  letter-spacing: -.01em;
+}
+.palco-convite small { font-size: clamp(12px, 1.4vw, 16px); color: var(--cis-muted); }
+.palco-convite kbd {
+  background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 5px; padding: 1px 7px; margin: 0 2px;
+  font: 700 .92em ui-monospace, Consolas, monospace; color: var(--cis-text);
+}
+@keyframes conviteEntra { from { opacity: 0; } to { opacity: 1; } }
+
+
+/* ══════════════ A JANELA DO CONSOLE ══════════════ */
+
+html.is-console, html.is-console body { overflow: hidden; height: 100%; background: #0a0703; }
+html.is-console .stage,
+html.is-console .hud,
+html.is-console .progress,
+html.is-console .home-button,
+html.is-console .t-live { display: none !important; }
+
+.cs {
+  position: fixed; inset: 0;
+  display: grid; grid-template-rows: auto minmax(0,1fr) auto auto;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  color: var(--cis-text); background: #0a0703;
+}
+
+/* ---- Topo ---- */
+.cs-top {
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  padding: 10px 18px; border-bottom: 1px solid rgba(224,181,82,0.22);
+  background: linear-gradient(180deg, rgba(46,36,21,.55), rgba(10,7,3,.2));
+  min-width: 0;
+}
+.cs-brand {
+  font-size: 14px; font-weight: 800; color: var(--cis-yellow);
+  display: flex; align-items: baseline; gap: 9px; white-space: nowrap;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.cs-brand small { font-size: 10px; font-weight: 700; color: var(--cis-muted); letter-spacing: .16em; text-transform: uppercase; }
+.cs-sp { flex: 1; }
+.cs-timers { display: flex; align-items: center; gap: 9px; }
+.cs-timer {
+  display: flex; flex-direction: column; align-items: center; line-height: 1;
+  background: rgba(0,0,0,.35); border: 1px solid rgba(224,181,82,.25);
+  border-radius: 10px; padding: 7px 14px; min-width: 82px;
+}
+.cs-timer b { font-size: 19px; font-weight: 900; color: var(--cis-yellow); font-variant-numeric: tabular-nums; }
+.cs-timer span { font-size: 9px; color: var(--cis-muted); letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; }
+.cs-timer.estourou b { color: #ff8b8b; }
+.cs-btn-sm {
+  background: rgba(224,181,82,.10); border: 1px solid rgba(224,181,82,.35);
+  color: var(--cis-yellow); font: 700 11px inherit; padding: 8px 12px;
+  border-radius: 8px; cursor: pointer; font-family: inherit;
+}
+.cs-btn-sm:hover { background: rgba(224,181,82,.22); }
+.cs-count { font-size: 14px; color: var(--cis-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cs-count b { font-size: 25px; color: #fff; font-weight: 900; }
+.cs-link { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 800; color: #9bd6a0; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.cs-link .dot { width: 8px; height: 8px; border-radius: 999px; background: #9bd6a0; box-shadow: 0 0 8px #9bd6a0; }
+.cs-link.off { color: #ff8b8b; }
+.cs-link.off .dot { background: #ff8b8b; box-shadow: none; }
+
+/* ---- Corpo ---- */
+.cs-body {
+  display: grid; grid-template-columns: minmax(0,1.28fr) minmax(340px,0.92fr);
+  gap: 16px; padding: 14px 18px 6px; min-height: 0;
+}
+.cs-col { display: flex; flex-direction: column; gap: 9px; min-height: 0; min-width: 0; }
+.cs-lbl {
+  font-size: 10px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--cis-muted); display: flex; align-items: center; gap: 8px;
+}
+.cs-lbl b { color: var(--cis-yellow); letter-spacing: .06em; }
+
+/* Preview do slide — duas camadas:
+   .cs-view  = a ÁREA disponível, elástica, sem moldura nenhuma.
+   .cs-frame = a MOLDURA, dimensionada pelo JS exatamente como o slide
+               escalado (1280×720 × k). Assim a borda abraça o slide e
+               nunca sobra aquela tarja preta dos lados. */
+.cs-view {
+  flex: 1 1 auto; min-height: 110px; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.cs-frame {
+  position: relative; overflow: hidden; flex: 0 0 auto;
+  border: 1px solid rgba(224,181,82,.32); border-radius: 12px; background: #0a0703;
+  box-shadow: 0 12px 34px -18px rgba(0,0,0,.9);
+}
+.cs-frame .deck { position: absolute; top: 0; left: 0; transform-origin: top left; }
+.cs-view .slide.is-active { animation: none !important; }
+/* No console o slide aparece inteiro: o treinador precisa ver o que vem. */
+.cs-view .slide.is-active .cis-step:not(.is-revealed) {
+  opacity: 1; transform: none; filter: none;
+}
+/* O "próximo" ocupa a LARGURA INTEIRA da coluna em 16:9 — antes tinha
+   altura fixa baixa e ficava um selo ilegível. O roteiro pega o resto:
+   é texto, se vira com menos espaço e ainda rola se precisar. */
+.cs-view.prox {
+  flex: 0 0 auto; width: 100%; aspect-ratio: 16 / 9;
+  max-height: 40vh; min-height: 110px;
+  justify-content: flex-start;
+}
+.cs-view.prox .cs-frame { border-color: rgba(255,255,255,.14); }
+.cs-view.prox .deck { opacity: .82; }
+.cs-view.vazio .cs-frame { display: none; }
+.cs-view.vazio::after {
+  content: "fim do deck";
+  color: var(--cis-muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+}
+
+/* Marcador de itens revelados */
+.cs-steps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--cis-muted); min-height: 16px; }
+.cs-steps .pip { width: 22px; height: 5px; border-radius: 999px; background: rgba(255,255,255,.16); }
+.cs-steps .pip.on { background: var(--cis-yellow); }
+.cs-steps em { font-style: normal; color: var(--cis-yellow); font-weight: 800; }
+
+/* Rótulo com o título do slide — é o que dá para LER de verdade.
+   A miniatura serve para reconhecer o slide; o texto carrega a informação. */
+.cs-lbl { flex: 0 0 auto; }
+.cs-lbl b {
+  color: var(--cis-yellow); letter-spacing: .02em; font-size: 12px;
+  text-transform: none; font-weight: 800;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+
+/* Roteiro */
+.cs-nota {
+  flex: 1 1 auto; min-height: 110px; overflow-y: auto;
+  background: rgba(155,180,255,.07); border: 1px solid rgba(155,180,255,.32);
+  border-radius: 12px; padding: 16px 18px;
+}
+.cs-nota .tk {
+  font-size: 10px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase;
+  color: #9bb4ff; display: flex; align-items: center; gap: 8px; margin-bottom: 11px;
+}
+.cs-nota .tk span {
+  background: rgba(155,180,255,.16); border: 1px solid rgba(155,180,255,.4);
+  border-radius: 999px; padding: 2px 9px; letter-spacing: .08em;
+}
+.cs-nota p { margin: 0; font-size: 16px; line-height: 1.55; color: #e7ecff; }
+.cs-nota p b { color: #fff; }
+.cs-nota.vazio p { color: var(--cis-muted); font-style: italic; font-size: 14px; }
+
+/* ---- Controles ---- */
+.cs-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 18px; border-top: 1px solid rgba(224,181,82,.2);
+  background: linear-gradient(0deg, rgba(46,36,21,.5), transparent);
+  min-width: 0;
+}
+.cs-bar button { white-space: nowrap; flex: 0 0 auto; }
+.cs-bar button {
+  background: rgba(224,181,82,.12); border: 1px solid rgba(224,181,82,.5);
+  color: var(--cis-yellow); font: 800 13px inherit; font-family: inherit;
+  padding: 11px 18px; border-radius: 10px; cursor: pointer; transition: all .14s;
+}
+.cs-bar button:hover { background: rgba(224,181,82,.24); }
+.cs-bar button.pri {
+  background: var(--cis-yellow); color: var(--cis-blue-900);
+  border-color: transparent; min-width: 210px; font-size: 14px;
+}
+.cs-bar button.pri:hover { background: var(--cis-yellow-soft); }
+.cs-hint { margin-left: auto; font-size: 11px; color: var(--cis-muted); text-align: right; line-height: 1.6; }
+.cs-hint kbd {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 5px; padding: 1px 6px; margin: 0 1px;
+  font: 700 10px ui-monospace, Consolas, monospace; color: var(--cis-text);
+}
+
+/* ---- Régua de slides ---- */
+.cs-rail { display: flex; gap: 4px; overflow-x: auto; padding: 9px 18px 12px; border-top: 1px solid rgba(255,255,255,.07); }
+.cs-rail button {
+  flex: 0 0 auto; width: 31px; height: 27px; border-radius: 7px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  color: var(--cis-muted); font: 800 11px inherit; font-family: inherit;
+  cursor: pointer; font-variant-numeric: tabular-nums; padding: 0;
+}
+.cs-rail button:hover { border-color: var(--cis-card-border-strong); color: var(--cis-yellow); }
+.cs-rail button.on { background: var(--cis-yellow); color: var(--cis-blue-900); border-color: transparent; }
+.cs-rail button.oculto { opacity: .3; }
+
+/* ---------- Adaptação ao display ----------
+   O console tem que caber inteiro, sem rolagem e sem sobreposição, do
+   notebook de 1366×768 ao monitor grande. A ordem do que é sacrificado
+   quando falta espaço: enfeites → régua → próximo slide. O roteiro e os
+   controles nunca saem. */
+
+/* Notebook baixo (1366×768 e parecidos): encolhe o "cromo" para sobrar
+   altura ao slide e ao roteiro. */
+@media (max-height: 820px) {
+  .cs-top { padding: 7px 14px; gap: 11px; }
+  .cs-timer { padding: 5px 11px; min-width: 72px; }
+  .cs-timer b { font-size: 16px; }
+  .cs-count b { font-size: 20px; }
+  .cs-body { padding: 10px 14px 4px; gap: 12px; }
+  .cs-bar { padding: 7px 14px; gap: 8px; }
+  .cs-bar button { padding: 9px 14px; font-size: 12px; }
+  .cs-bar button.pri { min-width: 180px; font-size: 13px; }
+  .cs-nota { padding: 12px 14px; }
+  .cs-nota p { font-size: 15px; }
+  .cs-rail { padding: 6px 14px 8px; }
+  .cs-rail button { height: 23px; width: 28px; }
+  .cs-view.prox { max-height: 26vh; }
+}
+
+/* Muito baixo (janela restaurada, TV em pé, zoom alto): a régua sai —
+   a navegação continua pelos botões e pelo teclado. */
+@media (max-height: 660px) {
+  .cs-rail { display: none; }
+  .cs-hint { display: none; }
+  .cs-view.prox { max-height: 22vh; }
+  .cs-nota p { font-size: 14px; }
+}
+
+/* Largura apertada: some o texto de apoio, depois o próximo slide. */
+@media (max-width: 1180px) {
+  .cs-brand small { display: none; }
+  .cs-hint { display: none; }
+}
+@media (max-width: 940px) {
+  .cs-body { grid-template-columns: 1fr; }
+  .cs-view.prox { display: none; }
+  .cs-lbl b { display: none; }
+}
+
+/* ---------- Painel de diagnóstico de telas ----------
+   Existe porque a colocação em segundo monitor depende de coisas que só
+   dá para ver na máquina do treinador: versão do Chrome, estado da
+   permissão, quantos displays o sistema expõe. Sem isso a gente fica
+   chutando. */
+.cs-telas {
+  position: fixed; top: 54px; right: 16px; z-index: 70; width: 400px; max-width: 92vw;
+  display: none; flex-direction: column; gap: 10px;
+  background: #12100c; border: 1px solid var(--cis-card-border-strong);
+  border-radius: 14px; padding: 16px 18px;
+  box-shadow: 0 26px 60px -20px rgba(0,0,0,.95);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+}
+.cs-telas.on { display: flex; }
+.cs-telas h4 {
+  margin: 0; font-size: 11px; font-weight: 900; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--cis-yellow);
+  display: flex; align-items: center; gap: 8px;
+}
+.cs-telas h4 button {
+  margin-left: auto; background: none; border: 0; color: var(--cis-muted);
+  font: 700 15px inherit; cursor: pointer; line-height: 1; padding: 2px 5px;
+}
+.cs-telas h4 button:hover { color: var(--cis-yellow); }
+.cs-telas dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 12px; }
+.cs-telas dt { color: var(--cis-muted); white-space: nowrap; }
+.cs-telas dd { margin: 0; color: var(--cis-text); font-weight: 700; }
+.cs-telas dd.sim { color: #9bd6a0; }
+.cs-telas dd.nao { color: #ff8b8b; }
+.cs-telas ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--cis-text); }
+.cs-telas ol .p { color: var(--cis-muted); font-size: 11px; }
+.cs-telas .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.cs-telas .dica {
+  font-size: 11px; color: var(--cis-muted); line-height: 1.55;
+  border-left: 2px solid rgba(224,181,82,.4); padding-left: 9px;
+}
+.cs-telas .dica b { color: var(--cis-yellow); }

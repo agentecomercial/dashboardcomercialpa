@@ -105,6 +105,22 @@
       ]
     },
     {
+      id: 'treinamento-ml5-essencial',
+      titulo: 'ML5 Essencial',
+      descricao: 'Versão EXECUTIVA do Treinamento Comercial ML5: os 115 slides do original condensados em 33, em 4 blocos (Produto, Lead Certo, Conversa, Fechar). Resumos de impacto, regras de ouro, scripts prontos, checklist e teste rápido. Tem Modo Treinador (tecla T) com o roteiro de condução — invisível para quem lê sozinho.',
+      produto: 'ML5',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 31,
+      url: 'treinamento-ml5-essencial/index.html',
+      icone: '⚡',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Deck Essencial (33 slides)', url: 'treinamento-ml5-essencial/index.html', tipo: 'index' }
+      ]
+    },
+    {
       id: 'treinamento-maestria',
       titulo: 'Treinamento Comercial MAESTRIA',
       descricao: 'Maestria Global Business — mastermind oficial Febracis (12 meses de mentoria premium com Paulo Vieira, imersões no Brasil e exterior, ecossistema contínuo de desenvolvimento empresarial) — treinamento comercial para a equipe vender a Maestria. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
@@ -234,6 +250,28 @@
         { titulo: 'Módulo 4 — Negociação e Objeções',         url: 'treinamento-master-coaching/modulo-4.html',     tipo: 'modulo' },
         { titulo: 'SPIN Selling — aplicado ao Master Coaching', url: 'treinamento-master-coaching/spin-selling.html', tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts e Roteiros',          url: 'treinamento-master-coaching/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-rac',
+      titulo: 'Treinamento Comercial RAC',
+      descricao: 'Reunião de Alta Conversão — método de condução da reunião de vendas consultiva. Não é sobre um produto: vale para todo o portfólio. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'RAC',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 1,
+      url: 'treinamento-rac/index.html',
+      icone: '🎯',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                          url: 'treinamento-rac/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — O Método (RAC)',              url: 'treinamento-rac/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Abertura e Controle',         url: 'treinamento-rac/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Diagnóstico',                 url: 'treinamento-rac/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Pit 01 e Objeções',           url: 'treinamento-rac/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao método',      url: 'treinamento-rac/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Pit 02, Pix e Follow-up',   url: 'treinamento-rac/fechamento.html',   tipo: 'final' }
       ]
     },
     {
