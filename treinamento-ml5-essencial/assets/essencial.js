@@ -122,10 +122,13 @@
     return casa[0] || telas.currentScreen || null;
   }
 
-  function abrirPalco(comFullscreen) {
+  function abrirPalco() {
     var t = projetor();
+    /* Sem o keyword "fullscreen": o Chrome abandonou essa feature
+       ("No longer pursuing"), ela nunca saiu de trás de flag e Firefox e
+       Safari recusaram. Em navegador de fábrica ela é inerte — manter
+       só deixaria uma variável sem função no comportamento da janela. */
     var f = 'popup,menubar=no,toolbar=no,location=no,status=no';
-    if (comFullscreen) f += ',fullscreen';   /* ignorado onde não houver suporte */
     if (t) {
       f += ',left=' + t.availLeft + ',top=' + t.availTop
         +  ',width=' + t.availWidth + ',height=' + t.availHeight;
@@ -216,9 +219,14 @@
     /* Mesmo gesto: o console nasce na tela de casa. O Chrome libera este
        popup por ser a "janela de companhia" de um fullscreen multi-tela. */
     var casa = telaDeCasa();
-    /* Sem teto de tamanho: o console ocupa a tela do treinador inteira.
-       Os Math.min de antes é que o deixavam numa janelinha. */
-    var f = 'popup,fullscreen,menubar=no,toolbar=no,location=no,status=no';
+    /* O console NÃO pode cair no mesmo monitor do palco: o Chrome tem uma
+       mitigação anti-popunder que TIRA a janela do fullscreen quando uma
+       popup da mesma cadeia aparece no display dela. Seria o palco caindo
+       do fullscreen sozinho no meio do treinamento. */
+    if (casa && alvo && casa.availLeft === alvo.availLeft && casa.availTop === alvo.availTop) casa = null;
+
+    /* Sem teto de tamanho: o console ocupa a tela do treinador inteira. */
+    var f = 'popup,menubar=no,toolbar=no,location=no,status=no';
     if (casa) {
       f += ',left=' + casa.availLeft + ',top=' + casa.availTop
         +  ',width=' + casa.availWidth
@@ -229,21 +237,44 @@
       f += ',left=0,top=0,width=' + sw + ',height=' + sh;
     }
     var con = window.open(BASE + '?role=console', 'ml5e-console', f);
-    if (!con && aviso) {
-      aviso('O navegador bloqueou a janela do console.<br>Libere os pop-ups deste site.', 6000);
+    if (!con) {
+      /* Sem console não há modo treinador: desfaz o fullscreen e mantém
+         esta janela como deck comum, em vez de deixar o usuário com um
+         palco mudo achando que a segunda janela "fechou sozinha". */
+      try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+      if (aviso) {
+        aviso('O navegador bloqueou a janela do console.<br>'
+            + 'Libere os <b>pop-ups</b> deste site na barra de endereço e clique de novo.', 9000);
+      }
+      return;
     }
     virarPalco(true);
   }
 
   /* ---------- Caminho clássico ---------- */
   function caminhoClassico(aviso) {
-    var palco = abrirPalco(true);
+    var palco = abrirPalco();
     if (!palco) {
       aviso('O navegador bloqueou a janela de apresentação.<br>Libere os pop-ups deste site e tente de novo.', 6000);
       return;
     }
     aviso('Abrindo a apresentação…');
-    setTimeout(function () { location.replace(BASE + '?role=console'); }, 120);
+
+    /* Espera o palco dar sinal de vida antes de navegar. O timeout fixo
+       de antes navegava com a popup ainda no documento inicial — nada
+       comprovadamente quebra aí, mas trocar por aperto de mão custa nada
+       e tira uma corrida do caminho. */
+    var jaFoi = false;
+    function virarConsole() {
+      if (jaFoi) return;
+      jaFoi = true;
+      location.replace(BASE + '?role=console');
+    }
+    window.addEventListener('message', function (ev) {
+      var m = ev.data || {};
+      if (m.t === 'ml5e:ola') virarConsole();
+    });
+    setTimeout(virarConsole, 2500);        /* rede: segue mesmo sem sinal */
   }
 
   /* ---------- Vira palco (no load com ?role=palco, ou no lugar) ---------- */
@@ -589,7 +620,7 @@
 
     raiz.querySelector('#csPalco').addEventListener('click', function () {
       if (canal.vivo()) { canal.par().focus(); return; }
-      var w = abrirPalco(true);
+      var w = abrirPalco();
       if (w) canal.fixar(w);
     });
 
