@@ -330,3 +330,28 @@ html.is-console .t-live { display: none !important; }
   border-left: 2px solid rgba(224,181,82,.4); padding-left: 9px;
 }
 .cs-telas .dica b { color: var(--cis-yellow); }
+
+/* ---- Controles fora da vista da turma ----
+   O palco está no projetor: HUD e botão de voltar não podem aparecer
+   para quem assiste. Somem por padrão e voltam só quando o mouse se
+   mexe sobre esta janela — que é quando o treinador realmente quer
+   usá-los.
+
+   Opacidade e NÃO display:none de propósito: o console comanda o palco
+   disparando .click() nesses botões. Com display:none eles continuariam
+   clicáveis por script, mas o updateAdvanceButton() do motor escreve
+   display inline no botão Avançar e reverteria a regra. Com opacidade,
+   nada disso acontece. */
+html.is-palco .hud,
+html.is-palco .home-button {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+html.is-palco.mostra-controles .hud,
+html.is-palco.mostra-controles .home-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Cursor parado também não fica no telão */
+html.is-palco:not(.mostra-controles) { cursor: none; }

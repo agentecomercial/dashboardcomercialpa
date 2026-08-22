@@ -288,6 +288,21 @@
     if (!noLugar) pedirTelaCheia();
     setTimeout(function () { if (!emTelaCheia()) mostrar(); }, 600);
 
+    /* ---- Controles escondidos da turma ----
+       No projetor ninguém pode ver o HUD nem o botão de voltar. Eles
+       reaparecem quando o mouse se mexe sobre esta janela e somem
+       sozinhos depois de alguns segundos parado. */
+    var relogioControles = null;
+    function mostrarControles() {
+      document.documentElement.classList.add('mostra-controles');
+      clearTimeout(relogioControles);
+      relogioControles = setTimeout(function () {
+        document.documentElement.classList.remove('mostra-controles');
+      }, 2500);
+    }
+    document.addEventListener('mousemove', mostrarControles);
+    document.addEventListener('mousedown', mostrarControles);
+
     /* ---- Conversa com o console ---- */
     var canal = ligar('palco', function () { publicar(); });
 
