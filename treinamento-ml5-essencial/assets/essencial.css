@@ -123,3 +123,19 @@
   border-left: 2px dashed rgba(224,181,82,0.45); padding-left: 10px;
 }
 
+
+/* ---- Revelação por célula em tabelas (.cis-table.por-celula) ----
+   Em <td>, o translate/scale do efeito padrão briga com o layout do
+   próprio table — o fade puro basta e fica mais limpo.
+   O html:not(.is-console) mantém o console imune: lá o slide aparece
+   sempre inteiro, porque o treinador precisa ver o que vem. */
+html:not(.is-console) .slide.is-active .cis-table.por-celula .cis-step:not(.is-revealed) {
+  opacity: 0;
+  transform: none;
+  filter: blur(2px);
+}
+html:not(.is-console) .slide.is-active .cis-table.por-celula .cis-step.is-revealed {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}

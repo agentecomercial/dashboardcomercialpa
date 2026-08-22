@@ -17,6 +17,10 @@
   // ---- Detecção de "passos" (itens revelados um por vez) ----
   // Seletores prioritários (cada um isolado).
   const STEP_SELECTORS = [
+    // Tabela marcada com .por-celula revela CÉLULA a célula, da esquerda
+    // para a direita: mostra a pergunta, a sala responde, e só então
+    // aparece a resposta. Precisa vir antes do seletor de linha inteira.
+    '.cis-table.por-celula tbody > tr > td',
     '.script-list > .item',
     '.dialog > .turn',
     '.seq > .step',
