@@ -447,8 +447,10 @@
       var w = area.clientWidth, h = area.clientHeight;
       if (!w || !h) return;
       var k = Math.min(w / 1280, h / 720);
-      frame.style.width = Math.round(1280 * k) + 'px';
-      frame.style.height = Math.round(720 * k) + 'px';
+      /* floor, não round: arredondar para cima daria uma moldura 1px
+         maior que a área e um clip desnecessário. */
+      frame.style.width = Math.floor(1280 * k) + 'px';
+      frame.style.height = Math.floor(720 * k) + 'px';
       deck.style.transform = 'scale(' + k + ')';
     }
     function escalarTudo() {
