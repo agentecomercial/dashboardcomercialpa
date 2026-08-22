@@ -116,7 +116,7 @@ html.is-console .t-live { display: none !important; }
 
 /* ---- Corpo ---- */
 .cs-body {
-  display: grid; grid-template-columns: minmax(0,1.28fr) minmax(340px,0.92fr);
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(340px,1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 16px; padding: 14px 18px 6px; min-height: 0;
   overflow: hidden;
@@ -153,9 +153,7 @@ html.is-console .t-live { display: none !important; }
    altura fixa baixa e ficava um selo ilegível. O roteiro pega o resto:
    é texto, se vira com menos espaço e ainda rola se precisar. */
 .cs-view.prox {
-  flex: 0 1 auto; width: 100%; aspect-ratio: 16 / 9;
-  max-height: min(40vh, 55%); min-height: 64px;
-  justify-content: flex-start;
+  flex: 1 1 auto; width: 100%; min-height: 60px;
 }
 .cs-view.prox .cs-frame { border-color: rgba(255,255,255,.14); }
 .cs-view.prox .deck { opacity: .82; }
@@ -164,6 +162,15 @@ html.is-console .t-live { display: none !important; }
   content: "fim do deck";
   color: var(--cis-muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
 }
+
+/* ---- Coluna direita empilhada ----
+   Proporção do layout: 50% telão | 30% próximo | 20% roteiro.
+   Os 30/20 viram 3fr/2fr dentro da coluna de 50% de largura. Nessa
+   razão a moldura do próximo chega a ~901x507 num console maximizado
+   em 1920 — praticamente o máximo que a coluna comporta, sem sobrar
+   tarja preta nas laterais. */
+.cs-dir { display: grid; grid-template-rows: 3fr 2fr; gap: 10px; min-height: 0; }
+.cs-cx { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
 
 /* Marcador de itens revelados */
 .cs-steps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--cis-muted); min-height: 16px; }
@@ -182,7 +189,7 @@ html.is-console .t-live { display: none !important; }
 
 /* Roteiro */
 .cs-nota {
-  flex: 1 1 auto; min-height: 84px; overflow-y: auto;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
   background: rgba(155,180,255,.07); border: 1px solid rgba(155,180,255,.32);
   border-radius: 12px; padding: 16px 18px;
 }
@@ -262,7 +269,7 @@ html.is-console .t-live { display: none !important; }
   .cs-nota p { font-size: 15px; }
   .cs-rail { padding: 6px 14px 8px; }
   .cs-rail button { height: 23px; width: 28px; }
-  .cs-view.prox { max-height: min(26vh, 50%); }
+  .cs-dir { gap: 8px; }
 }
 
 /* Muito baixo (janela restaurada, TV em pé, zoom alto): a régua sai —
@@ -271,7 +278,7 @@ html.is-console .t-live { display: none !important; }
   .cs-hint { display: none; }
   .cs-rail { padding: 5px 14px 6px; }
   .cs-rail button { height: 20px; width: 26px; font-size: 10px; }
-  .cs-view.prox { max-height: min(22vh, 45%); }
+  .cs-dir { gap: 6px; }
   .cs-nota p { font-size: 14px; }
 }
 
