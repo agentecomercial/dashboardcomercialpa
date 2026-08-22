@@ -216,11 +216,17 @@
     /* Mesmo gesto: o console nasce na tela de casa. O Chrome libera este
        popup por ser a "janela de companhia" de um fullscreen multi-tela. */
     var casa = telaDeCasa();
-    var f = 'popup,menubar=no,toolbar=no,location=no,status=no';
+    /* Sem teto de tamanho: o console ocupa a tela do treinador inteira.
+       Os Math.min de antes é que o deixavam numa janelinha. */
+    var f = 'popup,fullscreen,menubar=no,toolbar=no,location=no,status=no';
     if (casa) {
       f += ',left=' + casa.availLeft + ',top=' + casa.availTop
-        +  ',width=' + Math.min(1320, casa.availWidth)
-        +  ',height=' + Math.min(880, casa.availHeight);
+        +  ',width=' + casa.availWidth
+        +  ',height=' + casa.availHeight;
+    } else {
+      var sw = (window.screen && screen.availWidth) || 1280;
+      var sh = (window.screen && screen.availHeight) || 800;
+      f += ',left=0,top=0,width=' + sw + ',height=' + sh;
     }
     var con = window.open(BASE + '?role=console', 'ml5e-console', f);
     if (!con && aviso) {
@@ -405,6 +411,7 @@
       +   '</div>'
       +   '<div class="cs-sp"></div>'
       +   '<div class="cs-count"><b id="csN">–</b> / <span id="csTotalN">–</span></div>'
+      +   '<button class="cs-btn-sm" id="csCheia" title="Tela cheia deste painel (F)">⛶</button>'
       +   '<button class="cs-btn-sm" id="csPalco" title="Abrir ou trazer para a frente a tela de apresentação">⧉ Telão</button>'
       +   '<div class="cs-link off" id="csLink"><span class="dot"></span><span id="csLinkTxt">procurando…</span></div>'
       + '</div>'
@@ -432,7 +439,7 @@
       +   '<button data-cmd="avancar" class="pri" id="csAdv">▸ Avançar</button>'
       +   '<button data-cmd="proximo">Próximo slide ▶</button>'
       +   '<button data-cmd="telaCheia" title="Põe a apresentação em tela cheia">⛶ Tela cheia no telão</button>'
-      +   '<div class="cs-hint"><kbd>Espaço</kbd> ou <kbd>→</kbd> avança · <kbd>←</kbd> volta · <kbd>P</kbd> pausa o cronômetro<br>Clique num número da régua para pular</div>'
+      +   '<div class="cs-hint"><kbd>Espaço</kbd> ou <kbd>→</kbd> avança · <kbd>←</kbd> volta · <kbd>P</kbd> pausa · <kbd>F</kbd> tela cheia<br>Clique num número da régua para pular</div>'
       + '</div>'
       + '<div class="cs-rail" id="csRail"></div>';
     document.body.appendChild(raiz);
@@ -572,12 +579,41 @@
 
     setInterval(function () { marcarLink(canal.vivo()); }, 1500);
 
+    /* ---- Tela cheia do próprio console ----
+       A janela já nasce ocupando a tela do treinador. O fullscreen de
+       verdade some ainda com a barra de endereço e as abas — ganha uns
+       80px de altura, que fazem diferença nas prévias.
+
+       Tentamos automaticamente no load: como esta janela foi aberta por
+       um clique na outra, o Chrome às vezes propaga a ativação e a
+       chamada passa. Quando não passa, o botão ⛶ e a tecla F resolvem —
+       aí o gesto é daqui e nunca é recusado. */
+    function emCheia() { return !!document.fullscreenElement; }
+
+    function alternarCheia() {
+      try {
+        if (emCheia()) { document.exitFullscreen(); return; }
+        var p = document.documentElement.requestFullscreen();
+        if (p && p['catch']) p['catch'](function () {});
+      } catch (e) {}
+    }
+
+    raiz.querySelector('#csCheia').addEventListener('click', alternarCheia);
+    document.addEventListener('fullscreenchange', function () {
+      var b = raiz.querySelector('#csCheia');
+      b.textContent = emCheia() ? '⤢' : '⛶';
+      b.title = (emCheia() ? 'Sair da tela cheia' : 'Tela cheia deste painel') + ' (F)';
+      reajustar();
+    });
+    alternarCheia();
+
     document.addEventListener('keydown', function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); enviar('avancar'); }
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); enviar('anterior'); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); enviar('proximo'); }
       else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); alternarPausa(); }
+      else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); alternarCheia(); }
     });
 
     /* ---- Estado ---- */
