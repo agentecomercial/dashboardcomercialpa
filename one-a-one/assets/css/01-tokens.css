@@ -1,0 +1,130 @@
+/* =========================================================================
+   01-tokens.css — Design tokens (cores, tipografia, espaco, sombra, raio)
+   Fonte unica de verdade visual. Temas: light (padrao) e dark.
+   ========================================================================= */
+
+:root {
+  /* ---- Marca ---- */
+  --brand-50:  #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-300: #a5b4fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --accent-400: #2dd4bf;
+  --accent-500: #14b8a6;
+  --accent-600: #0d9488;
+
+  /* ---- Semanticas ---- */
+  --ok:      #10b981;
+  --ok-bg:   #ecfdf5;
+  --warn:    #f59e0b;
+  --warn-bg: #fffbeb;
+  --danger:  #ef4444;
+  --danger-bg:#fef2f2;
+  --info:    #3b82f6;
+  --info-bg: #eff6ff;
+  --purple:  #8b5cf6;
+  --purple-bg:#f5f3ff;
+  --pink:    #ec4899;
+
+  /* ---- Superficies (light) ---- */
+  --bg:        #f5f6f9;
+  --bg-soft:   #eceef4;
+  --surface:   #ffffff;
+  --surface-2: #fafbfc;
+  --surface-3: #f2f4f8;
+  --overlay:   rgba(15, 18, 28, .48);
+  --border:    #e4e7ee;
+  --border-strong: #d3d8e3;
+  --scroll-thumb: #c3cad8;
+  --scroll-thumb-hover: #9aa4b8;
+
+  /* ---- Texto ---- */
+  --text:      #11151f;
+  --text-2:    #414a5c;
+  --text-3:    #6b7488;
+  --text-4:    #98a1b3;
+  --on-brand:  #ffffff;
+
+  /* ---- Tipografia ---- */
+  --font: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-md: 13.5px;
+  --fs-base: 14.5px;
+  --fs-lg: 16px;
+  --fs-xl: 19px;
+  --fs-2xl: 24px;
+  --fs-3xl: 30px;
+  --fs-4xl: 38px;
+
+  /* ---- Espacamento ---- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 56px;
+
+  /* ---- Raio ---- */
+  --r-xs: 6px; --r-sm: 9px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-full: 999px;
+
+  /* ---- Sombra ---- */
+  --sh-xs: 0 1px 2px rgba(16,21,35,.05);
+  --sh-sm: 0 1px 3px rgba(16,21,35,.07), 0 1px 2px rgba(16,21,35,.04);
+  --sh-md: 0 4px 14px rgba(16,21,35,.08), 0 1px 3px rgba(16,21,35,.05);
+  --sh-lg: 0 18px 40px rgba(16,21,35,.13), 0 4px 12px rgba(16,21,35,.06);
+  --sh-xl: 0 32px 70px rgba(16,21,35,.20), 0 8px 20px rgba(16,21,35,.08);
+  --sh-brand: 0 8px 22px rgba(79,70,229,.28);
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --t-fast: .13s;
+  --t: .22s;
+  --t-slow: .38s;
+
+  /* ---- Layout ---- */
+  --sidebar-w: 250px;
+  --sidebar-w-collapsed: 74px;
+  --topbar-h: 62px;
+  --maxw: 1520px;
+  --z-sticky: 40; --z-drawer: 60; --z-modal: 80; --z-toast: 100; --z-pop: 90;
+}
+
+/* ===================== DARK ===================== */
+html[data-theme="dark"] {
+  --bg:        #0a0c11;
+  --bg-soft:   #0f1218;
+  --surface:   #14181f;
+  --surface-2: #191e27;
+  --surface-3: #1f242f;
+  --overlay:   rgba(3, 5, 10, .68);
+  --border:    #262c38;
+  --border-strong: #333b4a;
+  --scroll-thumb: #3f4a5e;
+  --scroll-thumb-hover: #5a6880;
+
+  --text:   #e9ecf3;
+  --text-2: #b3bccd;
+  --text-3: #8892a5;
+  --text-4: #667187;
+
+  --brand-500: #7c7ff5;
+  --brand-600: #6366f1;
+
+  --ok-bg:    rgba(16,185,129,.13);
+  --warn-bg:  rgba(245,158,11,.13);
+  --danger-bg:rgba(239,68,68,.13);
+  --info-bg:  rgba(59,130,246,.13);
+  --purple-bg:rgba(139,92,246,.14);
+
+  --sh-xs: 0 1px 2px rgba(0,0,0,.4);
+  --sh-sm: 0 1px 3px rgba(0,0,0,.45);
+  --sh-md: 0 6px 18px rgba(0,0,0,.45);
+  --sh-lg: 0 20px 44px rgba(0,0,0,.55);
+  --sh-xl: 0 34px 80px rgba(0,0,0,.68);
+  --sh-brand: 0 8px 26px rgba(99,102,241,.4);
+}

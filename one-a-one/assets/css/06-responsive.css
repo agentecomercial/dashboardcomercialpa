@@ -1,0 +1,135 @@
+/* =========================================================================
+   06-responsive.css — Adaptacoes por breakpoint
+   Desktop >1280 | Notebook 1024-1280 | Tablet 720-1024 | Celular <720
+   ========================================================================= */
+
+/* ---------------- Notebook ---------------- */
+@media (max-width: 1280px) {
+  :root { --sidebar-w: 224px; }
+  .grid-main { grid-template-columns: minmax(0,1.45fr) minmax(280px,1fr); }
+  .view { padding: var(--sp-5); }
+  .hero { padding: var(--sp-5) var(--sp-6); }
+}
+
+/* ---------------- Tablet ---------------- */
+@media (max-width: 1024px) {
+  .grid-main { grid-template-columns: minmax(0,1fr); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .kanban { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .oo-stage { grid-template-columns: minmax(0,1fr); }
+  .oo-steps { position: static; }
+  .oo-steps .card__body { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 5px; }
+  .hero__stats { gap: var(--sp-5); }
+}
+
+/* ---- Topbar: busca encolhe antes de estourar ---- */
+@media (max-width: 1180px) {
+  #btnBusca { width: 40px !important; padding: 0 11px; justify-content: center; }
+  #btnBusca .t-md, #btnBusca kbd { display: none; }
+}
+
+/* ------- Sidebar vira drawer a partir daqui ------- */
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0,1fr); }
+  .app.is-collapsed { grid-template-columns: minmax(0,1fr); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 272px;
+    transform: translateX(-102%);
+    transition: transform var(--t-slow) var(--ease-out);
+    box-shadow: var(--sh-xl);
+  }
+  .sidebar.is-open { transform: none; }
+  /* no mobile o menu abre inteiro, ignora o colapso do desktop */
+  .app.is-collapsed .sidebar__name,
+  .app.is-collapsed .sidebar__tag,
+  .app.is-collapsed .nav-group__label,
+  .app.is-collapsed .nav-item span,
+  .app.is-collapsed .nav-item__badge,
+  .app.is-collapsed .user-chip__info { display: revert; }
+  .app.is-collapsed .nav-item { justify-content: flex-start; padding: 9px var(--sp-3); }
+  .app.is-collapsed .sidebar__brand { justify-content: flex-start; padding: 0 var(--sp-4); }
+  .app.is-collapsed .user-chip { justify-content: flex-start; }
+
+  .main { grid-column: 1; }
+  .view { padding: var(--sp-4) var(--sp-4) 92px; }
+  .mobilenav { display: block; }
+  .fab { display: grid; }
+  .topbar { padding: 0 var(--sp-4); }
+  .topbar__sub { display: none; }
+  /* no celular a acao principal fica no botao flutuante */
+  #btnNovaObs { display: none; }
+
+  .hero { padding: var(--sp-5); border-radius: var(--r-lg); }
+  .hero__hi { font-size: var(--fs-2xl); }
+  .hero__grid { flex-direction: column; align-items: flex-start; gap: var(--sp-4); }
+  .hero__stats { width: 100%; justify-content: space-between; gap: var(--sp-3); }
+  .hero__flow { display: none; }
+
+  .grid-kpi { grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--sp-3); }
+  .kpi { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+  .kpi__value { font-size: var(--fs-2xl); }
+
+  .page-head__title { font-size: var(--fs-xl); }
+  .profile-head__body { padding: 0 var(--sp-4) var(--sp-4); gap: var(--sp-4); }
+  .profile-head__actions { width: 100%; }
+  .profile-head__actions .btn { flex: 1 1 auto; }
+  .profile-head__actions .btn--icon { flex: 0 0 36px; }
+}
+
+/* ---------------- Celular ---------------- */
+@media (max-width: 640px) {
+  :root { --fs-3xl: 26px; --fs-2xl: 21px; }
+
+  .grid { gap: var(--sp-3); }
+  .grid-2, .grid-3 { grid-template-columns: minmax(0,1fr); }
+  .grid-cards, .grid-wide { grid-template-columns: minmax(0,1fr); }
+  .kanban { grid-template-columns: minmax(0,1fr); }
+
+  .card--pad { padding: var(--sp-4); }
+  .card__head, .card__body { padding: var(--sp-4); }
+  .card__foot { padding: var(--sp-3) var(--sp-4); }
+
+  .modal__wrap { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: 100%; max-height: 94vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: 0;
+    animation: slideUpSheet var(--t-slow) var(--ease-out);
+  }
+  .modal__foot { border-radius: 0; padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom)); }
+  .modal__head { padding: var(--sp-4); }
+  .modal__body { padding: var(--sp-4); }
+  .modal__foot .btn { flex: 1 1 auto; }
+  @keyframes slideUpSheet { from { transform: translateY(28px); opacity: .4 } to { transform: none; opacity: 1 } }
+
+  .toast-root { left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); max-width: none; }
+  .toast { min-width: 0; }
+
+  .choice-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .comp-row { grid-template-columns: minmax(0,1fr); }
+  .comp-row .rating { margin-top: 6px; }
+  .rating__dot { width: 38px; height: 34px; }
+
+  .hero__stats { gap: var(--sp-2); }
+  .hero__stat-v { font-size: var(--fs-xl); }
+  .hero__stat-l { font-size: 9.5px; }
+
+  .tabs { gap: 0; }
+  .tab { padding: 10px 11px; font-size: var(--fs-sm); }
+
+  .tbl th, .tbl td { padding: 9px 10px; }
+  .drawer { width: 100vw; }
+  .cmdk__foot { display: none; }
+  .fab { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .set-row { align-items: flex-start; flex-direction: column; gap: var(--sp-2); }
+}
+
+/* ---------------- Impressao ---------------- */
+@media print {
+  .sidebar, .topbar, .mobilenav, .fab, .toast-root, .drawer, .scrim, .no-print { display: none !important; }
+  .app { grid-template-columns: 1fr; height: auto; }
+  .view { overflow: visible; padding: 0; height: auto; }
+  body { overflow: visible; background: #fff; }
+  .card { box-shadow: none; border-color: #ddd; break-inside: avoid; }
+}

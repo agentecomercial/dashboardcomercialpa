@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Plataforma de feedback contínuo, observações e One a One para equipes comerciais.">
+<meta name="theme-color" content="#6366f1">
+<title>Evolui · Feedback contínuo e One a One</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%234f46e5'/%3E%3Ctext x='50' y='68' font-family='Segoe UI,sans-serif' font-size='42' font-weight='700' fill='white' text-anchor='middle'%3E1:1%3C/text%3E%3C/svg%3E">
+
+<!-- ============================ ESTILOS ============================ -->
+<link rel="stylesheet" href="assets/css/01-tokens.css">
+<link rel="stylesheet" href="assets/css/02-base.css">
+<link rel="stylesheet" href="assets/css/03-layout.css">
+<link rel="stylesheet" href="assets/css/04-components.css">
+<link rel="stylesheet" href="assets/css/05-pages.css">
+<link rel="stylesheet" href="assets/css/06-responsive.css">
+<link rel="stylesheet" href="assets/css/07-compacto.css">
+
+<script>
+  /* Aplica o tema salvo antes da primeira pintura (evita flash de tela clara).
+     ?tema=dark|light define apenas o PADRÃO inicial — usado quando o app é
+     embutido em outro sistema. A escolha do usuário sempre tem prioridade. */
+  (function () {
+    try {
+      var t = localStorage.getItem('oao:tema');
+      if (!t) {
+        var q = /[?&]tema=(dark|light)/.exec(location.search);
+        t = q ? q[1]
+              : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+    /* Embutido em outro sistema (iframe): liga a densidade compacta antes da
+       primeira pintura, já que a barra do host consome altura da tela. */
+    try {
+      if (window.self !== window.top) document.documentElement.classList.add('is-embed');
+    } catch (e) { document.documentElement.classList.add('is-embed'); }
+  })();
+</script>
+</head>
+
+<body>
+  <!-- Shell montado por assets/js/99-app.js -->
+  <div class="app" id="app"></div>
+
+<!-- ============================ SCRIPTS ============================ -->
+<!-- Scripts classicos (sem type=module) para funcionar tambem via file:// -->
+
+<!-- core -->
+<script src="assets/js/core/00-utils.js"></script>
+<script src="assets/js/core/01-icons.js"></script>
+<script src="assets/js/core/02-bus.js"></script>
+<script src="assets/js/core/03-router.js"></script>
+
+<!-- dados e servicos -->
+<script src="assets/js/data/20-catalogo.js"></script>
+<script src="assets/js/services/10-adapter.js"></script>
+<script src="assets/js/services/11-db.js"></script>
+<script src="assets/js/services/12-analise.js"></script>
+<script src="assets/js/services/13-calendario.js"></script>
+<script src="assets/js/data/21-seed.js"></script>
+
+<!-- componentes -->
+<script src="assets/js/components/30-ui.js"></script>
+<script src="assets/js/components/31-partes.js"></script>
+<script src="assets/js/components/32-graficos.js"></script>
+<script src="assets/js/components/40-modal-observacao.js"></script>
+<script src="assets/js/components/41-modal-feedback.js"></script>
+<script src="assets/js/components/42-modal-plano.js"></script>
+<script src="assets/js/components/43-modal-colaborador.js"></script>
+<script src="assets/js/components/44-busca.js"></script>
+<script src="assets/js/components/45-notificacoes.js"></script>
+
+<!-- paginas -->
+<script src="assets/js/pages/50-dashboard.js"></script>
+<script src="assets/js/pages/51-equipe.js"></script>
+<script src="assets/js/pages/52-perfil.js"></script>
+<script src="assets/js/pages/53-oneaone-lista.js"></script>
+<script src="assets/js/pages/54-preparar.js"></script>
+<script src="assets/js/pages/55-sessao.js"></script>
+<script src="assets/js/pages/56-observacoes.js"></script>
+<script src="assets/js/pages/57-feedbacks.js"></script>
+<script src="assets/js/pages/58-planos.js"></script>
+<script src="assets/js/pages/59-indicadores.js"></script>
+<script src="assets/js/pages/60-config.js"></script>
+
+<!-- shell -->
+<script src="assets/js/99-app.js"></script>
+</body>
+</html>

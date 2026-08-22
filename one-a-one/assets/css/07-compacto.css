@@ -1,0 +1,154 @@
+/* =========================================================================
+   07-compacto.css — Densidade compacta.
+
+   Ativa em dois casos, sem nenhuma configuração:
+     • html.is-embed        → o app está dentro de um iframe (ex.: card do
+                              dashboard), onde a barra do host já consome
+                              altura da tela;
+     • @media (max-height)  → notebooks e janelas baixas.
+
+   Só mexe em espaçamento e escala. Nada de esconder informação: o objetivo
+   é caber mais conteúdo na primeira dobra, não remover conteúdo.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- */
+/*  Gatilho 1: app embutido em iframe                                */
+/* ---------------------------------------------------------------- */
+html.is-embed { --topbar-h: 54px; }
+
+html.is-embed .view { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
+html.is-embed .grid { gap: var(--sp-3); }
+
+/* topbar mais baixa */
+html.is-embed .topbar { gap: var(--sp-2); }
+html.is-embed .topbar__title { font-size: var(--fs-md); }
+html.is-embed .topbar__sub { font-size: 10.5px; }
+
+/* sidebar mais enxuta */
+html.is-embed .sidebar__brand { height: 54px; }
+html.is-embed .sidebar__nav { padding: var(--sp-3) var(--sp-3) var(--sp-2); }
+html.is-embed .nav-group + .nav-group { margin-top: var(--sp-4); }
+html.is-embed .nav-group__label { padding-bottom: 5px; }
+html.is-embed .nav-item { padding: 7px var(--sp-3); }
+
+/* hero: o maior consumidor de altura */
+html.is-embed .hero { padding: var(--sp-4) var(--sp-5); margin-bottom: var(--sp-4); border-radius: var(--r-lg); }
+html.is-embed .hero__hi { font-size: var(--fs-2xl); }
+html.is-embed .hero__sub { font-size: var(--fs-sm); margin-top: 3px; }
+html.is-embed .hero__grid { gap: var(--sp-4); }
+html.is-embed .hero .btn--lg { height: 36px; padding: 0 14px; font-size: var(--fs-md); border-radius: var(--r-sm); }
+html.is-embed .hero__stat-v { font-size: var(--fs-xl); }
+html.is-embed .hero__flow { margin-top: var(--sp-3); padding-top: var(--sp-3); gap: 6px; }
+html.is-embed .hero__flow-step { padding: 3px 9px; font-size: 10px; }
+
+/* KPIs */
+html.is-embed .grid-kpi { grid-template-columns: repeat(auto-fit, minmax(156px, 1fr)); }
+html.is-embed .kpi { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+html.is-embed .kpi__value { font-size: var(--fs-2xl); margin-top: 6px; }
+html.is-embed .kpi__icon { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; }
+html.is-embed .kpi__foot { margin-top: 4px; }
+
+/* seções e cards */
+html.is-embed .u-mb-5 { margin-bottom: var(--sp-4); }
+html.is-embed .page-head { margin-bottom: var(--sp-4); }
+html.is-embed .card--pad { padding: var(--sp-4); }
+html.is-embed .card__head { padding: var(--sp-3) var(--sp-4); }
+html.is-embed .card__body { padding: var(--sp-4); }
+
+/* cards de próximo 1:1 */
+html.is-embed .next-card { padding: var(--sp-3) var(--sp-4) var(--sp-4); gap: var(--sp-3); }
+html.is-embed .next-card__when { padding: 7px 10px; }
+html.is-embed .next-card__mini > div { padding: 6px 4px; }
+html.is-embed .next-card__mini b { font-size: var(--fs-md); }
+html.is-embed .profile-head__cover { height: 78px; }
+html.is-embed .profile-head__av { margin-top: -34px; }
+
+/* ---------------------------------------------------------------- */
+/*  Mesmo tratamento para janelas baixas, mesmo fora de iframe        */
+/* ---------------------------------------------------------------- */
+@media (max-height: 820px) {
+  :root { --topbar-h: 54px; }
+
+  .view { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
+  .grid { gap: var(--sp-3); }
+
+  .topbar__title { font-size: var(--fs-md); }
+  .sidebar__brand { height: 54px; }
+  .sidebar__nav { padding: var(--sp-3) var(--sp-3) var(--sp-2); }
+  .nav-item { padding: 7px var(--sp-3); }
+  .nav-group + .nav-group { margin-top: var(--sp-4); }
+
+  .hero { padding: var(--sp-4) var(--sp-5); margin-bottom: var(--sp-4); border-radius: var(--r-lg); }
+  .hero__hi { font-size: var(--fs-2xl); }
+  .hero__sub { font-size: var(--fs-sm); margin-top: 3px; }
+  .hero .btn--lg { height: 36px; padding: 0 14px; font-size: var(--fs-md); border-radius: var(--r-sm); }
+  .hero__stat-v { font-size: var(--fs-xl); }
+  .hero__flow { margin-top: var(--sp-3); padding-top: var(--sp-3); gap: 6px; }
+  .hero__flow-step { padding: 3px 9px; font-size: 10px; }
+
+  .grid-kpi { grid-template-columns: repeat(auto-fit, minmax(156px, 1fr)); }
+  .kpi { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+  .kpi__value { font-size: var(--fs-2xl); margin-top: 6px; }
+  .kpi__icon { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; }
+
+  .u-mb-5 { margin-bottom: var(--sp-4); }
+  .page-head { margin-bottom: var(--sp-4); }
+  .card--pad { padding: var(--sp-4); }
+  .card__head { padding: var(--sp-3) var(--sp-4); }
+  .card__body { padding: var(--sp-4); }
+
+  .next-card { padding: var(--sp-3) var(--sp-4) var(--sp-4); gap: var(--sp-3); }
+  .next-card__when { padding: 7px 10px; }
+  .next-card__mini > div { padding: 6px 4px; }
+  .next-card__mini b { font-size: var(--fs-md); }
+  .profile-head__cover { height: 78px; }
+  .profile-head__av { margin-top: -34px; }
+}
+
+/* ---------------------------------------------------------------- */
+/*  Nivel 2 — janela baixa de verdade (notebook 1366x768 embutido,    */
+/*  meia tela, etc.). Aperta o cabecalho para a primeira dobra        */
+/*  entregar hero + KPIs + os cards de proximo One a One inteiros.    */
+/* ---------------------------------------------------------------- */
+@media (max-height: 700px) {
+  .hero { padding: var(--sp-3) var(--sp-5); margin-bottom: var(--sp-3); }
+  .hero__hi { font-size: var(--fs-xl); }
+  .hero__grid { gap: var(--sp-3); }
+  .hero .btn--lg { height: 32px; font-size: var(--fs-sm); }
+  .hero__stats { gap: var(--sp-5); }
+  .hero__stat-v { font-size: var(--fs-lg); }
+
+  .view { padding: var(--sp-3) var(--sp-4) var(--sp-5); }
+  .kpi { padding: 10px var(--sp-3) 12px; }
+  .kpi__value { font-size: var(--fs-xl); margin-top: 4px; }
+  /* rodape do KPI em uma linha so: cards da mesma altura */
+  .kpi__foot { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* o subtitulo da secao explica algo que o proprio card ja mostra */
+  .page-head__desc,
+  .secao-sub { display: none; }
+
+  .next-card { padding: var(--sp-3); gap: 10px; }
+  .next-card__mini > div { padding: 5px 3px; }
+  .card__title { font-size: var(--fs-md); }
+
+  /* saudacao e acoes na MESMA linha — economiza a altura de um botao */
+  .hero__grid > div:first-child {
+    display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap;
+  }
+  .hero__grid > div:first-child > div:last-child { margin-top: 0; }
+}
+
+/* ---------------------------------------------------------------- */
+/*  Nivel 3 — janela muito baixa: o hero fica so com o essencial      */
+/* ---------------------------------------------------------------- */
+@media (max-height: 620px) {
+  .hero__flow { display: none; }
+  .hero__sub { display: none; }
+}
+
+/* No modo embutido a barra do host já dá contexto — o app não repete
+   a data por extenso, que rouba espaço da topbar em telas estreitas. */
+@media (max-width: 1100px) {
+  html.is-embed .topbar__sub { display: none; }
+}
