@@ -85,7 +85,7 @@
     {
       id: 'treinamento-ml5',
       titulo: 'Treinamento Comercial ML5',
-      descricao: 'ML5 — Formação de Líderes (Líderes Nível 5 de Jim Collins, alta performance e mentalidade empresarial) — treinamento comercial para a equipe vender o ML5. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      descricao: 'ML5 — Formação de Líderes (Líderes Nível 5 de Jim Collins, alta performance e mentalidade empresarial) — treinamento comercial para a equipe vender o ML5. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides). Inclui a versão ⚡ Essencial (33 slides, com modo treinador de duas telas), acessível pelo índice do próprio ML5.',
       produto: 'ML5',
       tipo: 'treinamento',
       status: 'publicado',
@@ -96,28 +96,15 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-ml5/index.html',         tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do ML5 —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ ML5 Essencial (33 slides)',          url: 'treinamento-ml5-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (ML5)',             url: 'treinamento-ml5/modulo-1.html',      tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-ml5/modulo-2.html',      tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-ml5/modulo-3.html',      tipo: 'modulo' },
         { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-ml5/modulo-4.html',      tipo: 'modulo' },
         { titulo: 'SPIN Selling — aplicado ao ML5',       url: 'treinamento-ml5/spin-selling.html',  tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-ml5/fechamento.html',    tipo: 'final' }
-      ]
-    },
-    {
-      id: 'treinamento-ml5-essencial',
-      titulo: 'ML5 Essencial',
-      descricao: 'Versão EXECUTIVA do Treinamento Comercial ML5: os 115 slides do original condensados em 33, em 4 blocos (Produto, Lead Certo, Conversa, Fechar). Resumos de impacto, regras de ouro, scripts prontos, checklist e teste rápido. Tem Modo Treinador (tecla T) com o roteiro de condução — invisível para quem lê sozinho.',
-      produto: 'ML5',
-      tipo: 'treinamento',
-      status: 'publicado',
-      novo: true,
-      ordem: 31,
-      url: 'treinamento-ml5-essencial/index.html',
-      icone: '⚡',
-      origem: 'html-existente',
-      estrutura: [
-        { titulo: 'Deck Essencial (33 slides)', url: 'treinamento-ml5-essencial/index.html', tipo: 'index' }
       ]
     },
     {
