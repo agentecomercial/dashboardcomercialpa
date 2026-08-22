@@ -464,14 +464,67 @@
       escalar(boxAtual, frameAtual, deckAtual);
       escalar(boxProx, frameProx, deckProx);
     }
-    window.addEventListener('resize', escalarTudo);
-    /* O resize da janela não cobre tudo: o roteiro muda de altura a cada
-       slide, a régua pode quebrar linha e o zoom do navegador não dispara
-       resize de forma confiável. O observador pega todos esses casos. */
+    /* ---- Equilíbrio automático das proporções ----
+       O desequilíbrio tem duas metades opostas: o slide do telão sobra na
+       VERTICAL (a coluna é mais baixa que larga para um 16:9) e o próximo
+       sobra na HORIZONTAL (a linha é mais larga que alta). Mexer numa
+       piora a outra, e o ponto em que as duas zeram depende do formato da
+       janela — por isso nenhuma porcentagem fixa resolve: acerta num
+       monitor e erra no seguinte.
+
+       Aqui as duas dimensões são derivadas a cada mudança de tamanho:
+         largura do telão  = 16/9 da altura disponível
+         altura do próximo = 9/16 da largura que sobrou
+       Com limites, para nenhuma das regiões virar um filete. */
+    var ESQ_MIN = 0.42, ESQ_MAX = 0.72, DIR_MIN = 300, ROTEIRO_MIN = 118;
+
+    function alturaDe(sel) {
+      var el = raiz.querySelector(sel);
+      return el ? el.getBoundingClientRect().height : 0;
+    }
+
+    function equilibrar() {
+      var body = raiz.querySelector('.cs-body');
+      var dir = raiz.querySelector('.cs-dir');
+      if (!body || !dir) return;
+      var W = body.clientWidth, H = body.clientHeight;
+      if (!W || !H) return;
+
+      /* Abaixo de 940px o CSS vira coluna única — devolve o controle a ele. */
+      if (W < 940) { body.style.gridTemplateColumns = ''; dir.style.gridTemplateRows = ''; return; }
+
+      var gapCol = 16, gapLin = 10, gapInt = 8;
+      var lblEsq = alturaDe('.cs-col > .cs-lbl');
+      var passos = alturaDe('#csSteps');
+      var lblDir = alturaDe('.cs-cx > .cs-lbl');
+
+      /* 1) largura do telão: a que faz o slide preencher a altura toda */
+      var util = W - gapCol;
+      var hEsq = H - lblEsq - passos - gapInt * 2;
+      var w1 = (16 / 9) * hEsq;
+      w1 = Math.max(util * ESQ_MIN, Math.min(util * ESQ_MAX, w1));
+      var w2 = Math.max(DIR_MIN, util - w1);
+      w1 = util - w2;
+
+      /* 2) altura do próximo: a que faz o slide preencher a largura */
+      var hProx = (9 / 16) * w2 + lblDir + gapInt;
+      hProx = Math.min(hProx, Math.max(0, H - gapLin - ROTEIRO_MIN));
+      var hRot = H - hProx - gapLin;
+
+      body.style.gridTemplateColumns = w1.toFixed(2) + 'px ' + w2.toFixed(2) + 'px';
+      dir.style.gridTemplateRows = hProx.toFixed(2) + 'px ' + hRot.toFixed(2) + 'px';
+    }
+
+    function reajustar() { equilibrar(); escalarTudo(); }
+
+    window.addEventListener('resize', reajustar);
+    /* Observa o CORPO, não as prévias: o tamanho do corpo depende só do
+       grid externo, então reagir a ele não realimenta o que acabamos de
+       escrever. Observar as prévias criaria laço de ResizeObserver. */
     if (window.ResizeObserver) {
-      var obs = new ResizeObserver(escalarTudo);
-      obs.observe(boxAtual);
-      obs.observe(boxProx);
+      new ResizeObserver(function () {
+        requestAnimationFrame(reajustar);
+      }).observe(raiz.querySelector('.cs-body'));
     }
 
     /* ---- Régua ---- */
@@ -618,7 +671,7 @@
         'estourou', minutosSugeridos > 0 && segundosNoSlide > minutosSugeridos * 60);
     }, 1000);
 
-    escalarTudo();
-    setTimeout(escalarTudo, 120);
+    reajustar();
+    setTimeout(reajustar, 120);
   }
 })();
