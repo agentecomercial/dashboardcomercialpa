@@ -197,13 +197,14 @@
 
   // ---- Revelação por passo ----
   function applyStepReveal(slide, mode) {
-    // mode: 'first' (só o primeiro), 'all' (todos), 'state' (usa stepState)
+    // mode: 'first' (nenhum revelado ainda), 'all' (todos), 'state' (usa stepState)
+    // cur = índice do ÚLTIMO item revelado; -1 significa "nada revelado".
     const total = parseInt(slide.dataset.steps || '0', 10);
     if (!total) return;
     let cur;
     if (mode === 'all') cur = total - 1;
-    else if (mode === 'first') cur = 0;
-    else cur = stepState.get(slide) ?? 0;
+    else if (mode === 'first') cur = -1;
+    else cur = stepState.get(slide) ?? -1;
     if (mode === 'first' || mode === 'all') stepState.set(slide, cur);
     slide.querySelectorAll('.cis-step').forEach((el, i) => {
       el.classList.toggle('is-revealed', i <= cur);
@@ -263,6 +264,22 @@
 
   function prev() { go(idx - 1); }
 
+  // "Recuar": esconde o último item revelado. Se já não há nada revelado
+  // neste slide, volta para o anterior — espelho exato do advance().
+  function retroceder() {
+    const slides = visibleSlides();
+    const current = slides[idx];
+    if (!current) return prev();
+    const info = stepInfo(current);
+    if (info.total > 0 && info.cur >= 0) {
+      stepState.set(current, info.cur - 1);
+      applyStepReveal(current, 'state');
+      updateAdvanceButton();
+    } else {
+      prev();
+    }
+  }
+
   // "Avançar": revela próximo item no slide atual. Se não houver, vai pro próximo slide.
   function advance() {
     const slides = visibleSlides();
@@ -293,7 +310,7 @@
       return;
     }
     const info = stepInfo(current);
-    if (lbl) lbl.textContent = info.hasMore ? 'Avançar (' + (info.cur + 2) + '/' + info.total + ')' : 'Avançar';
+    if (lbl) lbl.textContent = info.hasMore ? 'Revelar ' + (info.cur + 2) + '/' + info.total : 'Avançar';
     btn.classList.toggle('is-exhausted', !info.hasMore);
     btn.title = info.hasMore ? 'Revelar o próximo item' : 'Avançar para o próximo slide';
   }
@@ -341,6 +358,23 @@
   }
   ensureAdvanceButton();
 
+  // Botão Recuar — par do Avançar, some quando não há nada a esconder
+  function ensureRetrocederButton() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav) return;
+    if (nav.querySelector('[data-nav="retroceder"]')) return;
+    const btn = document.createElement('button');
+    btn.dataset.nav = 'retroceder';
+    btn.className = 'adv-btn';
+    btn.title = 'Esconder o último item revelado';
+    btn.innerHTML = `◂ <span class="ret-label">Recuar</span>`;
+    btn.addEventListener('click', retroceder);
+    const advBtn = nav.querySelector('[data-nav="advance"]');
+    if (advBtn && advBtn.parentNode === nav) nav.insertBefore(btn, advBtn);
+    else nav.appendChild(btn);
+  }
+  ensureRetrocederButton();
+
   // Botão "Menu" — volta ao menu principal (shell)
   function ensureMenuButton() {
     const nav = document.querySelector('.hud .nav-buttons');
@@ -366,7 +400,7 @@
   (function reorderHud() {
     const nav = document.querySelector('.hud .nav-buttons');
     if (!nav) return;
-    const order = ['menu', 'edit', 'reset', 'prev', 'advance', 'next', 'fullscreen'];
+    const order = ['menu', 'edit', 'reset', 'prev', 'retroceder', 'advance', 'next', 'fullscreen'];
     order.forEach(key => {
       const b = nav.querySelector('[data-nav="' + key + '"]');
       if (b) nav.appendChild(b);
@@ -598,7 +632,7 @@
   (function reorderHudFinal() {
     const nav = document.querySelector('.hud .nav-buttons');
     if (!nav) return;
-    const order = ['menu', 'edit', 'reset', 'prev', 'advance', 'next', 'fullscreen'];
+    const order = ['menu', 'edit', 'reset', 'prev', 'retroceder', 'advance', 'next', 'fullscreen'];
     order.forEach(key => {
       const b = nav.querySelector('[data-nav="' + key + '"]');
       if (b) nav.appendChild(b);

@@ -344,7 +344,7 @@
         if (emTelaCheia()) document.exitFullscreen();
         else { pedirTelaCheia(); setTimeout(mostrar, 400); }
       } else if (m.cmd !== 'ping') {
-        var mapa = { avancar: 'advance', anterior: 'prev', proximo: 'next' };
+        var mapa = { avancar: 'advance', recuar: 'retroceder', anterior: 'prev', proximo: 'next' };
         var alvoBtn = document.querySelector('[data-nav="' + mapa[m.cmd] + '"]');
         if (alvoBtn) alvoBtn.click();
       }
@@ -435,11 +435,12 @@
       +   '</div>'
       + '</div>'
       + '<div class="cs-bar">'
-      +   '<button data-cmd="anterior">◀ Anterior</button>'
+      +   '<button data-cmd="anterior">◀ Slide anterior</button>'
+      +   '<button data-cmd="recuar" id="csRec">◂ Recuar item</button>'
       +   '<button data-cmd="avancar" class="pri" id="csAdv">▸ Avançar</button>'
-      +   '<button data-cmd="proximo">Próximo slide ▶</button>'
+      +   '<button data-cmd="proximo">Slide seguinte ▶</button>'
       +   '<button data-cmd="telaCheia" title="Põe a apresentação em tela cheia">⛶ Tela cheia no telão</button>'
-      +   '<div class="cs-hint"><kbd>Espaço</kbd> ou <kbd>→</kbd> avança · <kbd>←</kbd> volta · <kbd>P</kbd> pausa · <kbd>F</kbd> tela cheia<br>Clique num número da régua para pular</div>'
+      +   '<div class="cs-hint"><kbd>→</kbd> revela · <kbd>←</kbd> recua · <kbd>↓</kbd><kbd>↑</kbd> troca de slide · <kbd>P</kbd> pausa · <kbd>F</kbd> tela cheia<br>Clique num número da régua para pular</div>'
       + '</div>'
       + '<div class="cs-rail" id="csRail"></div>';
     document.body.appendChild(raiz);
@@ -609,9 +610,13 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      /* Simetria: as setas horizontais andam ITEM a item, as verticais
+         andam SLIDE a slide. Antes a esquerda pulava o slide inteiro, o
+         que não era o par da direita. */
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); enviar('avancar'); }
-      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); enviar('anterior'); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); enviar('recuar'); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); enviar('proximo'); }
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); enviar('anterior'); }
       else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); alternarPausa(); }
       else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); alternarCheia(); }
     });
@@ -655,14 +660,28 @@
       if (m.passos > 0) {
         var pips = '';
         for (var i = 0; i < m.passos; i++) pips += '<span class="pip' + (i < m.revelados ? ' on' : '') + '"></span>';
-        passos.innerHTML = pips + ' <span>revelado <em>' + m.revelados + '</em> de ' + m.passos + '</span>';
+        passos.innerHTML = pips + ' <span>'
+          + (m.revelados === 0 ? 'nada revelado ainda' : 'revelados <em>' + m.revelados + '</em>')
+          + ' de ' + m.passos + '</span>';
       } else {
         passos.innerHTML = '<span>slide sem revelação por item</span>';
       }
 
-      raiz.querySelector('#csAdv').innerHTML = (m.passos > 0 && m.revelados < m.passos)
-        ? '▸ Revelar item ' + (m.revelados + 1) + ' de ' + m.passos
+      /* Os dois rótulos falam do MESMO número: o contador mostra quantos
+         já apareceram, o botão mostra qual é o próximo a aparecer. */
+      var adv = raiz.querySelector('#csAdv');
+      adv.innerHTML = (m.passos > 0 && m.revelados < m.passos)
+        ? '▸ Revelar o item ' + (m.revelados + 1) + ' de ' + m.passos
         : '▸ Avançar para o próximo slide';
+
+      var rec = raiz.querySelector('#csRec');
+      if (m.passos > 0 && m.revelados > 0) {
+        rec.innerHTML = '◂ Esconder o item ' + m.revelados;
+        rec.disabled = false;
+      } else {
+        rec.innerHTML = '◂ Slide anterior';
+        rec.disabled = false;
+      }
 
       var slide = deckAtual.querySelector('.slide[data-slide-id="' + m.slideId + '"]');
       var nota = slide && slide.querySelector('.tnote');
