@@ -60,6 +60,7 @@
 <script src="assets/js/services/11-db.js"></script>
 <script src="assets/js/services/12-analise.js"></script>
 <script src="assets/js/services/13-calendario.js"></script>
+<script src="assets/js/services/14-adapter-firebase.js"></script>
 <script src="assets/js/data/21-seed.js"></script>
 
 <!-- componentes -->
@@ -85,6 +86,43 @@
 <script src="assets/js/pages/58-planos.js"></script>
 <script src="assets/js/pages/59-indicadores.js"></script>
 <script src="assets/js/pages/60-config.js"></script>
+
+
+<!-- ===================== BASE COMPARTILHADA (Firebase) =====================
+     Carregado por modulo ES INLINE de proposito: modulo externo via src e
+     bloqueado pelo navegador em file://, e o app precisa rodar tambem por
+     duplo clique. Import dinamico para que a falta de internet nao quebre a
+     pagina — o boot cai no armazenamento local e o app segue funcionando.  -->
+<script type="module">
+  (async function () {
+    try {
+      const [appMod, dbMod] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js')
+      ]);
+      const fbApp = appMod.initializeApp({
+        apiKey: "AIzaSyA3npsv6oAI5AUFYdaYskbq2_7AF_KMXi0",
+        authDomain: "dashboardcomercialpa.firebaseapp.com",
+        databaseURL: "https://dashboardcomercialpa-default-rtdb.firebaseio.com",
+        projectId: "dashboardcomercialpa",
+        storageBucket: "dashboardcomercialpa.firebasestorage.app",
+        messagingSenderId: "861156523238",
+        appId: "1:861156523238:web:98dd0f1734e6f983184f27"
+      }, 'evolui');
+
+      window.EvoluiFB = {
+        db: dbMod.getDatabase(fbApp),
+        ref: dbMod.ref, get: dbMod.get, set: dbMod.set,
+        update: dbMod.update, remove: dbMod.remove, onValue: dbMod.onValue
+      };
+      window.dispatchEvent(new Event('evolui-fb:pronto'));
+    } catch (e) {
+      console.warn('[evolui] Firebase indisponivel:', e && e.message);
+      window.EvoluiFBErro = e;
+      window.dispatchEvent(new Event('evolui-fb:erro'));
+    }
+  })();
+</script>
 
 <!-- shell -->
 <script src="assets/js/99-app.js"></script>

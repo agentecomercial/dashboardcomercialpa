@@ -434,19 +434,37 @@
   /* ====================================================================== */
   /*  Sistema                                                               */
   /* ====================================================================== */
+  function compartilhado() { return App.adapter && App.adapter.nome === 'Firebase'; }
+
   function abaSistema(box) {
     box.appendChild(cartao('Onde os dados ficam',
       'A camada de persistência é plugável: trocar de backend não exige reescrever as telas.', [
       u.el('div.set-row', {}, [
         u.el('div', {}, [
-          u.el('div.set-row__t', { text: 'Adapter ativo' }),
+          u.el('div.set-row__t', { text: compartilhado() ? 'Base compartilhada ativa' : 'Somente neste navegador' }),
           u.el('div.set-row__d', {
-            text: 'Todo acesso a dados passa por App.adapter. Hoje: ' + App.adapter.nome +
-              '. Para migrar para Supabase, Firebase ou API própria, basta implementar os mesmos métodos ' +
-              '(init, list, insert, update, remove, replaceAll) e registrar o novo adapter.'
+            text: compartilhado()
+              ? 'Os três endereços — localhost:5500, o arquivo local (file://) e o GitHub Pages — leem e gravam ' +
+                'a mesma base no Firebase. O que você cadastra em um aparece nos outros, sem exportar nada.'
+              : 'A conexão com a base compartilhada não foi estabelecida (sem internet ou Firebase indisponível). ' +
+                'O app segue funcionando com os dados deste navegador e volta a sincronizar quando a conexão retornar.'
           })
         ]),
-        u.el('span.badge.badge--brand.badge--lg', { text: App.adapter.nome })
+        u.el('span', {
+          class: 'badge badge--lg badge--' + (compartilhado() ? 'ok' : 'warn'),
+          text: compartilhado() ? 'Firebase' : 'Local'
+        })
+      ]),
+      u.el('div.set-row', {}, [
+        u.el('div', {}, [
+          u.el('div.set-row__t', { text: 'Camada de persistência' }),
+          u.el('div.set-row__d', {
+            text: 'Todo acesso a dados passa por App.adapter. Trocar de backend é implementar os mesmos métodos ' +
+              '(init, list, insert, update, remove, replaceAll) e registrar o novo adapter — nenhuma tela muda. ' +
+              'É assim que o Firebase entrou no lugar do localStorage.'
+          })
+        ]),
+        u.el('span.badge.badge--outline.badge--lg', { text: App.adapter.nome })
       ]),
       u.el('div.set-row', {}, [
         u.el('div', {}, [

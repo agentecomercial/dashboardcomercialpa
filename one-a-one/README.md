@@ -56,6 +56,24 @@ assets/js/
   99-app.js                shell, rotas, tema, atalhos, bootstrap
 ```
 
+### Base compartilhada (Firebase)
+
+Os três endereços em que o dashboard é aberto — `localhost:5500`, o arquivo local (`file://`) e o
+GitHub Pages — leem e gravam a **mesma base**, no Realtime Database que o dashboard já usava
+(`dashboardcomercialpa-default-rtdb`, nó `evolui`). Cadastrou um consultor num deles, aparece nos
+outros; o `onValue` reflete a mudança sem recarregar.
+
+Isso é possível porque a persistência sempre foi isolada atrás de `App.adapter`: entrou
+`FirebaseAdapter` no lugar de `LocalAdapter` e **nenhuma tela mudou**.
+
+O SDK é carregado por um `<script type="module">` **inline** no `index.html` — módulo externo via
+`src` é bloqueado em `file://`, e o app precisa abrir por duplo clique. O import é dinâmico e o
+boot tem prazo máximo de 12s: sem internet, o app cai no `localStorage`, continua funcionando e
+o ícone de sincronização na topbar fica cinza em vez de verde.
+
+Na primeira conexão, se a base compartilhada ainda não tiver **nenhum colaborador real**, a
+operação deste navegador é enviada para lá. Havendo operação, nada é sobrescrito.
+
 ### Trocar de backend
 
 Toda leitura e escrita passa por `App.adapter`. Para migrar para Supabase, Firebase ou API

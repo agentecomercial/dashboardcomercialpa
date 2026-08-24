@@ -38,6 +38,26 @@
   };
   App.tema = tema;
 
+  /* Mostra de onde vem o dado: base compartilhada ou so este navegador. */
+  function atualizarSync(estado) {
+    const b = u.$('#btnSync');
+    if (!b) return;
+    const compartilhado = estado === 'firebase' ||
+      (estado === undefined && App.adapter && App.adapter.nome === 'Firebase');
+    b.style.color = compartilhado ? 'var(--ok)' : 'var(--text-4)';
+    b.setAttribute('data-tip', compartilhado
+      ? 'Base compartilhada — o que você registra aparece nos outros endereços'
+      : 'Somente neste navegador — sem conexão com a base compartilhada');
+  }
+  App.atualizarSync = atualizarSync;
+
+  App.bus.on('backend:firebase', () => atualizarSync('firebase'));
+  App.bus.on('backend:local', () => atualizarSync('local'));
+  App.bus.on('backend:migrado', info => {
+    setTimeout(() => App.toast.ok('Base compartilhada ativada',
+      'Seus dados deste navegador foram enviados e agora aparecem nos três endereços.'), 1200);
+  });
+
   function atualizarBotaoTema() {
     const b = u.$('#btnTema');
     if (!b) return;
@@ -150,6 +170,11 @@
         u.el('kbd', { text: 'Ctrl K' })
       ]),
       u.el('button.icon-btn', {
+        type: 'button', id: 'btnSync', 'aria-label': 'Estado da sincronização',
+        html: App.icon('database'),
+        onclick: () => App.router.go('/config/sistema')
+      }),
+      u.el('button.icon-btn', {
         type: 'button', id: 'btnNotif', 'aria-label': 'Notificações', 'data-tip': 'Notificações',
         html: App.icon('bell'),
         onclick: () => App.notificacoes.abrir()
@@ -193,6 +218,7 @@
 
     pintarNav();
     atualizarBotaoTema();
+    atualizarSync();
     atualizarBadges();
 
     /* colapsar sidebar no desktop com duplo clique na marca */
@@ -434,7 +460,11 @@
     registrarRotas();
     atalhos();
 
-    db.carregar()
+    /* Base compartilhada primeiro: se o Firebase responder, os tres
+       enderecos passam a ler e gravar os mesmos dados. Se nao responder,
+       segue no armazenamento local sem travar o app. */
+    App.escolherAdapter()
+      .then(() => db.carregar())
       .then(() => {
         if (db.vazio()) {
           /* instalacao nova: os exemplos entram apenas como material de consulta */
