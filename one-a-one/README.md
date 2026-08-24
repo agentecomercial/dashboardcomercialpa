@@ -112,9 +112,14 @@ Corpus Christi, derivados da Páscoa pelo algoritmo de Meeus) — e aceita feria
 cadastrados em Configurações › Preferências.
 
 `App.cal.agendar(base, dias)` soma os dias corridos da frequência e desloca para o próximo dia
-útil. Data escolhida à mão é sempre respeitada: o campo apenas avisa o motivo e oferece
-"antecipar" / "adiar" em um clique. Agendamentos herdados que caem em dia não útil viram
-alerta no painel do coordenador, nunca correção silenciosa.
+útil.
+
+**No salvamento, a regra é automática:** se a data cair em fim de semana ou feriado, o app move
+para o próximo dia útil e avisa no toast. A exceção do "colocado manualmente" existe, mas exige
+confirmação explícita — o botão **"Manter nesta data mesmo assim"** no aviso do campo. Sem esse
+clique, nenhum One a One é gravado em dia não útil, mesmo que a data tenha sido digitada à mão.
+
+Agendamentos herdados que caem em dia não útil viram alerta no painel do coordenador.
 
 ### Coleções
 

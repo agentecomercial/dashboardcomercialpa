@@ -389,8 +389,14 @@
     const aviso = u.el('div');
     const wrap = u.el('div', {}, [inp, aviso]);
 
+    /* Só fica true quando o coordenador confirma no botão "Manter".
+       Sem essa confirmação, o salvamento desloca para o dia útil: a regra
+       é que o sistema NUNCA agende em fim de semana ou feriado sozinho. */
+    let manterManual = false;
+
     function ir(destino) {
       inp.value = destino;
+      manterManual = false;
       pintar();
       if (opts.onChange) opts.onChange(destino);
     }
@@ -401,12 +407,20 @@
       if (!v) return;
       const motivo = App.cal.motivo(v);
       if (!motivo) return;
+
       const antes = u.toISODate(App.cal.utilAnterior(u.addDays(v, -1)));
-      const depois = u.toISODate(App.cal.proximoUtil(u.addDays(v, 1)));
-      aviso.appendChild(u.el('div.note.note--warn.u-mt-2', {}, [
+      const depois = u.toISODate(App.cal.proximoUtil(v));
+
+      aviso.appendChild(u.el('div.note.u-mt-2', {
+        class: manterManual ? 'note--brand' : 'note--warn'
+      }, [
         u.el('div.u-row.u-gap-2', { style: { alignItems: 'flex-start' } }, [
-          u.el('span', { html: App.icon('alert') }),
-          u.el('span.t-sm.u-grow', { text: motivo + ' — dia não útil. Dá para manter, se for intencional.' })
+          u.el('span', { html: App.icon(manterManual ? 'checkCircle' : 'alert') }),
+          u.el('span.t-sm.u-grow', {
+            text: manterManual
+              ? motivo + ' — mantido por sua escolha. Será salvo exatamente nesta data.'
+              : motivo + ' — dia não útil. Ao salvar, será movido para ' + u.fmtDiaCurto(depois) + '.'
+          })
         ]),
         u.el('div.u-row.u-gap-2.u-wrap.u-mt-2', {}, [
           u.el('button.btn.btn--xs.btn--outline', {
@@ -414,14 +428,42 @@
           }),
           u.el('button.btn.btn--xs.btn--outline', {
             type: 'button', text: 'Adiar · ' + u.fmtDiaCurto(depois), onclick: () => ir(depois)
+          }),
+          u.el('button.btn.btn--xs' + (manterManual ? '.btn--soft' : '.btn--ghost'), {
+            type: 'button',
+            text: manterManual ? '✓ Mantendo nesta data' : 'Manter nesta data mesmo assim',
+            onclick: () => { manterManual = !manterManual; pintar(); }
           })
         ])
       ]));
     }
 
-    inp.addEventListener('change', () => { pintar(); if (opts.onChange) opts.onChange(inp.value); });
+    inp.addEventListener('change', () => {
+      manterManual = false;                 // data nova volta a seguir a regra
+      pintar();
+      if (opts.onChange) opts.onChange(inp.value);
+    });
     pintar();
-    return { el: wrap, input: inp, valor: () => inp.value, repintar: pintar };
+
+    return {
+      el: wrap,
+      input: inp,
+      /** Valor cru do campo, sem aplicar a regra. */
+      valor: () => inp.value,
+      /** Valor a gravar: desloca para dia útil salvo confirmação explícita. */
+      valorFinal() {
+        const v = inp.value;
+        if (!v || manterManual) return v;
+        return App.cal.ehUtil(v) ? v : u.toISODate(App.cal.proximoUtil(v));
+      },
+      /** true quando o salvamento deslocou a data. */
+      foiAjustado() {
+        const v = inp.value;
+        return !!v && !manterManual && !App.cal.ehUtil(v);
+      },
+      manual: () => manterManual,
+      repintar: pintar
+    };
   };
 
   /* ------------------------- Seletor de colaborador ------------------------- */

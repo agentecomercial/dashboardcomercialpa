@@ -177,14 +177,18 @@
         nome: inpNome.value.trim(), foto: d.foto, cor: d.cor, cargo: d.cargo,
         dataEntrada: d.dataEntrada, meta: +d.meta || 0,
         telefone: d.telefone, email: d.email, status: d.status,
-        proximoOneAOne: campoProx.valor() || '', frequenciaDias: +d.frequenciaDias || 14,
+        proximoOneAOne: campoProx.valorFinal() || '', frequenciaDias: +d.frequenciaDias || 14,
         indicadores: d.indicadores,
         historico: (edicao && edicao.historico) || [],
         ultimoOneAOne: (edicao && edicao.ultimoOneAOne) || ''
       };
       const acao = edicao ? db.colaboradores.atualizar(edicao.id, doc) : db.colaboradores.criar(doc);
+      const ajustou = campoProx.foiAjustado();
       return acao.then(salvo => {
-        App.toast.ok(edicao ? 'Cadastro atualizado' : 'Colaborador cadastrado', doc.nome);
+        App.toast.ok(edicao ? 'Cadastro atualizado' : 'Colaborador cadastrado',
+          ajustou
+            ? doc.nome + ' · One a One movido para ' + u.fmtDiaCurto(doc.proximoOneAOne) + ' (dia útil)'
+            : doc.nome);
         if (opts.aoSalvar) opts.aoSalvar(salvo);
         else if (!edicao) App.router.go('/colaborador/' + salvo.id);
         return true;
@@ -256,13 +260,14 @@
         {
           label: 'Salvar', tipo: 'primary',
           onClick: () => {
-            const v = campo.valor();
-            if (!v) { App.toast.aviso('Escolha uma data'); return false; }
+            if (!campo.valor()) { App.toast.aviso('Escolha uma data'); return false; }
+            const v = campo.valorFinal();
+            const ajustou = campo.foiAjustado();
             return db.colaboradores.atualizar(c.id, { proximoOneAOne: v })
               .then(() => {
-                const motivo = App.cal.motivo(v);
                 App.toast.ok('One a One agendado',
-                  u.fmtDateLong(v) + (motivo ? ' · ' + motivo + ' (mantido por sua escolha)' : ''));
+                  u.fmtDateLong(v) + (ajustou ? ' · movido para dia útil' :
+                    (campo.manual() ? ' · ' + App.cal.motivo(v) + ', mantido por sua escolha' : '')));
                 return true;
               });
           }
