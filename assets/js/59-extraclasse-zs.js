@@ -3,7 +3,7 @@
 
    ARQUIVO GERADO AUTOMATICAMENTE â€” nÃ£o edite Ã  mÃ£o.
    Fonte: Sync-Extraclasse-ZS.ps1 (lÃª o ZS via API REST).
-   Gerado em: 27/08/2026 11:51 Â· MÃªs: 2026-08 Â· 15 venda(s)
+   Gerado em: 28/08/2026 18:53 Â· MÃªs: 2026-08 Â· 15 venda(s)
 
    O Pablo nÃ£o lanÃ§a no HUD; as vendas dele estÃ£o sÃ³ no ZS, que o navegador
    nÃ£o consegue ler (login + CORS). Este arquivo Ã© a ponte: o 58-frz-sync.js
@@ -15,7 +15,7 @@
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 window.EXTRACLASSE_ZS = {
   mes: '2026-08',
-  geradoEm: '27/08/2026 11:51',
+  geradoEm: '28/08/2026 18:53',
   vendas: [
     {
         "id":  "2000364601",

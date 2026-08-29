@@ -673,7 +673,41 @@
     }
   }
 
-  /* ── Todas as vendas do mês (A + B) ──────────────── */
+  /* ── Dedup turma × CRM ───────────────────────────────
+     A mesma venda chega por dois caminhos: a turma (fonte A, nó `turmas`) e o
+     pipelineSales (fonte B, que o Sincronizar-FRZ importa do ZS). Somar as duas
+     conta o mesmo dinheiro duas vezes.
+
+     O casamento é por CLIENTE, comparando SOMA com SOMA — nunca linha a linha:
+     a turma detalha a grade item a item e o ZS agrupa numa venda só (Diogo =
+     6 linhas de R$ 26.293,25 na turma × 1 venda de R$ 26.293,25 no ZS). Chave
+     por linha não casaria nenhum desses.
+
+     FAIL-OPEN: cliente cuja soma não bate continua contando normalmente. Na
+     dúvida a venda aparece — some nunca. O que ficou de fora sai em
+     window._npDedupInfo.semPar e no rodapé do KPI. */
+  function _npDedupNorm(s){
+    var t=String(s||'');
+    try{ t=t.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){}
+    return t.replace(/\s+/g,' ').trim().toUpperCase();
+  }
+  /* nomes divergem entre as bases ("Camila Vilela" × "Camila Virginia Vilela
+     Borges"): casa por primeiro nome + um sobrenome em comum de 3+ letras. */
+  function _npDedupMesmoCliente(a,b){
+    if(!a||!b) return false;
+    if(a===b) return true;
+    var pa=a.split(' '),pb=b.split(' ');
+    if(pa[0]!==pb[0]) return false;
+    for(var i=1;i<pa.length;i++){
+      if(pa[i].length<3) continue;
+      for(var j=1;j<pb.length;j++){ if(pa[i]===pb[j]) return true; }
+    }
+    /* um lado só com primeiro nome (ex.: "Wellington") casa pelo primeiro */
+    return pa.length===1||pb.length===1;
+  }
+  var _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0};
+
+  /* ── Todas as vendas do mês (A + B, sem dupla contagem) ── */
   function _npTodasVendas(){
     var avulsos=Object.entries(_npVendasAvulso||{}).map(function(e){
       var v=e[1]||{};
@@ -686,7 +720,83 @@
         cliente:v.cliente||v.clienteNome||''
       });
     });
-    return _npVendasTurma.concat(avulsos);
+
+    var over=(window._npDedupOverride||{});
+    var pagoTurma=[],restoTurma=[];
+    (_npVendasTurma||[]).forEach(function(v){
+      if((v.status||'').toLowerCase()==='pago') pagoTurma.push(v); else restoTurma.push(v);
+    });
+
+    /* soma paga por cliente na turma */
+    var somaT={};
+    pagoTurma.forEach(function(v){
+      var k=_npDedupNorm(v.cliente); somaT[k]=(somaT[k]||0)+(+(v.valor)||0);
+    });
+    var pagosB=avulsos.filter(function(v){return (v.status||'').toLowerCase()==='pago';});
+
+    /* Procura o SUBCONJUNTO das vendas do CRM daquele cliente que soma o total
+       da turma. Subconjunto, e não soma total, porque o cliente pode ter
+       comprado fora do evento no mesmo mês (Giumar: R$ 6.997 no evento + outra
+       venda) e porque o match de nome pode trazer homônimo junto. Poucos itens
+       por cliente, então força bruta com bitmask resolve; acima de 16 desiste. */
+    function _npSubconjunto(cands,alvo){
+      var n=Math.min(cands.length,16),i,j,soma,melhor=null;
+      for(i=1;i<(1<<n);i++){
+        soma=0;
+        for(j=0;j<n;j++){ if(i&(1<<j)) soma+=(+cands[j].valor||0); }
+        if(Math.abs(soma-alvo)<0.02){
+          /* entre empates, o de menos itens (casamento mais justo) */
+          var q=0; for(j=0;j<n;j++){ if(i&(1<<j)) q++; }
+          if(melhor===null||q<melhor.q) melhor={mask:i,q:q};
+        }
+      }
+      if(!melhor) return null;
+      var out=[];
+      for(j=0;j<n;j++){ if(melhor.mask&(1<<j)) out.push(cands[j]); }
+      return out;
+    }
+
+    _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0};
+    var cobertoPorCliente={},jaUsada=[];
+    Object.keys(somaT).forEach(function(kt){
+      var forc=over[kt];                          /* 'crm' | 'contar' */
+      if(forc==='contar'){ return; }
+      var cands=pagosB.filter(function(v){
+        return jaUsada.indexOf(v)<0 && _npDedupMesmoCliente(kt,_npDedupNorm(v.cliente));
+      });
+      var par=_npSubconjunto(cands,somaT[kt]);
+      if(forc==='crm'&&!par) par=cands.slice();   /* override: cobre com o que houver */
+      if(par&&par.length){
+        par.forEach(function(v){ jaUsada.push(v); });  /* consumo 1:1, sem reuso */
+        cobertoPorCliente[kt]={vendasB:par,valor:somaT[kt],forcado:forc==='crm'};
+        _npDedupInfo.valorCoberto+=somaT[kt];
+      } else {
+        var somaCand=cands.reduce(function(s,v){return s+(+v.valor||0);},0);
+        _npDedupInfo.semPar.push({cliente:kt,valor:somaT[kt],
+          parB:cands.length?_npDedupNorm(cands[0].cliente):null,
+          valorB:cands.length?somaCand:null});
+      }
+    });
+
+    /* remove as linhas de turma cobertas e anota a origem na venda do CRM,
+       para o filtro "Só turma"/t:<id> e a aba Vendas continuarem achando */
+    var turmaFinal=restoTurma.slice();
+    pagoTurma.forEach(function(v){
+      var k=_npDedupNorm(v.cliente),c=cobertoPorCliente[k];
+      if(!c){ turmaFinal.push(v); return; }
+      _npDedupInfo.cobertas.push(v);
+      if(!c._anot){
+        c._anot=true;
+        (c.vendasB||[]).forEach(function(a){
+          a._turmaId=a._turmaId||v._turmaId;
+          a._turmaNome=a._turmaNome||v._turmaNome;
+          a._cobreTurma=true;
+        });
+      }
+    });
+
+    window._npDedupInfo=_npDedupInfo;
+    return turmaFinal.concat(avulsos);
   }
 
   /* ── Aplicar filtros ─────────────────────────────── */
@@ -896,7 +1006,18 @@
 
     /* KPI cards */
     set('npKpiFaturado',_fmtR(kpis.faturado));
-    set('npKpiFaturadoSub',kpis.qtdPago+' pago'+(kpis.qtdPago!==1?'s':''));
+    /* o sub mostra quantas vendas de turma foram ignoradas por já virem do CRM,
+       para o número não parecer "menor do que deveria" sem explicação */
+    var _dd=window._npDedupInfo||{cobertas:[],semPar:[],valorCoberto:0};
+    var _subFat=kpis.qtdPago+' pago'+(kpis.qtdPago!==1?'s':'');
+    if(_dd.cobertas.length){
+      _subFat+=' · 🎓 '+_dd.cobertas.length+' de turma já contadas via CRM ('
+        +_fmtR(_dd.valorCoberto)+')';
+    }
+    if(_dd.semPar.length){
+      _subFat+=' · ⚠ '+_dd.semPar.length+' de turma sem par no CRM';
+    }
+    set('npKpiFaturadoSub',_subFat);
     set('npKpiAberto',_fmtR(kpis.emAberto));
     set('npKpiAbertoSub',kpis.qtdAberto+' em aberto');
     set('npKpiPotencial',_fmtR(kpis.potencial));
