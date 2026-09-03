@@ -1204,10 +1204,22 @@
       '&singleEvents=true&orderBy=startTime&maxResults=2500';
 
     try {
-      const res = await fetch(url, {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      const data = await res.json();
+      // ─── Paginação: o Google devolve NO MÁXIMO 2500 eventos por página.
+      // Como orderBy=startTime (crescente) e a janela cobre ~3 anos, sem
+      // paginar o corte cai justamente nas datas MAIS NOVAS — a agenda
+      // "atualizava pela metade". Seguimos o nextPageToken até o fim.
+      let itensTotais = [];
+      let pageToken = '';
+      let res, data;
+      do {
+        res = await fetch(url + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''), {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        data = await res.json();
+        if (!res.ok) break;
+        itensTotais = itensTotais.concat(data.items || []);
+        pageToken = data.nextPageToken || '';
+      } while (pageToken && itensTotais.length < 20000);
       if (!res.ok) {
         const erro = data.error && data.error.message || ('HTTP ' + res.status);
         if (res.status === 401) {
@@ -1232,7 +1244,7 @@
         mostrarErro(erro);
         return;
       }
-      eventos = (data.items || []).map(parseEvento);
+      eventos = itensTotais.map(parseEvento);
       // ─── Cache compacto para o card AGENDA do dashboard.html consumir ──
       // Inclui passado (até ~2 anos atrás) + futuro pra que o filtro de período
       // do dashboard ("Últimos 30/90 dias", "Últimos 2 anos") tenha o que mostrar.

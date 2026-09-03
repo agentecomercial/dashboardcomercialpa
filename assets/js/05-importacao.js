@@ -15,8 +15,26 @@ var IMP_ALIASES = {
   valor:       ['valor','preco','preço','total','value','price','valor_total','investimento'],
   status:      ['status','situacao','situação','state','status_pagamento'],
   entrada:     ['entrada','sinal','down_payment','entrada_valor','valor_entrada'],
-  acao:        ['acao','ação','observacao','observação','obs','nota','info','notes']
+  acao:        ['acao','ação','observacao','observação','obs','nota','info','notes'],
+  presenca:    ['presenca','presença','presente','presencas','presenças','check-in','checkin','check in','compareceu','comparecimento','frequencia','frequência','participou','confirmado?','confirmou']
 };
+
+/* ── Presença: célula da planilha → status do app ──────────────
+   Marcado (checkbox TRUE do Google, X, SIM, 1, ✓, "presente") → presente
+   Explicitamente ausente (falta, faltou, ausente, não)        → falta
+   Vazio / FALSE / qualquer outra coisa                        → '' (não define) */
+function impParsePresenca(v){
+  if(v===true)  return 'presente';
+  if(v===false) return '';
+  var s=String(v==null?'':v).trim();
+  if(!s) return '';
+  var n=impNorm(s);
+  if(['true','verdadeiro','sim','s','x','1','ok','p','presente','presenca','compareceu','participou','v'].indexOf(n)>=0) return 'presente';
+  if(s==='✓'||s==='✔'||s==='☑') return 'presente';
+  if(['falta','faltou','ausente','ausencia','nao','n','no','0','f'].indexOf(n)>=0) return 'falta';
+  if(['false','falso','pendente',''].indexOf(n)>=0) return '';
+  return '';
+}
 
 // Status do Onboarding — REGRA CRÍTICA
 var IMP_ONBOARD_ALIASES = ['status do onboarding','status_do_onboarding','statusdoonboarding','onboarding','status_onboarding'];
@@ -208,6 +226,30 @@ function impProcessarAOA(aoa){
     return null;
   }
 
+  /* Presença sem cabeçalho: no Google Sheets a coluna de caixinhas costuma vir
+     sem título. Se nenhum alias bateu, adota a coluna não mapeada cujo conteúdo
+     é majoritariamente TRUE/FALSE (checkbox) e cujo título está vazio. */
+  if(mapa.presenca===undefined){
+    var _usadas={}; Object.keys(mapa).forEach(function(k){ _usadas[mapa[k]]=true; });
+    for(var ci=0; ci<headers.length; ci++){
+      if(_usadas[ci]) continue;
+      if(String(headers[ci]||'').trim()!=='') continue;
+      var _bool=0,_preenchidas=0;
+      for(var li=1; li<aoa.length; li++){
+        var _cv=aoa[li]&&aoa[li][ci];
+        var _cs=String(_cv==null?'':_cv).trim();
+        if(!_cs) continue;
+        _preenchidas++;
+        if(['true','false','verdadeiro','falso'].indexOf(impNorm(_cs))>=0) _bool++;
+      }
+      if(_preenchidas>=1 && _bool/_preenchidas>=0.8){
+        mapa.presenca=ci;
+        window._log&&window._log('[IMPORT v3] Presença detectada pela caixinha na coluna '+(ci+1)+' (sem cabeçalho)');
+        break;
+      }
+    }
+  }
+
   function _get(row,campo){
     if(mapa[campo]===undefined) return '';
     var v=row[mapa[campo]];
@@ -259,6 +301,7 @@ function impProcessarAOA(aoa){
       status:      _statusImp,
       entrada:     _entradaImp,
       info:        _get(row,'acao'),
+      presenca:    (mapa.presenca===undefined ? '' : impParsePresenca(row[mapa.presenca])),
       _importKey:  impGerarKey(clienteRaw)
     });
   }
@@ -294,6 +337,9 @@ function impProcessarAOA(aoa){
     ex.entrada = (Number(ex.entrada||0)||0) + (Number(r.entrada||0)||0);
     if((_ordemStatus[r.status]||0) > (_ordemStatus[ex.status]||0)) ex.status = r.status;
     if(r.info && !ex.info) ex.info = r.info;
+    /* presença: uma linha marcada já vale presente para o cliente todo */
+    if(r.presenca==='presente') ex.presenca='presente';
+    else if(r.presenca && !ex.presenca) ex.presenca=r.presenca;
   });
 
   return {dados:_consolidado, total:aoa.length-1, filtrado:filtrado, dup:resultado.length-_consolidado.length, semNome:semNome};
@@ -693,7 +739,12 @@ function impRenderPrevia(res){
     {l:'Filtro onboarding',       v:res.filtrado,          cor:'var(--amber)'},
     {l:'Duplicatas',              v:res.dup,               cor:'var(--muted)'},
     {l:'Sem nome (inválidas)',     v:res.semNome,           cor:'var(--red)'}
-  ].map(function(s){
+  ].concat(
+    /* só aparece quando a planilha traz coluna de presença */
+    dadosImportacao.some(function(d){return d&&d.presenca;})
+      ? [{l:'✅ Presença marcada', v:dadosImportacao.filter(function(d){return d&&d.presenca==='presente';}).length, cor:'#34d399'}]
+      : []
+  ).map(function(s){
     return '<div class="imp-stat-card"><div class="imp-stat-label">'+s.l+'</div>'
       +'<div class="imp-stat-val" style="color:'+s.cor+'">'+s.v+'</div></div>';
   }).join('');
@@ -927,10 +978,6 @@ function impLerArquivo(event){
 
 /* ── Importar via Google Sheets ─────────────────────────────── */
 async function impImportarSheets(){
-  if(window.location.protocol==='file:'){
-    _showToast('⚠️ Google Sheets não disponível ao abrir o arquivo localmente. Use um servidor web ou importe via arquivo .xlsx/.csv.','var(--amber)');
-    return;
-  }
   var link=(document.getElementById('importSheetInput').value||'').trim();
   if(!link){ _showToast('⚠️ Cole o link do Google Sheets.','var(--amber)'); return; }
   var match=link.match(/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
@@ -939,6 +986,23 @@ async function impImportarSheets(){
   var url='https://docs.google.com/spreadsheets/d/'+match[1]+'/export?format=csv&gid='+(gidMatch?gidMatch[1]:'0');
   _showToast('🔗 Buscando planilha...','var(--blue)');
   document.getElementById('importModalSub').textContent='Buscando Google Sheets...';
+  /* Em file:// (e em qualquer origem, já que o Google não manda cabeçalho CORS)
+     o fetch do CSV falha; o JSONP do gviz lê a planilha pública sem CORS. */
+  if(window.location.protocol==='file:' && typeof window._gvizAOA==='function'){
+    try{
+      var aoaG=await window._gvizAOA(match[1], gidMatch?gidMatch[1]:'0');
+      var resG=impProcessarAOA(aoaG);
+      if(!resG) return;
+      impRenderPrevia(resG);
+      document.getElementById('importModalSub').textContent='Google Sheets importado.';
+      return;
+    }catch(eg){
+      console.error('[IMPORT v3] Sheets (jsonp):',eg);
+      _showToast('❌ '+(eg.message||eg)+' — confira se está como "Qualquer pessoa com o link (Leitor)".','var(--red)');
+      document.getElementById('importModalSub').textContent='Selecione o arquivo ou cole o link do Google Sheets.';
+      return;
+    }
+  }
   try{
     var resp=await fetch(url);
     if(!resp.ok) throw new Error(resp.status===401||resp.status===403?'Planilha privada. Defina como pública para visualização.':'HTTP '+resp.status);
@@ -967,6 +1031,17 @@ async function impImportarSheets(){
     document.getElementById('importModalSub').textContent='Google Sheets importado.';
   }catch(e){
     console.error('[IMPORT v3] Sheets:',e);
+    // CORS/planilha privada pelo CSV → última tentativa pelo JSONP do gviz
+    if(typeof window._gvizAOA==='function'){
+      try{
+        var aoa2=await window._gvizAOA(match[1], gidMatch?gidMatch[1]:'0');
+        var res2=impProcessarAOA(aoa2);
+        if(!res2) return;
+        impRenderPrevia(res2);
+        document.getElementById('importModalSub').textContent='Google Sheets importado.';
+        return;
+      }catch(e2){ console.error('[IMPORT v3] Sheets (jsonp):',e2); }
+    }
     _showToast('❌ '+e.message,'var(--red)');
   }
 }
@@ -1033,7 +1108,20 @@ function impSincronizarTurma(novos){
     mapaNovaplanilha[key] = n;
   });
 
-  var inserir = [], manter = [], remover = [];
+  var inserir = [], manter = [], remover = [], presencas = 0;
+
+  /* Presença por key — cobre também alunos adicionados na mão (fora do _importado) */
+  var mapaPresenca = {};
+  novos.forEach(function(n){
+    if(n && n.presenca) mapaPresenca[n._importKey || impGerarKey(n.cliente)] = n.presenca;
+  });
+  (data||[]).forEach(function(d){
+    if(!d || !d.cliente) return;
+    var p = mapaPresenca[d._importKey || impGerarKey(d.cliente)];
+    /* caixinha marcada promove a presente; nunca rebaixa quem já está presente */
+    if(p==='presente' && (d.presenca||'pendente')!=='presente'){ d.presenca='presente'; presencas++; }
+    else if(p==='falta' && !d.presenca){ d.presenca='falta'; presencas++; }
+  });
 
   // Novos que não existem → inserir
   novos.forEach(function(n){
@@ -1056,7 +1144,7 @@ function impSincronizarTurma(novos){
     if(!mapaNovaplanilha[key]) remover.push(d);
   });
 
-  return { inserir: inserir, manter: manter, remover: remover };
+  return { inserir: inserir, manter: manter, remover: remover, presencas: presencas };
 }
 
 /* ── Modal de confirmação do diff ────────────────────────────── */
@@ -1109,14 +1197,20 @@ function impAbrirModalDiff(diff, criadoPor){
               listaRemovidos +
             '</ul>' +
           '</div>' : '') +
-        (diff.inserir.length === 0 && diff.remover.length === 0 ?
+        ((diff.presencas||0) > 0 ?
+          '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);border-radius:8px;">' +
+            '<span style="font-size:18px;">✅</span>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#34d399;">'+diff.presencas+' presença'+(diff.presencas!==1?'s':'')+' marcada'+(diff.presencas!==1?'s':'')+' pela planilha</div>' +
+            '<div style="font-size:11px;color:var(--muted);">Caixinha da coluna PRESENÇA marcada → aluno vira Presente.</div></div>' +
+          '</div>' : '') +
+        (diff.inserir.length === 0 && diff.remover.length === 0 && !(diff.presencas||0) ?
           '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma alteração detectada. A turma já está sincronizada.</div>' : '') +
         (alertaRemocao ?
           '<div style="padding:10px 14px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:8px;font-size:12px;color:#fbbf24;">⚠️ <strong>Atenção:</strong> mais de 20% dos clientes importados serão removidos. Confirme apenas se tiver certeza que a planilha está correta.</div>' : '') +
       '</div>' +
       '<div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;">' +
         '<button id="impDiffCancelar" style="padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:\'DM Sans\',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>' +
-        (diff.inserir.length > 0 || diff.remover.length > 0 ?
+        (diff.inserir.length > 0 || diff.remover.length > 0 || (diff.presencas||0) > 0 ?
           '<button id="impDiffConfirmar" style="padding:8px 22px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#0a0a0a;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Sincronizar</button>' :
           '<button id="impDiffFechar" style="padding:8px 22px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#0a0a0a;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">OK</button>') +
       '</div>' +
@@ -1170,6 +1264,9 @@ function impAplicarSync(diff, criadoPor){
     });
   }
 
+  /* Presença dos já existentes: promovida em impSincronizarTurma (diff.presencas);
+     aqui só resta persistir (saveStorage/render abaixo). */
+
   // Inserir novos
   var inseridos = 0;
   if(diff.inserir.length) window._log&&window._log('[IMP inserir] primeiro item treinamento:', diff.inserir[0].treinamento, '| total:', diff.inserir.length);
@@ -1183,6 +1280,8 @@ function impAplicarSync(diff, criadoPor){
       status:      obj.status      || '-',
       entrada:     obj.entrada     || 0,
       info:        obj.info        || '',
+      /* caixinha marcada na planilha → aluno já entra como presente */
+      presenca:    (obj.presenca==='presente'||obj.presenca==='falta') ? obj.presenca : 'pendente',
       criadoPor:   criadoPor,
       _importado:  true,
       _importKey:  obj._importKey || impGerarKey(obj.cliente)
@@ -1233,11 +1332,15 @@ function impAplicarSync(diff, criadoPor){
   if(typeof renderConsultor==='function') renderConsultor();
   if(typeof renderTreinador==='function') renderTreinador();
   if(typeof renderProduto  ==='function') renderProduto();
+  if(typeof window._presencaAtualizarContadores==='function') window._presencaAtualizarContadores();
 
   closeImportModal();
 
+  var _presImp = (diff.inserir||[]).filter(function(o){return o&&o.presenca==='presente';}).length
+               + (diff.presencas||0);
   var msg = [];
   if(inseridos)         msg.push('➕ '+inseridos+' adicionado'+(inseridos!==1?'s':''));
+  if(_presImp)          msg.push('✅ '+_presImp+' presente'+(_presImp!==1?'s':''));
   if(diff.remover.length) msg.push('🗑️ '+diff.remover.length+' removido'+(diff.remover.length!==1?'s':''));
   if(!msg.length)         msg.push('Turma já estava sincronizada');
   _showToast('✅ Sync concluído — ' + msg.join(' · '), 'var(--accent)');

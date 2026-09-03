@@ -130,4 +130,68 @@
       return _jspdfPromise;
     };
   }
+
+  /* ── Google Sheets sem CORS (JSONP via gviz) ──────────────────────────
+     Os endpoints de CSV do Google (/export?format=csv e /gviz/tq?tqx=out:csv)
+     NÃO mandam Access-Control-Allow-Origin: mesmo com a planilha pública, o
+     fetch() morre em "Failed to fetch" — e em file:// (origem null) nunca
+     funciona. Carregando por <script> não existe CORS: o gviz devolve o
+     conteúdo já embrulhado no nosso callback.
+     headers=1 → o gviz consome a linha 1 como cabeçalho e devolve os títulos
+     em cols[].label. É obrigatório: em colunas de CHECKBOX (tipadas boolean)
+     o texto do cabeçalho não é boolean e o gviz o descartaria como célula
+     vazia (ex.: a coluna "PRESENÇA" perderia o título). Remontamos o AOA com
+     a linha de cabeçalho na frente, igual ao CSV.
+     Retorna Promise<AOA> (array de arrays de string).                      */
+  if(!window._gvizAOA){
+    window._gvizAOA = function(idOuLink, gid){
+      var m  = String(idOuLink||'').match(/\/spreadsheets\/d\/(?!e\/)([a-zA-Z0-9-_]+)/);
+      var id = m ? m[1] : String(idOuLink||'').trim();
+      if(!id) return Promise.reject(new Error('link do Google Sheets inválido'));
+      if(gid == null){
+        var g = String(idOuLink||'').match(/[#&?]gid=(\d+)/);
+        gid = g ? g[1] : '0';
+      }
+      return new Promise(function(resolve, reject){
+        var cb = '_gviz' + Date.now() + Math.floor(Math.random()*1000);
+        var s  = document.createElement('script');
+        var tm = setTimeout(function(){ limpar(); reject(new Error('tempo esgotado — planilha privada?')); }, 20000);
+        function limpar(){
+          clearTimeout(tm);
+          try{ delete window[cb]; }catch(_){ window[cb] = undefined; }
+          if(s.parentNode) s.parentNode.removeChild(s);
+        }
+        window[cb] = function(resp){
+          limpar();
+          if(!resp || resp.status === 'error'){
+            var er = resp && resp.errors && resp.errors[0];
+            var ms = er ? (er.detailed_message || er.message || 'erro') : 'resposta vazia';
+            reject(new Error(String(ms).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,140)));
+            return;
+          }
+          var tb = resp.table || {}, cols = tb.cols || [], rows = tb.rows || [];
+          var header = cols.map(function(c){ return String((c && c.label) || '').trim(); });
+          var aoa = rows.map(function(r){
+            var c = (r && r.c) || [], linha = [];
+            for(var i=0; i<cols.length; i++){
+              var cel = c[i];
+              if(!cel || (cel.v == null && cel.f == null))   linha.push('');
+              else if(cel.f != null)                          linha.push(String(cel.f));
+              else if(typeof cel.v === 'boolean')             linha.push(cel.v ? 'TRUE' : 'FALSE');
+              else                                            linha.push(String(cel.v));
+            }
+            return linha;
+          });
+          /* Cabeçalho primeiro — só se veio algum título (senão o gviz não
+             detectou header e os dados já estão completos nas rows). */
+          if(header.some(function(h){ return h !== ''; })) aoa.unshift(header);
+          resolve(aoa);
+        };
+        s.src = 'https://docs.google.com/spreadsheets/d/' + id +
+                '/gviz/tq?tqx=out:json;responseHandler:' + cb + '&headers=1&gid=' + gid;
+        s.onerror = function(){ limpar(); reject(new Error('não consegui abrir a planilha (link privado?)')); };
+        document.head.appendChild(s);
+      });
+    };
+  }
 })();

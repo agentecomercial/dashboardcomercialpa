@@ -300,18 +300,81 @@
     }
     return [url]; // não é Google Sheets: tenta como URL de CSV cru
   }
+  /* Fallback JSONP (gviz) — o Google NÃO manda cabeçalho CORS nos endpoints de
+     CSV, então o fetch() sempre morre com "Failed to fetch" mesmo com a planilha
+     pública (e pior ainda com a página aberta em file://). Carregando por <script>
+     não existe CORS: o gviz devolve o conteúdo já embrulhado no nosso callback.
+     headers=1 = títulos vêm em cols[].label (obrigatório: coluna de CHECKBOX
+     tipada boolean descartaria o texto do cabeçalho); remontamos o AOA. */
+  function _gvizJsonp(id, gid){
+    if(typeof window._gvizAOA === 'function') return window._gvizAOA(id, gid);
+    return new Promise(function(resolve, reject){
+      var cb = '_beltGviz' + Date.now() + Math.floor(Math.random()*1000);
+      var s  = document.createElement('script');
+      var tm = setTimeout(function(){ limpar(); reject(new Error('tempo esgotado — planilha privada?')); }, 20000);
+      function limpar(){
+        clearTimeout(tm);
+        try{ delete window[cb]; }catch(_){ window[cb] = undefined; }
+        if(s.parentNode) s.parentNode.removeChild(s);
+      }
+      window[cb] = function(resp){
+        limpar();
+        if(!resp || resp.status === 'error'){
+          var er = resp && resp.errors && resp.errors[0];
+          var ms = er ? (er.detailed_message || er.message || 'erro') : 'resposta vazia';
+          reject(new Error(String(ms).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,140)));
+          return;
+        }
+        var tb = resp.table || {}, cols = tb.cols || [], rows = tb.rows || [];
+        var header = cols.map(function(c){ return String((c && c.label) || '').trim(); });
+        var aoa = rows.map(function(r){
+          var c = (r && r.c) || [], linha = [];
+          for(var i=0; i<cols.length; i++){
+            var cel = c[i];
+            if(!cel || (cel.v == null && cel.f == null)) { linha.push(''); continue; }
+            if(cel.f != null)                 linha.push(String(cel.f));
+            else if(typeof cel.v === 'boolean') linha.push(cel.v ? 'TRUE' : 'FALSE');
+            else                                linha.push(String(cel.v));
+          }
+          return linha;
+        });
+        if(header.some(function(h){ return h !== ''; })) aoa.unshift(header);
+        resolve(aoa);
+      };
+      s.src = 'https://docs.google.com/spreadsheets/d/' + id +
+              '/gviz/tq?tqx=out:json;responseHandler:' + cb + '&headers=1&gid=' + gid;
+      s.onerror = function(){ limpar(); reject(new Error('não consegui abrir a planilha (link privado?)')); };
+      document.head.appendChild(s);
+    });
+  }
+
   function _beltLerLink(){
     var inp = document.getElementById('beltLink');
     var url = inp ? inp.value.trim() : '';
     if(!url){ _setStatus('Cole o link da planilha primeiro.', true); return; }
     _setStatus('Lendo link…', false);
     var urls = _googleSheetCsvUrls(url);
+    var mId  = url.match(/\/spreadsheets\/d\/(?!e\/)([a-zA-Z0-9-_]+)/);
+    var mGid = url.match(/[#&?]gid=(\d+)/);
     var ultimoErro = '';
+    function desistir(){
+      _setStatus('Não consegui ler o link (' + (ultimoErro||'falhou') + ').<br>' +
+        'Use <b>Arquivo → Compartilhar → Qualquer pessoa com o link (Leitor)</b> ' +
+        'OU <b>Arquivo → Compartilhar → Publicar na web → CSV</b> e cole o link gerado.<br>' +
+        '<span style="font-size:10px;">Se a planilha já está compartilhada, baixe-a ' +
+        '(<b>Arquivo → Fazer download → .xlsx</b>) e use o botão <b>Escolher arquivo</b>.</span>', true);
+    }
     (function tentar(i){
       if(i >= urls.length){
-        _setStatus('Não consegui ler o link (' + (ultimoErro||'falhou') + ').<br>' +
-          'Use <b>Arquivo → Compartilhar → Qualquer pessoa com o link (Leitor)</b> ' +
-          'OU <b>Arquivo → Compartilhar → Publicar na web → CSV</b> e cole o link gerado.', true);
+        // último recurso: JSONP, imune a CORS (só serve para link normal /d/<id>)
+        if(mId){
+          _setStatus('Lendo link (modo alternativo)…', false);
+          _gvizJsonp(mId[1], mGid ? mGid[1] : '0')
+            .then(function(aoa){ _processar([], 'via link · gid ' + (mGid?mGid[1]:'0'), aoa); })
+            .catch(function(e){ ultimoErro = (e && e.message) || e; desistir(); });
+          return;
+        }
+        desistir();
         return;
       }
       fetch(urls[i])
