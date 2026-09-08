@@ -45,6 +45,7 @@
     arrowLeft:   '<path d="M19 12H5"/><path d="m11 18-6-6 6-6"/>',
     chevronRight:'<path d="m9 6 6 6-6 6"/>',
     chevronDown: '<path d="m6 9 6 6 6-6"/>',
+    chevronUp:   '<path d="m18 15-6-6-6 6"/>',
     chevronLeft: '<path d="m15 6-6 6 6 6"/>',
     more:        '<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
     menu:        '<path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/>',

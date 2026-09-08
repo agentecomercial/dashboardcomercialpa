@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Prévia · Registro do encontro formatado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#0e1013; --surface:#16181d; --surface-2:#1c1f26; --border:#262a33;
+    --text:#e8eaee; --text-2:#b9bec8; --muted:#8a909c; --brand:#7c86ff; --brand-soft:rgba(124,134,255,.12);
+    --ok:#10b981; --warn:#f59e0b; --danger:#ef4444; --info:#3b82f6; --purple:#8b5cf6; --pink:#ec4899; --accent:#14b8a6;
+  }
+  .claro {
+    --bg:#f4f5f8; --surface:#ffffff; --surface-2:#f7f8fb; --border:#e4e7ee;
+    --text:#1c2028; --text-2:#3f4654; --muted:#7a8090; --brand:#4f5ae8; --brand-soft:rgba(79,90,232,.08);
+    --ok:#0d9668; --warn:#c47c08; --danger:#dc2626; --info:#2563eb; --purple:#7c3aed; --pink:#db2777; --accent:#0d9488;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font:15px/1.6 "Segoe UI",system-ui,sans-serif; padding:28px 16px 60px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .aviso { background:var(--brand-soft); border:1px solid var(--border); color:var(--text-2);
+    border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .aviso button { background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .card__head { padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; font-size:15px; }
+  .card__body { padding:6px 18px 20px; }
+
+  /* ---- estilos do registro formatado (o que vai para o app) ---- */
+  .reg-head { padding:14px 2px 12px; border-bottom:1px solid var(--border); }
+  .reg-head__t { font-size:12px; letter-spacing:.09em; color:var(--muted); text-transform:uppercase; font-weight:700; }
+  .reg-head__nome { font-size:19px; font-weight:800; margin-top:2px;
+    background:linear-gradient(90deg, var(--brand), var(--accent));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .reg-head__sub { font-size:13px; color:var(--muted); margin-top:2px; }
+
+  .reg-sec { --sec:var(--brand); --sec-bg:rgba(99,102,241,.13); margin-top:22px; }
+  .reg-sec--ok     { --sec:var(--ok);     --sec-bg:rgba(16,185,129,.13); }
+  .reg-sec--warn   { --sec:var(--warn);   --sec-bg:rgba(245,158,11,.14); }
+  .reg-sec--danger { --sec:var(--danger); --sec-bg:rgba(239,68,68,.13);  }
+  .reg-sec--info   { --sec:var(--info);   --sec-bg:rgba(59,130,246,.13); }
+  .reg-sec--purple { --sec:var(--purple); --sec-bg:rgba(139,92,246,.14); }
+  .reg-sec--pink   { --sec:var(--pink);   --sec-bg:rgba(236,72,153,.13); }
+  .reg-sec--accent { --sec:var(--accent); --sec-bg:rgba(20,184,166,.14); }
+
+  .reg-sec__h { display:flex; align-items:center; gap:9px; font-weight:800; font-size:13.5px;
+    letter-spacing:.05em; color:var(--sec); text-transform:uppercase; margin-bottom:9px; }
+  .reg-sec__h::after { content:""; flex:1; height:2px; border-radius:2px;
+    background:linear-gradient(90deg, var(--sec-bg), transparent); }
+  .reg-sec__ico { width:26px; height:26px; border-radius:8px; background:var(--sec-bg);
+    display:flex; align-items:center; justify-content:center; font-size:14px; flex:0 0 auto; }
+
+  .reg-p { color:var(--text-2); margin:3px 0; }
+  .reg-p b, .reg-li b, .reg-num b { color:var(--text); font-weight:700; }
+
+  .reg-li { display:flex; gap:8px; color:var(--text-2); margin:6px 0; }
+  .reg-li::before { content:"•"; color:var(--sec); font-weight:800; }
+
+  .reg-num { display:flex; gap:10px; align-items:flex-start; color:var(--text-2); margin:8px 0; }
+  .reg-num__n { flex:0 0 auto; width:22px; height:22px; border-radius:50%; background:var(--sec-bg);
+    color:var(--sec); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+
+  .reg-resp { margin:2px 0 10px 24px; padding:6px 12px; border-left:3px solid var(--sec);
+    background:var(--sec-bg); border-radius:0 8px 8px 0; color:var(--text-2); font-size:14px; }
+  .reg-resp b { color:var(--sec); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="aviso">
+    <span>🔍 <b>Prévia</b> — é assim que o card "📋 Registro do encontro" ficará no One a One (modelo: Gabriela).</span>
+    <button onclick="document.body.classList.toggle('claro')">☀️/🌙 Alternar tema</button>
+  </div>
+  <div class="card">
+    <div class="card__head">📋 Registro do encontro</div>
+    <div class="card__body" id="alvo"></div>
+  </div>
+</div>
+
+<script>
+const REGISTRO = `REGISTRO DO ONE A ONE — Gabriela Souza de Jesus
+2 de setembro de 2026 · Período: 22/08/2026 a 02/09/2026
+
+COMO ESTÁ
+Gabriela hoje, esta bem.
+Não espera motivação, ela prefere ganhar dinheiro.
+Clima organizacional.
+Desanimação - qual seria a reclamação.
+
+CONQUISTAS DO PERÍODO
+Você é fera.
+
+DIFICULDADES
+Reclamação do time:
+Excelência: não tem mais a receptividade da experiência do cliente / carta de apresentação, massagem.
+Biblioteca / Loja: vazia, livro faltando / não compras para o anjo.
+Entrega: Aluno reclamando da cadeira.
+Pedagogico: não esta engajado / não passa data com antecedencia / alteração de data sem avisar com o cliente / experiência ruim.
+Aluno: Treinadores estão gastando muito tempo se "vendendo".
+Momento de pitch da construção: mudar a pagina inicial.
+Comercial: Lead.
+Vision, time: clima organização.
+
+AUTOAVALIAÇÃO
+- Fez bem: Prospectar clientes, ir atras de condições, desenhei cenários diferentes.
+- Poderia ter feito melhor: Controle maior da lista de clientes / prospectar mais em tempos ociosos / contornar mais as objeções para aumentar o portfólio presencialmente.
+- Maior dificuldade: Periodo de desafiador: na conversão de lead.
+- Apoio que pediu: Treinamento de fechamento para quebrar objeção. Comportamento humano.
+
+PERGUNTAS DO ENCONTRO
+- Você bateu a meta, agora me diz, você se sentiu na obrigação de comemorar ou foi por outro motivo ?
+  Resposta: Porque foi o atingimento de meta.
+- Quais são seus objetivos aqui dentro da Febracis ? Onde você quer chegar? O que que você quer ?
+  Resposta: No momento atual - seguir para master (faltam 2 meses).
+- O que você tem buscado para evoluir cada vez mais na sua atuação comercial? Em quais áreas você sente que precisa se desenvolver atualmente? O que você tem feito para evoluir? O que você tem buscado aprender para se tornar um profissional cada vez melhor?
+  Resposta: Estudar... vendas, neurovendas, leitura - fechamento.
+
+EVIDÊNCIAS TRABALHADAS
+Foram discutidas 12 evidências do período: 4 reconhecimentos, 1 ponto de atenção, 7 outras observações.
+
+COMPETÊNCIAS
+Média 3,2/5.
+- Pontos fortes (4–5): Comunicação, Postura comercial, Conhecimento dos produtos, Proatividade, Inteligência emocional.
+- Intermediárias (3): Prospecção, Follow-up, Gestão do tempo.
+- A desenvolver (1–2): Negociação, Fechamento, Organização.
+
+PONTOS DE DESENVOLVIMENTO
+1) Fechamento - Trabalhar mais esse pilar.
+
+COMPROMISSOS
+1) Melhora o comportamento.
+2) Gerir melhor meu tempo - principalmente quando não tem treinamento.
+3) Aumentar as prospecções.
+4) Estudar sobre negociações e fechamento.`;
+
+/* ============== renderizador que será portado para o app ============== */
+const SECOES = {
+  'COMO ESTÁ':{ico:'💬',tom:'info'}, 'CONQUISTAS':{ico:'🏆',tom:'ok'}, 'DIFICULDADES':{ico:'🚧',tom:'warn'},
+  'AUTOAVALIAÇÃO':{ico:'🪞',tom:'purple'}, 'PERGUNTAS':{ico:'❓',tom:'accent'}, 'EVIDÊNCIAS':{ico:'📌',tom:'pink'},
+  'COMPETÊNCIAS':{ico:'📊',tom:'brand'}, 'PONTOS POSITIVOS':{ico:'⭐',tom:'ok'},
+  'PONTOS DE DESENVOLVIMENTO':{ico:'📈',tom:'warn'}, 'COMPROMISSOS':{ico:'🎯',tom:'brand'}, 'FECHAMENTO':{ico:'🤝',tom:'accent'}
+};
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function secao(titulo){
+  const k = Object.keys(SECOES).find(k => titulo.indexOf(k) === 0);
+  return k ? SECOES[k] : {ico:'📄',tom:'brand'};
+}
+/* "Rótulo: resto" -> <b>Rótulo:</b> resto (rótulo curto, sem ponto final) */
+function comRotulo(l){
+  const m = l.match(/^([^:]{2,42}):\s*(.*)$/);
+  if (m && !/[.!?…]/.test(m[1])) return '<b>'+esc(m[1])+':</b> '+esc(m[2]);
+  return esc(l);
+}
+function renderRegistro(texto){
+  const linhas = String(texto||'').replace(/\r/g,'').split('\n');
+  let h = '', secAberta = false;
+  const fechaSec = () => { if (secAberta) { h += '</div>'; secAberta = false; } };
+
+  linhas.forEach((l, i) => {
+    const t = l.trim();
+    if (!t) return;
+
+    /* cabeçalho: 2 primeiras linhas */
+    if (i === 0 && /^REGISTRO DO ONE A ONE/i.test(t)) {
+      const nome = t.split('—')[1] || '';
+      h += '<div class="reg-head"><div class="reg-head__t">Registro do One a One</div>'
+        + '<div class="reg-head__nome">'+esc(nome.trim())+'</div>';
+      return;
+    }
+    if (i === 1 && h.indexOf('reg-head') >= 0) { h += '<div class="reg-head__sub">'+esc(t)+'</div></div>'; return; }
+
+    /* título de seção: linha toda em maiúsculas */
+    if (t.length <= 48 && /^[A-ZÀ-ÖØ-Þ0-9 ()\/–—-]+$/.test(t) && /[A-ZÀ-ÖØ-Þ]{3}/.test(t)) {
+      fechaSec();
+      const s = secao(t);
+      h += '<div class="reg-sec reg-sec--'+s.tom+'"><div class="reg-sec__h"><span class="reg-sec__ico">'+s.ico+'</span>'+esc(t)+'</div>';
+      secAberta = true;
+      return;
+    }
+    /* resposta indentada */
+    if (/^\s+Resposta:/.test(l) || /^Resposta:/.test(t) && /^\s/.test(l)) {
+      h += '<div class="reg-resp"><b>↳ Resposta:</b> '+esc(t.replace(/^Resposta:\s*/,''))+'</div>';
+      return;
+    }
+    /* item numerado */
+    const n = t.match(/^(\d+)\)\s*(.*)$/);
+    if (n) { h += '<div class="reg-num"><span class="reg-num__n">'+n[1]+'</span><span>'+comRotulo(n[2])+'</span></div>'; return; }
+    /* bullet */
+    if (/^- /.test(t)) { h += '<div class="reg-li"><span>'+comRotulo(t.slice(2))+'</span></div>'; return; }
+    /* parágrafo (com rótulo em negrito quando houver) */
+    h += '<div class="reg-p">'+comRotulo(t)+'</div>';
+  });
+  fechaSec();
+  return h;
+}
+document.getElementById('alvo').innerHTML = renderRegistro(REGISTRO);
+</script>
+</body>
+</html>

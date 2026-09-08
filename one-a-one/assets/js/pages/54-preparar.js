@@ -25,7 +25,32 @@
     const box = u.el('div.view__inner');
 
     if (c.exemplo) box.appendChild(p.faixaExemplo(
-      'Preparação de demonstração — mostra como a pauta é montada a partir dos registros do período.'));
+      'Preparação de demonstração — a pauta é montada pela mesma lógica da operação. Pode iniciar o encontro para ver como fica.'));
+
+    /* --------- ciclo fechado: o encontro trata de um mes que ja virou --------- */
+    const cicloEnc = A.cicloDoEncontro(c);
+    if (cicloEnc && cicloEnc.fechada && cicloEnc.meta) {
+      const mAtual = A.metaMes(c);
+      box.appendChild(u.el('div.note.note--warn.u-mb-4.u-row.u-wrap.u-gap-3', { style: { alignItems: 'flex-start' } }, [
+        u.el('span', { html: App.icon('calendar', '', 15) }),
+        u.el('div.u-grow', {}, [
+          u.el('div.t-strong', { text: 'Este encontro cobre ' + u.fmtCompetenciaLonga(cicloEnc.competencia) + ', que já fechou.' }),
+          u.el('div.t-sm', { style: { marginTop: '3px' }, text:
+            'Os números abaixo são desse período' +
+            (mAtual.temMeta
+              ? '. A meta de ' + u.fmtCompetenciaLonga(mAtual.periodo) + ' (' +
+                u.fmtMoedaExata(mAtual.master) + ') começa a valer no próximo ciclo e não entra nesta conversa.'
+              : '.') })
+        ])
+      ]));
+    }
+
+    /* --------- enredo: por onde comecar (base de referencia) --------- */
+    box.appendChild(App.guia.enredo(c, prep.de));
+
+    /* --------- confronto: o quadro dele contra a base de livros --------- */
+    const confronto = App.guia.confronto(c, prep.de);
+    if (confronto) box.appendChild(confronto);
 
     /* ------------------------------ topo ------------------------------ */
     box.appendChild(u.el('button.btn.btn--sm.btn--ghost.u-mb-3', {
@@ -56,33 +81,61 @@
             type: 'button', html: App.icon('copy') + '<span>Copiar resumo</span>',
             onclick: () => copiarResumo(prep)
           }),
-          c.exemplo
-            ? u.el('span.badge.badge--warn.badge--lg', { text: '✨ Exemplo · somente consulta' })
-            : emAndamento
-              ? u.el('button.btn.btn--lg.btn--primary', {
-                  type: 'button', html: App.icon('play') + '<span>Continuar encontro</span>',
-                  onclick: () => App.router.go('/one-a-one/' + emAndamento.id)
-                })
-              : u.el('button.btn.btn--lg.btn--primary', {
-                  type: 'button', html: App.icon('play') + '<span>Iniciar One a One</span>',
-                  onclick: () => iniciar(c)
-                })
+          c.exemplo ? u.el('span.badge.badge--warn.badge--lg', { text: '✨ Demonstração' }) : null,
+          emAndamento
+            ? u.el('button.btn.btn--lg.btn--primary', {
+                type: 'button', html: App.icon('play') + '<span>Continuar encontro</span>',
+                onclick: () => App.router.go('/one-a-one/' + emAndamento.id)
+              })
+            : u.el('button.btn.btn--lg.btn--primary', {
+                type: 'button', html: App.icon('play') + '<span>Iniciar One a One</span>',
+                onclick: () => iniciar(c)
+              })
         ])
       ])
     ]));
 
-    /* --------------------------- resumo --------------------------- */
+    /* --------------------------- resumo ---------------------------
+       Cada numero abre a lista que o gerou, ja filtrada POR ESTE consultor e
+       pelo mesmo periodo do encontro (`desde`) — senao o card diz 11 e a tela
+       de destino mostra os registros da equipe inteira. */
     const r = prep.resumo;
+    const nomeCurto = u.primeiroNome(c.nome);
+    const alvoObs = extra => '/observacoes?colab=' + c.id + '&desde=' + prep.de + (extra || '');
+
     box.appendChild(u.el('div.grid.grid-kpi.u-mb-5.stagger', {}, [
-      p.kpi({ label: 'Observações', valor: r.total, icone: 'eye', tom: 'brand', rodape: '<span class="t-muted2">No período</span>' }),
-      p.kpi({ label: 'Pontos positivos', valor: r.positivos, icone: 'star', tom: 'ok' }),
-      p.kpi({ label: 'Pontos de atenção', valor: r.atencao, icone: 'alert', tom: r.atencao ? 'warn' : 'neutral' }),
-      p.kpi({ label: 'Feedbacks', valor: r.totalFeedbacks, icone: 'chat', tom: 'info' }),
-      p.kpi({ label: 'Ações concluídas', valor: r.acoesConcluidas, icone: 'checkCircle', tom: 'ok' }),
+      p.kpi({
+        label: 'Observações', valor: r.total, icone: 'eye', tom: 'brand',
+        rodape: '<span class="t-muted2">No período</span>',
+        tip: r.total ? 'Ver os ' + r.total + ' registros de ' + nomeCurto + ' no período' : null,
+        onClick: r.total ? (() => App.router.go(alvoObs())) : null
+      }),
+      p.kpi({
+        label: 'Pontos positivos', valor: r.positivos, icone: 'star', tom: 'ok',
+        tip: r.positivos ? 'Ver os positivos de ' + nomeCurto + ' no período' : null,
+        onClick: r.positivos ? (() => App.router.go(alvoObs('&pol=pos'))) : null
+      }),
+      p.kpi({
+        label: 'Pontos de atenção', valor: r.atencao, icone: 'alert', tom: r.atencao ? 'warn' : 'neutral',
+        tip: r.atencao ? 'Ver os pontos de atenção de ' + nomeCurto + ' no período' : null,
+        onClick: r.atencao ? (() => App.router.go(alvoObs('&pol=ate'))) : null
+      }),
+      p.kpi({
+        label: 'Feedbacks', valor: r.totalFeedbacks, icone: 'chat', tom: 'info',
+        tip: r.totalFeedbacks ? 'Ver os feedbacks de ' + nomeCurto : null,
+        onClick: r.totalFeedbacks ? (() => App.router.go('/feedbacks?colab=' + c.id)) : null
+      }),
+      p.kpi({
+        label: 'Ações concluídas', valor: r.acoesConcluidas, icone: 'checkCircle', tom: 'ok',
+        tip: r.acoesConcluidas ? 'Ver os planos concluídos de ' + nomeCurto : null,
+        onClick: r.acoesConcluidas ? (() => App.router.go('/planos?colab=' + c.id + '&status=concluido')) : null
+      }),
       p.kpi({
         label: 'Ações pendentes', valor: r.acoesPendentes, icone: 'flag',
         tom: r.acoesAtrasadas ? 'danger' : 'neutral',
-        rodape: r.acoesAtrasadas ? '<span class="t-danger t-strong">' + r.acoesAtrasadas + ' atrasada(s)</span>' : ''
+        rodape: r.acoesAtrasadas ? '<span class="t-danger t-strong">' + r.acoesAtrasadas + ' atrasada(s)</span>' : '',
+        tip: r.acoesPendentes ? 'Ver os planos abertos de ' + nomeCurto : null,
+        onClick: r.acoesPendentes ? (() => App.router.go('/planos?colab=' + c.id)) : null
       })
     ]));
 
@@ -173,10 +226,12 @@
     lat.appendChild(u.el('div.card', {}, [
       u.el('div.card__head', {}, [u.el('div.card__title', { text: 'Indicadores do período' })]),
       u.el('div.card__body', {}, [
-        p.barraMeta(ind.pctMeta),
+        p.metaFaixas(A.metaMes(c)),
         u.el('div.grid.grid-2.u-mt-4', {}, [
-          u.el('div', {}, [u.el('div.stat-tile__l', { text: 'Realizado' }), u.el('div.stat-tile__v', { text: u.fmtMoedaCurta(ind.realizado) })]),
-          u.el('div', {}, [u.el('div.stat-tile__l', { text: 'Meta' }), u.el('div.stat-tile__v', { text: u.fmtMoedaCurta(ind.meta) })]),
+          u.el('div', { 'data-tip': u.fmtMoedaExata(ind.realizado) + ' — é este valor que conta para a meta' }, [
+            u.el('div.stat-tile__l', { text: 'Líquido' }), u.el('div.stat-tile__v', { text: u.fmtMoedaCurta(ind.realizado) })]),
+          u.el('div', { 'data-tip': u.fmtMoedaExata(ind.bruto) + ' — sem o desconto do Coaching Individual' }, [
+            u.el('div.stat-tile__l', { text: 'Bruto' }), u.el('div.stat-tile__v', { text: u.fmtMoedaCurta(ind.bruto) })]),
           u.el('div', {}, [u.el('div.stat-tile__l', { text: 'Vendas' }), u.el('div.stat-tile__v', { text: u.fmtNum(ind.vendas) })]),
           u.el('div', {}, [u.el('div.stat-tile__l', { text: 'Conversão' }), u.el('div.stat-tile__v', { text: u.fmtPct(ind.conversao, 1) })])
         ])

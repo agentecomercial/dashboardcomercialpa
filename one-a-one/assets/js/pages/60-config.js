@@ -287,10 +287,24 @@
       u.el('div.u-row.u-gap-3', { style: { alignItems: 'flex-start' } }, [
         u.el('span', { html: App.icon('info') }),
         u.el('div.u-grow', {}, [
-          u.el('div.t-strong', { text: 'Material de consulta, separado da operação.' }),
+          u.el('div.t-strong', { text: 'Área de testes, separada da operação.' }),
           u.el('div.t-sm', { style: { marginTop: '3px' }, text:
-            'Estes registros não aparecem na Equipe, no Dashboard, no One a One, nos Indicadores nem na busca. ' +
-            'Clique em qualquer um para abrir o exemplo completo — perfil, timeline, competências e preparação de One a One funcionam normalmente.' })
+            'Aqui você pode editar cadastros e metas, registrar observações, dar feedback e conduzir One a Ones à vontade: ' +
+            'tudo o que nascer nesta área já vem marcado como exemplo e nunca aparece na Equipe, no Dashboard, nos Indicadores nem na busca. ' +
+            'Ligue o modo demonstração para navegar pelo app inteiro com esta equipe — é assim que ele vai ficar com dados reais dentro.' }),
+          u.el('div.u-row.u-wrap.u-gap-2', { style: { marginTop: '10px' } }, [
+            u.el('button', {
+              class: 'btn btn--sm ' + (App.demo.ativo() ? 'btn--outline' : 'btn--primary'),
+              type: 'button',
+              html: App.icon('sparkles') + '<span>' + (App.demo.ativo() ? 'Desligar modo demonstração' : 'Ligar modo demonstração') + '</span>',
+              onclick: () => App.demo.alternar()
+            }),
+            u.el('button.btn.btn--sm.btn--outline', {
+              type: 'button', html: App.icon('userPlus') + '<span>Novo colaborador de exemplo</span>',
+              'data-tip': 'Cria um figurante para testar metas e cards',
+              onclick: () => App.colabModal.abrir({ exemplo: true, aoSalvar: () => App.recarregarTela() })
+            })
+          ])
         ])
       ])
     ]));
@@ -316,7 +330,7 @@
     chips.appendChild(u.el('span.u-grow'));
     chips.appendChild(u.el('button.btn.btn--sm.btn--outline', {
       type: 'button', html: App.icon('refresh') + '<span>Restaurar exemplos</span>',
-      'data-tip': 'Repõe qualquer exemplo excluído, sem tocar na operação',
+      'data-tip': 'Desfaz o que você mexeu nos figurantes originais. Não apaga a operação nem o que você criou aqui.',
       onclick: restaurarExemplos
     }));
     chips.appendChild(u.el('button.btn.btn--sm.btn--ghost', {

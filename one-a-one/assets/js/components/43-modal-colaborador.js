@@ -21,8 +21,12 @@
       status: edicao ? edicao.status : 'ativo',
       proximoOneAOne: edicao ? (edicao.proximoOneAOne || '') : App.cal.agendar(new Date(), 7),
       frequenciaDias: edicao ? (+edicao.frequenciaDias || 14) : 14,
-      indicadores: Object.assign({ realizado: 0, vendas: 0, leads: 0, followups: 0, conversao: 0 },
-        (edicao && edicao.indicadores) || {})
+      indicadores: Object.assign({ realizado: 0, realizadoBruto: 0, vendas: 0, leads: 0, followups: 0, conversao: 0 },
+        (edicao && edicao.indicadores) || {}),
+      metaFaixas: Object.assign(
+        { minima: 0, basica: 0, master: (edicao && +edicao.meta) || 0 },
+        (edicao && edicao.metaFaixas) || {}),
+      faturamentoPeriodo: edicao ? (edicao.faturamentoPeriodo || '') : ''
     };
 
     const corpo = u.el('div.u-col.u-gap-5');
@@ -96,20 +100,35 @@
     const inpEntrada = u.el('input.input', { type: 'date', value: d.dataEntrada });
     inpEntrada.addEventListener('change', () => { d.dataEntrada = inpEntrada.value; });
 
-    const inpMeta = u.el('input.input', { type: 'number', min: '0', step: '1000', placeholder: '0' });
-    inpMeta.value = d.meta || '';
-    inpMeta.addEventListener('input', () => { d.meta = +inpMeta.value || 0; });
-
     const selStatus = u.el('select.select');
     [['ativo', 'Ativo'], ['inativo', 'Inativo']].forEach(s =>
       selStatus.appendChild(u.el('option', { value: s[0], text: s[1] })));
     selStatus.value = d.status;
     selStatus.addEventListener('change', () => { d.status = selStatus.value; });
 
-    corpo.appendChild(u.el('div.grid.grid-3', {}, [
+    corpo.appendChild(u.el('div.grid.grid-2', {}, [
       p.campo('Data de entrada', inpEntrada),
-      p.campo('Meta do período (R$)', inpMeta),
       p.campo('Status', selStatus)
+    ]));
+
+    /* ---------------- Faixas de meta ---------------- */
+    const gridFaixas = u.el('div.grid.grid-3');
+    [['minima', 'Meta Mínima (R$)'], ['basica', 'Meta Básica (R$)'], ['master', 'Meta Master (R$)']].forEach(([k, rot]) => {
+      const i = u.el('input.input', { type: 'number', min: '0', step: '1000', placeholder: '0' });
+      i.value = d.metaFaixas[k] || '';
+      i.addEventListener('input', () => {
+        d.metaFaixas[k] = +i.value || 0;
+        if (k === 'master') d.meta = d.metaFaixas.master;      // meta principal = Master
+      });
+      gridFaixas.appendChild(p.campo(rot, i));
+    });
+    corpo.appendChild(u.el('div', {}, [
+      u.el('div.t-up.u-mb-2', { text: 'Meta do mês' }),
+      gridFaixas,
+      u.el('div.field__hint.u-mt-2', {
+        text: 'Na operação estes valores vêm do metas-vitoria.json pelo Sincronizar-Faturamento.ps1 e são '
+            + 'reescritos a cada sincronização. Preencha à mão para simular cenários na demonstração.'
+      })
     ]));
 
     const inpTel = u.el('input.input', { type: 'tel', placeholder: '(00) 00000-0000' });
@@ -148,7 +167,8 @@
 
     /* ---------------- Indicadores ---------------- */
     const indCampos = [
-      ['realizado', 'Realizado (R$)', 'number'],
+      ['realizado', 'Líquido (R$)', 'number'],
+      ['realizadoBruto', 'Bruto (R$)', 'number'],
       ['vendas', 'Vendas', 'number'],
       ['leads', 'Leads', 'number'],
       ['followups', 'Follow-ups', 'number'],
@@ -164,7 +184,11 @@
     corpo.appendChild(u.el('div', {}, [
       u.el('div.t-up.u-mb-2', { text: 'Indicadores do período' }),
       gridInd,
-      u.el('div.field__hint.u-mt-2', { text: 'Alimentam os cards de performance e os gráficos de evolução do perfil.' })
+      u.el('div.field__hint.u-mt-2', {
+        text: 'Líquido, bruto e vendas vêm do Meta Master (Coaching Individual entra pela metade) e são '
+            + 'reescritos a cada sincronização. Leads, follow-ups e conversão ficam por sua conta. '
+            + 'O atingimento da meta conta sempre pelo líquido.'
+      })
     ]));
 
     function salvar() {
@@ -175,13 +199,16 @@
       }
       const doc = {
         nome: inpNome.value.trim(), foto: d.foto, cor: d.cor, cargo: d.cargo,
-        dataEntrada: d.dataEntrada, meta: +d.meta || 0,
+        dataEntrada: d.dataEntrada, meta: +d.metaFaixas.master || +d.meta || 0,
         telefone: d.telefone, email: d.email, status: d.status,
         proximoOneAOne: campoProx.valorFinal() || '', frequenciaDias: +d.frequenciaDias || 14,
         indicadores: d.indicadores,
+        metaFaixas: d.metaFaixas,
+        faturamentoPeriodo: d.faturamentoPeriodo,
         historico: (edicao && edicao.historico) || [],
         ultimoOneAOne: (edicao && edicao.ultimoOneAOne) || ''
       };
+      if (opts.exemplo && !edicao) doc.exemplo = true;      // figurante da area de testes
       const acao = edicao ? db.colaboradores.atualizar(edicao.id, doc) : db.colaboradores.criar(doc);
       const ajustou = campoProx.foiAjustado();
       return acao.then(salvo => {

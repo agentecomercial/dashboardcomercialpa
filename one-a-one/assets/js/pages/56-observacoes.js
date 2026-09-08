@@ -5,10 +5,21 @@
   'use strict';
   const u = App.u, p = App.p, g = App.g, db = App.db, cat = App.cat, A = App.analise;
 
-  const f = { colab: '', tipo: 'todos', contexto: 'todos', impacto: 'todos', periodo: '30', busca: '' };
+  /* `pol` filtra por polaridade (positivo / atenção) e existe para os cards
+     de cima serem clicáveis. É independente de `tipo`, que filtra um tipo só. */
+  const f = { colab: '', tipo: 'todos', contexto: 'todos', impacto: 'todos', periodo: '30', busca: '', lote: 'todos', pol: 'todos', desde: '' };
 
   function render(view, params, query) {
-    if (query && query.colab) f.colab = query.colab;
+    /* Filtros vindos por link (os KPIs do Preparar apontam para ca). Cada um
+       so e aplicado quando vem na URL, para nao apagar o que o usuario ja
+       tinha escolhido ao voltar para a tela. */
+    if (query) {
+      if (query.colab) f.colab = query.colab;
+      if (query.pol) f.pol = query.pol;
+      if (query.lote) f.lote = query.lote;
+      if (query.desde) { f.desde = query.desde; f.periodo = 'todos'; }
+      else if (query.colab || query.pol) { f.desde = ''; }
+    }
     const box = u.el('div.view__inner');
 
     box.appendChild(u.el('div.page-head', {}, [
@@ -43,13 +54,15 @@
     linha.appendChild(selectDe('tipo', 'Todos os tipos', cat.TIPOS_OBS.map(t => ({ id: t.id, label: t.emoji + ' ' + t.label }))));
     linha.appendChild(selectDe('contexto', 'Todos os contextos', cat.CONTEXTOS.map(t => ({ id: t.id, label: t.emoji + ' ' + t.label }))));
     linha.appendChild(selectDe('impacto', 'Qualquer impacto', cat.IMPACTOS.map(t => ({ id: t.id, label: 'Impacto ' + t.label.toLowerCase() }))));
+    linha.appendChild(selectDe('lote', 'Individuais e em lote',
+      [{ id: 'so', label: '👥 Só lançamentos em lote' }, { id: 'nao', label: 'Só registros individuais' }]));
     linha.appendChild(selectDe('periodo', 'Todo o período',
       [{ id: '7', label: 'Últimos 7 dias' }, { id: '30', label: 'Últimos 30 dias' }, { id: '90', label: 'Últimos 90 dias' }], 'todos'));
 
     const limpar = u.el('button.btn.btn--sm.btn--ghost', {
       type: 'button', html: App.icon('x') + '<span>Limpar filtros</span>',
       onclick: () => {
-        f.colab = ''; f.tipo = 'todos'; f.contexto = 'todos'; f.impacto = 'todos'; f.periodo = 'todos'; f.busca = '';
+        f.colab = ''; f.tipo = 'todos'; f.contexto = 'todos'; f.impacto = 'todos'; f.periodo = 'todos'; f.busca = ''; f.lote = 'todos'; f.pol = 'todos'; f.desde = '';
         App.recarregarTela();
       }
     });
@@ -77,25 +90,85 @@
       if (f.tipo !== 'todos') obs = obs.filter(o => o.tipo === f.tipo);
       if (f.contexto !== 'todos') obs = obs.filter(o => o.contexto === f.contexto);
       if (f.impacto !== 'todos') obs = obs.filter(o => o.impacto === f.impacto);
-      if (f.periodo !== 'todos') obs = obs.filter(o => u.diffDays(o.data, new Date()) <= +f.periodo);
+      if (f.lote === 'so') obs = obs.filter(o => !!o.loteId);
+      else if (f.lote === 'nao') obs = obs.filter(o => !o.loteId);
+      if (f.pol === 'pos') obs = obs.filter(o => cat.tipoObs(o.tipo).pol > 0);
+      else if (f.pol === 'ate') obs = obs.filter(o => cat.tipoObs(o.tipo).pol < 0);
+      /* `desde` vem do Preparar: recorta exatamente o periodo do encontro,
+         para o numero do card bater com a lista que abre aqui. */
+      if (f.desde) obs = obs.filter(o => u.diffDays(f.desde, o.data) >= 0);
+      else if (f.periodo !== 'todos') obs = obs.filter(o => u.diffDays(o.data, new Date()) <= +f.periodo);
       const q = u.norm(f.busca).trim();
       if (q) obs = obs.filter(o => u.norm(o.texto).indexOf(q) >= 0);
       return u.sortBy(obs, o => o.data, 'desc');
+    }
+
+    /* Alterna um filtro pelo card: clicar de novo no card ativo desliga. */
+    function alternarFiltro(chave, valor) {
+      f[chave] = f[chave] === valor ? 'todos' : valor;
+      pintar();
+      resumo.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
     function pintar() {
       const obs = filtradas();
       const pos = obs.filter(o => cat.tipoObs(o.tipo).pol > 0).length;
       const aten = obs.filter(o => cat.tipoObs(o.tipo).pol < 0).length;
+      const tocados = u.uniq(obs.map(o => o.colaboradorId));
+      const emLote = obs.filter(o => o.loteId);
+      const algumFiltro = f.colab || f.busca || f.desde || f.pol !== 'todos' || f.lote !== 'todos' ||
+        f.tipo !== 'todos' || f.contexto !== 'todos' || f.impacto !== 'todos' || f.periodo !== 'todos';
 
       u.clear(resumo);
+      if (f.desde) {
+        resumo.appendChild(u.el('div.note.note--brand.u-mb-3.u-row.u-wrap.u-gap-2', { style: { alignItems: 'center' } }, [
+          u.el('span', { html: App.icon('calendar', '', 14) }),
+          u.el('span.u-grow', {
+            text: 'Período do One a One' + (f.colab ? ' de ' + u.primeiroNome(db.colaboradores.nome(f.colab)) : '') +
+                  ' — desde ' + u.fmtDate(f.desde) + '.'
+          }),
+          u.el('button.btn.btn--xs.btn--outline', {
+            type: 'button', text: 'Ver todo o histórico',
+            onclick: () => { f.desde = ''; f.periodo = 'todos'; pintar(); }
+          })
+        ]));
+      }
       resumo.appendChild(u.el('div.grid.grid-kpi', {}, [
-        p.kpi({ label: 'Registros no filtro', valor: obs.length, icone: 'eye', tom: 'brand' }),
-        p.kpi({ label: 'Positivos', valor: pos, icone: 'star', tom: 'ok' }),
-        p.kpi({ label: 'Pontos de atenção', valor: aten, icone: 'alert', tom: aten ? 'warn' : 'neutral' }),
         p.kpi({
-          label: 'Colaboradores tocados', valor: u.uniq(obs.map(o => o.colaboradorId)).length,
-          icone: 'users', tom: 'purple'
+          label: 'Registros no filtro', valor: obs.length, icone: 'eye', tom: 'brand',
+          tip: algumFiltro ? 'Limpar todos os filtros' : 'Nenhum filtro ativo',
+          onClick: algumFiltro ? (() => limpar.click()) : null,
+          rodape: algumFiltro ? '<span class="t-muted2">clique para limpar os filtros</span>' : null
+        }),
+        p.kpi({
+          label: 'Positivos', valor: pos, icone: 'star', tom: 'ok',
+          ativo: f.pol === 'pos',
+          tip: f.pol === 'pos' ? 'Mostrando só os positivos — clique para voltar' : 'Ver só os positivos',
+          onClick: () => alternarFiltro('pol', 'pos')
+        }),
+        p.kpi({
+          label: 'Pontos de atenção', valor: aten, icone: 'alert', tom: aten ? 'warn' : 'neutral',
+          ativo: f.pol === 'ate',
+          tip: f.pol === 'ate' ? 'Mostrando só os pontos de atenção — clique para voltar' : 'Ver só os pontos de atenção',
+          onClick: () => alternarFiltro('pol', 'ate')
+        }),
+        p.kpi({
+          /* Sem clique: quem escolhe o consultor e o seletor da barra de cima.
+             O card so informa quantas pessoas aparecem no recorte atual. */
+          label: 'Colaboradores tocados', valor: tocados.length, icone: 'users', tom: 'purple',
+          ativo: !!f.colab,
+          rodape: f.colab
+            ? '<span class="t-muted2">filtrando ' + u.esc(u.primeiroNome(db.colaboradores.nome(f.colab))) + '</span>'
+            : (tocados.length ? '<span class="t-muted2">de ' + db.colaboradores.ativos().length + ' ativos</span>' : null)
+        }),
+        p.kpi({
+          label: 'Lançamentos em lote',
+          valor: u.uniq(emLote.map(o => o.loteId)).length,
+          icone: 'users', tom: 'info',
+          ativo: f.lote === 'so',
+          tip: f.lote === 'so' ? 'Mostrando só os lançamentos em lote — clique para voltar' : 'Ver só os lançamentos em lote',
+          onClick: () => alternarFiltro('lote', 'so'),
+          rodape: '<span class="t-muted2">' + u.plural(emLote.length, 'registro gerado', 'registros gerados') + '</span>'
         })
       ]));
 
@@ -133,11 +206,12 @@
     function exportar() {
       const obs = filtradas();
       if (!obs.length) { App.toast.aviso('Nada para exportar', 'O filtro atual não retornou registros.'); return; }
-      const L = [['Data', 'Colaborador', 'Tipo', 'Contexto', 'Impacto', 'Observação', 'Evidências']];
+      const L = [['Data', 'Colaborador', 'Tipo', 'Contexto', 'Impacto', 'Observação', 'Evidências', 'Lote']];
       obs.forEach(o => L.push([
         u.fmtDateTime(o.data), db.colaboradores.nome(o.colaboradorId),
         cat.tipoObs(o.tipo).label, cat.contexto(o.contexto).label, cat.impacto(o.impacto).label,
-        o.texto, (o.evidencias || []).map(e => e.nome).join(' | ')
+        o.texto, (o.evidencias || []).map(e => e.nome).join(' | '),
+        o.loteId ? 'Em lote (' + db.observacoes.doLote(o.loteId).length + ')' : 'Individual'
       ]));
       const csv = L.map(l => l.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';')).join('\r\n');
       u.baixarArquivo('observacoes-' + u.today() + '.csv', '﻿' + csv, 'text/csv;charset=utf-8');

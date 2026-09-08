@@ -117,7 +117,7 @@
     const abertos = db.planos.abertos(c.id).length;
     const atrasadas = db.planos.atrasados(c.id).length;
 
-    return u.el('div.card.card--hover.card--pad', {}, [
+    return u.el('div.card.card--hover.card--pad.est-' + A.estadoCard(c), {}, [
       u.el('div.u-row.u-gap-3.u-mb-3', {}, [
         p.avatar(c, 'md', true),
         u.el('div.u-grow', { style: { minWidth: 0 } }, [
@@ -137,6 +137,7 @@
           ])
         : null,
       u.el('div.u-row.u-wrap.u-gap-2.u-mt-3', {}, [
+        p.seloCicloFechado(c),
         u.el('span.badge.badge--outline', { text: u.plural(res.total, 'registro') }),
         res.atencao ? u.el('span.badge.badge--warn', { text: u.plural(res.atencao, 'atenção', 'atenção') }) : null,
         abertos ? u.el('span', { class: 'badge badge--' + (atrasadas ? 'danger' : 'info'), text: u.plural(abertos, 'ação aberta', 'ações abertas') }) : null

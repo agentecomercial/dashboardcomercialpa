@@ -65,13 +65,29 @@
     return b;
   };
 
+  /* ----------------------- Ciclo fechado no proximo 1:1 -----------------------
+     Selo curto para os cards: avisa que o encontro pendente trata de um mes
+     que ja virou. So aparece quando ha historico daquela competencia — sem
+     numero para conversar, o aviso seria ruido.
+     -------------------------------------------------------------------------- */
+  P.seloCicloFechado = function (colab) {
+    const c = App.analise.cicloDoEncontro(colab);
+    if (!c || !c.fechada || !c.meta) return null;
+    const mes = u.fmtCompetenciaLonga(c.competencia);
+    return u.el('span.badge.badge--warn.u-nowrap', {
+      'data-tip': 'O próximo One a One cobre ' + mes + ', que já fechou. ' +
+                  'Os números da conversa são desse período.',
+      text: '1:1 de ' + mes.split('/')[0].toLowerCase() + ' pendente'
+    });
+  };
+
   /* --------------------------- Faixa de demonstracao --------------------------- */
   /** Marca visivelmente que a tela mostra material de exemplo, nao a operacao. */
   P.faixaExemplo = function (texto) {
     return u.el('div.note.note--warn.u-mb-4.u-row.u-gap-3', { style: { alignItems: 'center' } }, [
       u.el('span', { html: App.icon('sparkles') }),
       u.el('span.u-grow', {
-        text: texto || 'Registro de demonstração — não entra na Equipe, no Dashboard nem nos Indicadores.'
+        text: texto || 'Registro de demonstração — mexa à vontade: nada daqui entra na Equipe, no Dashboard nem nos Indicadores.'
       }),
       u.el('button.btn.btn--xs.btn--outline.u-nowrap', {
         type: 'button', text: 'Voltar aos exemplos',
@@ -130,7 +146,7 @@
   /* ------------------------------ KPI card ------------------------------ */
   /** { label, valor, icone, tom, rodape, onClick, tip } */
   P.kpi = function (c) {
-    const node = u.el('div.kpi' + (c.onClick ? '.kpi--click' : ''), {
+    const node = u.el('div.kpi' + (c.onClick ? '.kpi--click' : '') + (c.ativo ? '.is-on' : ''), {
       onclick: c.onClick || null,
       'data-tip': c.tip || null,
       role: c.onClick ? 'button' : null,
@@ -161,6 +177,177 @@
     box.appendChild(u.el('div.bar', {}, [
       u.el('div.bar__fill' + (classe ? '.' + classe : ''), { style: { width: Math.min(100, p) + '%' } })
     ]));
+    return box;
+  };
+
+  /* ---------------------------- Lancamento em lote ----------------------------
+     Marca o registro que nasceu de um lancamento coletivo e abre a lista de
+     quem recebeu. Cada consultor tem o proprio registro — o loteId so diz de
+     onde vieram, para nao parecer que a mesma frase foi digitada 4 vezes.
+     ---------------------------------------------------------------------- */
+  P.badgeLote = function (o) {
+    if (!o || !o.loteId) return null;
+    const irmaos = db.observacoes.doLote(o.loteId);
+    if (irmaos.length < 2) return null;
+    return u.el('button.badge.badge--outline.badge--lote', {
+      type: 'button',
+      'data-tip': 'Lançado em lote para ' + u.plural(irmaos.length, 'consultor', 'consultores') + ' — ver quem recebeu',
+      html: App.icon('users', '', 12) + '<span>Em lote · ' + irmaos.length + '</span>',
+      onclick: ev => { ev.stopPropagation(); P.verLote(o.loteId); }
+    });
+  };
+
+  /** Modal com quem recebeu o lançamento. */
+  P.verLote = function (loteId) {
+    const irmaos = u.sortBy(db.observacoes.doLote(loteId), o => db.colaboradores.nome(o.colaboradorId));
+    if (!irmaos.length) return;
+    const base = irmaos[0];
+    const t = cat.tipoObs(base.tipo);
+
+    const corpo = u.el('div.u-col.u-gap-4', {}, [
+      u.el('div.note', {}, [
+        u.el('div.u-row.u-gap-2.u-mb-2', {}, [
+          u.el('span', { class: 'badge badge--' + (t.tom === 'neutral' ? 'outline' : t.tom), text: t.emoji + ' ' + t.label }),
+          u.el('span.t-xs.t-muted2', { text: u.fmtDateTime(base.data) })
+        ]),
+        u.el('div.t-sm.u-pre', { text: base.texto })
+      ]),
+      u.el('div.t-up', { text: u.plural(irmaos.length, 'consultor recebeu', 'consultores receberam') })
+    ]);
+
+    const lista = u.el('div');
+    irmaos.forEach(o => {
+      const c = db.colaboradores.por(o.colaboradorId);
+      lista.appendChild(u.el('button.list-row', {
+        type: 'button',
+        onclick: () => { m.fechar(); setTimeout(() => App.router.go('/colaborador/' + o.colaboradorId), 60); }
+      }, [
+        c ? P.avatar(c, 'sm') : null,
+        u.el('div.u-grow', { style: { minWidth: 0 } }, [
+          u.el('div.t-semi.u-truncate', { text: c ? c.nome : 'Colaborador removido' }),
+          u.el('div.t-xs.t-muted', {
+            text: o.texto === base.texto ? 'Registro idêntico' : 'Editado depois do lançamento'
+          })
+        ]),
+        u.el('span', { html: App.icon('arrowRight', '', 14) })
+      ]));
+    });
+    corpo.appendChild(lista);
+
+    const m = App.modal.abrir({
+      titulo: 'Lançamento em lote', icone: 'users', tamanho: 'sm',
+      desc: 'Cada um tem o próprio registro — editar ou excluir um não mexe nos outros.',
+      corpo, acoes: [{ label: 'Fechar', tipo: 'ghost' }]
+    });
+    return m;
+  };
+
+  /* ------------------------- Meta do mes (faixas) -------------------------
+     Barra unica na escala da Master, com marcadores da Minima e da Basica,
+     porcentagem pelo faturamento LIQUIDO e quanto falta para a proxima faixa.
+     `m` e o retorno de App.analise.metaMes(colab).
+     ---------------------------------------------------------------------- */
+  P.metaFaixas = function (m, opts) {
+    opts = opts || {};
+    /* Virou o mes: a meta zera ate a nova ser sincronizada. Em vez de um
+       vazio mudo, dizemos que ciclo comecou e como fechou o anterior. */
+    if (m && m.cicloNovo) {
+      const a = m.anterior || {};
+      return u.el('div.meta-box.meta-box--ciclo', {}, [
+        u.el('div.u-row.u-gap-2', { style: { alignItems: 'center' } }, [
+          u.el('span', { html: App.icon('refresh', '', 14) }),
+          u.el('span.t-sm.t-strong.u-grow', {
+            text: 'Ciclo novo · ' + u.fmtCompetenciaLonga(m.periodo)
+          })
+        ]),
+        u.el('div.t-xs.t-muted.u-mt-2', { text: 'Aguardando a meta do mês. Rode o Sincronizar-Faturamento.ps1.' }),
+        a.master
+          ? u.el('div.meta-box__ant', {}, [
+              u.el('span.meta-box__rot', { text: u.fmtCompetenciaLonga(a.periodo) + ' fechou em' }),
+              u.el('span', {}, [
+                u.el('b', { text: u.fmtMoedaExata(a.realizado) }),
+                u.el('span.t-muted', { text: ' de ' + u.fmtMoedaExata(a.master) + ' · ' + u.fmtPct(a.pct, 1) }),
+                a.bateuMaster ? u.el('span.badge.badge--ok.u-ml-2', { text: 'Master' }) : null
+              ])
+            ])
+          : null
+      ]);
+    }
+
+    if (!m || !m.temMeta) {
+      return u.el('div.meta-box.meta-box--vazia', {}, [
+        u.el('div.t-xs.t-muted', { text: 'Sem meta cadastrada para o mês' })
+      ]);
+    }
+
+    const pct = u.clamp(m.pct, 0, 100);
+    const tomFill = m.bateuMaster ? 'bar__fill--ok'
+      : m.atual && m.atual.id === 'basica' ? ''
+      : m.atual && m.atual.id === 'minima' ? 'bar__fill--warn'
+      : 'bar__fill--danger';
+
+    /* Marcadores das faixas intermediarias, posicionados na escala da Master. */
+    const marcas = [];
+    m.alvos.forEach(a => {
+      if (a.id === 'master' || !m.master) return;
+      const x = u.clamp((a.valor / m.master) * 100, 0, 100);
+      marcas.push(u.el('span.bar__marca' + (m.realizado >= a.valor ? '.is-on' : ''), {
+        style: { left: x + '%' },
+        'data-tip': a.label + ' · ' + u.fmtMoedaExata(a.valor)
+      }));
+    });
+
+    const cab = u.el('div.meta-box__cab', {}, [
+      u.el('span.meta-box__rot', { text: opts.rotulo || ('Meta ' + (m.periodo ? u.fmtCompetencia(m.periodo) : 'do mês')) }),
+      u.el('span', {
+        class: 'meta-box__pct ' + (m.bateuMaster ? 't-ok' : m.pct < 50 ? 't-danger' : ''),
+        'data-tip': u.fmtPct(m.pct, 2) + ' da Master, pelo líquido',
+        text: u.fmtPct(m.pct, 1)
+      })
+    ]);
+
+    const barra = u.el('div.bar.bar--marcada', {}, [
+      u.el('div.bar__fill' + (tomFill ? '.' + tomFill : ''), { style: { width: pct + '%' } })
+    ].concat(marcas));
+
+    const linhaValores = u.el('div.meta-box__vals', {}, [
+      u.el('span.t-strong', { text: u.fmtMoedaExata(m.realizado) }),
+      u.el('span.t-muted', { text: ' de ' + u.fmtMoedaExata(m.master) }),
+      m.bruto && m.bruto !== m.realizado
+        ? u.el('span.t-xs.t-muted2', { 'data-tip': 'Faturamento bruto — o atingimento conta pelo líquido', text: ' (bruto ' + u.fmtMoedaExata(m.bruto) + ')' })
+        : null
+    ]);
+
+    const falta = m.bateuMaster
+      ? u.el('div.meta-box__falta.is-ok', {}, [
+          u.el('span', { html: App.icon('checkCircle', '', 13) }),
+          u.el('span', { text: 'Master batida · ' + u.fmtMoedaExata(m.excedente) + ' acima' })
+        ])
+      : u.el('div.meta-box__falta', {}, [
+          u.el('span', { html: App.icon('target', '', 13) }),
+          u.el('span', {}, [
+            u.el('b', { text: 'Faltam ' + u.fmtMoedaExata(m.falta) }),
+            u.el('span', { text: ' para a ' + m.proxima.label })
+          ])
+        ]);
+
+    const box = u.el('div.meta-box', {}, [cab, barra, linhaValores, falta]);
+
+    if (opts.faixas !== false) {
+      const leg = u.el('div.meta-box__leg');
+      m.alvos.forEach(a => {
+        const ok = m.realizado >= a.valor;
+        const falta = m.realizado < a.valor ? a.valor - m.realizado : 0;
+        leg.appendChild(u.el('span.meta-box__leg-i' + (ok ? '.is-on' : ''), {
+          'data-tip': a.label + ' ' + u.fmtMoedaExata(a.valor)
+            + (falta ? ' · faltam ' + u.fmtMoedaExata(falta) : ' · batida')
+        }, [
+          u.el('i'),
+          u.el('span', { text: a.curto + ' ' + u.fmtMoedaCurta(a.valor) })
+        ]));
+      });
+      box.appendChild(leg);
+    }
     return box;
   };
 
@@ -222,6 +409,7 @@
             html: P.avatarHtml(colab, 'xs') + '<span>' + u.esc(u.primeiroNome(colab.nome)) + '</span>'
           })
         : null,
+      P.badgeLote(o),
       u.el('span.u-grow'),
       u.el('span.tl__date', { text: u.fmtDateTime(o.data), 'data-tip': u.fmtRelativo(o.data) })
     ]);
@@ -257,6 +445,12 @@
   };
 
   /* --------------------------- Card de feedback --------------------------- */
+  /** Rotulo do bloco `i` conforme a classificacao do feedback, sem o "?". */
+  function rotFb(f, i) {
+    const qs = cat.perguntasFeedback(f && f.classificacao);
+    return String(qs[i].rot).replace(/\?\s*$/, '');
+  }
+
   P.cardFeedback = function (f, opts) {
     opts = opts || {};
     const c = cat.classif(f.classificacao);
@@ -279,10 +473,14 @@
         u.el('span.u-grow'),
         u.el('span.tl__date', { text: u.fmtDate(f.data) })
       ]),
-      linha('O que aconteceu', f.oQueAconteceu, 'eye'),
-      linha('Qual foi o impacto', f.impacto, 'zap'),
-      linha('O que deveria acontecer', f.oQueDeveria, 'target'),
-      linha('Como vamos melhorar', f.comoMelhorar, 'trendUp')
+      /* Os rotulos seguem a classificacao: um reconhecimento nao pode
+         aparecer com "O que deveria acontecer" no lugar de "O que isso
+         mostra". Sem "?" porque aqui e resposta, nao pergunta.
+         Achatado a mao: u.el nao aceita array dentro de array. */
+      linha(rotFb(f, 0), f.oQueAconteceu, 'eye'),
+      linha(rotFb(f, 1), f.impacto, 'zap'),
+      linha(rotFb(f, 2), f.oQueDeveria, 'target'),
+      linha(rotFb(f, 3), f.comoMelhorar, 'trendUp')
     ]);
 
     const evi = P.listaEvidencias(f.evidencias);
@@ -510,8 +708,17 @@
     const sel = opts.multi ? (valor || []) : valor;
     lista.forEach(item => {
       const ativo = opts.multi ? sel.indexOf(item.id) >= 0 : sel === item.id;
-      const b = u.el('button.choice' + (ativo ? '.is-on' : ''), {
-        type: 'button', 'data-id': item.id, 'data-tip': item.label,
+      /* Tipos de observacao tem polaridade: ganham barra de cor a esquerda e
+         a pontuacao a direita, para a consequencia ficar visivel na escolha.
+         Contextos e outras listas nao tem `pol` e seguem iguais. */
+      const temPol = item.pol !== undefined && item.pol !== null;
+      const b = u.el('button.choice' + (ativo ? '.is-on' : '') + (temPol ? '.choice--pol' : ''), {
+        type: 'button', 'data-id': item.id,
+        'data-pol': temPol ? String(item.pol) : null,
+        'data-tip': temPol
+          ? item.label + ' · ' + (item.pol > 0 ? 'soma ' : item.pol < 0 ? 'desconta ' : '') +
+            cat.pontos(item.pol) + (item.pol === 0 ? ' — não mexe no saldo' : ' no saldo')
+          : item.label,
         onclick: () => {
           if (opts.multi) {
             const i = sel.indexOf(item.id);
@@ -527,7 +734,8 @@
         }
       }, [
         item.emoji ? u.el('span.choice__emoji', { text: item.emoji }) : null,
-        u.el('span.u-truncate', { text: item.label })
+        u.el('span.u-truncate.u-grow', { text: item.label }),
+        temPol ? u.el('span.choice__pts', { text: cat.pontos(item.pol) }) : null
       ]);
       grid.appendChild(b);
     });

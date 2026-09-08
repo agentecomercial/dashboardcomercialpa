@@ -48,6 +48,8 @@ html[data-theme="dark"] .btn--soft:hover { background: rgba(99,102,241,.26); }
   position: relative;
 }
 .icon-btn:hover { background: var(--surface-3); color: var(--text); }
+.icon-btn.is-on { background: var(--warn-bg); color: var(--warn); }
+.icon-btn.is-on:hover { background: var(--warn-bg); color: var(--warn); }
 .icon-btn .ic { width: 18px; height: 18px; }
 .icon-btn__dot {
   position: absolute; top: 5px; right: 4px;
@@ -92,6 +94,17 @@ html[data-theme="dark"] .btn--soft:hover { background: rgba(99,102,241,.26); }
 }
 .kpi--click { cursor: pointer; }
 .kpi--click:hover { box-shadow: var(--sh-md); transform: translateY(-2px); }
+/* Card usado como filtro ativo: a borda marca que a lista abaixo esta recortada. */
+.kpi.is-on {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 1px var(--brand-600) inset;
+}
+.kpi.is-on .kpi__label { color: var(--brand-600); font-weight: 640; }
+/* Barra no topo em vez de rotulo: o canto superior direito ja tem o icone. */
+.kpi.is-on::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: var(--brand-600);
+}
 .kpi__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
 .kpi__label { font-size: var(--fs-sm); color: var(--text-3); font-weight: 560; }
 .kpi__icon {
@@ -218,6 +231,31 @@ kbd {
 }
 .choice:hover { border-color: var(--border-strong); background: var(--surface-2); }
 .choice__emoji { font-size: 15px; line-height: 1; flex: 0 0 auto; }
+
+/* ---- Tipo com polaridade: barra de cor a esquerda + pontuacao a direita ----
+   Verde soma, cinza e neutro, amarelo e vermelho descontam. O numero diz
+   quanto aquele tipo mexe no saldo do consultor. */
+.choice--pol { position: relative; overflow: hidden; padding-left: 14px; }
+.choice--pol::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--border-strong);
+}
+.choice--pol[data-pol="1"]::before  { background: var(--ok); }
+.choice--pol[data-pol="0"]::before  { background: var(--border-strong); }
+.choice--pol[data-pol="-1"]::before { background: var(--warn); }
+.choice--pol[data-pol="-2"]::before { background: var(--danger); }
+
+.choice__pts {
+  flex: 0 0 auto; min-width: 22px; text-align: center;
+  font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 5px; border-radius: var(--r-full);
+  background: var(--surface-3); color: var(--text-4);
+}
+.choice--pol[data-pol="1"]  .choice__pts { background: var(--ok-bg);     color: var(--ok); }
+.choice--pol[data-pol="-1"] .choice__pts { background: var(--warn-bg);   color: var(--warn); }
+.choice--pol[data-pol="-2"] .choice__pts { background: var(--danger-bg); color: var(--danger); }
+.choice.is-on .choice__pts { background: rgba(255,255,255,.22); color: inherit; }
 .choice.is-on {
   border-color: var(--brand-500); background: var(--brand-50); color: var(--brand-700);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 12%, transparent);
@@ -402,6 +440,237 @@ html[data-theme="dark"] .tip-el { background: #2b3242; border: 1px solid var(--b
 .bar__fill--warn { background: linear-gradient(90deg, #fbbf24, var(--warn)); }
 .bar__fill--danger { background: linear-gradient(90deg, #f87171, var(--danger)); }
 
+/* ---- Meta do mes: Minima / Basica / Master ---- */
+.bar--marcada { position: relative; overflow: visible; height: 9px; }
+.bar--marcada .bar__fill { position: relative; z-index: 1; }
+.bar__marca {
+  position: absolute; top: -3px; width: 2px; height: 15px; z-index: 2;
+  background: var(--text-4); border-radius: 1px; transform: translateX(-1px);
+  opacity: .55;
+}
+.bar__marca.is-on { background: var(--text); opacity: .85; }
+
+.meta-box { display: flex; flex-direction: column; gap: 7px; }
+/* Ciclo novo: mes virou, meta ainda nao sincronizada. */
+.meta-box--ciclo {
+  padding: 11px 13px; border-radius: var(--r-sm);
+  background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  color: var(--warn);
+}
+.meta-box--ciclo .t-muted { color: inherit; opacity: .85; }
+.meta-box__ant {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px dashed color-mix(in srgb, currentColor 30%, transparent);
+  font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+}
+.u-ml-2 { margin-left: 8px; }
+
+.meta-box--vazia {
+  padding: 9px 11px; border-radius: var(--r-sm);
+  background: var(--surface-2); border: 1px dashed var(--border);
+}
+.meta-box__cab { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.meta-box__rot {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 620; color: var(--text-4);
+}
+.meta-box__pct {
+  font-family: var(--font-display); font-size: var(--fs-md); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.meta-box__vals { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.meta-box__falta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--fs-sm); color: var(--warn);
+}
+.meta-box__falta.is-ok { color: var(--ok); }
+.meta-box__falta .ic { flex: 0 0 auto; }
+.meta-box__leg { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.meta-box__leg-i {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-4); font-variant-numeric: tabular-nums;
+}
+.meta-box__leg-i i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--surface-3); border: 1px solid var(--border);
+}
+.meta-box__leg-i.is-on { color: var(--text-2); font-weight: 600; }
+.meta-box__leg-i.is-on i { background: var(--ok); border-color: var(--ok); }
+.meta-box__leg-i[data-tip], .meta-box__pct[data-tip] { cursor: help; }
+
+/* Seg compacto — usado no seletor de ordem das evidencias. */
+.seg--xs .seg__btn { padding: 3px 9px; font-size: 11.5px; }
+
+/* ==================== GUIA DA ETAPA (roteiro do 1:1) ====================
+   Bloco de apoio no topo de cada etapa: o que fazer, o que dizer, o que
+   evitar. Recolhivel, porque quem ja sabe conduzir nao precisa dele aberto.
+   ======================================================================= */
+.etapaguia {
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface-2); overflow: hidden;
+}
+.etapaguia__cab {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 10px 13px; background: none; border: 0;
+}
+.etapaguia__cab:hover { background: var(--surface-3); }
+.etapaguia__rot {
+  flex: 0 0 auto; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 700; color: #fff; background: var(--brand-600);
+  padding: 3px 7px; border-radius: var(--r-full);
+}
+.etapaguia__tit { font-weight: 620; font-size: var(--fs-sm); min-width: 0; }
+.etapaguia__seta { flex: 0 0 auto; color: var(--text-4); }
+.etapaguia__body { padding: 0 13px 13px; }
+.etapaguia.is-fechado .etapaguia__body { display: none; }
+.etapaguia .fbpassos { margin-top: 4px; }
+
+.etapaguia__fala {
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  margin-top: 8px; padding: 9px 11px;
+  background: var(--surface); border-left: 3px solid var(--brand-600);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: var(--fs-sm); line-height: 1.55;
+}
+.etapaguia__evitar {
+  display: flex; align-items: flex-start; gap: 7px;
+  margin-top: 8px; font-size: var(--fs-sm); color: var(--warn);
+}
+.etapaguia__evitar .ic { flex: 0 0 auto; margin-top: 2px; }
+
+/* ======================== GUIA DE FEEDBACK ========================
+   Painel "Como abrir esta conversa" (etapa 5) e card do enredo (Preparar).
+   O conteudo vem de data/22-biblioteca.js; aqui e so a forma.
+   ================================================================== */
+.fbguia {
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface); overflow: hidden;
+}
+.fbguia__top {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 14px var(--sp-5); border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.fbguia__top > span:first-child { color: var(--text-4); flex: 0 0 auto; }
+.fbguia__rot {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 640; color: var(--text-4);
+}
+.fbguia__tit {
+  font-family: var(--font-display); font-size: var(--fs-lg);
+  font-weight: 700; margin-top: 2px;
+}
+.fbguia__pq { font-size: var(--fs-sm); color: var(--text-3); margin-top: 4px; }
+.fbguia__body { padding: var(--sp-5); }
+
+/* --- a frase de abertura --- */
+.fbfrase {
+  border-left: 3px solid var(--brand-600);
+  background: var(--surface-2); border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 13px 15px; font-size: var(--fs-md); line-height: 1.55;
+}
+.fbfrase--solta { margin: 0 var(--sp-5) var(--sp-5); }
+.fbfrase__cab {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: var(--sp-2); margin-bottom: 7px;
+}
+
+.fbpassos { list-style: none; margin: 16px 0 0; padding: 0; }
+.fbpassos li {
+  display: flex; gap: 9px; padding: 5px 0;
+  font-size: var(--fs-sm); color: var(--text-2);
+}
+.fbpassos li::before { content: '\2192'; color: var(--text-4); flex: 0 0 auto; }
+.fbfontes { margin-top: 14px; font-size: 11px; color: var(--text-4); }
+
+/* --- faixa de tom: a Linha de Losada --- */
+.fbtom {
+  display: flex; gap: 12px; padding: 13px var(--sp-5);
+  border-top: 1px solid var(--border);
+}
+.fbtom--ok      { background: var(--ok-bg); }
+.fbtom--warn    { background: var(--warn-bg); }
+.fbtom--danger  { background: var(--danger-bg); }
+.fbtom--neutral { background: var(--surface-2); }
+.fbtom__razao {
+  font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 700;
+  line-height: 1; font-variant-numeric: tabular-nums;
+  flex: 0 0 auto; min-width: 66px; cursor: help;
+}
+.fbtom__razao small {
+  display: block; font-size: 10px; font-weight: 620; letter-spacing: .05em;
+  text-transform: uppercase; opacity: .75; margin-top: 4px;
+}
+.fbtom__tit { font-weight: 660; font-size: var(--fs-sm); }
+.fbtom__txt { font-size: var(--fs-sm); margin-top: 3px; opacity: .92; }
+.fbtom__faca { margin: 8px 0 0; padding-left: 17px; font-size: var(--fs-sm); }
+.fbtom__faca li { margin-top: 3px; }
+
+/* --- blocos do enredo (Preparar) --- */
+.enredo__b { border-left: 2px solid var(--border-strong); padding-left: 13px; }
+.enredo__rot {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 640; color: var(--text-4); margin-bottom: 3px;
+}
+.enredo__txt { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
+
+/* --- confronto: sintoma do quadro x o que a base manda fazer --- */
+.confronto { border-left: 2px solid var(--brand-500); padding-left: 13px; }
+.confronto__cab { margin-bottom: 8px; }
+.confronto__tit { font-weight: 660; font-size: var(--fs-md); }
+.confronto__pq { display: block; font-size: var(--fs-sm); color: var(--text-3); margin-top: 2px; }
+.confronto__resp {
+  font-size: var(--fs-md); line-height: 1.6; color: var(--text);
+  padding: 11px 13px; border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--brand-600) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-600) 22%, transparent);
+}
+.confronto__l {
+  padding: 9px 11px; margin-top: 6px;
+  background: var(--surface-2); border-radius: var(--r-sm);
+}
+.confronto__acao { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.5; }
+.confronto__fonte { font-size: 11px; color: var(--text-4); margin-top: 4px; }
+
+/* --- pergunta diagnostica na etapa 6 --- */
+.compq {
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  margin-top: 7px; padding: 7px 10px;
+  background: var(--surface-2); border-radius: var(--r-sm);
+}
+.compq__p { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.45; }
+.compq__pr { font-size: 11px; color: var(--text-4); margin-top: 2px; }
+
+.regra__n {
+  flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--surface-3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--font-display);
+}
+
+@media (max-width: 640px) {
+  .fbtom { flex-direction: column; gap: 8px; }
+  .fbtom__razao { min-width: 0; }
+}
+
+/* ====================== FAIXA DE MODO DEMONSTRACAO ====================== */
+/* Fica presa no rodape: nao empurra o layout e acompanha a rolagem, para o
+   usuario nunca confundir a equipe ficticia com a operacao real. */
+.demobar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 9px var(--sp-5);
+  background: var(--warn-bg); color: var(--warn);
+  border-top: 1px solid var(--warn);
+  font-size: var(--fs-sm); font-weight: 600;
+}
+.demobar .ic { flex: 0 0 auto; }
+html.is-demo .view { padding-bottom: 56px; }
+@media (max-width: 900px) {
+  .demobar { bottom: 62px; }                 /* acima da nav mobile */
+  .demobar span.u-grow { font-size: 12px; }
+}
+
 /* ============================== SKELETON ============================== */
 .sk {
   border-radius: var(--r-sm);
@@ -480,6 +749,35 @@ html[data-theme="dark"] .sk { background: linear-gradient(90deg, #1a1f29 8%, #23
 }
 .chip:hover { border-color: var(--text-4); background: var(--surface-2); }
 .chip.is-on { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+
+/* ---- Chip "Todos": liga o modo lote no modal de observacao ---- */
+.chip--lote { border-style: dashed; font-weight: 640; }
+.chip--lote .ic { width: 14px; height: 14px; }
+.chip--lote.is-on { border-style: solid; }
+/* No lote os individuais ficam marcados, porem discretos: o comando esta
+   no "Todos", e nao em cada um deles. */
+.chip.is-lote.is-on {
+  background: color-mix(in srgb, var(--brand-600) 16%, transparent);
+  border-color: var(--brand-600);
+  color: var(--brand-600);
+}
+/* Tirado do lote: continua visivel e clicavel, so recuado. Riscado para
+   nao restar duvida de que aquele consultor NAO vai receber o registro. */
+.chip.is-fora {
+  border-style: dashed; opacity: .5;
+  text-decoration: line-through; text-decoration-thickness: 1px;
+}
+.chip.is-fora:hover { opacity: .85; text-decoration: none; }
+.chip.is-fora .avatar { filter: grayscale(1); }
+
+/* Badge do lancamento em lote: e um botao, abre quem recebeu. */
+.badge--lote { cursor: pointer; gap: 4px; }
+.badge--lote:hover { border-color: var(--brand-600); color: var(--brand-600); }
+.badge--lote .ic { width: 12px; height: 12px; }
+.chip-sep {
+  align-self: stretch; width: 1px; margin: 2px 4px;
+  background: var(--border-strong); flex: 0 0 1px;
+}
 
 .spinner {
   width: 16px; height: 16px; border-radius: 50%;

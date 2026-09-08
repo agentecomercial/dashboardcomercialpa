@@ -27,6 +27,18 @@
     return _escopo === 'exemplos' ? !!x.exemplo : !x.exemplo;
   }
 
+  /* Um registro nasce como demonstracao quando a tela esta lendo no escopo
+     'exemplos' (modo demonstracao, aba Exemplos, perfil de um figurante) ou
+     quando o dono dele e um colaborador de demonstracao. Sem isto, mexer nos
+     exemplos vazaria observacoes, feedbacks e planos para a operacao real. */
+  function ehContextoExemplo(doc) {
+    if (_escopo === 'exemplos') return true;
+    const cid = doc && (doc.colaboradorId || doc.colaborador_id);
+    if (!cid) return false;
+    const c = cache.colaboradores.find(x => x.id === cid);
+    return !!(c && c.exemplo);
+  }
+
   function notificar(colecao, acao, doc) {
     App.bus.emit('dados:mudou', { colecao, acao, doc });
   }
@@ -52,6 +64,7 @@
     const novo = Object.assign({}, doc);
     if (!novo.id) novo.id = u.uid(this.c.slice(0, 3));
     novo.criadoEm = novo.criadoEm || u.nowISO();
+    if (novo.exemplo === undefined && ehContextoExemplo(novo)) novo.exemplo = true;
     cache[this.c] = cache[this.c].concat([novo]);
     const self = this;
     return App.adapter.insert(this.c, novo).then(salvo => {
@@ -130,6 +143,13 @@
   observacoes.recentes = function (n) {
     return u.sortBy(this.todos(), o => o.data, 'desc').slice(0, n || 20);
   };
+  /** Registros irmaos de um lancamento em lote — a mesma observacao
+      gravada para varios consultores compartilha o loteId. */
+  observacoes.doLote = function (loteId) {
+    if (!loteId) return [];
+    return observacoes.onde(o => o.loteId === loteId);
+  };
+
   observacoes.noPeriodo = function (colabId, de, ate) {
     const d = de ? u.startOfDay(de).getTime() : -Infinity;
     const a = ate ? u.startOfDay(ate).getTime() + 86399999 : Infinity;
@@ -203,6 +223,30 @@
     if (p.prazo && u.diffDays(p.prazo, new Date()) > 0) return 'atrasado';
     return p.status || 'nao_iniciado';
   };
+  /**
+   * Poe em andamento todos os planos ainda nao iniciados do colaborador.
+   *
+   * So mexe em quem esta em 'nao_iniciado': concluido, cancelado e o que ja
+   * roda ficam como estao. Quem nao tem data de inicio ganha a de hoje —
+   * sem ela o plano nao teria de quando comecou a contar.
+   *
+   * Sequencial de proposito: falha em um nao derruba os outros, e o retorno
+   * diz quantos entraram.
+   */
+  planos.iniciarTodos = function (colabId) {
+    const alvos = planos.onde(p => p.colaboradorId === colabId && (p.status || 'nao_iniciado') === 'nao_iniciado');
+    if (!alvos.length) return Promise.resolve({ ok: 0, falhas: 0, total: 0 });
+
+    const hoje = u.today();
+    return alvos.reduce((prom, p) => prom.then(res => {
+      const patch = { status: 'em_andamento' };
+      if (!p.inicio) patch.inicio = hoje;
+      return planos.atualizar(p.id, patch)
+        .then(() => { res.ok++; return res; })
+        .catch(() => { res.falhas++; return res; });
+    }), Promise.resolve({ ok: 0, falhas: 0, total: alvos.length }));
+  };
+
   planos.doColaborador = function (id) {
     return u.sortBy(this.onde(p => p.colaboradorId === id), p => p.prazo || '9999');
   };

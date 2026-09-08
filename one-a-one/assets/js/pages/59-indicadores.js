@@ -68,7 +68,7 @@
       grafico: () => g.ranking({
         itens: rank.map((x, i) => ({
           no: true, label: x.colaborador.nome, valor: Math.round(x.pct),
-          sub: u.fmtMoedaCurta(x.realizado) + ' de ' + u.fmtMoedaCurta(x.meta),
+          sub: u.fmtMoedaExata(x.realizado) + ' de ' + u.fmtMoedaExata(x.meta),
           cor: x.pct >= 100 ? g.STATUS.bom : x.pct >= 80 ? g.STATUS.atencao : g.STATUS.critico
         })),
         formatar: v => v + '%',
@@ -167,7 +167,8 @@
       grafico: () => temComp
         ? g.radar({
             eixos: mediaEquipe.map(x => x.label.split(' ')[0]),
-            series: [{ label: 'Média da equipe', valores: mediaEquipe.map(x => x.media) }]
+            series: [{ label: 'Média da equipe', valores: mediaEquipe.map(x => x.media) }],
+            mostrarValores: true
           })
         : p.vazio({
             icone: 'award', titulo: 'Sem avaliações de competência',
@@ -191,8 +192,8 @@
         ])
       ]),
       u.el('div.tbl-wrap', {}, [u.el('table.tbl.tbl--click', {}, [
-        u.el('thead', {}, [u.el('tr', {}, ['Colaborador', '% da meta', 'Registros', 'Positivos', 'Atenção', 'Feedbacks', 'Ações abertas', 'Competências', 'Próximo 1:1']
-          .map((h, i) => u.el('th', { class: i >= 1 && i <= 6 ? 'u-right' : '', text: h })))]),
+        u.el('thead', {}, [u.el('tr', {}, ['Colaborador', '% da meta', 'Falta p/ meta', 'Registros', 'Positivos', 'Atenção', 'Feedbacks', 'Ações abertas', 'Competências', 'Próximo 1:1']
+          .map((h, i) => u.el('th', { class: i >= 1 && i <= 7 ? 'u-right' : '', text: h })))]),
         u.el('tbody', {}, bal.map(x => {
           const c = x.colaborador;
           const ind = A.indicadores(c);
@@ -200,6 +201,16 @@
           return u.el('tr', { onclick: () => App.router.go('/colaborador/' + c.id) }, [
             u.el('td', {}, [u.el('div.u-row.u-gap-2', {}, [p.avatar(c, 'xs'), u.el('span.t-semi', { text: c.nome })])]),
             u.el('td', { class: 'u-right t-num' + (ind.pctMeta >= 100 ? ' t-ok t-strong' : ind.pctMeta < 60 ? ' t-danger' : ''), text: u.fmtPct(ind.pctMeta) }),
+            (() => {
+              const m = A.metaMes(c);
+              return u.el('td', {
+                class: 'u-right t-num' + (m.bateuMaster ? ' t-ok' : ''),
+                'data-tip': !m.temMeta ? null : m.bateuMaster
+                  ? 'Master batida · ' + u.fmtMoedaExata(m.excedente) + ' acima'
+                  : u.fmtMoedaExata(m.falta) + ' para a ' + m.proxima.label,
+                text: !m.temMeta ? '—' : m.bateuMaster ? 'bateu' : u.fmtMoedaCurta(m.falta)
+              });
+            })(),
             u.el('td', { class: 'u-right t-num', text: String(x.total) }),
             u.el('td', { class: 'u-right t-num t-ok', text: String(x.positivos) }),
             u.el('td', { class: 'u-right t-num' + (x.atencao ? ' t-warn t-strong' : ''), text: String(x.atencao) }),

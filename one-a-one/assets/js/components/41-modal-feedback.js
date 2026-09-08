@@ -6,11 +6,14 @@
   'use strict';
   const u = App.u, p = App.p, cat = App.cat, db = App.db;
 
+  /* A espinha do feedback nao muda: fato -> impacto -> esperado -> acao.
+     O que muda com a classificacao e a PERGUNTA de cada bloco, que vem de
+     cat.perguntasFeedback(). As chaves aqui sao as gravadas no banco. */
   const BLOCOS = [
-    { id: 'oQueAconteceu', rot: 'O que aconteceu?', ph: 'Descreva o fato observado, sem julgamento: o que foi dito ou feito, quando e onde.', icone: 'eye', obrig: true },
-    { id: 'impacto',       rot: 'Qual foi o impacto?', ph: 'Explique a consequência desse comportamento para o cliente, para o time ou para o resultado.', icone: 'zap', obrig: true },
-    { id: 'oQueDeveria',   rot: 'O que deveria acontecer?', ph: 'Defina com clareza o comportamento esperado.', icone: 'target' },
-    { id: 'comoMelhorar',  rot: 'Como vamos melhorar?', ph: 'Ação prática, com prazo e apoio definidos.', icone: 'trendUp' }
+    { id: 'oQueAconteceu', icone: 'eye',     obrig: true },
+    { id: 'impacto',       icone: 'zap',     obrig: true },
+    { id: 'oQueDeveria',   icone: 'target'  },
+    { id: 'comoMelhorar',  icone: 'trendUp' }
   ];
 
   /** abrir({ colaboradorId, feedback, observacao, oneAOneId, aoSalvar }) */
@@ -47,22 +50,38 @@
     ]));
 
     corpo.appendChild(p.campo('Classificação',
-      p.escolhas(cat.CLASSIF_FEEDBACK, dados.classificacao, v => { dados.classificacao = v; }),
-      { obrigatorio: true, hint: 'Define o tom da conversa: reconhecer, desenvolver, corrigir, orientar ou acompanhar.' }));
+      p.escolhas(cat.CLASSIF_FEEDBACK, dados.classificacao, v => {
+        dados.classificacao = v;
+        repintarPerguntas();
+      }),
+      { obrigatorio: true, hint: 'Define o tom da conversa — e as perguntas abaixo mudam junto.' }));
 
     const campos = {};
+    const areas = {};
     BLOCOS.forEach((b, i) => {
-      const ta = u.el('textarea.textarea', { placeholder: b.ph, rows: 3 });
+      const q = cat.perguntasFeedback(dados.classificacao)[i];
+      const ta = u.el('textarea.textarea', { placeholder: q.ph, rows: 3 });
       ta.value = dados[b.id] || '';
       if (i === 0) ta.setAttribute('data-autofocus', '');
       ta.addEventListener('input', () => {
         dados[b.id] = ta.value;
         campos[b.id].classList.remove('has-err');
       });
-      const c = p.campo((i + 1) + '. ' + b.rot, ta, { obrigatorio: b.obrig, erro: 'Preencha este bloco.' });
+      const c = p.campo((i + 1) + '. ' + q.rot, ta, { obrigatorio: b.obrig, erro: 'Preencha este bloco.' });
       campos[b.id] = c;
+      areas[b.id] = ta;
       corpo.appendChild(c);
     });
+
+    /* Troca so o texto: o que ja foi digitado continua ali. */
+    function repintarPerguntas() {
+      const qs = cat.perguntasFeedback(dados.classificacao);
+      BLOCOS.forEach((b, i) => {
+        const lbl = campos[b.id].querySelector('.field__label span');
+        if (lbl) lbl.textContent = (i + 1) + '. ' + qs[i].rot;
+        areas[b.id].setAttribute('placeholder', qs[i].ph);
+      });
+    }
 
     const up = p.uploadEvidencias(edicao ? edicao.evidencias : (opts.observacao ? (opts.observacao.evidencias || []) : []));
     corpo.appendChild(p.campo('Evidências', up.el, { hint: 'Anexe o que comprova o fato — o feedback fica muito mais fácil de sustentar.' }));

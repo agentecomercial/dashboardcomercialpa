@@ -8,7 +8,7 @@
   const u = App.u;
 
   /* Subir esta versao dispara a migracao automatica no proximo boot. */
-  const SEED_VERSAO = 5;
+  const SEED_VERSAO = 6;
 
   const D = n => u.toISODate(u.addDays(new Date(), -n));                 // data
   /* Encontros nunca caem em fim de semana ou feriado — nem nos exemplos. */
@@ -23,77 +23,83 @@
   const COLABS = [
     {
       id: 'c_carlos', nome: 'Carlos Almeida', cargo: 'Consultor Comercial Sênior',
-      dataEntrada: D(820), meta: 180000, telefone: '(27) 99812-4477', email: 'carlos.almeida@empresa.com.br',
-      status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(-2), ultimoOneAOne: DU_ANT(13), cor: '#6366f1',
-      indicadores: { realizado: 168400, vendas: 14, leads: 62, followups: 88, conversao: 22.6 },
+      dataEntrada: D(820), meta: 180000, metaFaixas: { minima: 124500, basica: 152500, master: 180000 },
+      telefone: '(27) 99812-4477', email: 'carlos.almeida@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(-2), ultimoOneAOne: DU_ANT(13), cor: '#6366f1',
+      indicadores: { realizado: 168400, realizadoBruto: 193600, vendas: 14, leads: 62, followups: 88, conversao: 22.6 },
       historico: [
-        { mes: MES(5), meta: 170000, realizado: 152000, vendas: 12 },
-        { mes: MES(4), meta: 170000, realizado: 174500, vendas: 15 },
-        { mes: MES(3), meta: 175000, realizado: 181200, vendas: 16 },
-        { mes: MES(2), meta: 175000, realizado: 166000, vendas: 13 },
-        { mes: MES(1), meta: 180000, realizado: 189300, vendas: 17 },
-        { mes: MES(0), meta: 180000, realizado: 168400, vendas: 14 }
+        { mes: MES(5), minima: 117500, basica: 144000, meta: 170000, realizado: 152000, bruto: 174700, vendas: 12 },
+        { mes: MES(4), minima: 117500, basica: 144000, meta: 170000, realizado: 174500, bruto: 200600, vendas: 15 },
+        { mes: MES(3), minima: 120500, basica: 148000, meta: 175000, realizado: 181200, bruto: 208300, vendas: 16 },
+        { mes: MES(2), minima: 120500, basica: 148000, meta: 175000, realizado: 166000, bruto: 190800, vendas: 13 },
+        { mes: MES(1), minima: 124000, basica: 152500, meta: 180000, realizado: 189300, bruto: 217600, vendas: 17 },
+        { mes: MES(0), minima: 124000, basica: 152500, meta: 180000, realizado: 168400, bruto: 193600, vendas: 14 }
       ]
     },
     {
       id: 'c_mariana', nome: 'Mariana Costa', cargo: 'Consultora Comercial',
-      dataEntrada: D(400), meta: 150000, telefone: '(27) 99745-1180', email: 'mariana.costa@empresa.com.br',
-      status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(-5), ultimoOneAOne: DU_ANT(9), cor: '#14b8a6',
-      indicadores: { realizado: 162700, vendas: 16, leads: 71, followups: 124, conversao: 22.5 },
+      dataEntrada: D(400), meta: 150000, metaFaixas: { minima: 103500, basica: 127000, master: 150000 },
+      telefone: '(27) 99745-1180', email: 'mariana.costa@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(-5), ultimoOneAOne: DU_ANT(9), cor: '#14b8a6',
+      indicadores: { realizado: 162700, realizadoBruto: 187000, vendas: 16, leads: 71, followups: 124, conversao: 22.5 },
       historico: [
-        { mes: MES(5), meta: 140000, realizado: 118000, vendas: 11 },
-        { mes: MES(4), meta: 140000, realizado: 131500, vendas: 12 },
-        { mes: MES(3), meta: 145000, realizado: 148900, vendas: 14 },
-        { mes: MES(2), meta: 145000, realizado: 152300, vendas: 15 },
-        { mes: MES(1), meta: 150000, realizado: 158100, vendas: 15 },
-        { mes: MES(0), meta: 150000, realizado: 162700, vendas: 16 }
+        { mes: MES(5), minima: 96500, basica: 118500, meta: 140000, realizado: 118000, bruto: 135600, vendas: 11 },
+        { mes: MES(4), minima: 96500, basica: 118500, meta: 140000, realizado: 131500, bruto: 151100, vendas: 12 },
+        { mes: MES(3), minima: 100000, basica: 122500, meta: 145000, realizado: 148900, bruto: 171100, vendas: 14 },
+        { mes: MES(2), minima: 100000, basica: 122500, meta: 145000, realizado: 152300, bruto: 175100, vendas: 15 },
+        { mes: MES(1), minima: 103500, basica: 127000, meta: 150000, realizado: 158100, bruto: 181700, vendas: 15 },
+        { mes: MES(0), minima: 103500, basica: 127000, meta: 150000, realizado: 162700, bruto: 187000, vendas: 16 }
       ]
     },
     {
       id: 'c_rafael', nome: 'Rafael Santos', cargo: 'Consultor Comercial',
-      dataEntrada: D(240), meta: 150000, telefone: '(27) 99633-2091', email: 'rafael.santos@empresa.com.br',
-      status: 'ativo', frequenciaDias: 7, proximoOneAOne: DU_PROX(3), ultimoOneAOne: DU_ANT(11), cor: '#f59e0b',
-      indicadores: { realizado: 96200, vendas: 8, leads: 84, followups: 51, conversao: 9.5 },
+      dataEntrada: D(240), meta: 150000, metaFaixas: { minima: 103500, basica: 127000, master: 150000 },
+      telefone: '(27) 99633-2091', email: 'rafael.santos@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'ativo', frequenciaDias: 7, proximoOneAOne: DU_PROX(3), ultimoOneAOne: DU_ANT(11), cor: '#f59e0b',
+      indicadores: { realizado: 96200, realizadoBruto: 110600, vendas: 8, leads: 84, followups: 51, conversao: 9.5 },
       historico: [
-        { mes: MES(5), meta: 140000, realizado: 121000, vendas: 11 },
-        { mes: MES(4), meta: 140000, realizado: 128400, vendas: 12 },
-        { mes: MES(3), meta: 145000, realizado: 117600, vendas: 10 },
-        { mes: MES(2), meta: 145000, realizado: 104300, vendas: 9 },
-        { mes: MES(1), meta: 150000, realizado: 99800, vendas: 9 },
-        { mes: MES(0), meta: 150000, realizado: 96200, vendas: 8 }
+        { mes: MES(5), minima: 96500, basica: 118500, meta: 140000, realizado: 121000, bruto: 139100, vendas: 11 },
+        { mes: MES(4), minima: 96500, basica: 118500, meta: 140000, realizado: 128400, bruto: 147600, vendas: 12 },
+        { mes: MES(3), minima: 100000, basica: 122500, meta: 145000, realizado: 117600, bruto: 135200, vendas: 10 },
+        { mes: MES(2), minima: 100000, basica: 122500, meta: 145000, realizado: 104300, bruto: 119900, vendas: 9 },
+        { mes: MES(1), minima: 103500, basica: 127000, meta: 150000, realizado: 99800, bruto: 114700, vendas: 9 },
+        { mes: MES(0), minima: 103500, basica: 127000, meta: 150000, realizado: 96200, bruto: 110600, vendas: 8 }
       ]
     },
     {
       id: 'c_juliana', nome: 'Juliana Oliveira', cargo: 'Closer',
-      dataEntrada: D(1090), meta: 200000, telefone: '(27) 99501-7734', email: 'juliana.oliveira@empresa.com.br',
-      status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(6), ultimoOneAOne: DU_ANT(20), cor: '#8b5cf6',
-      indicadores: { realizado: 143500, vendas: 11, leads: 48, followups: 62, conversao: 22.9 },
+      dataEntrada: D(1090), meta: 200000, metaFaixas: { minima: 138000, basica: 169000, master: 200000 },
+      telefone: '(27) 99501-7734', email: 'juliana.oliveira@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'ativo', frequenciaDias: 14, proximoOneAOne: DU_PROX(6), ultimoOneAOne: DU_ANT(20), cor: '#8b5cf6',
+      indicadores: { realizado: 143500, realizadoBruto: 164900, vendas: 11, leads: 48, followups: 62, conversao: 22.9 },
       historico: [
-        { mes: MES(5), meta: 190000, realizado: 201400, vendas: 16 },
-        { mes: MES(4), meta: 190000, realizado: 196800, vendas: 15 },
-        { mes: MES(3), meta: 195000, realizado: 188200, vendas: 15 },
-        { mes: MES(2), meta: 195000, realizado: 179500, vendas: 14 },
-        { mes: MES(1), meta: 200000, realizado: 161000, vendas: 12 },
-        { mes: MES(0), meta: 200000, realizado: 143500, vendas: 11 }
+        { mes: MES(5), minima: 131000, basica: 160500, meta: 190000, realizado: 201400, bruto: 231500, vendas: 16 },
+        { mes: MES(4), minima: 131000, basica: 160500, meta: 190000, realizado: 196800, bruto: 226200, vendas: 15 },
+        { mes: MES(3), minima: 134500, basica: 165000, meta: 195000, realizado: 188200, bruto: 216300, vendas: 15 },
+        { mes: MES(2), minima: 134500, basica: 165000, meta: 195000, realizado: 179500, bruto: 206300, vendas: 14 },
+        { mes: MES(1), minima: 138000, basica: 169000, meta: 200000, realizado: 161000, bruto: 185100, vendas: 12 },
+        { mes: MES(0), minima: 138000, basica: 169000, meta: 200000, realizado: 143500, bruto: 164900, vendas: 11 }
       ]
     },
     {
       id: 'c_daniel', nome: 'Daniel Souza', cargo: 'SDR / Pré-vendas',
-      dataEntrada: D(122), meta: 90000, telefone: '(27) 99388-6612', email: 'daniel.souza@empresa.com.br',
-      status: 'ativo', frequenciaDias: 7, proximoOneAOne: DU_PROX(0), ultimoOneAOne: DU_ANT(7), cor: '#3b82f6',
-      indicadores: { realizado: 74800, vendas: 7, leads: 96, followups: 141, conversao: 7.3 },
+      dataEntrada: D(122), meta: 90000, metaFaixas: { minima: 62000, basica: 76000, master: 90000 },
+      telefone: '(27) 99388-6612', email: 'daniel.souza@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'ativo', frequenciaDias: 7, proximoOneAOne: DU_PROX(0), ultimoOneAOne: DU_ANT(7), cor: '#3b82f6',
+      indicadores: { realizado: 74800, realizadoBruto: 86000, vendas: 7, leads: 96, followups: 141, conversao: 7.3 },
       historico: [
-        { mes: MES(3), meta: 70000, realizado: 41200, vendas: 4 },
-        { mes: MES(2), meta: 80000, realizado: 58600, vendas: 6 },
-        { mes: MES(1), meta: 85000, realizado: 69400, vendas: 7 },
-        { mes: MES(0), meta: 90000, realizado: 74800, vendas: 7 }
+        { mes: MES(3), minima: 48500, basica: 59000, meta: 70000, realizado: 41200, bruto: 47400, vendas: 4 },
+        { mes: MES(2), minima: 55000, basica: 67500, meta: 80000, realizado: 58600, bruto: 67400, vendas: 6 },
+        { mes: MES(1), minima: 58500, basica: 72000, meta: 85000, realizado: 69400, bruto: 79800, vendas: 7 },
+        { mes: MES(0), minima: 62000, basica: 76000, meta: 90000, realizado: 74800, bruto: 86000, vendas: 7 }
       ]
     },
     {
       id: 'c_patricia', nome: 'Patrícia Lima', cargo: 'Consultora Comercial',
-      dataEntrada: D(640), meta: 140000, telefone: '(27) 99277-4408', email: 'patricia.lima@empresa.com.br',
-      status: 'inativo', frequenciaDias: 14, proximoOneAOne: '', ultimoOneAOne: DU_ANT(96), cor: '#ec4899',
-      indicadores: { realizado: 0, vendas: 0, leads: 0, followups: 0, conversao: 0 },
+      dataEntrada: D(640), meta: 140000, metaFaixas: { minima: 96500, basica: 118500, master: 140000 },
+      telefone: '(27) 99277-4408', email: 'patricia.lima@empresa.com.br',
+      faturamentoPeriodo: MES(0), status: 'inativo', frequenciaDias: 14, proximoOneAOne: '', ultimoOneAOne: DU_ANT(96), cor: '#ec4899',
+      indicadores: { realizado: 0, realizadoBruto: 0, vendas: 0, leads: 0, followups: 0, conversao: 0 },
       historico: []
     }
   ];
@@ -508,10 +514,12 @@
     },
 
     /**
-     * Reinstala os exemplos SEM tocar nos dados reais.
-     * Registros do usuario ficam intactos; qualquer exemplo antigo
-     * (inclusive de versoes anteriores, que nao tinham a marca) e
-     * substituido pela versao atual — por isso o filtro tambem por id.
+     * Repoe os figurantes originais SEM tocar em mais nada.
+     * Preserva a operacao real E o que o usuario criou na area de testes
+     * (figurantes proprios, observacoes e encontros de demonstracao): so os
+     * registros que vieram do seed — identificados pelo id — sao repostos na
+     * versao atual. E o "desfazer" de quem bagunçou a demonstracao.
+     * Para zerar tudo o que e demonstracao existe o remover().
      */
     restaurar() {
       const d = gerar();
@@ -519,8 +527,8 @@
       return Promise.all(COLECOES_EXEMPLO.map(c => {
         const ids = {};
         d[c].forEach(x => { ids[x.id] = true; });
-        const reais = cache[c].filter(x => !x.exemplo && !ids[x.id]);
-        const arr = reais.concat(d[c]);
+        const preservados = cache[c].filter(x => !ids[x.id]);
+        const arr = preservados.concat(d[c]);
         cache[c] = arr;
         return App.adapter.replaceAll(c, arr);
       })).then(() => {

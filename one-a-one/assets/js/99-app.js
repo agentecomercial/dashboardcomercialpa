@@ -38,6 +38,61 @@
   };
   App.tema = tema;
 
+  /* ====================================================================== */
+  /*  MODO DEMONSTRACAO                                                     */
+  /*                                                                        */
+  /*  Ligado, TODAS as telas passam a ler o material de demonstracao no     */
+  /*  lugar da operacao — Dashboard, Equipe, One a One, Indicadores, busca.  */
+  /*  E a forma de ver como o sistema vai ficar com dados dentro: da para   */
+  /*  editar, registrar e conduzir encontros a vontade, porque tudo o que   */
+  /*  nasce aqui ja vem marcado como exemplo (services/11-db.js) e nunca    */
+  /*  entra na operacao real.                                               */
+  /*                                                                        */
+  /*  A escolha e deste navegador (localStorage), nao da base compartilhada: */
+  /*  ligar aqui nao muda o que os outros enderecos veem.                    */
+  /* ====================================================================== */
+  const CHAVE_DEMO = 'oao:demo';
+  const demo = {
+    ativo() {
+      try { return localStorage.getItem(CHAVE_DEMO) === '1'; } catch (e) { return false; }
+    },
+    escopo() { return demo.ativo() ? 'exemplos' : 'operacao'; },
+    definir(on) {
+      try { localStorage.setItem(CHAVE_DEMO, on ? '1' : '0'); } catch (e) {}
+      document.documentElement.classList.toggle('is-demo', !!on);
+      pintarFaixaDemo();
+      atualizarBotaoDemo();
+      App.bus.emit('demo:mudou', !!on);
+      App.recarregarTela();
+    },
+    alternar() {
+      const on = !demo.ativo();
+      demo.definir(on);
+      if (on) {
+        App.toast.aviso('Modo demonstração ligado',
+          'As telas mostram a equipe fictícia. Nada do que você fizer aqui entra na operação.');
+      } else {
+        App.toast.ok('De volta à operação', 'As telas voltaram a mostrar a equipe real.');
+      }
+    }
+  };
+  App.demo = demo;
+
+  /** Faixa fixa no topo, para nunca confundir demonstração com operação. */
+  function pintarFaixaDemo() {
+    const existente = u.$('#faixaDemo');
+    if (!demo.ativo()) { if (existente) existente.remove(); return; }
+    if (existente) return;
+    const faixa = u.el('div.demobar.no-print', { id: 'faixaDemo' }, [
+      u.el('span', { html: App.icon('sparkles', '', 15) }),
+      u.el('span.u-grow', { text: 'Modo demonstração — você está mexendo na equipe fictícia. Nada daqui entra na operação.' }),
+      u.el('button.btn.btn--xs.btn--outline.u-nowrap', {
+        type: 'button', text: 'Voltar à operação', onclick: () => demo.definir(false)
+      })
+    ]);
+    document.body.appendChild(faixa);
+  }
+
   /* Mostra de onde vem o dado: base compartilhada ou so este navegador. */
   function atualizarSync(estado) {
     const b = u.$('#btnSync');
@@ -58,6 +113,15 @@
       'Seus dados deste navegador foram enviados e agora aparecem nos três endereços.'), 1200);
   });
 
+
+  function atualizarBotaoDemo() {
+    const b = u.$('#btnDemo');
+    if (!b) return;
+    b.classList.toggle('is-on', App.demo.ativo());
+    b.setAttribute('data-tip', App.demo.ativo()
+      ? 'Modo demonstração ligado — clique para voltar à operação'
+      : 'Modo demonstração — ver o app com a equipe fictícia');
+  }
   function atualizarBotaoTema() {
     const b = u.$('#btnTema');
     if (!b) return;
@@ -180,6 +244,12 @@
         onclick: () => App.notificacoes.abrir()
       }),
       u.el('button.icon-btn', {
+        type: 'button', id: 'btnDemo', 'aria-label': 'Modo demonstração',
+        'data-tip': 'Modo demonstração — ver o app com a equipe fictícia',
+        html: App.icon('sparkles'),
+        onclick: () => demo.alternar()
+      }),
+      u.el('button.icon-btn', {
         type: 'button', id: 'btnTema', 'aria-label': 'Alternar tema',
         onclick: () => tema.alternar()
       }),
@@ -218,6 +288,8 @@
 
     pintarNav();
     atualizarBotaoTema();
+    atualizarBotaoDemo();
+    pintarFaixaDemo();
     atualizarSync();
     atualizarBadges();
 
@@ -277,8 +349,13 @@
     const caminho = r ? r.caminho : '/dashboard';
     const raiz = '/' + (caminho.split('/')[1] || 'dashboard');
     const mapaRaiz = { '/colaborador': '/equipe', '/preparar': '/one-a-one' };
-    /* material de demonstracao vive dentro de Configurações › Exemplos */
-    const alvo = db.escopo() === 'exemplos' ? '/config' : (mapaRaiz[raiz] || raiz);
+    /* Um registro de demonstracao aberto DENTRO da operacao vive em
+       Configurações › Exemplos — a nav aponta para la. No modo demonstracao
+       o escopo tambem e 'exemplos', mas ai o app inteiro e a demonstracao:
+       a nav tem de seguir a tela em que o usuario esta. */
+    const alvo = (!App.demo.ativo() && db.escopo() === 'exemplos')
+      ? '/config'
+      : (mapaRaiz[raiz] || raiz);
 
     u.$$('.nav-item').forEach(el => el.classList.toggle('is-active', el.getAttribute('data-rota') === alvo));
     u.$$('.mobilenav__item').forEach(el => el.classList.toggle('is-active', el.getAttribute('data-rota') === alvo));
@@ -332,9 +409,10 @@
         u.$('#subTela').textContent = pagina.sub || u.dataExtenso(new Date());
         atualizarBadges();
         view.scrollTop = 0;
-        /* toda tela comeca na operacao; quem mostra demonstracao eleva o
-           escopo no proprio render (perfil/preparacao/sessao de exemplo). */
-        db.setEscopo('operacao');
+        /* escopo padrao da navegacao: operacao, ou demonstracao quando o
+           modo demo esta ligado. Telas que abrem um registro de exemplo
+           elevam o escopo no proprio render (perfil/preparacao/sessao). */
+        db.setEscopo(App.demo.escopo());
         pagina.render(view, params, query || {});
         /* depois do render: telas de demonstracao acendem "Configurações" */
         marcarAtivo();
@@ -359,6 +437,7 @@
     if (!pagina) return;
     const view = u.$('#view');
     const topo = view.scrollTop;
+    db.setEscopo(App.demo.escopo());
     pagina.render(view, telaAtual.params, telaAtual.query || {});
     view.scrollTop = topo;
     atualizarBadges();
@@ -455,6 +534,7 @@
 
   function iniciar() {
     tema.iniciar();
+    document.documentElement.classList.toggle('is-demo', demo.ativo());
     montarShell();
     esqueleto();
     registrarRotas();

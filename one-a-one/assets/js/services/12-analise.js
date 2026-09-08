@@ -117,17 +117,337 @@
   /* ==================================================================== */
   A.indicadores = function (colab) {
     const i = colab.indicadores || {};
-    const meta = +colab.meta || 0;
+    /* A meta de referencia e a Master. Cai para o campo antigo `meta` nos
+       cadastros anteriores as faixas — e vice-versa, se so as faixas vierem. */
+    const meta = +colab.meta || (colab.metaFaixas && +colab.metaFaixas.master) || 0;
     const realizado = +i.realizado || 0;
     return {
       meta,
       realizado,
+      bruto: i.realizadoBruto !== undefined ? +i.realizadoBruto : realizado,
       pctMeta: meta ? (realizado / meta) * 100 : 0,
       vendas: +i.vendas || 0,
       leads: +i.leads || 0,
       followups: +i.followups || 0,
       conversao: i.conversao !== undefined ? +i.conversao : (i.leads ? (i.vendas / i.leads) * 100 : 0)
     };
+  };
+
+  /* -------------------------------------------------------------------- */
+  /*  Meta do mes vigente (Minima / Basica / Master)                       */
+  /*                                                                      */
+  /*  Fonte: metas-vitoria.json + faturamento do Meta Master, gravados no  */
+  /*  cadastro pelo Sincronizar-Faturamento.ps1:                          */
+  /*    colab.metaFaixas         { minima, basica, master }                */
+  /*    colab.indicadores.realizado        faturamento LIQUIDO do mes      */
+  /*    colab.indicadores.realizadoBruto   faturamento bruto do mes        */
+  /*    colab.faturamentoPeriodo           competencia 'AAAA-MM'           */
+  /*                                                                      */
+  /*  O atingimento do consultor conta SEMPRE pelo liquido (Coaching       */
+  /*  Individual entra pela metade) — mesma regra do Meta Master.          */
+  /*  Sem metaFaixas, cai para colab.meta como unica faixa (Master).       */
+  /* -------------------------------------------------------------------- */
+  const FAIXAS = [
+    { id: 'minima', label: 'Mínima', curto: 'Mín' },
+    { id: 'basica', label: 'Básica', curto: 'Bás' },
+    { id: 'master', label: 'Master', curto: 'Master' }
+  ];
+
+  /** Competencia vigente pelo relogio: 'AAAA-MM'. */
+  A.competenciaAtual = function () {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  };
+
+  A.metaMes = function (colab) {
+    const i = (colab && colab.indicadores) || {};
+    const f = (colab && colab.metaFaixas) || {};
+
+    /* -------------------------------------------------------------------
+       CICLO NOVO: virou o mes e a meta ainda nao foi sincronizada.
+       Meta e realizado zeram — mostrar o numero do mes passado como se
+       fosse o corrente faria o coordenador cobrar sobre dado vencido.
+       O que aconteceu continua guardado em `historico` e volta aqui em
+       `anterior`, para a analise e o feedback do periodo fechado.
+       ------------------------------------------------------------------- */
+    const compAtual = A.competenciaAtual();
+    const compDado = (colab && colab.faturamentoPeriodo) || '';
+    if (compDado && compDado !== compAtual) {
+      const h = A.historico(colab);
+      const ult = h.length ? h[h.length - 1] : null;
+      const master = ult ? +ult.meta || 0 : +f.master || 0;
+      const real = ult ? +ult.realizado || 0 : +i.realizado || 0;
+      return {
+        temMeta: false,
+        cicloNovo: true,
+        periodo: compAtual,
+        periodoAnterior: compDado,
+        alvos: [], minima: 0, basica: 0, master: 0,
+        realizado: 0, bruto: 0, vendas: 0, pct: 0,
+        atual: null, proxima: null, falta: 0, excedente: 0, bateuMaster: false,
+        /** O ciclo fechado, so para leitura. */
+        anterior: {
+          periodo: compDado, master: master, realizado: real,
+          bruto: ult && ult.bruto ? +ult.bruto : (i.realizadoBruto || 0),
+          vendas: ult && ult.vendas ? +ult.vendas : (+i.vendas || 0),
+          pct: master ? (real / master) * 100 : 0,
+          bateuMaster: master > 0 && real >= master
+        }
+      };
+    }
+    const master = +f.master || +(colab && colab.meta) || 0;
+    const basica = +f.basica || 0;
+    const minima = +f.minima || 0;
+    const realizado = +i.realizado || 0;                                  // liquido
+    const bruto = i.realizadoBruto !== undefined ? +i.realizadoBruto : realizado;
+
+    /* Faixas realmente cadastradas, em ordem crescente de exigencia. */
+    const alvos = FAIXAS
+      .map(x => Object.assign({}, x, { valor: x.id === 'master' ? master : x.id === 'basica' ? basica : minima }))
+      .filter(x => x.valor > 0);
+
+    const batidas = alvos.filter(x => realizado >= x.valor);
+    const atual = batidas.length ? batidas[batidas.length - 1] : null;
+    const proxima = alvos.filter(x => realizado < x.valor)[0] || null;
+
+    return {
+      temMeta: alvos.length > 0,
+      periodo: (colab && colab.faturamentoPeriodo) || '',
+      alvos, minima, basica, master,
+      realizado, bruto,
+      vendas: +i.vendas || 0,
+      pct: master ? (realizado / master) * 100 : 0,                        // % sobre a Master
+      atual,                                                              // maior faixa ja batida
+      proxima,                                                            // proxima faixa a bater
+      falta: proxima ? proxima.valor - realizado : 0,
+      excedente: master && realizado > master ? realizado - master : 0,
+      bateuMaster: master > 0 && realizado >= master
+    };
+  };
+
+  /* -------------------------------------------------------------------- */
+  /*  Meta do TIME — soma do que cada consultor ativo carrega no mes.       */
+  /*                                                                       */
+  /*  A meta da unidade vem do metas-vitoria.json quando o                  */
+  /*  Sincronizar-Faturamento.ps1 a gravou em config('metaUnidade'); sem    */
+  /*  ela, cai para a soma das metas individuais, que fica proxima.         */
+  /*  `origem` diz qual das duas esta valendo, para a tela nao mentir.      */
+  /* -------------------------------------------------------------------- */
+  A.metaTime = function () {
+    const ativos = db.colaboradores.ativos();
+    const todas = ativos.map(c => A.metaMes(c));
+    const metas = todas.filter(m => m.temMeta);
+
+    /* Virou o mes e ninguem tem meta nova: o time inteiro esta em ciclo novo. */
+    if (!metas.length && todas.some(m => m.cicloNovo)) {
+      const ant = todas.filter(m => m.anterior);
+      const compAnt = ant.length ? ant[0].periodoAnterior : '';
+      return {
+        temMeta: false, cicloNovo: true,
+        origem: 'soma', consultores: 0, bateram: 0,
+        alvos: [], minima: 0, basica: 0, master: 0, somaMaster: 0,
+        realizado: 0, bruto: 0, pct: 0,
+        atual: null, proxima: null, falta: 0, excedente: 0, bateuMaster: false,
+        periodo: A.competenciaAtual(), periodoAnterior: compAnt,
+        atualizadoEm: '', desatualizado: false,
+        competenciaHoje: A.competenciaAtual(),
+        anterior: {
+          periodo: compAnt,
+          master: u.sum(ant, m => m.anterior.master),
+          realizado: u.sum(ant, m => m.anterior.realizado),
+          bruto: u.sum(ant, m => m.anterior.bruto),
+          bateram: ant.filter(m => m.anterior.bateuMaster).length,
+          consultores: ant.length
+        }
+      };
+    }
+
+    const realizado = u.sum(metas, m => m.realizado);
+    const bruto = u.sum(metas, m => m.bruto);
+    const somaMinima = u.sum(metas, m => m.minima);
+    const somaBasica = u.sum(metas, m => m.basica);
+    const somaMaster = u.sum(metas, m => m.master);
+
+    const cfg = db.config.get('metaUnidade', null);
+    const daUnidade = cfg && +cfg.master > 0 ? cfg : null;
+
+    const minima = daUnidade ? +daUnidade.minima || 0 : somaMinima;
+    const basica = daUnidade ? +daUnidade.basica || 0 : somaBasica;
+    const master = daUnidade ? +daUnidade.master || 0 : somaMaster;
+
+    const alvos = [
+      { id: 'minima', label: 'Mínima', curto: 'Mín', valor: minima },
+      { id: 'basica', label: 'Básica', curto: 'Bás', valor: basica },
+      { id: 'master', label: 'Master', curto: 'Master', valor: master }
+    ].filter(x => x.valor > 0);
+
+    const batidas = alvos.filter(x => realizado >= x.valor);
+    const proxima = alvos.filter(x => realizado < x.valor)[0] || null;
+
+    /* Quem ja bateu a propria Master e quem ainda nao */
+    const bateram = metas.filter(m => m.bateuMaster).length;
+
+    /* Competencia e carimbo da ultima sincronizacao */
+    const comPeriodo = ativos.filter(c => c.faturamentoPeriodo);
+    const periodo = comPeriodo.length ? comPeriodo[0].faturamentoPeriodo : '';
+    const carimbos = ativos.map(c => c.faturamentoAtualizadoEm).filter(Boolean).sort();
+    const atualizadoEm = carimbos.length ? carimbos[carimbos.length - 1] : '';
+
+    /* Competencia vigente pelo relogio — para avisar quando o dado envelhece */
+    const hoje = new Date();
+    const compHoje = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+
+    return {
+      temMeta: alvos.length > 0,
+      origem: daUnidade ? 'unidade' : 'soma',
+      consultores: metas.length,
+      bateram,
+      alvos, minima, basica, master,
+      somaMaster,
+      realizado, bruto,
+      pct: master ? (realizado / master) * 100 : 0,
+      atual: batidas.length ? batidas[batidas.length - 1] : null,
+      proxima,
+      falta: proxima ? proxima.valor - realizado : 0,
+      excedente: master && realizado > master ? realizado - master : 0,
+      bateuMaster: master > 0 && realizado >= master,
+      periodo, atualizadoEm,
+      /** true quando os numeros sao de uma competencia que ja passou */
+      desatualizado: !!periodo && periodo !== compHoje,
+      competenciaHoje: compHoje
+    };
+  };
+
+  /**
+   * A meta que a CONVERSA usa. Diferente de A.metaMes, que responde
+   * "onde ele esta agora": no dia seguinte a virada do mes, o One a One
+   * ainda trata do periodo fechado — cobrar sobre um ciclo que acabou de
+   * comecar, com meta zerada, nao diria nada.
+   *
+   * Devolve a meta corrente quando ela existe; senao, a do ciclo fechado
+   * com `fechado: true`, no mesmo formato.
+   */
+  /** Monta o retorno no formato de metaMes a partir de uma linha do historico. */
+  function metaDeHistorico(linha, fechado) {
+    const master = +linha.meta || 0, minima = +linha.minima || 0, basica = +linha.basica || 0;
+    const real = +linha.realizado || 0;
+    const alvos = [
+      { id: 'minima', label: 'Mínima', curto: 'Mín', valor: minima },
+      { id: 'basica', label: 'Básica', curto: 'Bás', valor: basica },
+      { id: 'master', label: 'Master', curto: 'Master', valor: master }
+    ].filter(x => x.valor > 0);
+    const batidas = alvos.filter(x => real >= x.valor);
+    const proxima = alvos.filter(x => real < x.valor)[0] || null;
+    return {
+      temMeta: alvos.length > 0,
+      fechado: !!fechado,
+      periodo: linha.mes,
+      alvos: alvos, minima: minima, basica: basica, master: master,
+      realizado: real, bruto: +linha.bruto || real, vendas: +linha.vendas || 0,
+      pct: master ? (real / master) * 100 : 0,
+      atual: batidas.length ? batidas[batidas.length - 1] : null,
+      proxima: proxima,
+      falta: proxima ? proxima.valor - real : 0,
+      excedente: master && real > master ? real - master : 0,
+      bateuMaster: master > 0 && real >= master
+    };
+  }
+
+  /**
+   * @param colab
+   * @param de  inicio do periodo do encontro (opcional). Quando informado, a
+   *            competencia DELE manda: um One a One no dia 1º trata do mes que
+   *            fechou, nao do que acabou de comecar com tudo zerado.
+   */
+  A.metaDaConversa = function (colab, de) {
+    const m = A.metaMes(colab);
+
+    /* O periodo do encontro caiu em outra competencia? Usa a do historico. */
+    if (de) {
+      const compDe = String(de).slice(0, 7);
+      if (/^\d{4}-\d{2}$/.test(compDe) && compDe !== A.competenciaAtual()) {
+        const linha = A.historico(colab).filter(h => h.mes === compDe)[0];
+        if (linha && +linha.meta) return metaDeHistorico(linha, true);
+      }
+    }
+
+    /* Sem meta no ciclo corrente: cai para o ultimo fechado. */
+    if (m.temMeta || !m.cicloNovo || !m.anterior || !m.anterior.master) return m;
+
+    const a = m.anterior;
+    const h = A.historico(colab);
+    const ult = h.length ? h[h.length - 1] : {};
+    const minima = +ult.minima || 0, basica = +ult.basica || 0, master = a.master;
+
+    const alvos = [
+      { id: 'minima', label: 'Mínima', curto: 'Mín', valor: minima },
+      { id: 'basica', label: 'Básica', curto: 'Bás', valor: basica },
+      { id: 'master', label: 'Master', curto: 'Master', valor: master }
+    ].filter(x => x.valor > 0);
+
+    const batidas = alvos.filter(x => a.realizado >= x.valor);
+    const proxima = alvos.filter(x => a.realizado < x.valor)[0] || null;
+
+    return {
+      temMeta: alvos.length > 0,
+      fechado: true,                 /* o periodo ja acabou: nao ha o que correr atras */
+      periodo: a.periodo,
+      alvos: alvos, minima: minima, basica: basica, master: master,
+      realizado: a.realizado, bruto: a.bruto, vendas: a.vendas,
+      pct: master ? (a.realizado / master) * 100 : 0,
+      atual: batidas.length ? batidas[batidas.length - 1] : null,
+      proxima: proxima,
+      falta: proxima ? proxima.valor - a.realizado : 0,
+      excedente: master && a.realizado > master ? a.realizado - master : 0,
+      bateuMaster: a.bateuMaster
+    };
+  };
+
+  /**
+   * Qual competencia o proximo One a One cobre — e se ela ja fechou.
+   *
+   * O periodo do encontro comeca no ultimo 1:1 (ou na entrada). Quando ele
+   * cai num mes que ja virou, a conversa trata do ciclo FECHADO, mesmo que o
+   * card mostre o mes corrente. Sem esse aviso o coordenador abre o Preparar
+   * e estranha por que os numeros nao sao os do card.
+   *
+   * @returns { competencia, fechada, meta } — meta e a linha do historico.
+   */
+  A.cicloDoEncontro = function (colab) {
+    if (!colab) return null;
+    const de = A.inicioPeriodo(colab.id);
+    const comp = String(de || '').slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(comp)) return null;
+    const fechada = comp !== A.competenciaAtual();
+    const linha = fechada ? A.historico(colab).filter(h => h.mes === comp)[0] : null;
+    return { competencia: comp, fechada: fechada, meta: linha || null, de: de };
+  };
+
+  /**
+   * Estado de pendencia do consultor, para colorir o card.
+   *
+   * A ordem importa: 'atrasado' vem antes de 'fechado' porque passar da data
+   * e mais grave; 'fechado' vem antes de 'hoje' porque, marcado para hoje ou
+   * nao, um encontro que trata de mes ja virado muda como voce se prepara.
+   *
+   * @returns 'atrasado' | 'fechado' | 'hoje' | 'ok'
+   */
+  A.estadoCard = function (colab) {
+    if (!colab || colab.status === 'inativo') return 'ok';
+    const s = A.situacao1a1(colab);
+    if (s.estado === 'atrasado') return 'atrasado';
+    const ciclo = A.cicloDoEncontro(colab);
+    if (ciclo && ciclo.fechada && ciclo.meta) return 'fechado';
+    if (s.dias === 0) return 'hoje';
+    return 'ok';
+  };
+
+  /** Texto curto de status da meta — usado nos cards e no preparar. */
+  A.metaResumo = function (colab) {
+    const m = A.metaMes(colab);
+    if (!m.temMeta) return 'Sem meta cadastrada para o mês';
+    if (m.bateuMaster) return 'Master batida · ' + u.fmtMoedaExata(m.excedente) + ' acima';
+    return 'Faltam ' + u.fmtMoedaExata(m.falta) + ' para a ' + m.proxima.label;
   };
 
   /** Historico mensal (serie) do colaborador — usado nos graficos. */
@@ -154,8 +474,15 @@
   /*  4. Competencias                                                     */
   /* ==================================================================== */
   /** Ultima avaliacao registrada por competencia. */
-  A.competenciasAtuais = function (colabId) {
-    const encontros = db.oneones.concluidos(colabId);
+  /**
+   * @param colabId
+   * @param ignorarEncId  encontro a desconsiderar. Serve para responder
+   *   "como estava ANTES deste encontro" — sem isso, ao editar as notas de
+   *   um encontro, a referencia "Antes:" mostraria as proprias notas.
+   */
+  A.competenciasAtuais = function (colabId, ignorarEncId) {
+    let encontros = db.oneones.concluidos(colabId);
+    if (ignorarEncId) encontros = encontros.filter(e => e.id !== ignorarEncId);
     const out = {};
     cat.COMPETENCIAS.forEach(c => { out[c.id] = null; });
     for (let i = 0; i < encontros.length; i++) {           // do mais recente ao mais antigo
@@ -174,6 +501,20 @@
     const at = A.competenciasAtuais(colabId);
     const vals = Object.keys(at).map(k => at[k]).filter(Boolean).map(x => x.nota);
     return vals.length ? u.sum(vals) / vals.length : 0;
+  };
+
+  /** Media historica por competencia: todas as avaliacoes ja registradas,
+   *  nao so a ultima. null quando a competencia nunca foi avaliada. */
+  A.mediaHistoricaCompetencias = function (colabId) {
+    const encontros = db.oneones.concluidos(colabId);
+    const out = {};
+    cat.COMPETENCIAS.forEach(c => {
+      const notas = encontros
+        .map(e => e.competencias && e.competencias[c.id] && e.competencias[c.id].nota)
+        .filter(Boolean);
+      out[c.id] = notas.length ? u.sum(notas) / notas.length : null;
+    });
+    return out;
   };
 
   /** Serie de evolucao por competencia ao longo dos encontros. */
@@ -398,7 +739,8 @@
         grupo: t.pol > 0 ? 'positivo' : (t.pol < 0 ? 'atencao' : (o.tipo === 'evolucao' ? 'evolucao' : 'neutro')),
         data: o.data, emoji: t.emoji, tom: t.tom,
         titulo: t.label, texto: o.texto,
-        meta: [cat.contexto(o.contexto).label, 'Impacto ' + cat.impacto(o.impacto).label],
+        meta: [cat.contexto(o.contexto).label, 'Impacto ' + cat.impacto(o.impacto).label]
+          .concat(o.loteId ? ['Em lote · ' + db.observacoes.doLote(o.loteId).length] : []),
         evidencias: o.evidencias || [], ref: o
       });
     });

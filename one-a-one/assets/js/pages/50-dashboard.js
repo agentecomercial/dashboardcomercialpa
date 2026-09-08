@@ -267,7 +267,7 @@
       estavel: ['arrowRight', 't-muted', 'Estável']
     }[tend.estado];
 
-    return u.el('div.card.card--hover.next-card', {
+    return u.el('div.card.card--hover.next-card.est-' + A.estadoCard(c), {
       onclick: () => App.router.go('/preparar/' + c.id),
       role: 'button', tabindex: '0',
       onkeydown: ev => { if (ev.key === 'Enter') App.router.go('/preparar/' + c.id); }
@@ -286,7 +286,8 @@
       u.el('div.next-card__when' + estadoClasse, {}, [
         u.el('span.u-row.u-gap-2', {}, [
           u.el('span', { html: App.icon('calendar', '', 14) }),
-          u.el('span', { text: s.proximo ? u.fmtDate(s.proximo) : 'Sem data definida' })
+          u.el('span', { text: s.proximo ? u.fmtDate(s.proximo) : 'Sem data definida' }),
+          p.seloCicloFechado(c)
         ]),
         u.el('span.t-strong', {
           text: s.dias === null ? '—'
@@ -295,6 +296,7 @@
             : 'em ' + s.dias + 'd'
         })
       ]),
+      p.metaFaixas(A.metaMes(c)),
       u.el('div.next-card__mini', {}, [
         miniStat(res.total, 'registros'),
         miniStat(res.atencao, 'atenção'),

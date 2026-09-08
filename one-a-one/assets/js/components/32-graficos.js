@@ -446,7 +446,8 @@
       svg.appendChild(t);
     });
 
-    series.forEach(s => {
+    const fmtNota = v => (v % 1 ? (Math.round(v * 10) / 10).toFixed(1).replace('.', ',') : String(v));
+    series.forEach((s, si) => {
       const pts = eixos.map((_, i) => ponto(i, s.valores[i] || 0));
       const d = 'M' + pts.map(p => p.join(' ')).join(' L') + ' Z';
       svg.appendChild(svgEl('path', { d, fill: s.cor, 'fill-opacity': series.length > 1 ? .16 : .2, stroke: s.cor, class: 'radar-area' }));
@@ -454,6 +455,19 @@
         const c = svgEl('circle', { cx: p[0], cy: p[1], r: 4, fill: s.cor, stroke: 'var(--surface)', 'stroke-width': 2 });
         const t = svgEl('title'); t.textContent = eixos[i] + ' · ' + s.label + ': ' + (s.valores[i] || '—') + '/' + max;
         c.appendChild(t); svg.appendChild(c);
+        if (cfg.mostrarValores && s.valores[i]) {
+          /* ultima serie (desenhada por cima) leva o numero para fora do ponto;
+             as demais, para dentro — evita sobreposicao quando as notas coincidem */
+          const a = -Math.PI / 2 + (i / eixos.length) * Math.PI * 2;
+          const off = si === series.length - 1 ? 15 : -17;
+          const tv = svgEl('text', {
+            x: p[0] + off * Math.cos(a), y: p[1] + off * Math.sin(a) + 4,
+            'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700,
+            fill: s.cor, stroke: 'var(--surface)', 'stroke-width': 3, 'paint-order': 'stroke'
+          });
+          tv.textContent = fmtNota(s.valores[i]);
+          svg.appendChild(tv);
+        }
       });
     });
 

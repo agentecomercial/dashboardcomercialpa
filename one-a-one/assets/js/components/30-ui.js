@@ -151,7 +151,8 @@
         icone: cfg.icone || (cfg.perigo ? 'alert' : 'info'),
         tom: cfg.perigo ? 'danger' : 'brand',
         corpo: u.el('div', {}, [
-          u.el('div', { class: 't-md', style: { color: 'var(--text-2)', lineHeight: '1.6' }, text: cfg.mensagem || '' })
+          /* pre-line: a mensagem pode listar itens em linhas separadas. */
+          u.el('div', { class: 't-md', style: { color: 'var(--text-2)', lineHeight: '1.6', whiteSpace: 'pre-line' }, text: cfg.mensagem || '' })
         ]),
         acoes: [
           { label: cfg.cancelar || 'Cancelar', tipo: 'ghost', onClick: () => { decidido = true; resolve(false); } },

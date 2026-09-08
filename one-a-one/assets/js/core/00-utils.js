@@ -171,6 +171,19 @@ window.App = window.App || {};
   const DIAS_ABR = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   /** "seg 24/08" — usado nos botoes de ajuste de data. */
   u.fmtDiaCurto = d => { const x = u.parseDate(d); return x ? DIAS_ABR[x.getDay()] + ' ' + u.fmtDate(x, false) : '—'; };
+  /** Competencia 'AAAA-MM' -> 'ago/26'. */
+  u.fmtCompetencia = function (comp) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(comp || ''));
+    if (!m) return '';
+    return MES_ABR[+m[2] - 1] + '/' + m[1].slice(2);
+  };
+  /** Competencia 'AAAA-MM' -> 'Agosto/2026'. */
+  u.fmtCompetenciaLonga = function (comp) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(comp || ''));
+    if (!m) return '';
+    const nome = MESES[+m[2] - 1];
+    return nome.charAt(0).toUpperCase() + nome.slice(1) + '/' + m[1];
+  };
   u.fmtMesAno = d => { const x = u.parseDate(d); return x ? MES_ABR[x.getMonth()] + '/' + String(x.getFullYear()).slice(2) : ''; };
 
   /** "hoje", "ontem", "há 3 dias", "em 5 dias" */
@@ -205,6 +218,11 @@ window.App = window.App || {};
   u.fmtMoeda = function (n) {
     if (n === null || n === undefined || isNaN(n)) return '—';
     return 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  };
+  /** Moeda com centavos — usada onde o valor exato importa (metas, faturamento). */
+  u.fmtMoedaExata = function (n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
   u.fmtMoedaCurta = function (n) {
     if (n === null || n === undefined || isNaN(n)) return '—';

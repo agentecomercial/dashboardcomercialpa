@@ -13,6 +13,7 @@
 
   function render(view, params, query) {
     if (query && query.status) f.status = query.status;
+    if (query && query.colab) f.colab = query.colab;
     const box = u.el('div.view__inner');
 
     box.appendChild(u.el('div.page-head', {}, [

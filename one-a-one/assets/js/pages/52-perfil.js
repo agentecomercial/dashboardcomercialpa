@@ -37,7 +37,7 @@
     const box = u.el('div.view__inner');
 
     if (c.exemplo) box.appendChild(p.faixaExemplo(
-      'Perfil de demonstração. Tudo aqui é material de consulta e não afeta a operação.'));
+      'Perfil de demonstração. Edite, registre e conduza encontros à vontade — tudo o que nascer aqui continua fora da operação.'));
 
     box.appendChild(cabecalho(c, abaAtual));
 
@@ -111,9 +111,8 @@
             c.email ? fato('mail', c.email) : null
           ])
         ]),
-        u.el('div.profile-head__actions', {}, c.exemplo ? [
-          u.el('span.badge.badge--warn.badge--lg', { text: '✨ Exemplo · somente consulta' })
-        ] : [
+        u.el('div.profile-head__actions', {}, [
+          c.exemplo ? u.el('span.badge.badge--warn.badge--lg', { text: '✨ Demonstração' }) : null,
           u.el('button.btn.btn--primary', {
             type: 'button', html: App.icon('plus') + '<span>Observação</span>',
             onclick: () => App.obsModal.abrir({ colaboradorId: c.id })
@@ -139,17 +138,40 @@
       ])
     ]);
 
+    /* meta do mes vigente — Minima / Basica / Master, atingimento pelo liquido */
+    const m = A.metaMes(c);
+    const cardMeta = u.el('div.card.card--pad.u-mb-5', {}, [
+      u.el('div.u-between.u-wrap.u-gap-3.u-mb-3', {}, [
+        u.el('div.card__title', { text: 'Meta de ' + (m.periodo ? u.fmtCompetenciaLonga(m.periodo) : 'do período') }),
+        m.temMeta
+          ? u.el('span', {
+              class: 'badge badge--' + (m.bateuMaster ? 'ok' : m.atual ? 'info' : 'warn'),
+              text: m.bateuMaster ? 'Master batida' : m.atual ? m.atual.label + ' batida' : 'Abaixo da Mínima'
+            })
+          : null
+      ]),
+      p.metaFaixas(m, { rotulo: 'Atingimento (líquido)' })
+    ]);
+
     /* indicadores */
     const tiles = u.el('div.grid.u-mb-5', { style: { gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))' } }, [
-      tile('Meta', u.fmtMoedaCurta(ind.meta), 'do período'),
-      tile('Realizado', u.fmtMoedaCurta(ind.realizado), u.plural(ind.vendas, 'venda')),
-      tileMeta(ind.pctMeta),
-      tile('Conversão', u.fmtPct(ind.conversao, 1), ind.leads + ' leads'),
+      tile('Meta Master', u.fmtMoedaCurta(m.master), 'do mês', u.fmtMoedaExata(m.master)),
+      tile('Líquido', u.fmtMoedaCurta(ind.realizado), u.plural(ind.vendas, 'venda'),
+        u.fmtMoedaExata(ind.realizado) + ' — é este valor que conta para a meta'),
+      tile('Bruto', u.fmtMoedaCurta(ind.bruto), 'faturado',
+        u.fmtMoedaExata(ind.bruto) + ' — sem o desconto do Coaching Individual'),
+      tile('Falta', m.bateuMaster ? '—' : u.fmtMoedaCurta(m.falta),
+        m.bateuMaster ? 'meta batida' : (m.proxima ? 'para a ' + m.proxima.label : ''),
+        m.bateuMaster
+          ? 'Master batida · ' + u.fmtMoedaExata(m.excedente) + ' acima'
+          : (m.proxima ? u.fmtMoedaExata(m.falta) + ' para a ' + m.proxima.label + ' de ' + u.fmtMoedaExata(m.proxima.valor) : null)),
+      tileMeta(ind.pctMeta, m),
+      tile('Conversão', u.fmtPct(ind.conversao, 1), ind.leads + ' leads', u.fmtPct(ind.conversao, 2)),
       tile('Leads', u.fmtNum(ind.leads), 'na carteira'),
       tile('Follow-ups', u.fmtNum(ind.followups), 'no período')
     ]);
 
-    return u.el('div', {}, [head, tiles]);
+    return u.el('div', {}, [head, cardMeta, tiles]);
   }
 
   function fato(icone, txt) {
@@ -158,15 +180,20 @@
       u.el('span', { text: txt })
     ]);
   }
-  function tile(l, v, s) {
-    return u.el('div.stat-tile', {}, [
+  /* O valor do tile vem abreviado (R$ 176k) para caber; o numero cheio,
+     com centavos, fica no tooltip — passar o mouse mostra o real exato. */
+  function tile(l, v, s, tip) {
+    return u.el('div.stat-tile', { 'data-tip': tip || null }, [
       u.el('div.stat-tile__l', { text: l }),
       u.el('div.stat-tile__v', { text: v }),
       s ? u.el('div.stat-tile__s', { text: s }) : null
     ]);
   }
-  function tileMeta(pct) {
-    const t = u.el('div.stat-tile', {}, [
+  function tileMeta(pct, m) {
+    const tip = m && m.temMeta
+      ? u.fmtPct(pct, 2) + ' — ' + u.fmtMoedaExata(m.realizado) + ' de ' + u.fmtMoedaExata(m.master)
+      : null;
+    const t = u.el('div.stat-tile', { 'data-tip': tip }, [
       u.el('div.stat-tile__l', { text: '% da meta' }),
       u.el('div', { class: 'stat-tile__v ' + (pct >= 100 ? 't-ok' : pct < 60 ? 't-danger' : ''), text: u.fmtPct(pct) })
     ]);
@@ -252,18 +279,34 @@
 
     /* competencias */
     const avaliadas = Object.keys(comps).filter(k => comps[k]);
+    const mediaHist = A.mediaHistoricaCompetencias(c.id);
+    /* so vale a pena desenhar a media historica com 2+ avaliacoes — com uma
+       unica, ela coincide com a atual e viraria ruido no radar */
+    const nAval = db.oneones.concluidos(c.id).filter(e =>
+      e.competencias && Object.keys(e.competencias).some(k => e.competencias[k] && e.competencias[k].nota)
+    ).length;
+    const valsHist = Object.keys(mediaHist).map(k => mediaHist[k]).filter(x => x !== null);
+    const mediaHistGeral = valsHist.length ? u.sum(valsHist) / valsHist.length : 0;
+    const fmtM = v => v.toFixed(1).replace('.', ',');
+    const subComp = !avaliadas.length ? 'Ainda sem avaliação'
+      : nAval > 1 ? 'Atual ' + fmtM(media) + ' / 5 · Média das avaliações ' + fmtM(mediaHistGeral) + ' / 5'
+      : 'Média ' + fmtM(media) + ' / 5';
+    const seriesComp = [];
+    if (nAval > 1) seriesComp.push({ label: 'Média das avaliações', valores: cat.COMPETENCIAS.map(x => mediaHist[x.id] || 0), cor: g.cor(1) });
+    seriesComp.push({ label: 'Avaliação atual', valores: cat.COMPETENCIAS.map(x => comps[x.id] ? comps[x.id].nota : 0), cor: g.cor(0) });
     lat.appendChild(u.el('div.card', {}, [
       u.el('div.card__head', {}, [
         u.el('div', {}, [
           u.el('div.card__title', { text: 'Competências' }),
-          u.el('div.t-sm.t-muted', { text: avaliadas.length ? 'Média ' + media.toFixed(1).replace('.', ',') + ' / 5' : 'Ainda sem avaliação' })
+          u.el('div.t-sm.t-muted', { text: subComp })
         ])
       ]),
       u.el('div.card__body', {}, [
         avaliadas.length
           ? g.radar({
               eixos: cat.COMPETENCIAS.map(x => x.label.split(' ')[0]),
-              series: [{ label: 'Avaliação do coordenador', valores: cat.COMPETENCIAS.map(x => comps[x.id] ? comps[x.id].nota : 0) }]
+              series: seriesComp,
+              mostrarValores: true
             })
           : p.vazio({
               icone: 'award', titulo: 'Sem avaliação de competências',
@@ -494,12 +537,25 @@
     u.clear(alvo);
     const planos = db.planos.doColaborador(c.id);
 
+    /* Quantos ainda nao sairam do papel — o botao so aparece se houver algum. */
+    const naoIniciados = planos.filter(x => (x.status || 'nao_iniciado') === 'nao_iniciado');
+
     alvo.appendChild(u.el('div.u-row.u-wrap.u-gap-3.u-mb-4', {}, [
       u.el('div', {}, [
         u.el('div.card__title', { text: 'Plano de desenvolvimento' }),
         u.el('div.t-sm.t-muted', { text: 'O que foi combinado, com dono, prazo e indicador de sucesso.' })
       ]),
       u.el('span.u-grow'),
+      naoIniciados.length
+        ? u.el('button.btn.btn--soft.u-nowrap', {
+            type: 'button',
+            html: App.icon('play') + '<span>Iniciar ' +
+                  (naoIniciados.length === planos.length ? 'todas' : naoIniciados.length) +
+                  ' ' + (naoIniciados.length === 1 ? 'atividade' : 'atividades') + '</span>',
+            'data-tip': 'Marca como "em andamento" tudo o que ainda não começou',
+            onclick: () => iniciarTodasAsAtividades(c, naoIniciados)
+          })
+        : null,
       u.el('button.btn.btn--primary', {
         type: 'button', html: App.icon('plus') + '<span>Novo plano</span>',
         onclick: () => App.planoModal.abrir({ colaboradorId: c.id, aoSalvar: () => App.recarregarTela() })
@@ -542,6 +598,36 @@
     ]));
   }
 
+  /**
+   * Confirma e poe em andamento tudo o que nao comecou. Confirma porque
+   * mexe em varios registros de uma vez e nao ha desfazer — o texto lista
+   * o que vai mudar, para a decisao ser informada.
+   */
+  function iniciarTodasAsAtividades(c, naoIniciados) {
+    const nomes = naoIniciados.slice(0, 4).map(x => '· ' + (x.ponto || x.acao || 'sem título')).join('\n');
+    const resto = naoIniciados.length > 4 ? '\n· e mais ' + (naoIniciados.length - 4) : '';
+
+    App.modal.confirmar({
+      titulo: 'Iniciar ' + u.plural(naoIniciados.length, 'atividade'),
+      mensagem: 'Estas atividades passam para "em andamento" e ganham hoje como data de início:\n\n'
+                + nomes + resto,
+      confirmar: 'Iniciar ' + (naoIniciados.length === 1 ? 'a atividade' : 'todas'),
+      icone: 'play'
+    }).then(ok => {
+      if (!ok) return;
+      return db.planos.iniciarTodos(c.id).then(res => {
+        if (res.falhas) {
+          App.toast.aviso('Iniciadas parcialmente',
+            res.ok + ' de ' + res.total + ' — ' + u.plural(res.falhas, 'falhou', 'falharam'));
+        } else {
+          App.toast.ok(u.plural(res.ok, 'atividade iniciada', 'atividades iniciadas'),
+            u.primeiroNome(c.nome) + ' · início em ' + u.fmtDate(u.today()));
+        }
+        App.recarregarTela();
+      });
+    });
+  }
+
   /* ====================================================================== */
   /*  Aba: Evolucao                                                         */
   /* ====================================================================== */
@@ -580,8 +666,11 @@
     pintarTl();
     alvo.appendChild(cardTl);
 
-    /* --- graficos --- */
+    /* --- historico de faturamento (mes a mes) --- */
     const hist = A.historico(c);
+    alvo.appendChild(cardHistoricoFaturamento(hist));
+
+    /* --- graficos --- */
     const grid = u.el('div.grid.grid-2');
 
     grid.appendChild(g.card({
@@ -689,7 +778,8 @@
             series: [
               { label: 'Autoavaliação', valores: comp.linhas.map(l => l.auto || 0), cor: g.cor(1) },
               { label: 'Coordenador', valores: comp.linhas.map(l => l.coord || 0), cor: g.cor(0) }
-            ]
+            ],
+            mostrarValores: true
           }),
           u.el('div.u-mt-4', {}, [g.tabela(comp.linhas.map(l => l.label), [
             { label: 'Autoavaliação', valores: comp.linhas.map(l => l.auto) },
@@ -703,6 +793,60 @@
   /* ====================================================================== */
   /*  Aba: Evidencias                                                       */
   /* ====================================================================== */
+  /* ----------------------------------------------------------------------
+     Historico de faturamento — uma linha por competencia fechada, com as
+     tres faixas e o atingimento pelo liquido. Alimenta o feedback do 1:1:
+     mostra a trajetoria, nao so o mes corrente.
+     ---------------------------------------------------------------------- */
+  function cardHistoricoFaturamento(hist) {
+    const card = u.el('div.card.u-mb-5');
+    card.appendChild(u.el('div.card__head', {}, [
+      u.el('div', {}, [
+        u.el('div.card__title', { text: 'Histórico de faturamento' }),
+        u.el('div.t-sm.t-muted', { text: 'Mês a mês, com as faixas Mínima / Básica / Master. O atingimento conta pelo líquido.' })
+      ])
+    ]));
+
+    if (!hist.length) {
+      card.appendChild(u.el('div.card__body', {}, [p.vazio({
+        icone: 'chart', titulo: 'Sem histórico mensal',
+        desc: 'Rode o Sincronizar-Faturamento.ps1 para trazer o faturamento do Meta Master. Cada mês sincronizado vira uma linha aqui.'
+      })]));
+      return card;
+    }
+
+    const tb = u.el('tbody');
+    u.sortBy(hist, h => h.mes, 'desc').forEach(h => {
+      const liq = +h.realizado || 0;
+      const master = +h.meta || 0;
+      const pct = master ? (liq / master) * 100 : 0;
+      const faixa = liq >= master && master ? ['Master', 'ok']
+        : (h.basica && liq >= +h.basica) ? ['Básica', 'info']
+        : (h.minima && liq >= +h.minima) ? ['Mínima', 'warn']
+        : ['Abaixo', 'danger'];
+      tb.appendChild(u.el('tr', {}, [
+        u.el('td', { class: 't-semi u-nowrap', text: u.fmtCompetenciaLonga(h.mes) || h.mes }),
+        u.el('td', { class: 'u-right t-num', 'data-tip': h.minima ? u.fmtMoedaExata(h.minima) : null, text: h.minima ? u.fmtMoedaCurta(h.minima) : '—' }),
+        u.el('td', { class: 'u-right t-num', 'data-tip': h.basica ? u.fmtMoedaExata(h.basica) : null, text: h.basica ? u.fmtMoedaCurta(h.basica) : '—' }),
+        u.el('td', { class: 'u-right t-num', 'data-tip': master ? u.fmtMoedaExata(master) : null, text: master ? u.fmtMoedaCurta(master) : '—' }),
+        u.el('td', { class: 'u-right t-num t-muted', text: h.bruto ? u.fmtMoedaExata(h.bruto) : '—' }),
+        u.el('td', { class: 'u-right t-num t-semi', text: u.fmtMoedaExata(liq) }),
+        u.el('td', { class: 'u-right t-num', text: master ? u.fmtPct(pct, 1) : '—' }),
+        u.el('td', {}, [u.el('span', { class: 'badge badge--' + faixa[1], text: faixa[0] })]),
+        u.el('td', { class: 'u-right t-num', text: h.vendas ? u.fmtNum(h.vendas) : '—' })
+      ]));
+    });
+
+    card.appendChild(u.el('div.tbl-wrap', {}, [
+      u.el('table.tbl', {}, [
+        u.el('thead', {}, [u.el('tr', {}, ['Mês', 'Mínima', 'Básica', 'Master', 'Bruto', 'Líquido', '% Master', 'Faixa', 'Vendas']
+          .map((h, i) => u.el('th', { class: (i >= 1 && i <= 6) || i === 8 ? 'u-right' : '', text: h })))]),
+        tb
+      ])
+    ]));
+    return card;
+  }
+
   function todasEvidencias(colabId) {
     const out = [];
     db.observacoes.doColaborador(colabId).forEach(o =>

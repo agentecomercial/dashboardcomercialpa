@@ -55,6 +55,42 @@
 .next-card__mini b { display: block; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
 .next-card__mini span { font-size: 10.5px; color: var(--text-4); text-transform: uppercase; letter-spacing: .05em; font-weight: 620; }
 
+/* ==================== CARD COM PENDENCIA (fundo tingido) ====================
+   O card do consultor muda de cor conforme a pendencia, para achar de longe
+   quem precisa de atencao. A regra de qual estado vence esta em
+   A.estadoCard (services/12-analise.js).
+
+     est-atrasado  vermelho  passou da data marcada
+     est-fechado   amarelo   1:1 pendente de um ciclo que ja fechou
+     est-hoje      azul      encontro marcado para hoje
+     est-ok        —         sem pendencia, card normal
+
+   O tom e diluido de proposito (9%): com quatro cards pendentes lado a lado,
+   saturar deixaria a tela cansativa e nada se destacaria.
+   ========================================================================= */
+.card.est-atrasado {
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+.card.est-fechado {
+  background: color-mix(in srgb, var(--warn) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+}
+.card.est-hoje {
+  background: color-mix(in srgb, var(--info) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--info) 32%, var(--border));
+}
+
+/* As caixinhas internas ganham fundo proprio para nao sumirem no tingido. */
+.card.est-atrasado .next-card__mini > div,
+.card.est-fechado .next-card__mini > div,
+.card.est-hoje .next-card__mini > div { background: var(--surface); }
+
+/* No escuro o mesmo mix escurece demais: sobe a proporcao da cor. */
+html[data-theme="dark"] .card.est-atrasado { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+html[data-theme="dark"] .card.est-fechado  { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); }
+html[data-theme="dark"] .card.est-hoje     { background: color-mix(in srgb, var(--info) 13%, var(--surface)); }
+
 /* --- Atencao do coordenador --- */
 .alert-row {
   display: flex; align-items: flex-start; gap: 11px;
@@ -116,6 +152,9 @@
 .stat-tile__l { font-size: var(--fs-xs); color: var(--text-4); text-transform: uppercase; letter-spacing: .06em; font-weight: 640; }
 .stat-tile__v { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .stat-tile__s { font-size: var(--fs-xs); color: var(--text-3); margin-top: 3px; }
+/* Tile com valor abreviado: o cursor avisa que o numero cheio esta no tooltip. */
+.stat-tile[data-tip] { cursor: help; }
+.person-card__meta > div[data-tip] { cursor: help; }
 
 /* ============================ OBSERVACOES ============================ */
 .obs-card {
@@ -186,6 +225,42 @@ html[data-theme="dark"] .oo-step.is-on { background: rgba(99,102,241,.16); color
 .pill-item__x { margin-left: auto; color: var(--text-4); }
 .pill-item__x:hover { color: var(--danger); }
 
+/* ---- Linha ordenavel: numero + alca + item + setas ----
+   A ordem escolhida aqui e a ordem da conversa e da pauta impressa. */
+.pick-list { }
+.pick-row {
+  display: flex; align-items: center; gap: 8px;
+  border-radius: var(--r-md);
+  transition: opacity var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+}
+.pick-row__n {
+  flex: 0 0 20px; text-align: right;
+  font-family: var(--font-display); font-size: 12px; font-weight: 700;
+  color: var(--text-4); font-variant-numeric: tabular-nums;
+}
+.pick-row__alca {
+  flex: 0 0 auto; cursor: grab; user-select: none;
+  color: var(--text-4); font-size: 15px; line-height: 1;
+  padding: 6px 2px; letter-spacing: -2px;
+}
+.pick-row__alca:active { cursor: grabbing; }
+.pick-row:hover .pick-row__alca { color: var(--text-2); }
+.pick-row__setas { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+.icon-btn--xs { width: 22px; height: 22px; border-radius: var(--r-sm); }
+.icon-btn--xs .ic { width: 14px; height: 14px; }
+.icon-btn--xs:disabled { opacity: .3; cursor: default; }
+.icon-btn--xs:disabled:hover { background: none; }
+
+.pick-row.is-dragging { opacity: .45; }
+.pick-row.is-over {
+  box-shadow: 0 -2px 0 0 var(--brand-600);
+}
+.pick-row .pick-item { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 640px) {
+  .pick-row__alca { display: none; }        /* arrastar nao funciona bem no toque */
+}
+
 .pick-item {
   display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left;
   border: 1.5px solid var(--border); border-radius: var(--r-md);
@@ -194,6 +269,16 @@ html[data-theme="dark"] .oo-step.is-on { background: rgba(99,102,241,.16); color
 .pick-item:hover { border-color: var(--border-strong); background: var(--surface-2); }
 .pick-item.is-on { border-color: var(--brand-500); background: var(--brand-50); }
 html[data-theme="dark"] .pick-item.is-on { background: rgba(99,102,241,.12); }
+/* Orientacao de como tratar aquele registro na conversa. */
+.pick-item__dica {
+  display: flex; align-items: flex-start; gap: 6px;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: var(--fs-sm); color: var(--text-3); line-height: 1.5;
+}
+.pick-item__dica .ic { flex: 0 0 auto; margin-top: 3px; color: var(--brand-500); }
+.pick-item__fonte { display: block; font-size: 10.5px; color: var(--text-4); margin-top: 3px; }
+
 .pick-item__box {
   width: 18px; height: 18px; border-radius: 5px; flex: 0 0 18px; margin-top: 1px;
   border: 1.5px solid var(--border-strong); display: grid; place-items: center;
@@ -324,3 +409,47 @@ html[data-theme="dark"] .cmdk__item mark { background: rgba(99,102,241,.3); colo
 .theme-card__prev { height: 66px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
 .theme-card__prev i { display: block; height: 7px; border-radius: 3px; }
 .theme-card__lbl { padding: 7px; font-size: var(--fs-sm); font-weight: 600; text-align: center; border-top: 1px solid var(--border); }
+
+/* ================= Registro do encontro (leitura formatada) =================
+   O registro e salvo como texto puro (editavel no passo 10); estas classes
+   so formatam a EXIBICAO. Cada secao tem a sua cor semantica: o titulo, o
+   chip do icone, a divisoria, os bullets, os selos numerados e o bloco de
+   resposta herdam de --sec/--sec-bg — e os tons vem dos tokens do tema,
+   entao claro e escuro acompanham sozinhos. */
+.reg-head { padding: 4px 0 12px; border-bottom: 1px solid var(--border); }
+.reg-head__t { font-size: var(--fs-xs); letter-spacing: .09em; color: var(--text-3); text-transform: uppercase; font-weight: 700; }
+.reg-head__nome { font-size: 18px; font-weight: 800; margin-top: 2px;
+  background: linear-gradient(90deg, var(--brand-500), var(--accent-500));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.reg-head__sub { font-size: var(--fs-sm); color: var(--text-3); margin-top: 2px; }
+
+.reg-sec { --sec: var(--brand-500); --sec-bg: rgba(99,102,241,.13); margin-top: 22px; }
+.reg-sec--ok     { --sec: var(--ok);         --sec-bg: rgba(16,185,129,.13); }
+.reg-sec--warn   { --sec: var(--warn);       --sec-bg: rgba(245,158,11,.14); }
+.reg-sec--danger { --sec: var(--danger);     --sec-bg: rgba(239,68,68,.13);  }
+.reg-sec--info   { --sec: var(--info);       --sec-bg: rgba(59,130,246,.13); }
+.reg-sec--purple { --sec: var(--purple);     --sec-bg: rgba(139,92,246,.14); }
+.reg-sec--pink   { --sec: var(--pink);       --sec-bg: rgba(236,72,153,.13); }
+.reg-sec--accent { --sec: var(--accent-500); --sec-bg: rgba(20,184,166,.14); }
+
+.reg-sec__h { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: var(--fs-md);
+  letter-spacing: .05em; color: var(--sec); text-transform: uppercase; margin-bottom: 9px; }
+.reg-sec__h::after { content: ""; flex: 1; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--sec-bg), transparent); }
+.reg-sec__ico { width: 26px; height: 26px; border-radius: 8px; background: var(--sec-bg);
+  display: flex; align-items: center; justify-content: center; font-size: 14px; flex: 0 0 auto; }
+
+.reg-p { color: var(--text-2); margin: 3px 0; }
+.reg-p b, .reg-li b, .reg-num b { color: var(--text); font-weight: 700; }
+
+.reg-li { display: flex; gap: 8px; color: var(--text-2); margin: 6px 0; }
+.reg-li::before { content: "\2022"; color: var(--sec); font-weight: 800; }
+
+.reg-num { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); margin: 8px 0; }
+.reg-num__n { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--sec-bg);
+  color: var(--sec); font-size: var(--fs-xs); font-weight: 800;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+
+.reg-resp { margin: 2px 0 10px 24px; padding: 6px 12px; border-left: 3px solid var(--sec);
+  background: var(--sec-bg); border-radius: 0 8px 8px 0; color: var(--text-2); font-size: var(--fs-md); }
+.reg-resp b { color: var(--sec); font-weight: 700; }
