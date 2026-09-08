@@ -39,7 +39,7 @@ var _PROPOSTA_TEXTO = "É uma imensa honra tê-lo conosco e poder fazer parte da
 
 var _PROPOSTA_PRECOS = {
   'IF':        {integral:4596.40,  parcelado:383.03,  parcelado_desc:249.75,   avista_credito:2997.00, avista:2497.00,  reciclagem:1798.20},
-  'MASTER':    {integral:8796.45,  parcelado:733.03,  parcelado_desc:649.75,   avista_credito:5997.00, avista:5997.00,  reciclagem:3898.24},
+  'MASTER':    {integral:7796.45,  parcelado:733.03,  parcelado_desc:649.75,   avista_credito:5997.00, avista:5997.00,  reciclagem:3898.24},
   'CEOP':      {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
   'FGPC':      {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
   'BHP':       {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
@@ -210,6 +210,8 @@ function abrirPropostaModal(){
   /* Zera a modalidade Elite/Legacy Belt a cada abertura (evita vazar o texto
      da Seção I para uma proposta comum). A grade carregada é preservada. */
   if(typeof window._beltReset === 'function') window._beltReset();
+  /* Redesenha os chips do texto da Seção I (mantém a última escolha). */
+  if(typeof window._introReset === 'function') window._introReset();
   document.getElementById('propostaOverlay').classList.add('open');
   /* Ativa o preview em tempo real desde o início — qualquer interação
      (sliders, +/− qty, preço, checkbox) regenera o PDF instantaneamente
@@ -908,10 +910,17 @@ function gerarPropostaPDF(modo, loteCtx, loteDoc){
   // Box motivacional · Estilo 26 (Fundo Navy + texto bege/dourado italic Times)
   var motivX = mg + 5;
   var motivMaxW = maxW - 10;
-  /* Texto da Seção I: no lote vem por cliente; individual usa Elite/Legacy ativo ou padrão. */
+  /* Texto da Seção I: no lote vem por cliente; individual segue a ordem
+     seletor (GGB/CIS/personalizado) > Elite/Legacy ativo > padrão.
+     O seletor devolve null quando está em "GGB", preservando o
+     comportamento antigo em que o texto do belt vence. */
   var _txtIntro = _emLote
-    ? (loteCtx.txtIntro || _PROPOSTA_TEXTO)
-    : ((typeof window._beltTextoIntro === 'function' && window._beltTextoIntro()) || _PROPOSTA_TEXTO);
+    ? (loteCtx.txtIntro
+       || (typeof window._introTextoAtivo === 'function' && window._introTextoAtivo())
+       || _PROPOSTA_TEXTO)
+    : ((typeof window._introTextoAtivo === 'function' && window._introTextoAtivo())
+       || (typeof window._beltTextoIntro === 'function' && window._beltTextoIntro())
+       || _PROPOSTA_TEXTO);
   var motivLines = doc.splitTextToSize(_txtIntro.replace(/\n/g,' '), motivMaxW);
   var motivH = motivLines.length * 3.6 + 5;
   _quebraPagina(motivH + 3);
