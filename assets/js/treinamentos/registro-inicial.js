@@ -262,6 +262,29 @@
       ]
     },
     {
+      id: 'treinamento-script',
+      titulo: 'Treinamento Comercial SCRIPT',
+      descricao: 'Script CIS × Avaliação de Role Play — treino rápido e direto: o script de vendas do Método CIS confrontado com a ficha de Role Play (5 etapas SPIN, 15 critérios). 8 HTMLs: índice + 4 etapas + SPIN + Conclusão + Simulação comentada (30 slides).',
+      produto: 'SCRIPT',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 2,
+      url: 'treinamento-script/index.html',
+      icone: '🎭',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                              url: 'treinamento-script/index.html',        tipo: 'index'  },
+        { titulo: 'Etapa 1 — Apresentação',                     url: 'treinamento-script/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Etapa 2 — Sondagem',                         url: 'treinamento-script/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Etapa 3 — Desenvolvimento',                  url: 'treinamento-script/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Etapa 4 — Negociação',                       url: 'treinamento-script/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN — a régua da avaliação',                url: 'treinamento-script/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Etapa 5 — Conclusão · Fechamento',           url: 'treinamento-script/fechamento.html',   tipo: 'final' },
+        { titulo: 'Simulação comentada — o caso Marcos',        url: 'treinamento-script/simulacao.html',    tipo: 'extra'  }
+      ]
+    },
+    {
       id: 'treinamento-fcis',
       titulo: 'Treinamento Comercial FCIS',
       descricao: 'Formação em Coaching Integral Sistêmico (certificação internacional FCU) — treinamento comercial para a equipe vender o FCIS. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',

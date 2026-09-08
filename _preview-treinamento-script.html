@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Prévia — Treinamento SCRIPT × Role Play (formato reduzido)</title>
+<style>
+:root{
+  --bg:#0a0d12; --bg2:#10151c; --panel:#141b24; --line:#25303c;
+  --tx:#e8edf2; --mut:#95a2b0; --gold:#f5b81d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--tx);
+  font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  line-height:1.6;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:36px 24px 90px}
+h1{font-size:32px;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}
+h2{font-size:21px;margin:44px 0 6px;padding-bottom:9px;border-bottom:1px solid var(--line);letter-spacing:-.01em}
+h3{font-size:16px;margin:22px 0 6px}
+p{margin:0 0 12px;max-width:78ch;color:#d3dbe3}
+.sub{color:var(--mut);font-size:15px;max-width:78ch}
+.eyebrow{font-family:Consolas,monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.tag{display:inline-block;font-family:Consolas,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:#1d2733;color:var(--mut);border:1px solid var(--line)}
+.tag.ok{background:#16281f;color:#77c79c;border-color:#264234}
+.tag.warn{background:#2c2113;color:#d9ab5c;border-color:#453520}
+.tag.gap{background:#2c1616;color:#e08a80;border-color:#4a2622}
+
+.aviso{border:1px solid #453520;background:#1c1710;border-radius:6px;padding:16px 20px;margin:20px 0}
+.aviso p:last-child{margin-bottom:0}
+
+/* --------- paletas --------- */
+.paletas{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));margin:22px 0}
+.pal{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.pal > header{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pal > header b{font-size:16px}
+.pal > header span{font-family:Consolas,monospace;font-size:11px;color:var(--mut)}
+.chips{display:flex;gap:0;height:26px}
+.chips i{flex:1}
+.pal .why{padding:12px 18px;font-size:13.5px;color:var(--mut);border-top:1px solid var(--line)}
+
+/* --------- mini-slide real (classes do molde) --------- */
+.mini{padding:16px;background:#05070a}
+.slide{
+  width:100%; aspect-ratio:16/9; border-radius:5px; overflow:hidden;
+  padding:22px 26px; display:flex; flex-direction:column; gap:12px;
+  border:1px solid var(--sl-border);
+  background:var(--sl-grad);
+  font-size:11px;
+}
+.slide .slide-header{display:flex;flex-direction:column;gap:2px;padding-bottom:9px;border-bottom:1px solid var(--sl-border)}
+.slide .sl-eyebrow{font-family:Consolas,monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--sl-accent)}
+.slide .slide-title{margin:0;font-size:19px;line-height:1.1;font-weight:700;color:var(--sl-text);letter-spacing:-.01em}
+.slide.metal .slide-title{
+  background:linear-gradient(180deg,var(--sl-metal-a) 0%,var(--sl-accent) 45%,var(--sl-metal-b) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.6));
+}
+.slide .grid{display:grid;gap:8px;flex:1}
+.slide .grid-3{grid-template-columns:repeat(3,1fr)}
+.slide .card{
+  background:var(--sl-card);border:1px solid var(--sl-border);border-radius:4px;padding:9px 11px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.slide .card h4{margin:0;font-size:9px;color:var(--sl-accent);letter-spacing:.02em;font-weight:700}
+.slide .card p{margin:0;font-size:9.5px;line-height:1.4;color:var(--sl-mut);max-width:none}
+.slide .metric .value{font-size:26px;font-weight:800;line-height:1;color:var(--sl-accent)}
+.slide.metal .metric .value{
+  background:linear-gradient(180deg,var(--sl-metal-a) 0%,var(--sl-accent) 50%,var(--sl-metal-b) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.slide .metric .lbl{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--sl-mut)}
+
+/* paleta A — meia-noite + gelo */
+.pal-a{
+  --sl-grad:linear-gradient(135deg,#12294d 0%,#0d1e3a 55%,#050a16 100%);
+  --sl-accent:#7fb8f0; --sl-text:#eef4fb; --sl-mut:#9fb2c9;
+  --sl-border:rgba(127,184,240,.30); --sl-card:rgba(12,30,56,.66);
+  --sl-metal-a:#d6eaff; --sl-metal-b:#2f6cb0;
+}
+/* paleta B — berinjela + lilás */
+.pal-b{
+  --sl-grad:linear-gradient(135deg,#2a1a3c 0%,#221430 55%,#0d0716 100%);
+  --sl-accent:#b18cf0; --sl-text:#f4eefb; --sl-mut:#b0a3c4;
+  --sl-border:rgba(177,140,240,.32); --sl-card:rgba(34,20,48,.7);
+  --sl-metal-a:#e3d2ff; --sl-metal-b:#6a3fb8;
+}
+/* paleta C — grafite + lima */
+.pal-c{
+  --sl-grad:linear-gradient(135deg,#232a1a 0%,#1a2013 55%,#0a0d07 100%);
+  --sl-accent:#a9c94a; --sl-text:#f3f6ea; --sl-mut:#adb59a;
+  --sl-border:rgba(169,201,74,.32); --sl-card:rgba(28,34,18,.7);
+  --sl-metal-a:#e6f0bb; --sl-metal-b:#5f7a1e;
+}
+
+/* --------- tabelas --------- */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;margin:16px 0;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{padding:10px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:#1a222c;font-family:Consolas,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:500;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.n{font-family:Consolas,monospace;text-align:right;color:var(--gold)}
+del{color:#7a848f;text-decoration-color:#5a636c}
+
+/* --------- inventário --------- */
+.deck{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin:14px 0;overflow:hidden}
+.deck > header{padding:12px 18px;background:#1a222c;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.deck > header b{font-size:15.5px}
+.deck > header em{font-style:normal;font-family:Consolas,monospace;font-size:11px;color:var(--mut)}
+.deck ol{margin:0;padding:14px 18px 16px 40px;columns:2;column-gap:34px;font-size:13.5px;color:#cfd8e0}
+.deck ol li{margin-bottom:4px;break-inside:avoid}
+@media(max-width:720px){.deck ol{columns:1}}
+
+.tot{display:flex;gap:26px;flex-wrap:wrap;margin:18px 0;padding:16px 20px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.tot div{display:flex;flex-direction:column}
+.tot .v{font-size:26px;font-weight:800;color:var(--gold);line-height:1.1;font-family:Consolas,monospace}
+.tot .l{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+
+ul.q{max-width:78ch}
+ul.q li{margin-bottom:8px}
+code{font-family:Consolas,monospace;font-size:13px;background:#1a222c;padding:1px 5px;border-radius:3px;color:#d9e2ea}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Prévia para validação · não construir antes do OK</p>
+  <h1>Treinamento SCRIPT — script CIS confrontado com o Role Play</h1>
+  <p class="sub">Origem dupla: o <strong>Google Slides do script de vendas do Método CIS</strong> (19 telas) + a ficha <code>5 - ROLE_PLAY_-_AVALIAO.pdf</code> (5 etapas SPIN, 3 critérios de nota por etapa). Objetivo: um treinamento <strong>muito mais curto e direto</strong> que os anteriores, onde cada deck é uma etapa da avaliação — o consultor treina exatamente aquilo em que vai ser medido no role play.</p>
+
+  <div class="aviso">
+    <p><span class="tag warn">Desvios do padrão</span></p>
+    <p><strong>1 · Formato reduzido.</strong> Todos os treinamentos anteriores têm 115 slides. Este terá <strong>24</strong> — material de treino rápido antes do role play, não um curso longo. Cada deck tem exatamente 4 telas, sempre no mesmo ritmo: <em>critérios da ficha → o que dizer (script literal) → a lacuna coberta → role play relâmpago</em>. A estrutura de arquivos continua a mesma (shell + 6 decks), então nada muda no visualizador.</p>
+    <p><strong>2 · Decks renomeados para as etapas da avaliação.</strong> Em vez de Produto/Prospecção/Apresentação/Negociação, os decks seguem as 5 etapas da ficha de role play. O módulo SPIN continua obrigatório — e aqui ele é literal: <em>a ficha de avaliação é SPIN Selling</em>.</p>
+    <p><strong>3 · O script original será reordenado.</strong> No Slides, "Desenvolvimento" vem <em>antes</em> de "Sondagem". A ficha de avaliação (e o SPIN) cobram o contrário: sondar primeiro, apresentar depois. O treinamento ensina a ordem da avaliação e mostra o porquê — é justamente um dos pontos que derrubam nota hoje.</p>
+  </div>
+
+  <!-- ============ CONFRONTO ============ -->
+  <h2>1 · O confronto — script × ficha de avaliação</h2>
+  <p>Este cruzamento é o coração do treinamento. Cada etapa da ficha, o que o script já entrega, e onde ele deixa o consultor descoberto:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:17%">Etapa da ficha</th><th style="width:30%">O que o avaliador mede</th><th style="width:28%">O que o script cobre</th><th>Lacuna a treinar</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>1 · Apresentação</strong></td>
+          <td>Conexão e empatia · validou tempo e agenda · coletou contexto com fluidez</td>
+          <td>Introdução ("time do Paulo Vieira…") + Rapport ("como você chegou até aqui?")</td>
+          <td><span class="tag gap">gap</span> Nenhum slide valida tempo/agenda — critério de nota sem frase pronta no script.</td>
+        </tr>
+        <tr>
+          <td><strong>2 · Sondagem</strong></td>
+          <td>Identificou problemas · explorou consequências · cliente percebeu urgência</td>
+          <td>Slide "Sondagem" já lista os 3 movimentos (dor → consequência → urgência)</td>
+          <td><span class="tag warn">ordem</span> No script a sondagem vem depois do pitch. Reordenar e dar perguntas prontas de Problema e Implicação.</td>
+        </tr>
+        <tr>
+          <td><strong>3 · Desenvolvimento</strong></td>
+          <td>Conectou benefício à dor mapeada · cliente descreveu o valor · demonstrou autoridade</td>
+          <td>6 slides "Como o CIS vai te ajudar" + frase-mestra do MCIS + pilares</td>
+          <td><span class="tag warn">condensar</span> Benefício genérico em lote. Treinar o par dor dita → promessa certa, e a pergunta de Necessidade ("o que mudaria pra você?").</td>
+        </tr>
+        <tr>
+          <td><strong>4 · Negociação</strong></td>
+          <td>Causa raiz da objeção · postura consultiva · reafirmou valor</td>
+          <td>Global × Presencial (4 slides) + tabela de Valores — só a ancoragem</td>
+          <td><span class="tag gap">gap</span> O script não trata objeção ("tá caro", "vou pensar"). É a etapa mais descoberta das cinco.</td>
+        </tr>
+        <tr>
+          <td><strong>5 · Conclusão</strong></td>
+          <td>Resumo eficaz · compromisso claro e específico · encerramento profissional</td>
+          <td>Fechamento (5 perguntas + "Pix ou cartão?") e Fechamento sem sucesso (salvar contato)</td>
+          <td><span class="tag warn">parcial</span> Falta o resumo dos benefícios antes da pergunta de fechamento — critério 1 da etapa.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ NOME ============ -->
+  <h2>2 · Nome do treinamento</h2>
+  <p>O nome define a pasta, a sigla nos assets e o registro em <code>TRAP_REGISTRO</code>. Três opções:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:16%">Sigla</th><th style="width:32%">Nome</th><th style="width:24%">Pasta</th><th>Leitura</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>SCRIPT</strong> <span class="tag ok">sugerido</span></td>
+          <td>Script CIS — Treino de Role Play</td>
+          <td><code>treinamento-script/</code></td>
+          <td>É como você chamou o produto no comando. Direto: o consultor sabe que ali está o roteiro que cai na avaliação.</td>
+        </tr>
+        <tr>
+          <td><strong>RP5</strong></td>
+          <td>Role Play em 5 Etapas</td>
+          <td><code>treinamento-rp5/</code></td>
+          <td>Nomeia pela avaliação, não pelo roteiro. Sobrevive se o script do CIS mudar, mas esconde que o conteúdo é o script.</td>
+        </tr>
+        <tr>
+          <td><strong>SxR</strong></td>
+          <td>Script × Role Play</td>
+          <td><code>treinamento-sxr/</code></td>
+          <td>Explicita o confronto que motivou o treinamento. Sigla menos óbvia de pronunciar no dia a dia.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ PALETA ============ -->
+  <h2>3 · Identidade visual</h2>
+  <p>Amostras em <strong>mini-slides reais</strong> com as classes do molde. Nenhuma repete a biblioteca atual: CIS é azul-marinho, FGPC grafite+dourado, BHP ardósia+champanhe, FCIS preto+esmeralda, ML5 tabaco+dourado, RAC petróleo+turquesa.</p>
+  <p class="sub">A e B estão <strong>com</strong> efeito metálico na escrita; a C está <strong>sem</strong>. O efeito é independente da paleta — dá para combinar qualquer uma das duas formas.</p>
+
+  <div class="paletas">
+
+    <!-- A -->
+    <div class="pal">
+      <header><b>A · Meia-noite + Gelo</b><span>#0d1e3a · #7fb8f0</span></header>
+      <div class="chips"><i style="background:#050a16"></i><i style="background:#0d1e3a"></i><i style="background:#12294d"></i><i style="background:#7fb8f0"></i><i style="background:#d6eaff"></i></div>
+      <div class="mini">
+        <div class="slide pal-a metal">
+          <div class="slide-header">
+            <span class="sl-eyebrow">Etapa 2 • Sondagem</span>
+            <h3 class="slide-title">Dor → Consequência → Urgência</h3>
+          </div>
+          <div class="grid grid-3">
+            <div class="card metric"><span class="value">5</span><span class="lbl">Etapas avaliadas</span></div>
+            <div class="card metric"><span class="value">15</span><span class="lbl">Critérios de nota</span></div>
+            <div class="card metric"><span class="value">24</span><span class="lbl">Slides diretos</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why">Parente do azul-marinho do CIS — de propósito: o conteúdo É o script do CIS. Um tom mais frio e claro separa os dois cards sem quebrar a família.</p>
+    </div>
+
+    <!-- B -->
+    <div class="pal">
+      <header><b>B · Berinjela + Lilás</b><span>#221430 · #b18cf0</span></header>
+      <div class="chips"><i style="background:#0d0716"></i><i style="background:#221430"></i><i style="background:#2a1a3c"></i><i style="background:#b18cf0"></i><i style="background:#e3d2ff"></i></div>
+      <div class="mini">
+        <div class="slide pal-b metal">
+          <div class="slide-header">
+            <span class="sl-eyebrow">Etapa 2 • Sondagem</span>
+            <h3 class="slide-title">Dor → Consequência → Urgência</h3>
+          </div>
+          <div class="grid grid-3">
+            <div class="card metric"><span class="value">5</span><span class="lbl">Etapas avaliadas</span></div>
+            <div class="card metric"><span class="value">15</span><span class="lbl">Critérios de nota</span></div>
+            <div class="card metric"><span class="value">24</span><span class="lbl">Slides diretos</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why">Inédita na biblioteca inteira. Tom de "palco" que conversa com a ideia de role play — o consultor está ensaiando uma cena que será avaliada.</p>
+    </div>
+
+    <!-- C -->
+    <div class="pal">
+      <header><b>C · Grafite + Lima</b><span>#1a2013 · #a9c94a</span></header>
+      <div class="chips"><i style="background:#0a0d07"></i><i style="background:#1a2013"></i><i style="background:#232a1a"></i><i style="background:#a9c94a"></i><i style="background:#e6f0bb"></i></div>
+      <div class="mini">
+        <div class="slide pal-c">
+          <div class="slide-header">
+            <span class="sl-eyebrow">Etapa 2 • Sondagem</span>
+            <h3 class="slide-title">Dor → Consequência → Urgência</h3>
+          </div>
+          <div class="grid grid-3">
+            <div class="card metric"><span class="value">5</span><span class="lbl">Etapas avaliadas</span></div>
+            <div class="card metric"><span class="value">15</span><span class="lbl">Critérios de nota</span></div>
+            <div class="card metric"><span class="value">24</span><span class="lbl">Slides diretos</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why">Verde-lima de "checklist aprovado" — combina com um treinamento que é, no fundo, uma ficha de nota. Risco: é a mais próxima do esmeralda do FCIS, embora bem mais amarelada.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ ESTRUTURA ============ -->
+  <h2>4 · Estrutura dos 6 decks</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:18%">Arquivo</th><th style="width:26%">Deck no padrão FGPC</th><th style="width:34%">Neste treinamento</th><th class="n" style="width:10%">Slides</th></tr></thead>
+      <tbody>
+        <tr><td><code>modulo-1.html</code></td><td><del>Produto</del></td><td><strong>Etapa 1 · Apresentação</strong> — abertura, rapport e agenda</td><td class="n">4</td></tr>
+        <tr><td><code>modulo-2.html</code></td><td><del>Prospecção</del></td><td><strong>Etapa 2 · Sondagem</strong> — dor, consequência, urgência</td><td class="n">4</td></tr>
+        <tr><td><code>modulo-3.html</code></td><td>Apresentação e Proposta</td><td><strong>Etapa 3 · Desenvolvimento</strong> — benefício certo para a dor dita</td><td class="n">4</td></tr>
+        <tr><td><code>modulo-4.html</code></td><td>Negociação e Objeções</td><td><strong>Etapa 4 · Negociação</strong> — Global × Presencial, valores e objeções</td><td class="n">4</td></tr>
+        <tr><td><code>spin-selling.html</code></td><td>SPIN Selling adaptado</td><td><strong>SPIN — a régua da avaliação</strong> — cada etapa ↔ cada letra</td><td class="n">4</td></tr>
+        <tr><td><code>fechamento.html</code></td><td>Fechamento</td><td><strong>Etapa 5 · Conclusão</strong> — resumo, compromisso e o script do "não"</td><td class="n">4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tot">
+    <div><span class="v">24</span><span class="l">slides</span></div>
+    <div><span class="v">−79%</span><span class="l">vs. os 115 do padrão</span></div>
+    <div><span class="v">6</span><span class="l">decks · 4 telas cada</span></div>
+    <div><span class="v">2</span><span class="l">fontes (script + ficha)</span></div>
+  </div>
+
+  <!-- ============ INVENTÁRIO ============ -->
+  <h2>5 · Inventário de slides</h2>
+  <p class="sub">Todo deck tem exatamente 4 telas, sempre no mesmo ritmo: <strong>critérios da ficha → o que dizer (script literal) → a lacuna coberta → role play relâmpago</strong>. Telas densas: cada uma condensa o que no padrão FGPC seriam 2–3 slides.</p>
+
+  <div class="deck">
+    <header><b>Etapa 1 — Apresentação</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — os 3 critérios que o avaliador vai marcar</li>
+      <li>A abertura palavra por palavra + validar tempo e agenda (frase nova — gap da ficha)</li>
+      <li>Rapport e perguntas de Situação ("como você chegou até aqui?" · trabalho · casado)</li>
+      <li>Role play 60 segundos + erros que zeram a etapa</li>
+    </ol>
+  </div>
+
+  <div class="deck">
+    <header><b>Etapa 2 — Sondagem</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — os 3 critérios da etapa</li>
+      <li>Sondar ANTES de apresentar: a inversão do script e o porquê</li>
+      <li>Dor → Consequência → Urgência, com perguntas prontas de Problema e Implicação</li>
+      <li>Role play: sondar 5 minutos sem oferecer nada</li>
+    </ol>
+  </div>
+
+  <div class="deck">
+    <header><b>Etapa 3 — Desenvolvimento</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — os 3 critérios da etapa</li>
+      <li>A frase-mestra do MCIS + os 4 pilares (financeiro, emocional, profissional, conjugal)</li>
+      <li>Matriz dor dita → promessa certa + pergunta de Necessidade + autoridade em uma frase</li>
+      <li>Role play: desenvolver usando SÓ as dores que o cliente falou</li>
+    </ol>
+  </div>
+
+  <div class="deck">
+    <header><b>Etapa 4 — Negociação</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — os 3 critérios da etapa</li>
+      <li>Global × Presencial em 60 segundos + valores e ancoragem (Bronze → VIP)</li>
+      <li>Objeção é dúvida não respondida: causa raiz + postura consultiva (reafirmar valor, nunca defender preço)</li>
+      <li>Role play: "tá caro" e "vou pensar"</li>
+    </ol>
+  </div>
+
+  <div class="deck">
+    <header><b>SPIN — a régua da avaliação</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — a ficha de role play É SPIN Selling</li>
+      <li>S·P·I·N em uma tela + mapa etapa da ficha ↔ letra do SPIN</li>
+      <li>Frases que derrubam nota (pitch cedo demais, falar mais que ouvir)</li>
+      <li>Checklist SPIN de bolso para levar pro role play</li>
+    </ol>
+  </div>
+
+  <div class="deck">
+    <header><b>Etapa 5 — Conclusão</b><em>4 slides</em></header>
+    <ol>
+      <li>Capa — os 3 critérios da etapa</li>
+      <li>Resumo eficaz + as 5 perguntas de fechamento + "Pix ou cartão?"</li>
+      <li>O script do "não": salvar contato e deixar a porta aberta</li>
+      <li>Role play final: a reunião completa contra a ficha, com nota</li>
+    </ol>
+  </div>
+
+  <!-- ============ PIPELINE ============ -->
+  <h2>6 · O que será feito após o OK</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:7%">Etapa</th><th style="width:30%">Ação</th><th>Detalhe</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Scaffold</td><td>Criar <code>treinamento-&lt;sigla&gt;/assets/</code>; copiar <code>cis.css</code> e <code>cis.js</code>, trocar só os valores de cor. Nomes internos <code>--cis-*</code> preservados.</td></tr>
+        <tr><td class="n">2</td><td>Shell</td><td>Clonar o <code>index.html</code> do molde; ajustar branding, hero, cards, <code>ROUTES</code>, <code>NESTED_PARENT</code> e <code>SLIDE_TITLES</code> com os 24 títulos acima.</td></tr>
+        <tr><td class="n">3</td><td>Decks</td><td>Gerar os 6 HTMLs com as classes do molde. Falas do script em blocos literais; critérios da ficha como checklist em toda capa de etapa.</td></tr>
+        <tr><td class="n">4</td><td>Registro</td><td>Acrescentar em <code>window.TRAP_REGISTRO</code> (<code>assets/js/treinamentos/registro-inicial.js</code>) com <code>estrutura[]</code> dos 7 HTMLs — sugestão: <code>ordem: 2</code> (ao lado do RAC), ícone 🎭.</td></tr>
+        <tr><td class="n">5</td><td>Validação</td><td>Conferir contagem por deck, casamento com <code>SLIDE_TITLES</code>, encadeamento dos <code>end-cta</code>, regerar o índice de busca e abrir no navegador.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ DECISÕES ============ -->
+  <h2>7 · Decisões <span class="tag ok">validadas</span></h2>
+  <ul class="q">
+    <li><strong>Nome</strong> — SCRIPT (<code>treinamento-script/</code>).</li>
+    <li><strong>Paleta</strong> — B (berinjela + lilás).</li>
+    <li><strong>Efeito metálico na escrita</strong> — sim.</li>
+    <li><strong>A inversão da ordem</strong> — confirmada: Sondagem antes de Desenvolvimento (ordem da ficha/SPIN).</li>
+    <li><strong>Tamanho</strong> — 24 slides (6 decks × 4 telas).</li>
+  </ul>
+
+</div>
+</body>
+</html>

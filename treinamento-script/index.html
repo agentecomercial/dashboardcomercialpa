@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Treinamento Comercial SCRIPT — Script CIS × Role Play</title>
+<link rel="stylesheet" href="assets/script.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
+  body { color: var(--cis-text); font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  /* ===== Layout com sidebar ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    position: relative;
+    background: linear-gradient(170deg, #221430 0%, #0d0716 100%);
+    border-right: 1px solid rgba(177,140,240,0.18);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 14px;
+    overflow-y: auto;
+    z-index: 6;
+  }
+  .sidebar .brand {
+    padding: 4px 12px 18px;
+    border-bottom: 1px solid rgba(177,140,240,0.12);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+  }
+  .sidebar .brand h2 {
+    margin: 4px 0 0;
+    font-size: 22px;
+    color: var(--cis-yellow);
+    letter-spacing: -0.5px;
+    font-weight: 900;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidenav-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+    margin: 14px 12px 6px;
+  }
+  .sidenav-item {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cis-text);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 600 14px/1.2 inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .sidenav-item:hover { background: rgba(177,140,240,0.08); color: var(--cis-yellow); }
+  .sidenav-item.is-active {
+    background: rgba(177,140,240,0.15);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico {
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico svg { width: 16px; height: 16px; }
+  .sidenav-item .num {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(177,140,240,0.15);
+    color: var(--cis-yellow);
+    font-weight: 900;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidenav-item .meta {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--cis-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Chevron para expandir/recolher subtópicos */
+  .sidenav-item .chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: var(--cis-muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: transform .2s ease, background .15s ease, color .15s ease;
+    flex: 0 0 22px;
+    padding: 0;
+  }
+  .sidenav-item .chevron:hover {
+    background: rgba(177,140,240,0.18);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .chevron svg { width: 11px; height: 11px; }
+  .sidenav-item .chevron.is-open { transform: rotate(90deg); color: var(--cis-yellow); }
+  .sidenav-item.highlight .chevron { color: var(--cis-yellow); }
+  .sidenav-item.highlight.is-active .chevron { color: var(--cis-blue-900); }
+
+  .sidenav-item.highlight {
+    background: linear-gradient(135deg, rgba(177,140,240,0.18), rgba(138,95,214,0.10));
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    font-weight: 800;
+    margin-top: 6px;
+  }
+  .sidenav-item.highlight:hover { background: linear-gradient(135deg, rgba(177,140,240,0.28), rgba(138,95,214,0.18)); }
+  .sidenav-item.highlight.is-active { background: var(--cis-yellow); color: var(--cis-blue-900); }
+  .sidenav-item.highlight.is-active .ico { color: var(--cis-blue-900); }
+
+  .sidebar .foot {
+    margin-top: auto;
+    padding: 14px 12px 0;
+    border-top: 1px solid rgba(177,140,240,0.12);
+    font-size: 11px;
+    color: var(--cis-muted);
+    line-height: 1.4;
+  }
+
+  /* Container agrupador (Fechamento CIS contém SPIN aninhado + seus subtópicos) */
+  .sidenav-group {
+    display: none;
+    margin-left: 18px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(177,140,240,0.18);
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .sidenav-group.is-open { display: block; }
+
+  /* Item aninhado (sub-item da seção) */
+  .sidenav-item.nested {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--cis-yellow);
+    background: rgba(177,140,240,0.06);
+    border: 1px solid rgba(177,140,240,0.18);
+    margin-top: 4px;
+  }
+  .sidenav-item.nested:hover {
+    background: rgba(177,140,240,0.14);
+    border-color: var(--cis-card-border-strong);
+  }
+  .sidenav-item.nested.is-active {
+    background: rgba(177,140,240,0.22);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+
+  /* Sublista de slides (subtópicos) por deck */
+  .sidenav-sub {
+    list-style: none;
+    margin: 4px 0 8px;
+    padding: 4px 4px 8px 12px;
+    border-left: 2px solid rgba(177,140,240,0.18);
+    margin-left: 18px;
+    display: none;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sidenav-sub.is-open { display: block; }
+
+  .sidenav-sub li { margin: 0; }
+  .sidenav-sub-item {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--cis-muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font: 500 12px/1.35 inherit;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    transition: background .12s ease, color .12s ease;
+  }
+  .sidenav-sub-item:hover { background: rgba(177,140,240,0.08); color: var(--cis-yellow); }
+  .sidenav-sub-item.is-current {
+    background: rgba(177,140,240,0.18);
+    color: var(--cis-yellow);
+    font-weight: 700;
+  }
+  .sidenav-sub-item .sub-n {
+    flex: 0 0 22px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 10px;
+    color: var(--cis-yellow);
+    opacity: .7;
+    padding-top: 1px;
+  }
+  .sidenav-sub-item.is-current .sub-n { opacity: 1; }
+  .sidenav-sub-item .sub-title { flex: 1; }
+
+  /* ── Olhinhos de ocultar (curadoria da trilha) ── */
+  .eye-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 20px; height: 20px; flex: 0 0 20px; margin-left: 3px;
+    background: none; border: 0; padding: 0; border-radius: 6px;
+    color: var(--cis-muted); cursor: pointer; transition: color .12s, background .12s;
+  }
+  .eye-btn svg { width: 14px; height: 14px; }
+  /* deixa a seta + olhinho caberem lado a lado mesmo em rótulos longos (ex.: Fechamento) */
+  .sidenav-item { gap: 8px; padding-left: 11px; padding-right: 10px; }
+  .sidenav-item .meta { margin-left: auto; margin-right: 0; }
+  .sidenav-item .chevron { margin-left: 3px; }
+  .eye-btn:hover { background: rgba(255,255,255,0.12); color: var(--cis-yellow); }
+  /* aparece ao passar o mouse; e fica sempre visível quando o item está oculto */
+  .sidenav-item:hover .eye-btn,
+  .sidenav-sub-item:hover .eye-btn,
+  .module-card:hover .eye-btn,
+  .sidenav-item.is-oculto .eye-btn,
+  .sidenav-sub-item.is-oculto .eye-btn,
+  .module-card.is-oculto .eye-btn { display: inline-flex; }
+  .eye-btn.is-off { color: #ff6b6b; }
+  .eye-btn.is-off:hover { background: rgba(255,107,107,0.16); color: #ff8a8a; }
+  /* item oculto: esmaecido */
+  .sidenav-item.is-oculto,
+  .sidenav-sub-item.is-oculto,
+  .module-card.is-oculto { opacity: 0.42; }
+  .module-card { position: relative; }
+  .module-card .eye-btn { position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.35); }
+
+  /* ===== Conteúdo principal (Views) ===== */
+  .main { position: relative; overflow: hidden; }
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* ===== Menu view ===== */
+  #menu-view {
+    height: 100vh; overflow: auto;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(94,58,148,0.35), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(177,140,240,0.10), transparent 55%),
+      linear-gradient(160deg, var(--cis-blue-900) 0%, var(--cis-blue-800) 55%, var(--cis-blue-700) 100%);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 36px 96px; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(177,140,240,0.18);
+    margin-bottom: 40px;
+  }
+  .hero .badge {
+    display: inline-block; background: var(--cis-yellow); color: var(--cis-blue-900);
+    padding: 6px 18px; border-radius: 999px; font-weight: 900;
+    letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 60px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
+    letter-spacing: -1.5px; font-weight: 900;
+  }
+  .hero h1 small { display:block; color:#fff; font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
+  .hero p.sub { max-width: 720px; font-size: 17px; color: var(--cis-muted); margin: 0; }
+  .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero .stats strong { display:block; font-size: 44px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-bottom: 40px; }
+  .module-card {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(177,140,240,0.10), transparent 50%),
+      rgba(26, 15, 46, 0.65);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 24px 60px -32px rgba(0,0,0,0.85);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(177,140,240,0.25); }
+  .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
+  .module-card h3 { margin: 0; font-size: 28px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 14px; line-height: 1.5; }
+  .module-card .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(177,140,240,0.18);
+    font-size: 13px; color: var(--cis-muted);
+  }
+  .module-card .meta .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 5px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 13px; color: var(--cis-text); }
+  .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
+
+  .section-title { font-size: 13px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 14px; }
+
+  /* Card especial Fechamento */
+  .closing-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(177,140,240,0.25), transparent 50%),
+      linear-gradient(135deg, rgba(138,95,214,0.18), rgba(26, 15, 46, 0.85));
+    border: 1px solid var(--cis-card-border-strong);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 28px 60px -28px rgba(177,140,240,0.3);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .closing-card:hover { transform: translateY(-3px); box-shadow: 0 32px 70px -25px rgba(177,140,240,0.45); }
+  .closing-card .tag { font-size: 11px; letter-spacing: 0.2em; color: var(--cis-blue-900); font-weight: 900; text-transform: uppercase; background: var(--cis-yellow); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .closing-card h3 { margin: 10px 0 6px; font-size: 32px; color: var(--cis-yellow); line-height: 1.05; font-weight: 900; letter-spacing: -1px; }
+  .closing-card p { margin: 0; color: #fff; font-size: 14px; line-height: 1.5; max-width: 580px; }
+  .closing-card .cta {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px -8px rgba(177,140,240,0.6);
+  }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
+  .info-grid .card {
+    background: rgba(26, 15, 46, 0.55);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+  .info-grid .card h4 { margin: 0 0 6px; color: var(--cis-yellow); font-size: 15px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 13px; line-height: 1.5; }
+  .info-grid .card kbd {
+    display: inline-block; background: rgba(177,140,240,0.18);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
+  }
+
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 20px; border-top: 1px solid rgba(177,140,240,0.12); }
+
+  /* ===== Player view ===== */
+  #player-view { position: absolute; inset: 0; background: #000; }
+  #player-view iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0; display: block;
+  }
+  .player-topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
+    pointer-events: none;
+    font-family: inherit;
+  }
+  .player-topbar > * { pointer-events: auto; }
+  .player-topbar .spacer { flex: 1; }
+
+  .pbtn {
+    appearance: none;
+    background: rgba(26, 15, 46, 0.6);
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: 700 13px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+  }
+  .pbtn:hover { background: rgba(177,140,240,0.2); transform: translateY(-1px); }
+  .pbtn:active { transform: translateY(0); }
+  .pbtn svg { width: 14px; height: 14px; }
+  .pbtn.is-on {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    border-color: var(--cis-yellow);
+  }
+
+  .player-topbar .module-label {
+    font: 700 11px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cis-muted);
+    background: rgba(26,15,46,0.5);
+    border: 1px solid rgba(177,140,240,0.25);
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
+
+
+  /* Em fullscreen, a sidebar some do grid (vira overlay sob demanda) */
+  .is-fullscreen .sidebar { display: none; }
+  .is-fullscreen .app { grid-template-columns: 1fr; }
+
+  /* Puxador da sidebar — visível só em fullscreen */
+  .sidebar-pull {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 40;
+    background: linear-gradient(90deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+    color: var(--cis-blue-900);
+    border: 0;
+    border-radius: 0 14px 14px 0;
+    padding: 22px 10px 22px 6px;
+    cursor: pointer;
+    box-shadow: 6px 0 20px -4px rgba(0,0,0,0.6);
+    transition: padding-right .15s ease, transform .15s ease;
+  }
+  .sidebar-pull:hover { padding-right: 14px; transform: translateY(-50%) translateX(2px); }
+  .sidebar-pull svg { width: 18px; height: 18px; display: block; }
+  .is-fullscreen .sidebar-pull { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Sidebar como overlay quando em fullscreen e ativada via puxador */
+  .is-fullscreen .sidebar.is-overlay {
+    display: flex !important;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px;
+    z-index: 45;
+    animation: sidebarIn .22s ease both;
+    box-shadow: 8px 0 30px -8px rgba(0,0,0,0.6);
+  }
+  .is-fullscreen .sidebar-pull.is-hidden { display: none; }
+
+  /* Backdrop para fechar a sidebar overlay */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 42;
+    animation: fadeIn .2s ease both;
+  }
+  .is-fullscreen .sidebar-backdrop.is-open { display: block; }
+
+  @keyframes sidebarIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Botão "fechar sidebar overlay" — dentro da sidebar quando em overlay */
+  .sidebar-close {
+    display: none;
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease;
+  }
+  .sidebar-close:hover { background: rgba(177,140,240,0.18); }
+  .sidebar-close svg { width: 14px; height: 14px; }
+  .is-fullscreen .sidebar.is-overlay .sidebar-close { display: inline-flex; }
+
+  /* Sidebar toggle (mobile/narrow) */
+  .sidebar-toggle {
+    display: none;
+    position: fixed; top: 14px; left: 14px; z-index: 30;
+  }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+    }
+    .sidebar.is-open { transform: translateX(0); }
+    .sidebar-toggle { display: inline-flex; }
+    .hero { grid-template-columns: 1fr; }
+    .hero .stats { text-align: left; }
+    .hero h1 { font-size: 42px; }
+    .grid-modules { grid-template-columns: 1fr; }
+    .closing-card { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- =========================== SIDEBAR =========================== -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebar-close" title="Fechar (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="brand">
+      <small>Treinamento Comercial</small>
+      <h2>SCRIPT</h2>
+    </div>
+
+    <nav class="sidenav">
+      <button class="sidenav-item is-active" data-go="menu">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+        Visão geral
+      </button>
+
+      <button class="sidenav-item highlight" data-go="fechamento">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Etapa 5 · Conclusão
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="fechamento" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
+
+      <div class="sidenav-label">Trilha completa</div>
+
+      <button class="sidenav-item" data-go="1">
+        <span class="num">1</span>
+        Apresentação
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="1" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="1"></ul>
+
+      <button class="sidenav-item" data-go="2">
+        <span class="num">2</span>
+        Sondagem
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="2" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="2"></ul>
+
+      <button class="sidenav-item" data-go="3">
+        <span class="num">3</span>
+        Desenvolvimento
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="3" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="3"></ul>
+
+      <button class="sidenav-item" data-go="4">
+        <span class="num">4</span>
+        Negociação
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="4" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="4"></ul>
+
+      <button class="sidenav-item" data-go="spin">
+        <span class="num">S</span>
+        SPIN — a régua
+        <span class="meta">4</span>
+        <span class="chevron" data-toggle-sub="spin" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="spin"></ul>
+
+      <button class="sidenav-item" data-go="simulacao">
+        <span class="num">▶</span>
+        Simulação
+        <span class="meta">6</span>
+        <span class="chevron" data-toggle-sub="simulacao" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="simulacao"></ul>
+    </nav>
+
+    <div class="foot">
+      Conteúdo Febracis · uso interno (consultores + equipe).
+    </div>
+  </aside>
+
+  <!-- =========================== MAIN =========================== -->
+  <main class="main">
+
+    <!-- ====== MENU VIEW ====== -->
+    <section id="menu-view" class="view is-active">
+
+      <div class="wrap">
+
+        <header class="hero">
+          <div>
+            <span class="badge">Treinamento Comercial</span>
+            <h1>SCRIPT<small>Script CIS × Avaliação de Role Play</small></h1>
+            <p class="sub">Treino rápido e direto: o script de vendas do Método CIS confrontado com a ficha de avaliação de Role Play (5 etapas SPIN, 15 critérios de nota). Cada trilha é uma etapa da avaliação, sempre no mesmo ritmo — critérios → o que dizer → a lacuna coberta → role play relâmpago.</p>
+          </div>
+          <div class="stats">
+            <strong>30</strong>
+            Slides 16:9
+            <div style="margin-top:14px;"><strong>07</strong>Trilhas</div>
+          </div>
+        </header>
+
+        <button class="closing-card" data-go="fechamento">
+          <div>
+            <span class="tag">Etapa 5 da ficha</span>
+            <h3>Conclusão — resumo, compromisso e o script do "não"</h3>
+            <p>Resumo eficaz antes de pedir a decisão, as 5 perguntas de fechamento do script, "Pix ou cartão?" e o roteiro do "não" (salvar contato e deixar a porta aberta). Fecha com o role play completo contra a ficha, com nota.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="spin">
+          <div>
+            <span class="tag">A régua da avaliação</span>
+            <h3>SPIN Selling — a ficha de role play É SPIN</h3>
+            <p>S·P·I·N em uma tela, o mapa etapa da ficha ↔ letra do SPIN, as perguntas do script classificadas por letra, as frases que derrubam nota e o checklist de bolso para levar pro role play.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="simulacao">
+          <div>
+            <span class="tag">Exemplo completo</span>
+            <h3>Simulação comentada — o caso Marcos</h3>
+            <p>Uma ligação real do início ao fim: Karla × Marcos (empresário, lead de cadastro). As 5 etapas aplicadas na ordem da ficha, com o diálogo de um lado e o que o avaliador marcou do outro. Resultado: 15/15 e venda fechada sem desconto.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <h2 class="section-title">▸ Trilha do Treinamento</h2>
+        <div class="grid-modules">
+
+          <button class="module-card" data-go="1">
+            <span class="tag">Etapa 1</span>
+            <h3>Apresentação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">abertura, rapport e agenda</span></h3>
+            <p>Os primeiros minutos da ligação: conexão, empatia e o critério que o script não cobre.</p>
+            <ul>
+              <li>A abertura palavra por palavra ("time do Paulo Vieira…")</li>
+              <li>Validar tempo e agenda — o gap da ficha</li>
+              <li>Rapport e perguntas de Situação</li>
+            </ul>
+            <div class="meta"><span>4 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="2">
+            <span class="tag">Etapa 2</span>
+            <h3>Sondagem<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">dor, consequência, urgência</span></h3>
+            <p>A etapa que decide a nota — e a venda. Sondar ANTES de apresentar, na ordem da ficha.</p>
+            <ul>
+              <li>A inversão do script e o porquê</li>
+              <li>Perguntas prontas de Problema e Implicação</li>
+              <li>O cliente precisa verbalizar a urgência</li>
+            </ul>
+            <div class="meta"><span>4 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="3">
+            <span class="tag">Etapa 3</span>
+            <h3>Desenvolvimento<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">benefício certo para a dor dita</span></h3>
+            <p>A frase-mestra do MCIS e os 4 pilares — conectados só às dores que o cliente falou.</p>
+            <ul>
+              <li>Matriz dor dita → promessa certa do script</li>
+              <li>Pergunta de Necessidade: o cliente descreve o valor</li>
+              <li>Autoridade em uma frase (30 anos, 250+ edições)</li>
+            </ul>
+            <div class="meta"><span>4 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="4">
+            <span class="tag">Etapa 4</span>
+            <h3>Negociação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">Global × Presencial e objeções</span></h3>
+            <p>A etapa mais descoberta do script: valores, ancoragem e o contorno consultivo das objeções.</p>
+            <ul>
+              <li>Global × Presencial em 60 segundos</li>
+              <li>Objeção é dúvida não respondida: causa raiz</li>
+              <li>Reafirmar valor, nunca defender preço</li>
+            </ul>
+            <div class="meta"><span>4 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+        </div>
+
+        <h2 class="section-title">▸ Como navegar</h2>
+        <div class="info-grid">
+          <div class="card">
+            <h4>Teclado</h4>
+            <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+          </div>
+          <div class="card">
+            <h4>Touch / Mouse</h4>
+            <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+          </div>
+          <div class="card">
+            <h4>Apresentação</h4>
+            <p>Use a sidebar à esquerda para alternar rapidamente entre trilhas. A tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+          </div>
+        </div>
+
+        <footer>
+          Treinamento Comercial SCRIPT · Script CIS × Role Play · Conteúdo Febracis · uso interno (consultores + equipe).
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ====== PLAYER VIEW ====== -->
+    <section id="player-view" class="view" aria-hidden="true">
+      <div class="player-topbar">
+        <button class="pbtn" id="back-menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          Menu
+        </button>
+        <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+        <div class="spacer"></div>
+      </div>
+      <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+    </section>
+
+  </main>
+
+  <!-- Puxador da sidebar em fullscreen -->
+  <button class="sidebar-pull" id="sidebar-pull" title="Abrir menu" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <!-- Backdrop para fechar overlay -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+</div>
+
+<script>
+  // ---- Estado e rotas ----
+  const menuView   = document.getElementById('menu-view');
+  const playerView = document.getElementById('player-view');
+  const frame      = document.getElementById('module-frame');
+  const moduleLbl  = document.getElementById('module-label');
+  const backBtn    = document.getElementById('back-menu');
+  const sidebar    = document.getElementById('sidebar');
+
+  const ROUTES = {
+    menu:        { file: null,                title: null },
+    fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Etapa 5 · Conclusão' },
+    spin:        { file: 'spin-selling.html',  title: '<strong>S</strong> SPIN — a régua' },
+    simulacao:   { file: 'simulacao.html',    title: '<strong>▶</strong> Simulação comentada' },
+    '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> Apresentação' },
+    '2':         { file: 'modulo-2.html',     title: '<strong>02</strong> Sondagem' },
+    '3':         { file: 'modulo-3.html',     title: '<strong>03</strong> Desenvolvimento' },
+    '4':         { file: 'modulo-4.html',     title: '<strong>04</strong> Negociação' },
+  };
+
+  // Sem sub-itens aninhados: SPIN Selling é um módulo próprio da trilha.
+  const NESTED_PARENT = {};
+
+  function setActiveNav(key) {
+    document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+
+    // Abre o grupo pai se a key for um sub-item aninhado
+    const groupKey = NESTED_PARENT[key] || key;
+    document.querySelectorAll('.sidenav-group').forEach(g => {
+      g.classList.toggle('is-open', g.dataset.groupFor === groupKey);
+    });
+
+    // Sublista do deck ativo aberta, demais fechadas
+    document.querySelectorAll('.sidenav-sub').forEach(ul => {
+      ul.classList.toggle('is-open', ul.dataset.subFor === key);
+    });
+    syncChevrons();
+  }
+
+  function syncChevrons() {
+    document.querySelectorAll('.chevron[data-toggle-sub]').forEach(c => {
+      const key = c.dataset.toggleSub;
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+      const isOpen = (group && group.classList.contains('is-open'))
+                  || (sub && sub.classList.contains('is-open'));
+      c.classList.toggle('is-open', isOpen);
+    });
+  }
+
+  function toggleSubFor(key) {
+    // Se o item tem um grupo (Fechamento → grupo com SPIN + subtópicos), alterna o grupo.
+    const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+    if (group) {
+      group.classList.toggle('is-open');
+      // Quando abre o grupo, também abre a sublista do próprio item (subtópicos de Fechamento).
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open', group.classList.contains('is-open'));
+    } else {
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open');
+    }
+    syncChevrons();
+  }
+
+  // ---- Subtópicos: títulos pré-definidos (funciona em file://) ----
+  // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
+  // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
+  const SLIDE_TITLES = {
+    '1': [
+      'Etapa 1 — Apresentação',
+      'A Abertura Palavra por Palavra + Agenda',
+      'Rapport e Perguntas de Situação',
+      'Role Play 60s + Erros que Zeram'
+    ],
+    '2': [
+      'Etapa 2 — Sondagem',
+      'Sondar Antes de Apresentar (a Inversão)',
+      'Dor → Consequência → Urgência',
+      'Role Play: Sondar Sem Oferecer Nada'
+    ],
+    '3': [
+      'Etapa 3 — Desenvolvimento',
+      'A Frase-Mestra do MCIS + os 4 Pilares',
+      'Dor Dita → Promessa Certa + Necessidade',
+      'Role Play: Só as Dores que o Cliente Falou'
+    ],
+    '4': [
+      'Etapa 4 — Negociação',
+      'Global × Presencial + Valores em 60s',
+      'Objeção: Causa Raiz e Postura Consultiva',
+      'Role Play: "Tá caro" e "Vou pensar"'
+    ],
+    'spin': [
+      'SPIN — a Régua da Avaliação',
+      'S·P·I·N + o Mapa da Ficha',
+      'Frases que Derrubam Nota',
+      'Checklist SPIN de Bolso'
+    ],
+    'fechamento': [
+      'Etapa 5 — Conclusão',
+      'Resumo + 5 Perguntas + "Pix ou Cartão?"',
+      'O Script do "Não"',
+      'Role Play Final: a Reunião Completa'
+    ],
+    'simulacao': [
+      'Simulação Comentada — o Caso Marcos',
+      'Etapa 1 — Abertura, Agenda e Rapport',
+      'Etapa 2 — Sondagem até a Urgência',
+      'Etapa 3 — Benefício Sob Medida',
+      'Etapa 4 — "Tá Caro" Sem Desconto',
+      'Etapa 5 — Resumo, Pix e o 15/15'
+    ]
+  };
+
+  const slideTitlesByKey = {}; // key -> [titles]
+  function decodeText(s) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+  function extractTitlesFromDoc(doc) {
+    const slides = doc.querySelectorAll('.slide');
+    return Array.from(slides).map((s, i) => {
+      const title = s.querySelector('.slide-title');
+      const badge = s.querySelector('.module-badge');
+      const eyebrow = s.querySelector('.eyebrow');
+      if (title) return decodeText(title.textContent);
+      if (s.classList.contains('module-cover') && badge) return decodeText(badge.textContent) + ' — Capa';
+      if (eyebrow) return decodeText(eyebrow.textContent);
+      return `Slide ${i + 1}`;
+    });
+  }
+
+  function renderSubtopicsPlaceholder(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '<li style="padding:6px 10px;font-size:11px;color:var(--cis-muted);font-style:italic;">carregando…</li>';
+  }
+
+  // Renderiza os subtópicos imediatamente a partir da lista estática.
+  function loadSlideTitles() {
+    Object.keys(SLIDE_TITLES).forEach(key => {
+      slideTitlesByKey[key] = SLIDE_TITLES[key];
+      renderSubtopics(key);
+    });
+  }
+
+  function renderSubtopics(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '';
+    const ocultos = getDeckHidden(key); /* slideIds ocultos (1-indexed, string) */
+    (slideTitlesByKey[key] || []).forEach((title, i) => {
+      const n = i + 1;
+      const oculto = ocultos.includes(String(n));
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'sidenav-sub-item' + (oculto ? ' is-oculto' : '');
+      btn.dataset.deck = key; btn.dataset.slide = String(n);
+      btn.innerHTML = `<span class="sub-n">${String(n).padStart(2, '0')}</span>`
+        + `<span class="sub-title">${title.replace(/</g,'&lt;')}</span>`
+        + `<span class="eye-btn${oculto ? ' is-off' : ''}" data-eye-slide title="${oculto ? 'Mostrar este slide' : 'Ocultar este slide'}">${eyeSvg(oculto)}</span>`;
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('[data-eye-slide]')) { e.preventDefault(); e.stopPropagation(); toggleSlideHidden(key, n); return; }
+        openAtSlide(key, n);
+      });
+      li.appendChild(btn); ul.appendChild(li);
+    });
+  }
+
+  function openAtSlide(key, slideN) {
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      return;
+    }
+    openRoute(key);
+    const onLoad = () => {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      frame.removeEventListener('load', onLoad);
+    };
+    frame.addEventListener('load', onLoad);
+  }
+
+  function markCurrentSubtopic(key, slideN) {
+    document.querySelectorAll('.sidenav-sub-item').forEach(b => {
+      b.classList.toggle('is-current', b.dataset.deck === key && b.dataset.slide === String(slideN));
+    });
+  }
+
+  function showMenu() {
+    playerView.classList.remove('is-active');
+    playerView.setAttribute('aria-hidden', 'true');
+    menuView.classList.add('is-active');
+    menuView.setAttribute('aria-hidden', 'false');
+    frame.src = 'about:blank';
+    history.replaceState(null, '', '#');
+    setActiveNav('menu');
+  }
+  function openRoute(key) {
+    if (key === 'menu') { showMenu(); return; }
+    const route = ROUTES[key];
+    if (!route || !route.file) return;
+    moduleLbl.innerHTML = route.title || ('Módulo ' + key);
+    frame.src = route.file;
+    frame.dataset.currentKey = key;
+    menuView.classList.remove('is-active');
+    menuView.setAttribute('aria-hidden', 'true');
+    playerView.classList.add('is-active');
+    playerView.setAttribute('aria-hidden', 'false');
+    history.replaceState(null, '', `#${key}`);
+    setActiveNav(key);
+    markCurrentSubtopic(key, 1);
+    if (sidebar) sidebar.classList.remove('is-open');
+  }
+
+  // Cliques: sidebar e cards do menu (mesmo data-go)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Se clicou no chevron dentro do item, só alterna subtópicos (sem navegar)
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubFor(chev.dataset.toggleSub);
+        return;
+      }
+      openRoute(btn.dataset.go);
+    });
+  });
+  backBtn.addEventListener('click', showMenu);
+
+  // Mensagens do iframe — só processa as do iframe principal (#module-frame),
+  // ignorando os iframes preloaders ocultos usados para extrair títulos.
+  window.addEventListener('message', (e) => {
+    const fromMain = e.source === (frame && frame.contentWindow);
+    if (!fromMain) return;
+    const msg = e.data || {};
+    if (msg.type === 'cis-nav') {
+      if (msg.target === 'menu') showMenu();
+      else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+      else if (msg.target === 'fullscreen') toggleFullscreen();
+    } else if (msg.type === 'cis-slide-changed' && msg.n) {
+      const key = frame.dataset.currentKey;
+      if (key) markCurrentSubtopic(key, msg.n);
+    }
+  });
+
+  // Enviar estado de fullscreen para o iframe ativo (sincroniza o botão dentro do módulo)
+  function broadcastFsState() {
+    const on = !!document.fullscreenElement;
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-fullscreen-state', on }, '*');
+    }
+  }
+  frame.addEventListener('load', broadcastFsState);
+
+  // Fullscreen
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function syncFs() {
+    const on = !!document.fullscreenElement;
+    document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => {
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const lbl = b.querySelector('.fs-label');
+      if (lbl) lbl.textContent = on ? 'Sair' : 'Tela cheia';
+    });
+  }
+  document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
+  document.addEventListener('fullscreenchange', () => {
+    syncFs();
+    broadcastFsState();
+    const on = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', on);
+    if (!on) closeSidebarOverlay(); // ao sair do fullscreen, garante que o overlay também feche
+  });
+
+  // ---- Sidebar overlay em fullscreen ----
+  const pull = document.getElementById('sidebar-pull');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebarOverlay() {
+    sidebar.classList.add('is-overlay');
+    backdrop.classList.add('is-open');
+    pull.classList.add('is-hidden');
+  }
+  function closeSidebarOverlay() {
+    sidebar.classList.remove('is-overlay');
+    backdrop.classList.remove('is-open');
+    pull.classList.remove('is-hidden');
+  }
+
+  if (pull) pull.addEventListener('click', openSidebarOverlay);
+  if (backdrop) backdrop.addEventListener('click', closeSidebarOverlay);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebarOverlay);
+
+  // Fechar overlay ao clicar em um item da sidebar (navegação)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // só fecha se NÃO foi clique no chevron
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) return;
+      if (sidebar.classList.contains('is-overlay')) closeSidebarOverlay();
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      if (!playerView.classList.contains('is-active')) toggleFullscreen();
+    }
+    if (e.key === 'Escape') {
+      if (sidebar.classList.contains('is-overlay')) { closeSidebarOverlay(); return; }
+      if (playerView.classList.contains('is-active') && !document.fullscreenElement) showMenu();
+    }
+  });
+
+  /* ═══ Curadoria da trilha: ocultar módulos e tópicos (olhinhos) ═══
+     - Slides: gravados no MESMO store do deck (localStorage 'cis-edits:<pasta>/<arquivo>'),
+       campo .hidden — assim a tela cheia do deck já pula os ocultos.
+     - Módulos: store próprio do shell (por treinamento). */
+  const TRILHA_FOLDER = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0] || '';
+  const MOD_OCULTO_KEY = 'trilha-mod-oculto:' + (TRILHA_FOLDER || 'default');
+
+  function eyeSvg(off) {
+    return off
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A9 9 0 0 1 21 12a17.6 17.6 0 0 1-2.16 2.96M6.5 6.6A17.6 17.6 0 0 0 3 12s3.5 7 9 7a9 9 0 0 0 3.35-.64"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+
+  function deckStoreKey(key) {
+    const f = ROUTES[key] && ROUTES[key].file;
+    return f ? ('cis-edits:' + (TRILHA_FOLDER ? TRILHA_FOLDER + '/' : '') + f) : null;
+  }
+  function getDeckHidden(key) {
+    const k = deckStoreKey(key); if (!k) return [];
+    try { const s = JSON.parse(localStorage.getItem(k) || '{}'); return Array.isArray(s.hidden) ? s.hidden.map(String) : []; }
+    catch (e) { return []; }
+  }
+  function toggleSlideHidden(key, n) {
+    const k = deckStoreKey(key); if (!k) return;
+    let s; try { s = JSON.parse(localStorage.getItem(k) || '{}'); } catch (e) { s = {}; }
+    if (!s.edits) s.edits = {}; if (!Array.isArray(s.hidden)) s.hidden = [];
+    const id = String(n); const i = s.hidden.indexOf(id);
+    if (i >= 0) s.hidden.splice(i, 1); else s.hidden.push(id);
+    localStorage.setItem(k, JSON.stringify(s));
+    /* se o módulo está aberto no iframe, manda recarregar os ocultos */
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-reload-hidden' }, '*');
+    }
+    renderSubtopics(key);
+  }
+
+  function getHiddenModules() { try { return JSON.parse(localStorage.getItem(MOD_OCULTO_KEY) || '[]'); } catch (e) { return []; } }
+  function setHiddenModules(arr) { localStorage.setItem(MOD_OCULTO_KEY, JSON.stringify(arr)); }
+  function isModuleHidden(key) { return getHiddenModules().includes(key); }
+  function toggleModuleHidden(key) {
+    const arr = getHiddenModules(); const i = arr.indexOf(key);
+    if (i >= 0) arr.splice(i, 1); else arr.push(key);
+    setHiddenModules(arr);
+    applyOcultosUI();
+  }
+
+  function injectModuleEyes() {
+    /* olhinho em cada item de módulo/trilha da sidebar (menos "Visão geral") */
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu' || item.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      const chev = item.querySelector('.chevron');
+      if (chev) item.insertBefore(eye, chev); else item.appendChild(eye);
+    });
+    /* olhinho em cada card de módulo do menu */
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const key = card.dataset.go;
+      if (card.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      card.appendChild(eye);
+    });
+  }
+
+  function applyOcultosUI() {
+    const hidden = getHiddenModules();
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu') return;
+      const h = hidden.includes(key);
+      item.classList.toggle('is-oculto', h);
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-oculto', h);
+      const eye = item.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const h = hidden.includes(card.dataset.go);
+      card.classList.toggle('is-oculto', h);
+      const eye = card.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+  }
+
+  const h = (location.hash || '').replace('#', '');
+  if (h && ROUTES[h]) openRoute(h);
+
+  loadSlideTitles();
+  injectModuleEyes();
+  applyOcultosUI();
+</script>
+
+</body>
+</html>
