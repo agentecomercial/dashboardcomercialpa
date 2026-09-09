@@ -153,18 +153,28 @@
      ───────────────────────────────────────────────────────────────
      Green  = 5 treinamentos · Golden = 8.
      "Fora da contagem": o treinamento não ocupa vaga na meta e nunca
-     é marcado na proposta. O CIS já nasce fora nas duas faixas — é a
-     regra do "até 6" (CIS + 5). Configurável pelo gestor e salvo.
+     é marcado na proposta.
+     O CIS nasce fora SÓ no Green — é a regra do "até 6" (CIS + 5).
+     No Golden o CIS conta normalmente: são 9 na grade para uma meta de
+     8, e o TAV (sempre último da fila) é o que costuma ficar de fora.
+     Tudo isso é configurável pelo gestor e fica salvo.
      ═══════════════════════════════════════════════════════════════ */
   var _FAIXA_GRADE = ['IF','MASTER','CEOP','FGPC','BHP','FCIS','ML5','TAV','CIS_GLOBAL'];
   var _FAIXA_META  = { green:5, gold:8 };
   var _FAIXA_NOME  = { green:'🟢 Green Belt', gold:'🥇 Golden Belt' };
-  var LS_FORA = 'proposta_belt_fora_v1';
+  /* v2: o padrão do Golden mudou (o CIS passou a contar). A troca de
+     chave descarta a configuração antiga em vez de herdar o padrão velho. */
+  var LS_FORA = 'proposta_belt_fora_v2';
+  var _FAIXA_FORA_PADRAO = { green:{ CIS_GLOBAL:true }, gold:{} };
 
   function _faixaFora(){
     var f = null;
     try{ f = JSON.parse(localStorage.getItem(LS_FORA)); }catch(e){}
-    if(!f || !f.green || !f.gold) f = { green:{ CIS_GLOBAL:true }, gold:{ CIS_GLOBAL:true } };
+    if(!f || !f.green || !f.gold){
+      f = { green:{}, gold:{} };
+      Object.keys(_FAIXA_FORA_PADRAO.green).forEach(function(k){ f.green[k] = _FAIXA_FORA_PADRAO.green[k]; });
+      Object.keys(_FAIXA_FORA_PADRAO.gold).forEach(function(k){ f.gold[k] = _FAIXA_FORA_PADRAO.gold[k]; });
+    }
     return f;
   }
   function _faixaSalvarFora(f){
@@ -877,7 +887,9 @@
       + '<th style="padding:3px 4px;color:#f5c451;font-size:9px;">FORA DO GOLDEN</th></tr>'
       + linhas + '</table>'
       + (avisos.length ? '<div style="color:var(--amber);font-size:10px;margin-top:6px;line-height:1.5;">' + avisos.join('<br>') + '</div>' : '')
-      + '<div style="color:var(--muted);font-size:10px;margin-top:6px;line-height:1.45;">O marcado não ocupa vaga na meta e nunca entra na proposta. A escolha fica salva.</div>';
+      + '<div style="color:var(--muted);font-size:10px;margin-top:6px;line-height:1.45;">'
+      + 'O marcado não ocupa vaga na meta e nunca entra na proposta. A escolha fica salva.<br>'
+      + 'Padrão: o CIS fica fora só do Green (a regra do "até 6"). No Golden ele conta — são 9 na grade para uma meta de 8.</div>';
   }
   function _faixaConfigToggle(modo, key){
     var f = _faixaFora();
