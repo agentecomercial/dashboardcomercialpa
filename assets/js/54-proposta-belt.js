@@ -182,6 +182,19 @@
     var v = p[_faixaPag()];
     return (v == null) ? Infinity : v;
   }
+  /* Pré-requisito para ENTRAR na proposta: o treinamento só é oferecido
+     quando o cliente já tem ao menos um dos listados como ADQUIRIDO.
+     Regra do gestor: o MASTER exige FCIS ou ML5.
+     Não afeta a contagem — quem já tem MASTER continua contando com ele. */
+  var _FAIXA_PRERREQ = { MASTER: ['FCIS','ML5'] };
+
+  function _faixaLiberado(k, st){
+    var req = _FAIXA_PRERREQ[k];
+    if(!req) return true;
+    for(var i = 0; i < req.length; i++) if(st[req[i]] === 'ADQUIRIDO') return true;
+    return false;
+  }
+
   /* Treinamentos que vão SEMPRE para o fim da fila, independente do preço:
      só são escolhidos quando não sobrou mais nada que conte para a faixa.
      Regra do gestor: o TAV é sempre o último, no Green e no Golden. */
@@ -208,12 +221,15 @@
     var jaTem   = _FAIXA_GRADE.filter(function(k){ return conta(k) && st[k] === 'ADQUIRIDO'; });
     var foraAdq = _FAIXA_GRADE.filter(function(k){ return !conta(k) && st[k] === 'ADQUIRIDO'; });
     var faltam  = meta - jaTem.length;
-    var cand    = _faixaOrdenada().filter(function(k){ return conta(k) && st[k] === 'PENDENTE'; });
+    var pend    = _faixaOrdenada().filter(function(k){ return conta(k) && st[k] === 'PENDENTE'; });
+    /* Pendentes barrados por pré-requisito ficam de fora da fila */
+    var bloq    = pend.filter(function(k){ return !_faixaLiberado(k, st); });
+    var cand    = pend.filter(function(k){ return _faixaLiberado(k, st); });
     var marcar  = cand.slice(0, Math.max(0, faltam));
     var semInfo = _FAIXA_GRADE.filter(function(k){ return !st[k]; });
 
     return { modo:modo, meta:meta, jaTem:jaTem, foraAdq:foraAdq, faltam:faltam,
-             marcar:marcar, cand:cand, semInfo:semInfo, fora:fora,
+             marcar:marcar, cand:cand, bloqueados:bloq, semInfo:semInfo, fora:fora,
              completa: faltam <= 0,
              insuficiente: faltam > cand.length,
              totalFinal: jaTem.length + marcar.length + foraAdq.length };
@@ -739,7 +755,13 @@
       }
       if(r.insuficiente){
         hFx += '<br><span style="color:var(--amber)">Não fecha a faixa: faltavam '+r.faltam
-             + ' e só havia '+r.cand.length+' pendente(s) na grade.</span>';
+             + ' e só havia '+r.cand.length+' pendente(s) liberado(s) na grade.</span>';
+      }
+      if(r.bloqueados.length){
+        hFx += '<br><span style="color:var(--amber)">🔒 Barrado(s) por pré-requisito: '
+             + r.bloqueados.map(function(k){
+                 return '<b>'+k+'</b> (exige ' + _FAIXA_PRERREQ[k].join(' ou ') + ' adquirido)';
+               }).join(', ') + '.</span>';
       }
       if(r.semInfo.length){
         hFx += '<br><span style="color:var(--amber)">⚠ Sem informação na planilha — <b>'+rec.nome
@@ -760,6 +782,7 @@
             var st  = rec.status[k];
             var cor, txt;
             if(r.fora[k])                { cor = 'rgba(255,183,64,.14);color:#f0b429';  txt = rot + ' ∅'; }
+            else if(r.bloqueados.indexOf(k) !== -1){ cor = 'rgba(167,139,250,.16);color:#a78bfa'; txt = rot + ' 🔒'; }
             else if(st === 'ADQUIRIDO')  { cor = 'rgba(86,211,100,.12);color:#56d364';  txt = rot + ' ✓'; }
             else if(marcarFx.indexOf(k) !== -1){ cor = 'rgba(200,240,90,.16);color:var(--accent)'; txt = rot + ' +'; }
             else if(st === 'PENDENTE')   { cor = 'rgba(255,255,255,.06);color:var(--muted)'; txt = rot; }
@@ -768,7 +791,7 @@
           }).join('')
         + '</div>'
         + '<div style="color:var(--muted);font-size:9.5px;margin-top:3px;">'
-        + '✓ já tem · + entra na proposta · ∅ fora da contagem · ? sem informação na planilha · sem marca = pendente que não coube</div>';
+        + '✓ já tem · + entra na proposta · ∅ fora da contagem · 🔒 barrado por pré-requisito · ? sem informação na planilha · sem marca = pendente que não coube</div>';
       hFx += '<br><span style="color:var(--muted);font-size:10px;">Clique de novo no botão para desmarcar. Revise antes de gerar o PDF.</span>';
       _setStatus(hFx, false);
       return;
@@ -1158,6 +1181,13 @@
           + ' <span class="belt-chip c-add" onclick="_beltLoteAddTreino('+i+')">+ treino</span>';
       } else {
         incChips = c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+(q>1?' ×'+q:'')+'</span>'; }).join('');
+        /* Barrados por pré-requisito — o gestor precisa ver por que ficaram fora */
+        if(c.faixa && c.faixa.bloqueados && c.faixa.bloqueados.length){
+          incChips += c.faixa.bloqueados.map(function(t){
+            return '<span class="belt-chip" style="background:rgba(167,139,250,.16);color:#a78bfa;" title="exige '
+                 + _FAIXA_PRERREQ[t].join(' ou ') + ' adquirido">' + t + ' 🔒</span>';
+          }).join('');
+        }
       }
       /* Botão "Gerar só este": gera 1 PDF apenas deste cliente.
          Desabilitado quando não há treinamentos a incluir (nada pra gerar). */
