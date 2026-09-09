@@ -115,16 +115,37 @@
     };
   }
 
-  /* ── Localiza o cliente no mapeamento (exato → aproximado) ── */
+  /* ── Localiza o cliente no mapeamento (exato → aproximado) ──
+     O aproximado antigo casava por substring solta: "MARIA" casava com
+     "ANA MARIA COSTA" — que é cliente de OUTRO consultor. No lote isso
+     trazia gente de fora para dentro da lista (visível no modo Manual,
+     onde todos sobem para a lista editável).
+     Agora o aproximado só aceita PREFIXO DE PALAVRA INTEIRA e só quando
+     há um único candidato; havendo dois ou mais, é ambíguo e não casa. */
+  var _beltAmbiguo = null;   /* nomes candidatos do último casamento ambíguo */
+
   function _acharCliente(nome){
+    _beltAmbiguo = null;
     if(!window._beltMapa) return null;
     var nk = _norm(nome);
     var cl = window._beltMapa.clientes;
     if(cl[nk]) return cl[nk];
-    var keys = Object.keys(cl);
-    var hit = keys.filter(function(k){ return k.indexOf(nk) !== -1 || nk.indexOf(k) !== -1; })
-                  .sort(function(a,b){ return Math.abs(a.length-nk.length) - Math.abs(b.length-nk.length); })[0];
-    return hit ? cl[hit] : null;
+
+    var cands = Object.keys(cl).filter(function(k){
+      /* um é prefixo do outro, cortando em palavra inteira */
+      return (k + ' ').indexOf(nk + ' ') === 0 || (nk + ' ').indexOf(k + ' ') === 0;
+    });
+    if(cands.length === 1) return cl[cands[0]];
+    if(cands.length > 1){
+      _beltAmbiguo = cands.map(function(k){ return cl[k].nome; });
+    }
+    return null;
+  }
+  /* Motivo da falha do último _acharCliente, para a mensagem de tela */
+  function _beltMotivoNaoAchou(){
+    return _beltAmbiguo
+      ? ('nome ambíguo na planilha — casa com ' + _beltAmbiguo.join(' / '))
+      : 'não está no mapeamento';
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -161,10 +182,20 @@
     var v = p[_faixaPag()];
     return (v == null) ? Infinity : v;
   }
-  /* Grade ordenada do mais barato ao mais caro; empate pela ordem da grade. */
+  /* Treinamentos que vão SEMPRE para o fim da fila, independente do preço:
+     só são escolhidos quando não sobrou mais nada que conte para a faixa.
+     Regra do gestor: o TAV é sempre o último, no Green e no Golden. */
+  var _FAIXA_ULTIMO = { TAV:true };
+
+  /* Grade ordenada do mais barato ao mais caro; os "últimos" vão para o fim;
+     empate de preço desfeito pela ordem da grade. */
   function _faixaOrdenada(){
     return _FAIXA_GRADE.map(function(k,i){ return {k:k, i:i}; })
-      .sort(function(a,b){ return (_faixaPreco(a.k) - _faixaPreco(b.k)) || (a.i - b.i); })
+      .sort(function(a,b){
+        var ua = _FAIXA_ULTIMO[a.k] ? 1 : 0, ub = _FAIXA_ULTIMO[b.k] ? 1 : 0;
+        if(ua !== ub) return ua - ub;
+        return (_faixaPreco(a.k) - _faixaPreco(b.k)) || (a.i - b.i);
+      })
       .map(function(x){ return x.k; });
   }
   /* A REGRA. rec = registro do cliente na grade da turma. */
@@ -664,7 +695,14 @@
     if(!window._beltMapa){ if(window._showToast)_showToast('⚠️ Carregue a grade da turma.','var(--amber)'); _setStatus('Carregue a grade da turma (link ou arquivo) antes.', true); _beltSetChip('carregue a grade','warn'); _beltExpandir(true); return; }
 
     var rec = _acharCliente(nome);
-    if(!rec){ _setStatus('Cliente "<b>'+nome+'</b>" não encontrado no mapeamento. Confira se o nome bate com a planilha.', true); _beltSetChip('cliente não achado','warn'); _beltExpandir(true); return; }
+    if(!rec){
+      var amb = _beltAmbiguo;
+      _setStatus('Cliente "<b>'+nome+'</b>" não encontrado no mapeamento.'
+        + (amb ? '<br><span style="color:var(--amber)">O nome é ambíguo: casa com <b>' + amb.join('</b> e <b>')
+                 + '</b>. Escreva o nome completo para eu não pegar o cliente errado.</span>'
+               : '<br>Confira se o nome bate com a planilha.'), true);
+      _beltSetChip(amb ? 'nome ambíguo' : 'cliente não achado','warn'); _beltExpandir(true); return;
+    }
 
     /* ── Ramo GREEN / GOLDEN BELT ─────────────────────────────── */
     if(eFaixa){
@@ -704,10 +742,33 @@
              + ' e só havia '+r.cand.length+' pendente(s) na grade.</span>';
       }
       if(r.semInfo.length){
-        hFx += '<br><span style="color:var(--amber)">⚠ Célula em branco na planilha — <b>'+rec.nome
-             + '</b> está sem informação em: <b>'+r.semInfo.join(', ')+'</b>. '
+        hFx += '<br><span style="color:var(--amber)">⚠ Sem informação na planilha — <b>'+rec.nome
+             + '</b> está em branco em: <b>'+r.semInfo.join(', ')+'</b>. '
              + 'Esses ficaram de fora da conta.</span>';
       }
+      /* Colunas da planilha que o leitor não reconheceu: é a causa mais comum
+         de um treinamento "sumir" da regra (ex.: cabeçalho do TAV ou do CIS
+         escrito de um jeito que não está no mapa de colunas). */
+      if(window._beltMapa.desconhecidas && window._beltMapa.desconhecidas.length){
+        hFx += '<br><span style="color:var(--amber)">⚠ Colunas ignoradas no mapeamento: <b>'
+             + window._beltMapa.desconhecidas.join(', ') + '</b> — não entraram na conta.</span>';
+      }
+      /* Leitura completa da grade para este cliente — mostra de onde veio cada decisão */
+      hFx += '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">'
+        + _FAIXA_GRADE.map(function(k){
+            var rot = _FAIXA_ROTULO[k] || k;
+            var st  = rec.status[k];
+            var cor, txt;
+            if(r.fora[k])                { cor = 'rgba(255,183,64,.14);color:#f0b429';  txt = rot + ' ∅'; }
+            else if(st === 'ADQUIRIDO')  { cor = 'rgba(86,211,100,.12);color:#56d364';  txt = rot + ' ✓'; }
+            else if(marcarFx.indexOf(k) !== -1){ cor = 'rgba(200,240,90,.16);color:var(--accent)'; txt = rot + ' +'; }
+            else if(st === 'PENDENTE')   { cor = 'rgba(255,255,255,.06);color:var(--muted)'; txt = rot; }
+            else                         { cor = 'rgba(255,95,87,.12);color:#fca5a5';   txt = rot + ' ?'; }
+            return '<span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:'+cor+';">'+txt+'</span>';
+          }).join('')
+        + '</div>'
+        + '<div style="color:var(--muted);font-size:9.5px;margin-top:3px;">'
+        + '✓ já tem · + entra na proposta · ∅ fora da contagem · ? sem informação na planilha · sem marca = pendente que não coube</div>';
       hFx += '<br><span style="color:var(--muted);font-size:10px;">Clique de novo no botão para desmarcar. Revise antes de gerar o PDF.</span>';
       _setStatus(hFx, false);
       return;
@@ -881,10 +942,14 @@
     var pagLabel = (window._PROPOSTA_LABELS && window._PROPOSTA_LABELS[pag]) || pag;
     var clientes = nomes.map(function(nome){
       var rec = _acharCliente(nome);
+      var motivo = rec ? null : _beltMotivoNaoAchou();
       var temCI = _loteTemCI(rec);
       var pend = rec ? _lotePendBase(rec) : [];
       var tem = rec ? Object.keys(rec.status).filter(function(k){ return rec.status[k] === 'ADQUIRIDO'; }) : [];
-      return { nome: nome, rec: rec, temCI: temCI, pend: pend, tem: tem, incluir: [], qtd: {}, modalidade: 'elite' };
+      /* Nome com que a planilha casou — quando difere, o gestor precisa ver */
+      var casado = (rec && _norm(rec.nome) !== _norm(nome)) ? rec.nome : null;
+      return { nome: nome, rec: rec, motivoSemRec: motivo, casado: casado,
+               temCI: temCI, pend: pend, tem: tem, incluir: [], qtd: {}, modalidade: 'elite' };
     });
     _lote = { consultor: consultor, pagamento: pag, pagLabel: pagLabel, modo: 'elite', clientes: clientes };
     _loteGarantirOverlay();
@@ -1040,7 +1105,7 @@
       /* No Manual TODOS sobem para a lista editável (até quem seria pulado),
          pra poder ajustar. Nos outros modos, pulados ficam separados. */
       if(manual){ inc.push({c:c, i:i}); return; }
-      if(!c.rec){ pul.push({c:c, motivo:'não está no mapeamento'}); return; }
+      if(!c.rec){ pul.push({c:c, motivo: c.motivoSemRec || 'não está no mapeamento'}); return; }
       if(!c.incluir.length){
         pul.push({c:c, motivo: (c.faixa && c.faixa.completa)
           ? ('já fechou a faixa (' + c.faixa.jaTem.length + '/' + c.faixa.meta + ')')
@@ -1100,9 +1165,18 @@
       var btnUm = '<button class="belt-cli-gerar" '+(podeGerarUm?'':'disabled')+' '
         + 'onclick="event.stopPropagation();_beltLoteGerarUm('+i+')" '
         + 'title="'+(podeGerarUm?'Gerar só a proposta deste cliente':'Sem treinamentos a incluir')+'">📄 Gerar só este</button>';
+      /* Sinaliza quem não está na grade e quem casou com outro nome da planilha */
+      var aviso = '';
+      if(!c.rec){
+        aviso = ' <span class="belt-bdg" style="background:rgba(239,68,68,.16);color:#fca5a5;">fora da grade — '
+              + (c.motivoSemRec || 'não está no mapeamento') + '</span>';
+      } else if(c.casado){
+        aviso = ' <span class="belt-bdg" style="background:rgba(255,183,64,.16);color:#f0b429;">planilha: '
+              + c.casado + '</span>';
+      }
       html += '<div class="belt-cli" style="display:flex;align-items:flex-start;gap:10px;">'
         + '<div style="flex:1;min-width:0;">'
-        +   '<div class="belt-cli-nome">'+c.nome+' '+badge+'</div>'
+        +   '<div class="belt-cli-nome">'+c.nome+' '+badge+aviso+'</div>'
         +   '<div class="belt-chips" style="margin-bottom:4px;"><span class="belt-lbl">tem</span>'+temChips+'</div>'
         +   '<div class="belt-chips"><span class="belt-lbl">incluir</span>'+incChips+'</div>'
         + '</div>'
