@@ -154,18 +154,20 @@
      Green  = 5 treinamentos · Golden = 8.
      "Fora da contagem": o treinamento não ocupa vaga na meta e nunca
      é marcado na proposta.
-     O CIS nasce fora SÓ no Green — é a regra do "até 6" (CIS + 5).
-     No Golden o CIS conta normalmente: são 9 na grade para uma meta de
-     8, e o TAV (sempre último da fila) é o que costuma ficar de fora.
-     Tudo isso é configurável pelo gestor e fica salvo.
+     O CIS nasce fora da contagem nas DUAS faixas: ele entra na conta do
+     aluno mas não ocupa vaga na meta.
+       Green  → "até 6"  (CIS + 5)
+       Golden → "até 9"  (CIS + 8)
+     Como fora o CIS existem exatamente 8 treinamentos na grade, o Golden
+     fecha com todos eles. Tudo isso é configurável pelo gestor e fica salvo.
      ═══════════════════════════════════════════════════════════════ */
   var _FAIXA_GRADE = ['IF','MASTER','CEOP','FGPC','BHP','FCIS','ML5','TAV','CIS_GLOBAL'];
   var _FAIXA_META  = { green:5, gold:8 };
   var _FAIXA_NOME  = { green:'🟢 Green Belt', gold:'🥇 Golden Belt' };
-  /* v2: o padrão do Golden mudou (o CIS passou a contar). A troca de
-     chave descarta a configuração antiga em vez de herdar o padrão velho. */
-  var LS_FORA = 'proposta_belt_fora_v2';
-  var _FAIXA_FORA_PADRAO = { green:{ CIS_GLOBAL:true }, gold:{} };
+  /* v3: o CIS voltou a ficar fora da contagem também no Golden. A troca
+     de chave descarta a configuração antiga em vez de herdar o padrão velho. */
+  var LS_FORA = 'proposta_belt_fora_v3';
+  var _FAIXA_FORA_PADRAO = { green:{ CIS_GLOBAL:true }, gold:{ CIS_GLOBAL:true } };
 
   function _faixaFora(){
     var f = null;
@@ -192,18 +194,76 @@
     var v = p[_faixaPag()];
     return (v == null) ? Infinity : v;
   }
-  /* Pré-requisito para ENTRAR na proposta: o treinamento só é oferecido
-     quando o cliente já tem ao menos um dos listados como ADQUIRIDO.
-     Regra do gestor: o MASTER exige FCIS ou ML5.
-     Não afeta a contagem — quem já tem MASTER continua contando com ele. */
-  var _FAIXA_PRERREQ = { MASTER: ['FCIS','ML5'] };
+  /* ── MODO DE EXCEÇÃO ─────────────────────────────────────────
+     Ligado, o gestor escolhe os treinamentos que devem ser
+     OBRIGATORIAMENTE analisados. Eles furam a fila do menor
+     investimento e entram primeiro, NA ORDEM EM QUE FORAM CLICADOS.
+     Caso o cliente já os tenha, a fila normal segue e completa a faixa
+     com os outros treinamentos.
+     Por ser exceção, o obrigatório também passa por cima da lista
+     "fora da contagem" — mas nunca por cima do par MASTER + FCIS/ML5.
+     A seleção fica salva; o modo nasce DESLIGADO a cada abertura do
+     modal, para não montar proposta errada sem querer. */
+  var LS_EXC = 'proposta_belt_excecao_v1';
+  var _excAtivo = false;
 
-  function _faixaLiberado(k, st){
-    var req = _FAIXA_PRERREQ[k];
+  /* Lista ORDENADA: a posição é a ordem de entrada na proposta. */
+  function _excLista(){
+    var a = null;
+    try{ a = JSON.parse(localStorage.getItem(LS_EXC)); }catch(e){}
+    if(!Array.isArray(a)) return [];
+    return a.filter(function(k){ return _FAIXA_GRADE.indexOf(k) !== -1; });
+  }
+  function _excSalvar(a){
+    try{ localStorage.setItem(LS_EXC, JSON.stringify(a)); }catch(e){}
+  }
+  function _excOn(){ return _excAtivo && _excLista().length > 0; }
+
+  /* ── PAR OBRIGATÓRIO ─────────────────────────────────────────
+     O MASTER só pode ESTAR na proposta se o FCIS ou o ML5 também
+     estiver nela — ou se o cliente já tiver um dos dois. Ele nunca
+     entra sozinho: quando chega a vez dele na fila, o liberador mais
+     barato entra junto, desde que haja vaga para os dois. Se não
+     houver, o MASTER é pulado e a vaga vai para o próximo da fila. */
+  var _FAIXA_PAR = { MASTER: ['FCIS','ML5'] };
+
+  /* O par já está satisfeito? (adquirido ou já dentro da proposta) */
+  function _parOk(k, st, dentro){
+    var req = _FAIXA_PAR[k];
     if(!req) return true;
-    for(var i = 0; i < req.length; i++) if(st[req[i]] === 'ADQUIRIDO') return true;
+    for(var i = 0; i < req.length; i++){
+      if(st[req[i]] === 'ADQUIRIDO') return true;
+      if(dentro.indexOf(req[i]) !== -1) return true;
+    }
     return false;
   }
+  /* Liberador que dá para puxar: pendente, disponível na fila e fora da
+     proposta. Escolhe o mais barato. */
+  function _parPuxavel(k, fila, dentro){
+    var req = _FAIXA_PAR[k];
+    if(!req) return null;
+    var op = req.filter(function(x){ return fila.indexOf(x) !== -1 && dentro.indexOf(x) === -1; })
+                .sort(function(a, b){ return _faixaPreco(a) - _faixaPreco(b); });
+    return op.length ? op[0] : null;
+  }
+  /* Monta a seleção passo a passo, puxando o liberador quando preciso. */
+  function _faixaMontar(fila, vagas, st){
+    var selec = [], guard = 0;
+    while(selec.length < vagas && guard++ < 60){
+      var entrar = null;
+      for(var i = 0; i < fila.length; i++){
+        var k = fila[i];
+        if(selec.indexOf(k) !== -1) continue;
+        if(_parOk(k, st, selec)){ entrar = [k]; break; }
+        var lib = _parPuxavel(k, fila, selec);
+        if(lib && (selec.length + 2) <= vagas){ entrar = [lib, k]; break; }
+      }
+      if(entrar === null) break;
+      for(var j = 0; j < entrar.length; j++) selec.push(entrar[j]);
+    }
+    return selec;
+  }
+
 
   /* Treinamentos que vão SEMPRE para o fim da fila, independente do preço:
      só são escolhidos quando não sobrou mais nada que conte para a faixa.
@@ -226,20 +286,34 @@
     var meta = _FAIXA_META[modo];
     var fora = _faixaFora()[modo] || {};
     var st   = (rec && rec.status) ? rec.status : {};
-    var conta = function(k){ return !fora[k]; };
+
+    /* Modo de Exceção: os obrigatórios furam a fila e o "fora da contagem" */
+    var excOn   = _excOn();
+    var obrig   = excOn ? _excLista() : [];
+    var ehObrig = function(k){ return obrig.indexOf(k) !== -1; };
+    var conta   = function(k){ return !fora[k] || ehObrig(k); };
 
     var jaTem   = _FAIXA_GRADE.filter(function(k){ return conta(k) && st[k] === 'ADQUIRIDO'; });
     var foraAdq = _FAIXA_GRADE.filter(function(k){ return !conta(k) && st[k] === 'ADQUIRIDO'; });
     var faltam  = meta - jaTem.length;
     var pend    = _faixaOrdenada().filter(function(k){ return conta(k) && st[k] === 'PENDENTE'; });
-    /* Pendentes barrados por pré-requisito ficam de fora da fila */
-    var bloq    = pend.filter(function(k){ return !_faixaLiberado(k, st); });
-    var cand    = pend.filter(function(k){ return _faixaLiberado(k, st); });
-    var marcar  = cand.slice(0, Math.max(0, faltam));
+    /* Obrigatórios na ORDEM DE CLIQUE à frente; depois a fila normal */
+    var cand    = obrig.filter(function(k){ return pend.indexOf(k) !== -1; })
+                       .concat(pend.filter(function(k){ return !ehObrig(k); }));
+    var marcar  = _faixaMontar(cand, Math.max(0, faltam), st);
+    /* BARRADO = pendente que ficou de fora porque o par não foi satisfeito:
+       nem adquirido, nem entrou nesta proposta. */
+    var bloq    = cand.filter(function(k){
+      return marcar.indexOf(k) === -1 && !_parOk(k, st, marcar);
+    });
     var semInfo = _FAIXA_GRADE.filter(function(k){ return !st[k]; });
 
     return { modo:modo, meta:meta, jaTem:jaTem, foraAdq:foraAdq, faltam:faltam,
              marcar:marcar, cand:cand, bloqueados:bloq, semInfo:semInfo, fora:fora,
+             excAtivo: excOn, excObrig: obrig,
+             excTem:   obrig.filter(function(k){ return st[k] === 'ADQUIRIDO'; }),
+             excFalta: obrig.filter(function(k){ return st[k] !== 'ADQUIRIDO'; }),
+             excEntrou: marcar.filter(ehObrig),
              completa: faltam <= 0,
              insuficiente: faltam > cand.length,
              totalFinal: jaTem.length + marcar.length + foraAdq.length };
@@ -755,7 +829,18 @@
       if(typeof window._introSelecionar === 'function') window._introSelecionar(modo === 'green' ? 'greenbelt' : 'goldenbelt');
       if(typeof window._propostaRecalcular === 'function') window._propostaRecalcular();
 
-      var hFx = '<b>'+rotulo+'</b> · ' + rec.nome
+      var hFx = '';
+      if(r.excAtivo){
+        var _rot = function(k){ return _FAIXA_ROTULO[k] || k; };
+        hFx += '<div style="margin-bottom:5px;padding:6px 9px;border-radius:6px;'
+             + 'background:rgba(255,183,64,.10);border:1px solid rgba(255,183,64,.35);color:#f0b429;">'
+             + '⚠ <b>Modo de Exceção</b> · '
+             + r.excObrig.map(function(k,i){ return (i+1) + 'º ' + _rot(k); }).join(' → ')
+             + (r.excEntrou.length ? '<br>Entrou(entraram) na frente da fila: <b>' + r.excEntrou.map(_rot).join(', ') + '</b>.' : '')
+             + (r.excTem.length ? '<br>Ele já tem: <b>' + r.excTem.map(_rot).join(', ') + '</b> — a fila normal completou a faixa.' : '')
+             + '</div>';
+      }
+      hFx += '<b>'+rotulo+'</b> · ' + rec.nome
         + '<br>Marcados ('+marcarFx.length+'): ' + (marcarFx.length ? marcarFx.join(', ') : '—')
         + '<br><span style="color:var(--muted)">Já contam para a faixa: '
         + (r.jaTem.length ? r.jaTem.join(', ') : '—') + ' · meta de ' + r.meta + ' → faltavam ' + r.faltam + '</span>';
@@ -763,15 +848,14 @@
         hFx += '<br><span style="color:var(--muted)">Fora da contagem e ele já tem: '+r.foraAdq.join(', ')
              + ' — fecha com <b>'+r.totalFinal+' treinamentos no total</b>.</span>';
       }
+      if(r.bloqueados.length){
+        hFx += '<br><span style="color:#a78bfa">🔒 Barrado: ' + r.bloqueados.map(function(k){
+          return '<b>' + k + '</b> (exige ' + _FAIXA_PAR[k].join(' ou ') + ' na mesma proposta)';
+        }).join(', ') + ' — a vaga foi para o próximo da fila.</span>';
+      }
       if(r.insuficiente){
         hFx += '<br><span style="color:var(--amber)">Não fecha a faixa: faltavam '+r.faltam
-             + ' e só havia '+r.cand.length+' pendente(s) liberado(s) na grade.</span>';
-      }
-      if(r.bloqueados.length){
-        hFx += '<br><span style="color:var(--amber)">🔒 Barrado(s) por pré-requisito: '
-             + r.bloqueados.map(function(k){
-                 return '<b>'+k+'</b> (exige ' + _FAIXA_PRERREQ[k].join(' ou ') + ' adquirido)';
-               }).join(', ') + '.</span>';
+             + ' e só havia '+r.cand.length+' pendente(s) na grade.</span>';
       }
       if(r.semInfo.length){
         hFx += '<br><span style="color:var(--amber)">⚠ Sem informação na planilha — <b>'+rec.nome
@@ -801,7 +885,7 @@
           }).join('')
         + '</div>'
         + '<div style="color:var(--muted);font-size:9.5px;margin-top:3px;">'
-        + '✓ já tem · + entra na proposta · ∅ fora da contagem · 🔒 barrado por pré-requisito · ? sem informação na planilha · sem marca = pendente que não coube</div>';
+        + '✓ já tem · + entra na proposta · ∅ fora da contagem · 🔒 barrado (falta o par) · ? sem informação na planilha · sem marca = pendente que não coube</div>';
       hFx += '<br><span style="color:var(--muted);font-size:10px;">Clique de novo no botão para desmarcar. Revise antes de gerar o PDF.</span>';
       _setStatus(hFx, false);
       return;
@@ -889,7 +973,7 @@
       + (avisos.length ? '<div style="color:var(--amber);font-size:10px;margin-top:6px;line-height:1.5;">' + avisos.join('<br>') + '</div>' : '')
       + '<div style="color:var(--muted);font-size:10px;margin-top:6px;line-height:1.45;">'
       + 'O marcado não ocupa vaga na meta e nunca entra na proposta. A escolha fica salva.<br>'
-      + 'Padrão: o CIS fica fora só do Green (a regra do "até 6"). No Golden ele conta — são 9 na grade para uma meta de 8.</div>';
+      + 'Padrão: o CIS fica fora da contagem nas duas faixas — Green fecha com 6 (CIS + 5) e Golden com 9 (CIS + 8).</div>';
   }
   function _faixaConfigToggle(modo, key){
     var f = _faixaFora();
@@ -903,6 +987,70 @@
       _beltAplicar(m);
     }
   }
+  /* ── UI do Modo de Exceção ─────────────────────────────────── */
+  function _excRender(){
+    var bt = document.getElementById('btnModoExcecao');
+    if(!bt) return;
+    var lista = _excLista();
+
+    bt.style.background  = _excAtivo ? 'rgba(255,183,64,.20)' : 'var(--surface2)';
+    bt.style.borderColor = _excAtivo ? 'rgba(255,183,64,.65)' : 'var(--border2)';
+    bt.style.color       = _excAtivo ? '#f0b429' : 'var(--muted)';
+    bt.style.boxShadow   = _excAtivo ? '0 0 0 2px rgba(255,183,64,.35) inset' : '';
+    bt.innerHTML = (_excAtivo ? '\u26A0 Modo de Exceção LIGADO' : '\u26A0 Modo de Exceção')
+                 + (_excAtivo && lista.length ? ' \u00b7 ' + lista.length : '');
+
+    var pn = document.getElementById('propExcPainel');
+    if(pn) pn.style.display = _excAtivo ? 'block' : 'none';
+    if(!_excAtivo) return;
+
+    var ch = document.getElementById('propExcChips');
+    if(ch){
+      ch.innerHTML = _FAIXA_GRADE.map(function(k){
+        var pos = lista.indexOf(k);
+        var nome = _FAIXA_ROTULO[k] || k;
+        return '<button type="button" onclick="_excItem(\'' + k + '\')" '
+          + 'style="flex:0 0 auto;height:27px;padding:0 9px;border-radius:var(--radius-sm);'
+          + 'font-size:10.5px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;'
+          + 'letter-spacing:.03em;transition:all .15s;display:inline-flex;align-items:center;gap:4px;'
+          + (pos >= 0 ? 'background:rgba(255,183,64,.20);border:1px solid rgba(255,183,64,.6);color:#f0b429;'
+                      : 'background:var(--surface);border:1px solid var(--border2);color:var(--muted);')
+          + '">'
+          + (pos >= 0 ? '<span style="background:rgba(255,183,64,.3);border-radius:20px;padding:1px 5px;font-size:9px;">'
+                        + (pos+1) + '\u00ba</span>' : '')
+          + nome + '</button>';
+      }).join('');
+    }
+    var rs = document.getElementById('propExcOrdem');
+    if(rs){
+      rs.innerHTML = lista.length
+        ? 'Ordem de entrada: <b style="color:#f0b429;">'
+          + lista.map(function(k,i){ return (i+1) + '\u00ba ' + (_FAIXA_ROTULO[k] || k); }).join(' \u2192 ') + '</b>'
+        : '<span style="color:var(--amber)">Clique nos treinamentos na ordem em que devem entrar. Sem nenhum, o modo não muda nada.</span>';
+    }
+  }
+  function _excToggle(){
+    _excAtivo = !_excAtivo;
+    _excRender();
+    _excReaplicar();
+  }
+  function _excItem(k){
+    var a = _excLista();
+    var i = a.indexOf(k);
+    if(i >= 0) a.splice(i, 1); else a.push(k);   /* o clique define a ordem */
+    _excSalvar(a);
+    _excRender();
+    _excReaplicar();
+  }
+  /* Refaz a seleção da faixa ativa para refletir na hora */
+  function _excReaplicar(){
+    if(window._beltAtivo === 'green' || window._beltAtivo === 'gold'){
+      var m = window._beltAtivo;
+      window._beltAtivo = null;
+      _beltAplicar(m);
+    }
+  }
+
   function _faixaToggleAcc(){
     var b = document.getElementById('propFaixaAccBody');
     var c = document.getElementById('propFaixaCaret');
@@ -919,6 +1067,8 @@
     if(window._beltMapa) _beltSetChip(window._beltMapa.totalClientes + ' clientes', 'ok');
     else _beltSetChip('sem grade', 'none');
     _faixaConfigRender();
+    _excAtivo = false;      /* o Modo de Exceção nunca vem ligado de fábrica */
+    _excRender();
   }
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -1158,8 +1308,8 @@
     var hint = document.getElementById('beltLoteHint');
     if(hint) hint.textContent = (_lote.modo==='elite') ? 'All Elite: cada cliente recebe seus pendentes, sem CI.'
       : (_lote.modo==='legacy') ? 'All Legacy: cada cliente recebe seus pendentes + CI (quem já tem CI não recebe de novo).'
-      : (_lote.modo==='green') ? 'All Green: para cada cliente, os pendentes mais baratos até fechar 5 — respeitando o que está fora da contagem.'
-      : (_lote.modo==='gold') ? 'All Golden: para cada cliente, os pendentes mais baratos até fechar 8 — respeitando o que está fora da contagem.'
+      : (_lote.modo==='green') ? ('All Green: para cada cliente, os pendentes mais baratos até fechar 5.' + (_excOn() ? ' ⚠ Modo de Exceção ligado: ' + _excLista().join(' → ') + ' entram primeiro.' : ''))
+      : (_lote.modo==='gold') ? ('All Golden: para cada cliente, os pendentes mais baratos até fechar 8.' + (_excOn() ? ' ⚠ Modo de Exceção ligado: ' + _excLista().join(' → ') + ' entram primeiro.' : ''))
       : 'Manual: todos os clientes ficam editáveis. Clique num treinamento âmbar para remover; "+ treino" abre o seletor.';
 
     /* Aviso de células em branco na planilha — nomeia cliente e treinamento */
@@ -1193,11 +1343,10 @@
           + ' <span class="belt-chip c-add" onclick="_beltLoteAddTreino('+i+')">+ treino</span>';
       } else {
         incChips = c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+(q>1?' ×'+q:'')+'</span>'; }).join('');
-        /* Barrados por pré-requisito — o gestor precisa ver por que ficaram fora */
         if(c.faixa && c.faixa.bloqueados && c.faixa.bloqueados.length){
           incChips += c.faixa.bloqueados.map(function(t){
             return '<span class="belt-chip" style="background:rgba(167,139,250,.16);color:#a78bfa;" title="exige '
-                 + _FAIXA_PRERREQ[t].join(' ou ') + ' adquirido">' + t + ' 🔒</span>';
+                 + _FAIXA_PAR[t].join(' ou ') + ' na mesma proposta">' + t + ' 🔒</span>';
           }).join('');
         }
       }
@@ -1352,5 +1501,10 @@
   window._faixaConfigToggle = _faixaConfigToggle;
   window._faixaConfigRender = _faixaConfigRender;
   window._faixaToggleAcc    = _faixaToggleAcc;
+  window._excToggle         = _excToggle;
+  window._excItem           = _excItem;
+  window._excRender         = _excRender;
+  /* usado pelos testes: liga/desliga sem passar pela UI */
+  window._excSet            = function(v){ _excAtivo = !!v; };
   window._faixaCalcular     = _faixaCalcular;
 })();
