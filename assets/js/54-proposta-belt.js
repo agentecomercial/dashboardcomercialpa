@@ -127,6 +127,67 @@
     return hit ? cl[hit] : null;
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     FAIXA · GREEN BELT / GOLDEN BELT
+     ───────────────────────────────────────────────────────────────
+     Green  = 5 treinamentos · Golden = 8.
+     "Fora da contagem": o treinamento não ocupa vaga na meta e nunca
+     é marcado na proposta. O CIS já nasce fora nas duas faixas — é a
+     regra do "até 6" (CIS + 5). Configurável pelo gestor e salvo.
+     ═══════════════════════════════════════════════════════════════ */
+  var _FAIXA_GRADE = ['IF','MASTER','CEOP','FGPC','BHP','FCIS','ML5','TAV','CIS_GLOBAL'];
+  var _FAIXA_META  = { green:5, gold:8 };
+  var _FAIXA_NOME  = { green:'🟢 Green Belt', gold:'🥇 Golden Belt' };
+  var LS_FORA = 'proposta_belt_fora_v1';
+
+  function _faixaFora(){
+    var f = null;
+    try{ f = JSON.parse(localStorage.getItem(LS_FORA)); }catch(e){}
+    if(!f || !f.green || !f.gold) f = { green:{ CIS_GLOBAL:true }, gold:{ CIS_GLOBAL:true } };
+    return f;
+  }
+  function _faixaSalvarFora(f){
+    try{ localStorage.setItem(LS_FORA, JSON.stringify(f)); }catch(e){}
+  }
+  /* Forma de pagamento escolhida no modal — é ela que define o
+     "menor investimento" (o valor que o cliente vê na proposta). */
+  function _faixaPag(){
+    var el = document.getElementById('propostaPagamento');
+    return el ? el.value : 'integral';
+  }
+  function _faixaPreco(cod){
+    var p = _precos()[cod];
+    if(!p) return Infinity;
+    var v = p[_faixaPag()];
+    return (v == null) ? Infinity : v;
+  }
+  /* Grade ordenada do mais barato ao mais caro; empate pela ordem da grade. */
+  function _faixaOrdenada(){
+    return _FAIXA_GRADE.map(function(k,i){ return {k:k, i:i}; })
+      .sort(function(a,b){ return (_faixaPreco(a.k) - _faixaPreco(b.k)) || (a.i - b.i); })
+      .map(function(x){ return x.k; });
+  }
+  /* A REGRA. rec = registro do cliente na grade da turma. */
+  function _faixaCalcular(modo, rec){
+    var meta = _FAIXA_META[modo];
+    var fora = _faixaFora()[modo] || {};
+    var st   = (rec && rec.status) ? rec.status : {};
+    var conta = function(k){ return !fora[k]; };
+
+    var jaTem   = _FAIXA_GRADE.filter(function(k){ return conta(k) && st[k] === 'ADQUIRIDO'; });
+    var foraAdq = _FAIXA_GRADE.filter(function(k){ return !conta(k) && st[k] === 'ADQUIRIDO'; });
+    var faltam  = meta - jaTem.length;
+    var cand    = _faixaOrdenada().filter(function(k){ return conta(k) && st[k] === 'PENDENTE'; });
+    var marcar  = cand.slice(0, Math.max(0, faltam));
+    var semInfo = _FAIXA_GRADE.filter(function(k){ return !st[k]; });
+
+    return { modo:modo, meta:meta, jaTem:jaTem, foraAdq:foraAdq, faltam:faltam,
+             marcar:marcar, cand:cand, semInfo:semInfo, fora:fora,
+             completa: faltam <= 0,
+             insuficiente: faltam > cand.length,
+             totalFinal: jaTem.length + marcar.length + foraAdq.length };
+  }
+
   function _pendentes(rec){
     var pend = [];
     Object.keys(rec.status).forEach(function(key){
@@ -560,6 +621,10 @@
     if(e){ e.style.boxShadow = (ativo==='elite')  ? '0 0 0 2px #f0b429 inset' : ''; e.innerHTML = (ativo==='elite'  ? '✓ ' : '🟡 ') + 'Elite Belt'; }
     if(l){ l.style.boxShadow = (ativo==='legacy') ? '0 0 0 2px #a78bfa inset' : ''; l.innerHTML = (ativo==='legacy' ? '✓ ' : '🟣 ') + 'Legacy Belt'; }
     if(g){ g.style.boxShadow = (ativo==='ggb')    ? '0 0 0 2px #5096ff inset' : ''; g.textContent = (ativo==='ggb' ? '✓ GGB selecionado' : 'Selecionar GGB'); }
+    var gr = document.getElementById('btnGreenBelt');
+    var go = document.getElementById('btnGoldenBelt');
+    if(gr){ gr.style.boxShadow = (ativo==='green') ? '0 0 0 2px #34d399 inset' : ''; gr.innerHTML = (ativo==='green' ? '✓ ' : '🟢 ') + 'Green Belt'; }
+    if(go){ go.style.boxShadow = (ativo==='gold')  ? '0 0 0 2px #f5c451 inset' : ''; go.innerHTML = (ativo==='gold'  ? '✓ ' : '🥇 ') + 'Golden Belt'; }
   }
 
   /* Desmarca apenas os checkboxes que a modalidade marcou */
@@ -576,16 +641,21 @@
      Elite  = pendentes SEM o CI.
      Legacy = pendentes (sem CI) + CI obrigatório.
      Clicar de novo no mesmo botão (mesmo cliente) desmarca. */
-  function _beltAplicar(modo){ // 'elite' | 'legacy'
+  function _beltAplicar(modo){ // 'elite' | 'legacy' | 'green' | 'gold'
     var nome = _clienteSelecionado();
+    var eFaixa = (modo === 'green' || modo === 'gold');
+    var rotulo = eFaixa ? _FAIXA_NOME[modo]
+               : ((modo==='legacy'?'Legacy':'Elite') + ' Belt');
 
     // TOGGLE: mesma modalidade + mesmo cliente → desmarca
     if(window._beltAtivo === modo && window._beltAtivoCliente === nome){
       _beltDesmarcarConjunto();
       window._beltAtivo = null; window._beltAtivoCliente = null; window._beltMarcados = [];
       _beltAtualizarBotoes(null);
+      /* Faixa também governa o texto da Seção I — ao desmarcar, volta ao GGB. */
+      if(eFaixa && typeof window._introSelecionar === 'function') window._introSelecionar('ggb');
       if(typeof window._propostaRecalcular === 'function') window._propostaRecalcular();
-      _setStatus('Seleção do ' + (modo==='legacy'?'Legacy':'Elite') + ' Belt removida.', false);
+      _setStatus('Seleção do ' + rotulo + ' removida.', false);
       _beltSetChip(window._beltMapa ? (window._beltMapa.totalClientes + ' clientes') : 'sem grade', window._beltMapa ? 'ok' : 'none');
       return;
     }
@@ -595,6 +665,56 @@
 
     var rec = _acharCliente(nome);
     if(!rec){ _setStatus('Cliente "<b>'+nome+'</b>" não encontrado no mapeamento. Confira se o nome bate com a planilha.', true); _beltSetChip('cliente não achado','warn'); _beltExpandir(true); return; }
+
+    /* ── Ramo GREEN / GOLDEN BELT ─────────────────────────────── */
+    if(eFaixa){
+      var r = _faixaCalcular(modo, rec);
+      var contFx = document.getElementById('propostaTreinamentos');
+      if(!contFx){ _setStatus('Modal de treinamentos não está pronto.', true); return; }
+
+      if(r.completa){
+        _setStatus('<b>'+rotulo+'</b> · '+rec.nome
+          + '<br><span style="color:var(--amber)">Ele já fechou a faixa: '+r.jaTem.length+' de '+r.meta
+          + ' treinamentos que contam ('+r.jaTem.join(', ')+'). Nada a propor.</span>', false);
+        _beltSetChip('faixa já fechada', 'warn');
+        return;
+      }
+
+      var marcarFx = r.marcar.slice();
+      contFx.querySelectorAll('input[type=checkbox]').forEach(function(chk){
+        chk.checked = marcarFx.indexOf(chk.id.replace('prop_','')) !== -1;
+      });
+      window._beltAtivo = modo; window._beltAtivoCliente = nome; window._beltMarcados = marcarFx.slice();
+      _beltAtualizarBotoes(modo);
+      _beltSetChip(rotulo + ' · ' + marcarFx.length + ' itens', 'info');
+      /* A faixa manda no texto da Seção I */
+      if(typeof window._introSelecionar === 'function') window._introSelecionar(modo === 'green' ? 'greenbelt' : 'goldenbelt');
+      if(typeof window._propostaRecalcular === 'function') window._propostaRecalcular();
+
+      var hFx = '<b>'+rotulo+'</b> · ' + rec.nome
+        + '<br>Marcados ('+marcarFx.length+'): ' + (marcarFx.length ? marcarFx.join(', ') : '—')
+        + '<br><span style="color:var(--muted)">Já contam para a faixa: '
+        + (r.jaTem.length ? r.jaTem.join(', ') : '—') + ' · meta de ' + r.meta + ' → faltavam ' + r.faltam + '</span>';
+      if(r.foraAdq.length){
+        hFx += '<br><span style="color:var(--muted)">Fora da contagem e ele já tem: '+r.foraAdq.join(', ')
+             + ' — fecha com <b>'+r.totalFinal+' treinamentos no total</b>.</span>';
+      }
+      if(r.insuficiente){
+        hFx += '<br><span style="color:var(--amber)">Não fecha a faixa: faltavam '+r.faltam
+             + ' e só havia '+r.cand.length+' pendente(s) na grade.</span>';
+      }
+      if(r.semInfo.length){
+        hFx += '<br><span style="color:var(--amber)">⚠ Célula em branco na planilha — <b>'+rec.nome
+             + '</b> está sem informação em: <b>'+r.semInfo.join(', ')+'</b>. '
+             + 'Esses ficaram de fora da conta.</span>';
+      }
+      hFx += '<br><span style="color:var(--muted);font-size:10px;">Clique de novo no botão para desmarcar. Revise antes de gerar o PDF.</span>';
+      _setStatus(hFx, false);
+      return;
+    }
+
+    /* Elite/Legacy não usam texto de faixa — se vinha de Green/Golden, solta. */
+    if(typeof window._introLimparFaixa === 'function') window._introLimparFaixa();
 
     var pend = _pendentes(rec);
     var ciPendente = pend.indexOf('CI') !== -1;
@@ -631,12 +751,70 @@
      Substituem _PROPOSTA_TEXTO no PDF quando a modalidade está ativa. */
   var _BELT_TEXTOS = {
     elite: 'Você já demonstrou um nível de comprometimento e evolução que o coloca entre um grupo seleto de pessoas que escolhem não se contentar com o comum. Sua trajetória revela disciplina, coragem e a decisão de buscar a melhor versão de si mesmo. Agora, falta apenas concluir os treinamentos restantes para alcançar um patamar reservado àqueles que fazem da excelência um padrão de vida e te coloca na elite. Parabéns Golden Belt.',
+    green: 'Existe um marco na jornada Febracis que separa quem experimenta de quem assume: o Green Belt. Ele não é um certificado pendurado na parede — é o reconhecimento de que você percorreu uma formação consistente e transformou conhecimento em prática nas suas emoções, nas suas finanças, na sua carreira e nos seus relacionamentos. Você já está nesse caminho, e falta menos do que imagina para chegar lá. Os treinamentos desta proposta são exatamente os que completam a sua faixa e firmam o seu nome entre os que levaram a própria evolução a sério. O Green Belt está ao seu alcance. Conquiste-o.',
+    gold: 'Poucos chegam ao Golden Belt, e não é por acaso: ele exige a formação completa, o percurso inteiro, sem atalhos. É a mais alta distinção da jornada Febracis, reservada a quem levou o próprio desenvolvimento até o fim e converteu cada treinamento em resultado real na vida e nos negócios. Você já provou que tem disciplina para começar e constância para seguir — agora está a poucos passos de fechar o ciclo. Os treinamentos desta proposta são os que faltam para completar a sua formação e colocar o seu nome onde estão os que não se contentaram com metade do caminho. O Golden Belt é o seu próximo lugar. Assuma-o.',
     legacy: 'Você já demonstrou um nível de comprometimento, disciplina e evolução que o diferencia da maioria das pessoas. Sua trajetória revela a coragem de investir em si mesmo, superar desafios e buscar continuamente a sua melhor versão. Hoje, você faz parte de um grupo seleto de indivíduos que não aceitam viver no padrão comum, mas escolhem a excelência como estilo de vida. Agora, resta apenas concluir os treinamentos pendentes para consolidar essa jornada e ocupar definitivamente um lugar entre aqueles que transformam conhecimento em resultados, influência e referência para os que estão ao seu redor. Parabéns Golden Belt. Esse é o seu legado.'
   };
   /* Retorna o texto da modalidade ativa, ou null (gerador usa o texto padrão). */
   function _beltTextoIntro(){
     return (window._beltAtivo && _BELT_TEXTOS[window._beltAtivo]) || null;
   }
+  /* ── Painel de configuração "fora da contagem" (Green / Golden) ──
+     Fica no modal, abaixo dos botões de faixa. A escolha é salva e
+     vale para a proposta individual e para o lote. */
+  var _FAIXA_ROTULO = { CIS_GLOBAL:'CIS' };
+  function _faixaConfigRender(){
+    var box = document.getElementById('propFaixaFora');
+    if(!box) return;
+    var f = _faixaFora();
+    var linhas = _FAIXA_GRADE.map(function(k){
+      var nome = _FAIXA_ROTULO[k] || k;
+      var cel = function(modo){
+        return '<td style="text-align:center;padding:3px 4px;">'
+             + '<input type="checkbox" ' + (f[modo][k] ? 'checked ' : '')
+             + 'onchange="_faixaConfigToggle(\'' + modo + '\',\'' + k + '\')" '
+             + 'style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;"></td>';
+      };
+      return '<tr><td style="padding:3px 4px;font-weight:700;">' + nome + '</td>'
+           + cel('green') + cel('gold') + '</tr>';
+    }).join('');
+
+    /* Aviso quando sobrou treinamento de menos para a meta */
+    var avisos = [];
+    [['green','Green',5], ['gold','Golden',8]].forEach(function(m){
+      var disp = _FAIXA_GRADE.filter(function(k){ return !f[m[0]][k]; }).length;
+      if(disp < m[2]) avisos.push(m[1] + ': meta ' + m[2] + ', mas só ' + disp + ' na contagem — a faixa nunca fecha.');
+    });
+
+    box.innerHTML =
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px;">'
+      + '<tr><th style="text-align:left;padding:3px 4px;color:var(--muted);font-size:9px;letter-spacing:.06em;">Treinamento</th>'
+      + '<th style="padding:3px 4px;color:#34d399;font-size:9px;">FORA DO GREEN</th>'
+      + '<th style="padding:3px 4px;color:#f5c451;font-size:9px;">FORA DO GOLDEN</th></tr>'
+      + linhas + '</table>'
+      + (avisos.length ? '<div style="color:var(--amber);font-size:10px;margin-top:6px;line-height:1.5;">' + avisos.join('<br>') + '</div>' : '')
+      + '<div style="color:var(--muted);font-size:10px;margin-top:6px;line-height:1.45;">O marcado não ocupa vaga na meta e nunca entra na proposta. A escolha fica salva.</div>';
+  }
+  function _faixaConfigToggle(modo, key){
+    var f = _faixaFora();
+    f[modo][key] = !f[modo][key];
+    _faixaSalvarFora(f);
+    _faixaConfigRender();
+    /* Se a faixa está ativa, reaplica para refletir na hora */
+    if(window._beltAtivo === 'green' || window._beltAtivo === 'gold'){
+      var m = window._beltAtivo;
+      window._beltAtivo = null;           /* evita o toggle de desmarcar */
+      _beltAplicar(m);
+    }
+  }
+  function _faixaToggleAcc(){
+    var b = document.getElementById('propFaixaAccBody');
+    var c = document.getElementById('propFaixaCaret');
+    var abrir = !(b && b.style.display === 'block');
+    if(b) b.style.display = abrir ? 'block' : 'none';
+    if(c) c.style.transform = abrir ? 'rotate(180deg)' : '';
+  }
+
   /* Limpa a modalidade ativa (chamado ao (re)abrir o modal de proposta) */
   function _beltReset(){
     window._beltAtivo = null; window._beltAtivoCliente = null; window._beltMarcados = [];
@@ -644,6 +822,7 @@
     _beltExpandir(false);
     if(window._beltMapa) _beltSetChip(window._beltMapa.totalClientes + ' clientes', 'ok');
     else _beltSetChip('sem grade', 'none');
+    _faixaConfigRender();
   }
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -688,7 +867,7 @@
     if(!c || c === '__manual__') return;
     var nomes = _loteClientesDoConsultor(c);
     if(!nomes.length) return;                       // consultor sem clientes na turma → ignora
-    if(!window.confirm('Selecionar todos os clientes do consultor ' + c + ' (' + nomes.length + ')?\n\nVai montar as propostas de todos de uma vez (Elite/Legacy).')) return;
+    if(!window.confirm('Selecionar todos os clientes do consultor ' + c + ' (' + nomes.length + ')?\n\nVai montar as propostas de todos de uma vez (Elite / Legacy / Green Belt / Golden Belt).')) return;
     if(!window._beltMapa){
       if(window._showToast) _showToast('⚠️ Carregue a grade da turma antes (campo "Grade da turma").','var(--amber)');
       _beltExpandir(true);
@@ -720,6 +899,15 @@
     _lote.clientes.forEach(function(c){
       c.qtd = {}; /* troca de modo reconstrói a lista → zera as quantidades (tudo volta a 1) */
       if(!c.rec){ c.incluir = []; c.modalidade = 'elite'; return; }
+      if(m === 'green' || m === 'gold'){
+        /* Mesma regra da proposta individual, cliente a cliente. */
+        var rf = _faixaCalcular(m, c.rec);
+        c.modalidade = m;
+        c.faixa = rf;
+        c.incluir = rf.completa ? [] : rf.marcar.slice();
+        return;
+      }
+      c.faixa = null;
       if(m === 'elite'){      c.modalidade = 'elite';  c.incluir = c.pend.slice(); }
       else if(m === 'legacy'){c.modalidade = 'legacy';
                               /* CI só para quem AINDA não possui — quem já tem não recebe de novo
@@ -853,24 +1041,49 @@
          pra poder ajustar. Nos outros modos, pulados ficam separados. */
       if(manual){ inc.push({c:c, i:i}); return; }
       if(!c.rec){ pul.push({c:c, motivo:'não está no mapeamento'}); return; }
-      if(!c.incluir.length){ pul.push({c:c, motivo:'sem treinamentos a incluir'}); return; }
+      if(!c.incluir.length){
+        pul.push({c:c, motivo: (c.faixa && c.faixa.completa)
+          ? ('já fechou a faixa (' + c.faixa.jaTem.length + '/' + c.faixa.meta + ')')
+          : (c.faixa ? 'sem pendente na grade' : 'sem treinamentos a incluir') });
+        return;
+      }
       inc.push({c:c, i:i});
     });
     var geraveis = _lote.clientes.filter(function(c){ return c.incluir.length > 0; }).length;
     // botões de modo
-    ['elite','legacy','manual'].forEach(function(m){
+    ['elite','legacy','green','gold','manual'].forEach(function(m){
       var b = document.getElementById('beltLoteModo-'+m);
       if(b) b.classList.toggle('on', _lote.modo === m);
     });
     var hint = document.getElementById('beltLoteHint');
     if(hint) hint.textContent = (_lote.modo==='elite') ? 'All Elite: cada cliente recebe seus pendentes, sem CI.'
       : (_lote.modo==='legacy') ? 'All Legacy: cada cliente recebe seus pendentes + CI (quem já tem CI não recebe de novo).'
+      : (_lote.modo==='green') ? 'All Green: para cada cliente, os pendentes mais baratos até fechar 5 — respeitando o que está fora da contagem.'
+      : (_lote.modo==='gold') ? 'All Golden: para cada cliente, os pendentes mais baratos até fechar 8 — respeitando o que está fora da contagem.'
       : 'Manual: todos os clientes ficam editáveis. Clique num treinamento âmbar para remover; "+ treino" abre o seletor.';
+
+    /* Aviso de células em branco na planilha — nomeia cliente e treinamento */
+    var elVaz = document.getElementById('beltLoteVazios');
+    if(elVaz){
+      var vazios = _lote.clientes.filter(function(c){ return c.rec; })
+        .map(function(c){ return { nome:c.nome, cols:_FAIXA_GRADE.filter(function(k){ return !c.rec.status[k]; }) }; })
+        .filter(function(v){ return v.cols.length; });
+      if(vazios.length && (_lote.modo==='green' || _lote.modo==='gold')){
+        elVaz.style.display = 'block';
+        elVaz.innerHTML = '<b>&#9888; Células em branco na planilha &middot; '+vazios.length+' cliente(s)</b>'
+          + '<div style="margin-top:5px;max-height:150px;overflow-y:auto;">'
+          + vazios.map(function(v){ return '<div><b>'+v.nome+'</b> — sem informação em: '+v.cols.join(', ')+'</div>'; }).join('')
+          + '</div><div style="opacity:.75;margin-top:5px;">Ficaram de fora da conta desses clientes.</div>';
+      } else { elVaz.style.display = 'none'; elVaz.innerHTML = ''; }
+    }
 
     var html = '';
     inc.forEach(function(o){
       var c = o.c, i = o.i;
-      var badge = c.modalidade==='legacy' ? '<span class="belt-bdg bg-legacy">Legacy</span>' : '<span class="belt-bdg bg-elite">Elite</span>';
+      var badge = c.modalidade==='legacy' ? '<span class="belt-bdg bg-legacy">Legacy</span>'
+                : c.modalidade==='green'  ? '<span class="belt-bdg bg-green">Green</span>'
+                : c.modalidade==='gold'   ? '<span class="belt-bdg bg-gold">Golden</span>'
+                : '<span class="belt-bdg bg-elite">Elite</span>';
       var temChips = c.tem.map(function(t){ return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-has')+'">'+t+'</span>'; }).join('') || '<span style="color:var(--muted);font-size:10px;">—</span>';
       var incChips;
       if(manual){
@@ -927,6 +1140,9 @@
       +'.belt-modo.m-e{background:rgba(240,180,40,.10);border:1px solid rgba(240,180,40,.4);color:#f0b429;}'
       +'.belt-modo.m-l{background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.4);color:#a78bfa;}'
       +'.belt-modo.m-m{background:rgba(96,165,250,.10);border:1px solid rgba(96,165,250,.4);color:#93c5fd;}'
+      +'.belt-modo.m-g{background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.45);color:#34d399;}'
+      +'.belt-modo.m-o{background:rgba(240,180,40,.14);border:1px solid rgba(240,180,40,.55);color:#f5c451;}'
+      +'.belt-modos{flex-wrap:wrap;}.belt-modo{flex:1 1 128px;}'
       +'.belt-modo.on{box-shadow:0 0 0 2px currentColor inset;}'
       +'.belt-hint{font-size:11px;color:var(--muted);margin:0 0 12px;min-height:15px;}'
       +'.belt-grupo{border:1px solid var(--border2);border-radius:10px;margin-bottom:12px;overflow:hidden;}'
@@ -935,6 +1151,7 @@
       +'.belt-cli{padding:9px 14px;border-bottom:1px solid var(--border);}.belt-cli:last-child{border-bottom:none;}'
       +'.belt-cli-nome{font-size:12px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px;}'
       +'.belt-bdg{font-size:9px;font-weight:800;padding:1px 7px;border-radius:20px;}.bg-elite{background:rgba(240,180,40,.16);color:#f0b429;}.bg-legacy{background:rgba(167,139,250,.18);color:#a78bfa;}'
+      +'.bg-green{background:rgba(52,211,153,.16);color:#34d399;}.bg-gold{background:rgba(240,180,40,.22);color:#f5c451;}'
       +'.belt-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}'
       +'.belt-chip{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;}'
       +'.belt-chip.c-has{background:rgba(86,211,100,.12);color:#56d364;}.belt-chip.c-inc{background:rgba(240,180,40,.16);color:#f0b429;}.belt-chip.c-ci{background:rgba(167,139,250,.18);color:#a78bfa;}'
@@ -970,9 +1187,12 @@
       +'<div class="belt-modos">'
       +'<button class="belt-modo m-e" id="beltLoteModo-elite" onclick="_beltLoteSetModo(\'elite\')">🟡 All Elite<small>todos sem CI</small></button>'
       +'<button class="belt-modo m-l" id="beltLoteModo-legacy" onclick="_beltLoteSetModo(\'legacy\')">🟣 All Legacy<small>todos com CI</small></button>'
+      +'<button class="belt-modo m-g" id="beltLoteModo-green" onclick="_beltLoteSetModo(\'green\')">&#128994; All Green<small>fechar a faixa &middot; 5</small></button>'
+      +'<button class="belt-modo m-o" id="beltLoteModo-gold" onclick="_beltLoteSetModo(\'gold\')">&#129351; All Golden<small>fechar a faixa &middot; 8</small></button>'
       +'<button class="belt-modo m-m" id="beltLoteModo-manual" onclick="_beltLoteSetModo(\'manual\')">✏️ Manual<small>editar por cliente</small></button>'
       +'</div>'
       +'<p class="belt-hint" id="beltLoteHint"></p>'
+      +'<div id="beltLoteVazios" style="display:none;margin:0 0 12px;padding:10px 12px;background:rgba(255,183,64,.08);border:1px solid rgba(255,183,64,.32);border-radius:9px;font-size:11.5px;line-height:1.65;color:#f0b429;"></div>'
       +'<div class="belt-grupo"><div class="belt-grupo-h"><span>Clientes do consultor</span><span id="beltLoteCont">—</span></div><div id="beltLoteLista"></div></div>'
       +'<div class="belt-grupo"><div class="belt-grupo-h skip"><span>⏭ SERÃO PULADOS</span><span id="beltLotePuladosCont">0</span></div><div id="beltLotePulados"></div></div>'
       +'<div class="belt-foot"><span class="r" id="beltLoteResumo"></span><button class="belt-gerar" id="beltLoteBtnGerar" onclick="_beltLoteGerar()">📄 Gerar PDF do lote</button></div>'
@@ -1013,4 +1233,8 @@
   window._beltTextoIntro    = _beltTextoIntro;
   window._beltReset         = _beltReset;
   window._beltToggleAcc     = _beltToggleAcc;
+  window._faixaConfigToggle = _faixaConfigToggle;
+  window._faixaConfigRender = _faixaConfigRender;
+  window._faixaToggleAcc    = _faixaToggleAcc;
+  window._faixaCalcular     = _faixaCalcular;
 })();

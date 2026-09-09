@@ -410,6 +410,8 @@ function _propostaSelecionarGGB(){
   window._beltAtivoCliente = null;
   window._beltMarcados = jaAtivo ? [] : _PROPOSTA_GGB.slice();
   if(typeof window._beltAtualizarBotoes === 'function') window._beltAtualizarBotoes(window._beltAtivo);
+  /* O GGB não usa texto de faixa — se vinha de Green/Golden, solta. */
+  if(typeof window._introLimparFaixa === 'function') window._introLimparFaixa();
   _propostaRecalcular();
 }
 window._propostaSelecionarGGB = _propostaSelecionarGGB;
