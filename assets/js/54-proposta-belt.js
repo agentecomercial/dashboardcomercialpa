@@ -19,6 +19,18 @@
 (function(){
   'use strict';
 
+  /* Versão deste arquivo — vem do ?v= do <script>. Aparece no rodapé do
+     lote para o gestor saber se está olhando a versão publicada ou uma
+     cópia velha em cache do navegador. */
+  var _VERSAO = (function(){
+    try{
+      var sc = document.currentScript;
+      if(!sc){ var a = document.getElementsByTagName('script'); sc = a[a.length-1]; }
+      var m = sc && sc.src && sc.src.match(/[?&]v=([^&#]+)/);
+      return m ? m[1] : '';
+    }catch(e){ return ''; }
+  })();
+
   /* Mapa: rótulo da coluna no mapeamento → chave do catálogo (_PROPOSTA_PRECOS).
      Confirmado com o gestor: CIS→CIS_GLOBAL, FOP→CEOP, MLS→ML5, TV→TAV. */
   var _BELT_COLMAP = {
@@ -1203,6 +1215,26 @@
     if(document.getElementById('beltSelOverlay') && document.getElementById('beltSelOverlay').classList.contains('open')) _loteSelGrid();
   }
 
+  var _loteForaAberto = false;
+  function _loteToggleFora(){ _loteForaAberto = !_loteForaAberto; _loteRender(); }
+
+  /* No Manual, clicar no chip travado inclui o treinamento E o liberador. */
+  function _lotePar(idx, cod){
+    var c = _lote.clientes[idx]; if(!c) return;
+    var req = _FAIXA_PAR[cod] || [];
+    var jaOk = req.some(function(x){
+      return (c.rec && c.rec.status[x] === 'ADQUIRIDO') || c.incluir.indexOf(x) !== -1;
+    });
+    if(!jaOk){
+      /* puxa o liberador mais barato que ainda não está incluído */
+      var lib = req.filter(function(x){ return c.incluir.indexOf(x) === -1; })
+                   .sort(function(a,b){ return _faixaPreco(a) - _faixaPreco(b); })[0];
+      if(lib){ c.incluir.push(lib); c.qtd = c.qtd || {}; c.qtd[lib] = 1; }
+    }
+    if(c.incluir.indexOf(cod) === -1){ c.incluir.push(cod); c.qtd = c.qtd || {}; c.qtd[cod] = 1; }
+    _loteRender();
+  }
+
   var _loteSelIdx = null;
   function _loteAddTreino(idx){ _loteSelIdx = idx; _loteGarantirOverlay(); document.getElementById('beltSelOverlay').classList.add('open'); _loteSelGrid(); }
   function _loteSelFechar(){ var o = document.getElementById('beltSelOverlay'); if(o) o.classList.remove('open'); }
@@ -1285,11 +1317,17 @@
   function _loteRender(){
     _loteGarantirOverlay();
     var manual = (_lote.modo === 'manual');
-    var inc = [], pul = [];
+    var inc = [], pul = [], fora = [];
     _lote.clientes.forEach(function(c, i){
-      /* No Manual TODOS sobem para a lista editável (até quem seria pulado),
-         pra poder ajustar. Nos outros modos, pulados ficam separados. */
-      if(manual){ inc.push({c:c, i:i}); return; }
+      /* No Manual sobem só os alunos presentes na grade da turma. Quem não
+         está no mapeamento vai para um bloco recolhido — continua editável
+         quando aberto, para o consultor poder montar na mão, mas não polui
+         a lista nem some da tela. */
+      if(manual){
+        if(!c.rec) fora.push({c:c, i:i});
+        else       inc.push({c:c, i:i});
+        return;
+      }
       if(!c.rec){ pul.push({c:c, motivo: c.motivoSemRec || 'não está no mapeamento'}); return; }
       if(!c.incluir.length){
         pul.push({c:c, motivo: (c.faixa && c.faixa.completa)
@@ -1327,8 +1365,7 @@
       } else { elVaz.style.display = 'none'; elVaz.innerHTML = ''; }
     }
 
-    var html = '';
-    inc.forEach(function(o){
+    var _linha = function(o){
       var c = o.c, i = o.i;
       var badge = c.modalidade==='legacy' ? '<span class="belt-bdg bg-legacy">Legacy</span>'
                 : c.modalidade==='green'  ? '<span class="belt-bdg bg-green">Green</span>'
@@ -1342,13 +1379,8 @@
           : '<span style="color:var(--muted);font-size:10px;">nenhum</span>')
           + ' <span class="belt-chip c-add" onclick="_beltLoteAddTreino('+i+')">+ treino</span>';
       } else {
-        incChips = c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+(q>1?' ×'+q:'')+'</span>'; }).join('');
-        if(c.faixa && c.faixa.bloqueados && c.faixa.bloqueados.length){
-          incChips += c.faixa.bloqueados.map(function(t){
-            return '<span class="belt-chip" style="background:rgba(167,139,250,.16);color:#a78bfa;" title="exige '
-                 + _FAIXA_PAR[t].join(' ou ') + ' na mesma proposta">' + t + ' 🔒</span>';
-          }).join('');
-        }
+        incChips = c.incluir.map(function(t){ var q=_loteQtd(c,t); return '<span class="belt-chip '+(t==='CI'?'c-ci':'c-inc')+'">'+t+(q>1?' ×'+q:'')+'</span>'; }).join('')
+          || '<span style="color:var(--muted);font-size:10px;">nenhum</span>';
       }
       /* Botão "Gerar só este": gera 1 PDF apenas deste cliente.
          Desabilitado quando não há treinamentos a incluir (nada pra gerar). */
@@ -1359,23 +1391,59 @@
       /* Sinaliza quem não está na grade e quem casou com outro nome da planilha */
       var aviso = '';
       if(!c.rec){
-        aviso = ' <span class="belt-bdg" style="background:rgba(239,68,68,.16);color:#fca5a5;">fora da grade — '
-              + (c.motivoSemRec || 'não está no mapeamento') + '</span>';
+        /* Tom neutro: não estar na grade não é erro, é falta de dado. */
+        aviso = ' <span class="belt-bdg" style="background:rgba(255,255,255,.08);color:var(--muted);">'
+              + (c.motivoSemRec || 'não mapeado') + '</span>';
       } else if(c.casado){
         aviso = ' <span class="belt-bdg" style="background:rgba(255,183,64,.16);color:#f0b429;">planilha: '
               + c.casado + '</span>';
       }
-      html += '<div class="belt-cli" style="display:flex;align-items:flex-start;gap:10px;">'
+      /* Travados pelo par (MASTER sem FCIS/ML5): FORA da linha "incluir",
+         em tom neutro — não é erro, é uma vaga que não coube. */
+      var travChips = '';
+      if(c.faixa && c.faixa.bloqueados && c.faixa.bloqueados.length){
+        travChips = '<div class="belt-chips" style="margin-top:4px;"><span class="belt-lbl">travado</span>'
+          + c.faixa.bloqueados.map(function(t){
+              var tip = 'exige ' + _FAIXA_PAR[t].join(' ou ') + ' na mesma proposta e não havia vaga para os dois';
+              return '<span class="belt-chip belt-trav"' + (manual ? ' style="cursor:pointer;" onclick="_beltLotePar('+i+',\''+t+'\')" title="'+tip+' — clique para incluir os dois"' : ' title="'+tip+'"') + '>'
+                   + t + ' 🔒</span>';
+            }).join('')
+          + '</div>';
+      }
+      return '<div class="belt-cli" style="display:flex;align-items:flex-start;gap:10px;">'
         + '<div style="flex:1;min-width:0;">'
         +   '<div class="belt-cli-nome">'+c.nome+' '+badge+aviso+'</div>'
         +   '<div class="belt-chips" style="margin-bottom:4px;"><span class="belt-lbl">tem</span>'+temChips+'</div>'
         +   '<div class="belt-chips"><span class="belt-lbl">incluir</span>'+incChips+'</div>'
+        +   travChips
         + '</div>'
         + btnUm
         + '</div>';
-    });
-    if(!html) html = '<div style="padding:16px;color:var(--muted);font-size:12px;text-align:center;">Nenhum cliente.</div>';
+    };
+
+    var html = inc.map(_linha).join('');
+    if(!html) html = '<div style="padding:16px;color:var(--muted);font-size:12px;text-align:center;">Nenhum cliente na grade da turma.</div>';
     document.getElementById('beltLoteLista').innerHTML = html;
+
+    /* Bloco recolhido dos que não estão na grade (só no Manual) */
+    var boxFora = document.getElementById('beltLoteForaBox');
+    if(boxFora){
+      if(fora.length){
+        boxFora.style.display = 'block';
+        document.getElementById('beltLoteForaTit').innerHTML =
+          (_loteForaAberto ? '▾' : '▸') + ' ' + fora.length + ' fora da grade da turma';
+        document.getElementById('beltLoteForaLista').style.display = _loteForaAberto ? 'block' : 'none';
+        document.getElementById('beltLoteForaLista').innerHTML = _loteForaAberto
+          ? ('<div style="padding:8px 14px;color:var(--muted);font-size:10.5px;line-height:1.5;">'
+             + 'Não estão no mapeamento — pode ser turma diferente ou o nome grafado de outro jeito. '
+             + 'Monte na mão pelo "+ treino": quem receber treinamento entra no PDF, quem ficar vazio não.</div>'
+             + fora.map(_linha).join(''))
+          : '';
+      } else {
+        boxFora.style.display = 'none';
+        document.getElementById('beltLoteForaLista').innerHTML = '';
+      }
+    }
     document.getElementById('beltLoteCont').textContent = inc.length + (manual ? ' clientes' : ' a gerar');
 
     var pulHtml = pul.length
@@ -1383,7 +1451,8 @@
       : '<div style="padding:10px 14px;color:var(--muted);font-size:11px;">'+(manual?'No modo Manual todos ficam editáveis acima.':'Nenhum.')+'</div>';
     document.getElementById('beltLotePulados').innerHTML = pulHtml;
     document.getElementById('beltLotePuladosCont').textContent = pul.length;
-    document.getElementById('beltLoteResumo').innerHTML = 'Serão geradas <b>'+geraveis+' propostas</b> em <b>1 PDF</b>'+(pul.length?(' · '+pul.length+' puladas'):'');
+    document.getElementById('beltLoteResumo').innerHTML = 'Serão geradas <b>'+geraveis+' propostas</b> em <b>1 PDF</b>'+(pul.length?(' · '+pul.length+' puladas'):'')
+      + (_VERSAO ? ' <span style="opacity:.45;font-size:10px;">· versão '+_VERSAO+'</span>' : '');
     document.getElementById('beltLoteBtnGerar').textContent = '📄 Gerar todos ('+geraveis+')';
   }
 
@@ -1419,7 +1488,7 @@
       +'.bg-green{background:rgba(52,211,153,.16);color:#34d399;}.bg-gold{background:rgba(240,180,40,.22);color:#f5c451;}'
       +'.belt-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}'
       +'.belt-chip{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;}'
-      +'.belt-chip.c-has{background:rgba(86,211,100,.12);color:#56d364;}.belt-chip.c-inc{background:rgba(240,180,40,.16);color:#f0b429;}.belt-chip.c-ci{background:rgba(167,139,250,.18);color:#a78bfa;}'
+      +'.belt-chip.belt-trav{background:transparent;border:1px dashed rgba(255,255,255,.28);color:var(--muted);}.belt-chip.c-has{background:rgba(86,211,100,.12);color:#56d364;}.belt-chip.c-inc{background:rgba(240,180,40,.16);color:#f0b429;}.belt-chip.c-ci{background:rgba(167,139,250,.18);color:#a78bfa;}'
       +'.belt-chip.edit{cursor:pointer;}.belt-chip.edit:hover{filter:brightness(1.25);}'
       +'.belt-chip.c-add{background:none;border:1px dashed var(--border2);color:var(--muted);cursor:pointer;}.belt-chip.c-add:hover{border-color:var(--accent);color:var(--accent);}'
       +'.belt-cli-gerar{flex-shrink:0;align-self:center;background:rgba(200,240,90,.10);border:1px solid rgba(200,240,90,.35);color:var(--accent);font-size:10.5px;font-weight:700;padding:6px 11px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}'
@@ -1457,6 +1526,11 @@
       +'<button class="belt-modo m-m" id="beltLoteModo-manual" onclick="_beltLoteSetModo(\'manual\')">✏️ Manual<small>editar por cliente</small></button>'
       +'</div>'
       +'<p class="belt-hint" id="beltLoteHint"></p>'
+      +'<div class="belt-grupo" id="beltLoteForaBox" style="display:none;">'
+      +'<div class="belt-grupo-h" style="cursor:pointer;" onclick="_beltLoteToggleFora()">'
+      +'<span id="beltLoteForaTit">fora da grade</span>'
+      +'<span style="font-size:10px;font-weight:600;color:var(--muted);">clique para abrir</span></div>'
+      +'<div id="beltLoteForaLista" style="display:none;"></div></div>'
       +'<div id="beltLoteVazios" style="display:none;margin:0 0 12px;padding:10px 12px;background:rgba(255,183,64,.08);border:1px solid rgba(255,183,64,.32);border-radius:9px;font-size:11.5px;line-height:1.65;color:#f0b429;"></div>'
       +'<div class="belt-grupo"><div class="belt-grupo-h"><span>Clientes do consultor</span><span id="beltLoteCont">—</span></div><div id="beltLoteLista"></div></div>'
       +'<div class="belt-grupo"><div class="belt-grupo-h skip"><span>⏭ SERÃO PULADOS</span><span id="beltLotePuladosCont">0</span></div><div id="beltLotePulados"></div></div>'
@@ -1488,6 +1562,8 @@
   window._beltLoteSetModo      = _loteSetModo;
   window._beltLoteToggleTreino = _loteToggleTreino;
   window._beltLoteAddTreino    = _loteAddTreino;
+  window._beltLoteToggleFora   = _loteToggleFora;
+  window._beltLotePar          = _lotePar;
   window._beltLoteSelFechar    = _loteSelFechar;
   window._beltLoteGerar        = _loteGerar;
   window._beltLoteGerarUm      = _loteGerarUm;
