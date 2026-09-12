@@ -637,6 +637,19 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   box-shadow:0 3px 14px rgba(200,240,90,.5);
 }
 
+/* Sincronizar FRZ da turma — laranja da marca FRZ, igual ao .np-btn-frz da
+   Pipeline, pra ler como "o mesmo botão" e não competir com o +Novo cliente */
+.cli-bar-unica .cli-btn-frz{
+  background:rgba(255,100,32,.12);
+  color:#ff8f57;
+  border:1px solid rgba(255,100,32,.42);
+  font-weight:700;
+}
+.cli-bar-unica .cli-btn-frz:hover{
+  background:rgba(255,100,32,.22);color:#ffb27a;border-color:rgba(255,100,32,.6);
+}
+.cli-bar-unica .cli-btn-frz:disabled{cursor:default;}
+
 /* Menu kebab "···" — botão simples sem glass */
 .cli-bar-unica .cli-menu{position:relative;display:inline-block;}
 .cli-bar-unica .cli-menu-trigger{

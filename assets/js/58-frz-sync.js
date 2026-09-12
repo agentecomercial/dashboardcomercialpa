@@ -27,8 +27,10 @@
 
    Detalhes de conversão
    ─────────────────────
-   • valor: vai o valor cheio do lançamento. A regra do HUD de contar
-     metade em "C.I" é do gauge deles, não vale como valor de venda.
+   • valor: sobe o LÍQUIDO, nunca o bruto (15/08/2026). O líquido é o valor
+     que está lançado no HUD — inclusive no COACHING INDIVIDUAL, onde o
+     lançamento já vem pela metade. O sync espelha, não recalcula.
+     Se um CI estiver no HUD pelo bruto, corrija no HUD.
    • und > 1: o app não tem campo de quantidade em venda avulsa, então a
      quantidade entra no nome do produto ("MASTER COACHING ×2").
    ══════════════════════════════════════════════════════════════════ */
@@ -45,9 +47,19 @@
      sync sem dar erro nenhum. */
   var CONSULTORES = {
     'Gabriela':          'GABRIELA SOUZA',
-    'Karla':             'KARLA FERREIRA',   /* liberada em 03/08/2026 */
-    'Heverton Leonardo': 'HEVERTON LEONARDO' /* liberado em 05/08/2026 */
+    'Karla':             'KARLA FERREIRA',    /* liberada em 03/08/2026 */
+    'Heverton Leonardo': 'HEVERTON LEONARDO', /* liberado em 05/08/2026 */
+    'Natália':           'NATALIA OLIVEIRA'   /* liberada em 15/08/2026 — chave COM acento, igual ao HUD */
   };
+
+  /* EXTRACLASSE (Pablo) — NÃO vem do HUD.
+     O Pablo não lança no pipeline_entries: as vendas dele vivem no ZS. Como o
+     ZS exige login e não libera CORS, o navegador nunca conseguiria buscar de
+     lá — então o Sync-Extraclasse-ZS.ps1 gera o arquivo de dados
+     assets/js/59-extraclasse-zs.js (window.EXTRACLASSE_ZS) e o sync lê dali,
+     direto para a Pipeline, sem passar pelo HUD. Rode o .ps1 antes de clicar
+     no botão para atualizar os números. */
+  var EXTRACLASSE_NOME = 'EXTRACLASSE';
 
   /* Status do HUD → status da Pipeline. Ausente = não importa.
      PROJEÇÃO virou "negociação" em 05/08/2026 — é o status que o app soma
@@ -94,6 +106,17 @@
     return mk + '-01';
   }
 
+  /* LÍQUIDO — o que sobe para a Pipeline.
+     O HUD é a fonte do líquido: o valor lançado lá JÁ É o que deve subir.
+     No COACHING INDIVIDUAL isso significa o lançamento com a metade (o outro
+     50% é do coach) — ex.: Thayná Deps, HUD R$ 27.001,77 para uma venda de
+     R$ 54.003,54 no ZS. O sync NÃO divide nada: se dividisse, esse caso
+     viraria metade da metade.
+     ⚠️ Quem lançar o BRUTO no CI sobe errado — a correção é no HUD, não aqui. */
+  function _liquido(curso, valor){
+    return +valor || 0;
+  }
+
   /* Objeto de venda avulsa no formato que a Pipeline já usa
      (mesmos campos de npSalvarVenda) */
   function _venda(e, mk){
@@ -103,7 +126,7 @@
       clienteNome:   String(e.aluno||'').trim(),
       consultorNome: CONSULTORES[e.consultant],
       produto:       produto,
-      valor:         +(e.valor||0),
+      valor:         _liquido(e.curso, e.valor),
       status:        _statusApp(e.status),
       data:          _data(e, mk),
       origemManual:  'FRZ HUD' + (e.origem ? ' · ' + e.origem : ''),
@@ -142,6 +165,41 @@
         if(!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       });
+  }
+
+  /* ── EXTRACLASSE: vendas do ZS do Pablo (arquivo 59-extraclasse-zs.js) ──
+     Formato esperado:
+       window.EXTRACLASSE_ZS = {
+         mes: '2026-08',
+         geradoEm: '15/08/2026 21:40',
+         vendas: [ { id, cliente, produto, valor, data, status } ]
+       }
+     `id` é o id da oportunidade no ZS — vira 'zs_<id>' no app, então
+     regerar o arquivo atualiza a mesma venda em vez de duplicar. */
+  function _extraclasse(mk){
+    var d = window.EXTRACLASSE_ZS;
+    if(!d || !d.vendas || !d.vendas.length) return [];
+    if(d.mes && d.mes !== mk) return [];   /* arquivo de outro mês: ignora */
+    return d.vendas.map(function(v){
+      return {
+        id: 'zs_' + v.id,
+        venda: {
+          clienteNome:   String(v.cliente||'').trim(),
+          consultorNome: EXTRACLASSE_NOME,
+          produto:       String(v.produto||'').trim(),
+          valor:         _liquido(v.produto, v.valor),   /* mesma regra do líquido */
+          status:        _statusApp(v.status || 'FECHADO') || 'pago',
+          data:          v.data || (mk + '-01'),
+          origemManual:  'ZS · Extraclasse',
+          obs:           '',
+          mes:           mk,
+          _src:          'avulso',
+          _frz:          true,
+          frzId:         'zs_' + v.id,
+          ts:            Date.now()
+        }
+      };
+    });
   }
 
   function _marcarBotao(txt, disabled){
@@ -187,29 +245,37 @@
         var novos = 0, atualizados = 0, removidos = 0;
         var ops = [];
 
-        /* 1) HUD → app: cria ou atualiza */
+        /* Junta as duas fontes num único conjunto {id, venda}:
+           HUD (pipeline_entries) + EXTRACLASSE (ZS do Pablo, arquivo local) */
+        var itens = [];
         remotos.forEach(function(e){
           if(!CONSULTORES[e.consultant] || !_statusApp(e.status)) return;
-          var id = 'frz_' + e.id;
-          var novo = _venda(e, mk);
-          var atual = locais[id];
+          itens.push({ id: 'frz_' + e.id, venda: _venda(e, mk) });
+        });
+        var extra = _extraclasse(mk);
+        extra.forEach(function(it){ itens.push(it); });
+
+        /* 1) fonte → app: cria ou atualiza */
+        itens.forEach(function(it){
+          var atual = locais[it.id];
           if(!atual){ novos++; }
-          else if(_igual(atual, novo)){ return; }   /* nada mudou */
+          else if(_igual(atual, it.venda)){ return; }   /* nada mudou */
           else { atualizados++; }
-          ops.push(window._fbSave('pipelineSales/' + mk + '/' + id, novo));
+          ops.push(window._fbSave('pipelineSales/' + mk + '/' + it.id, it.venda));
         });
 
-        /* 2) Apagado no HUD (ou com status fora do mapa) → remove aqui.
-              Só mexe no que veio do FRZ e é de consultor do escopo — venda
+        /* 2) Apagado na origem (ou com status fora do mapa) → remove aqui.
+              Só mexe no que veio do FRZ/ZS e é de consultor do escopo — venda
               lançada à mão no app nunca é tocada. */
         var vivos = {};
-        remotos.forEach(function(e){ vivos['frz_' + e.id] = true; });
+        itens.forEach(function(it){ vivos[it.id] = true; });
         Object.keys(locais).forEach(function(id){
           var v = locais[id];
           if(!v || !v._frz) return;
-          var doEscopo = Object.keys(CONSULTORES).some(function(n){
-            return CONSULTORES[n] === v.consultorNome;
-          });
+          var doEscopo = (v.consultorNome === EXTRACLASSE_NOME)
+            || Object.keys(CONSULTORES).some(function(n){
+                 return CONSULTORES[n] === v.consultorNome;
+               });
           if(!doEscopo) return;
           if(vivos[id]) return;
           removidos++;
@@ -217,7 +283,7 @@
         });
 
         return Promise.all(ops).then(function(){
-          return { novos:novos, atualizados:atualizados, removidos:removidos, total:remotos.length };
+          return { novos:novos, atualizados:atualizados, removidos:removidos, total:itens.length };
         });
       })
       .then(function(r){
@@ -248,6 +314,21 @@
         _rodando = false;
         _marcarBotao('⟳ Sincronizar FRZ', false);
       });
+  };
+
+  /* ── Constantes compartilhadas ───────────────────────────────────
+     O 63-turma-frz-sync.js (⟳ Sincronizar FRZ da aba Turmas) precisa do MESMO
+     mapa de consultores e do MESMO de-para de status. Duplicar lá é justamente
+     o risco que o comentário do CONSULTORES descreve: chave errada = consultor
+     some do sync sem dar erro nenhum. Então a fonte é uma só, publicada aqui. */
+  window.FRZ = {
+    CONSULTORES: CONSULTORES,
+    EXTRACLASSE_NOME: EXTRACLASSE_NOME,
+    STATUS: STATUS,
+    stKey: _stKey,
+    statusApp: _statusApp,
+    SB_URL: SB_URL,
+    SB_KEY: SB_KEY
   };
 
   document.addEventListener('DOMContentLoaded', _mostrarUltima);
