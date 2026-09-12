@@ -161,8 +161,23 @@
     return [{ cod: cod || bruto, valor: valorTotal, aviso: cod ? '' : 'curso fora do catálogo' }];
   }
 
-  /* Rateio proporcional ao preço de tabela; o resto dos centavos vai para a
-     maior parte, então a soma fecha EXATAMENTE o valor do HUD. */
+  /* Combo fechado num valor REDONDO foi negociado em números redondos: quem
+     vende R$ 14.000 de CEOP+MASTER+FGPC divide 4.000 / 4.000 / 6.000, não
+     4.242,19 / 5.515,62 / 4.242,19. O passo é o maior valor "inteiro" que
+     divide o total; total quebrado (R$ 13.993,46) não tem passo e fica no
+     proporcional puro. */
+  function _passoRedondo(total){
+    var c = Math.round(total * 100);
+    if(c <= 0) return 0;
+    if(c % 100000 === 0) return 1000;
+    if(c % 50000  === 0) return 500;
+    if(c % 10000  === 0) return 100;
+    return 0;
+  }
+
+  /* Rateio proporcional ao preço de tabela, arredondado ao passo redondo. O
+     resto vai para a maior parte, então a soma fecha EXATAMENTE o valor do HUD
+     (é isso que o Aplicar cobra). */
   function _ratear(cods, total){
     var pesos = cods.map(function(c){ return PRECO_TABELA[c] || 0; });
     if(pesos.some(function(p){ return !p; })) pesos = cods.map(function(){ return 1; });
@@ -170,6 +185,16 @@
     var partes = cods.map(function(c,i){
       return { cod:c, valor: Math.round((total * pesos[i] / somaP) * 100) / 100, aviso:'' };
     });
+
+    var passo = _passoRedondo(total);
+    if(passo){
+      var arred = partes.map(function(p){ return Math.round(p.valor / passo) * passo; });
+      /* se o arredondamento zerar alguma parte, não serve — fica o proporcional */
+      if(arred.every(function(v){ return v > 0; })){
+        partes.forEach(function(p,i){ p.valor = arred[i]; });
+      }
+    }
+
     var dif = Math.round((total - partes.reduce(function(a,p){ return a+p.valor; },0)) * 100) / 100;
     if(dif){
       var maior = 0;
@@ -501,25 +526,30 @@
     var t = window._turmaAtiva;
     return LS_PREFIX + ((t && t.id) || 'sem-turma');
   }
+  var TITULO_BASE = 'Sincronizar FRZ — puxar os lançamentos do FRZ Pipeline HUD do período desta turma';
+
+  /* O botão é só o ícone ⟳ (34×34, do tamanho do "⋯") porque a barra de
+     Clientes não tem folga pra um rótulo de 150px mais o carimbo ao lado.
+     Então a última sincronização vive no title, não num <span> próprio. */
   function _mostrarUltima(){
-    var el = document.getElementById('turmaFrzUltima');
-    if(!el) return;
+    var b = document.getElementById('turmaBtnFrzSync');
+    if(!b) return;
     var v = null;
     try{ v = localStorage.getItem(_chaveLS()); }catch(e){}
-    el.textContent = v ? ('FRZ: ' + v) : '';
+    b.title = TITULO_BASE + (v ? ('\nÚltima: ' + v) : '');
   }
   window._turmaFrzMostrarUltima = _mostrarUltima;
 
-  /* Troca só o .btn-label: no mobile o .cli-action-btn vira um quadrado 40×40 com
-     o label escondido (main.css:1104), então mexer no textContent do botão
-     inteiro apagaria o ícone e quebraria o layout. */
+  /* Sem rótulo pra trocar: o estado "rodando" aparece no ícone (…), no title e
+     na opacidade. O card Clientes zera toda animation/transform via
+     `.tpanel:has(#cliBarUnica) *` (main.css), então um spin no ⟳ não rodaria. */
   function _marcarBotao(txt, disabled){
     var b = document.getElementById('turmaBtnFrzSync');
     if(!b) return;
-    var lab = b.querySelector('.btn-label');
-    if(lab) lab.textContent = ' ' + txt; else b.textContent = '⟳ ' + txt;
+    b.textContent = disabled ? '…' : '⟳';
     b.disabled = !!disabled;
     b.style.opacity = disabled ? '.6' : '';
+    if(disabled) b.title = txt; else _mostrarUltima();
   }
 
   /* ── Modal de prévia ───────────────────────────────────────────── */

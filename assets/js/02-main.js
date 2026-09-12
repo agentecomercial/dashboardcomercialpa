@@ -1673,10 +1673,11 @@ function renderAll(){
   if(_btnNC)_btnNC.style.display=_isAdm?'':'none';
   // ⟳ Sincronizar FRZ (63-turma-frz-sync.js): escreve na turma, então só ADM
   var _btnFrz=document.getElementById('turmaBtnFrzSync');
-  if(_btnFrz)_btnFrz.style.display=_isAdm?'':'none';
-  var _frzUlt=document.getElementById('turmaFrzUltima');
-  if(_frzUlt)_frzUlt.style.display=_isAdm?'':'none';
-  if(typeof window._turmaFrzMostrarUltima==='function') window._turmaFrzMostrarUltima();
+  if(_btnFrz){
+    _btnFrz.style.display=_isAdm?'':'none';
+    // a data da última sincronização é o title do próprio botão (não há rótulo)
+    if(typeof window._turmaFrzMostrarUltima==='function') window._turmaFrzMostrarUltima();
+  }
   // Título "Clientes" clicável: só ADM + desktop ≥ 769px
   var _ptCli=document.getElementById('panelTitleClientes');
   if(_ptCli){

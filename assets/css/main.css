@@ -637,13 +637,19 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   box-shadow:0 3px 14px rgba(200,240,90,.5);
 }
 
-/* Sincronizar FRZ da turma — laranja da marca FRZ, igual ao .np-btn-frz da
-   Pipeline, pra ler como "o mesmo botão" e não competir com o +Novo cliente */
+/* Sincronizar FRZ da turma — só o ícone, redondo, do tamanho do "⋯".
+   A barra já carrega busca + 5 filtros + "+ Novo cliente": um botão com o
+   rótulo inteiro (150px) mais o carimbo ao lado estourava o card abaixo de
+   ~1150px. O laranja é o da marca FRZ, o mesmo do .np-btn-frz da Pipeline,
+   pra ler como "o mesmo botão". A última sincronização vai no title. */
 .cli-bar-unica .cli-btn-frz{
+  width:34px;height:34px;padding:0;
+  justify-content:center;gap:0;
+  border-radius:50%;
   background:rgba(255,100,32,.12);
   color:#ff8f57;
   border:1px solid rgba(255,100,32,.42);
-  font-weight:700;
+  font-size:15px;font-weight:700;line-height:1;
 }
 .cli-bar-unica .cli-btn-frz:hover{
   background:rgba(255,100,32,.22);color:#ffb27a;border-color:rgba(255,100,32,.6);
@@ -744,6 +750,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .cli-bar-unica .btn-secondary,
   .cli-bar-unica .add-btn,
   .cli-bar-unica #btnNovoCliente{min-width:34px;padding:0 10px;}
+  /* o FRZ já nasce redondo 34x34: o padding acima espremeria o ícone */
+  .cli-bar-unica .cli-btn-frz{min-width:34px;padding:0;}
 }
 /* ≤1050px: título "CLIENTES" some + busca encolhe */
 @media (max-width:1050px){

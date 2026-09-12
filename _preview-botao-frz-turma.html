@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Botão Sincronizar FRZ — 5 opções</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);--text:#f0f0f0;--muted:#888;--accent:#c8f05a;--red:#ff5f57;--radius:10px;--radius-sm:6px;}
+*{box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;margin:0;padding:24px;}
+h1{font-size:18px;font-weight:700;margin:0 0 4px;}
+.sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;max-width:900px;}
+.sub code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;}
+
+.ctl{position:sticky;top:0;z-index:50;background:var(--bg);padding:10px 0 14px;border-bottom:1px solid var(--border);margin-bottom:22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ctl label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.ctl input[type=range]{width:320px;accent-color:var(--accent);}
+.ctl .val{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);min-width:62px;}
+.ctl .preset{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:5px 11px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;}
+.ctl .preset:hover{border-color:var(--accent);color:var(--accent);}
+
+.opt{margin-bottom:26px;}
+.opt-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.opt-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:#0f0f0f;background:var(--accent);border-radius:4px;padding:2px 7px;}
+.opt-tag.ruim{background:var(--red);color:#fff;}
+.opt-name{font-size:13px;font-weight:700;}
+.opt-desc{font-size:11.5px;color:var(--muted);margin:0 0 10px;line-height:1.55;max-width:860px;}
+.tpanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;overflow:visible;container-type:inline-size;}
+
+.cli-bar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:visible;position:relative;}
+.panel-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;flex-shrink:0;}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 12px;height:34px;flex:0 1 auto;min-width:0;}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:12px;width:110px;min-width:0;}
+.search-bar input::placeholder{color:var(--muted);}
+.search-icon{color:var(--muted);font-size:13px;flex-shrink:0;}
+.ms-filt-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;height:34px;padding:0 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:10.5px;font-family:inherit;font-weight:700;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;white-space:nowrap;flex:0 1 auto;min-width:0;}
+.ms-filt-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;}
+.ms-filt-caret{font-size:10px;color:var(--muted);flex-shrink:0;}
+.cli-clear-icon{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;border-radius:50%;color:#666;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0;padding:0;}
+.cli-spacer{flex:1 1 0;min-width:8px;}
+
+.cli-action-btn{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:11px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+.cli-action-btn .btn-icon{font-size:13px;line-height:1;}
+.add-btn{background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;border:none;font-weight:700;box-shadow:0 2px 10px rgba(200,240,90,.35);}
+.cli-menu-trigger{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border2);border-radius:50%;font-size:18px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;padding:0;flex-shrink:0;}
+
+.frz{background:rgba(255,100,32,.12);color:#ff8f57;border:1px solid rgba(255,100,32,.42);font-weight:700;}
+.frz:hover{background:rgba(255,100,32,.22);color:#ffb27a;}
+.frz-stamp{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-family:'DM Mono',monospace;}
+
+.frz-a{width:34px;height:34px;padding:0;border-radius:50%;justify-content:center;font-size:15px;gap:0;}
+.frz-b{padding:0 11px;}
+
+.menu-wrap{position:relative;flex-shrink:0;}
+.menu-pop{position:absolute;top:calc(100% + 6px);right:0;min-width:216px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 28px rgba(0,0,0,.55);padding:5px;z-index:100;}
+.menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 11px;background:transparent;border:none;border-radius:5px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;}
+.menu-item:hover{background:rgba(255,255,255,.05);}
+.menu-item .ic{font-size:14px;width:18px;text-align:center;}
+.menu-item.is-frz{color:#ff8f57;}
+.menu-item small{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:1px;font-family:'DM Mono',monospace;}
+.menu-sep{height:1px;background:var(--border);margin:4px 2px;}
+
+.frz-d{padding:0 6px 0 11px;gap:7px;}
+.frz-d .stamp-in{font-family:'DM Mono',monospace;font-size:9.5px;font-weight:500;background:rgba(255,100,32,.18);color:#ffb27a;padding:2px 6px;border-radius:4px;line-height:1;}
+
+.frz-e .lbl-curto{display:none;}
+@container (max-width:900px){
+  .frz-e .lbl-full{display:none;}
+  .frz-e .lbl-curto{display:inline;}
+  .frz-e-stamp{display:none;}
+}
+@container (max-width:620px){
+  .frz-e .lbl-curto{display:none;}
+  .frz-e{width:34px;padding:0;justify-content:center;gap:0;border-radius:50%;font-size:15px;}
+}
+</style>
+</head>
+<body>
+
+<h1>⟳ Sincronizar FRZ — 5 opções de encaixe</h1>
+<p class="sub">
+  Hoje o botão usa <code>.cli-action-btn</code> com o rótulo inteiro <strong>mais</strong> um
+  <code>&lt;span&gt;</code> de carimbo ao lado: juntos passam de 230px numa barra que já carrega
+  busca + 5 filtros + “+ Novo cliente” + “⋯”. Arraste a largura para ver cada opção apertar.
+  Os cards são a réplica da barra real.
+</p>
+
+<div class="ctl">
+  <label for="w">Largura do card</label>
+  <input type="range" id="w" min="360" max="1320" value="1020">
+  <span class="val" id="wv">1020px</span>
+  <button class="preset" data-w="1320">Desktop 1320</button>
+  <button class="preset" data-w="1020">Notebook 1020</button>
+  <button class="preset" data-w="760">Tablet 760</button>
+  <button class="preset" data-w="420">Celular 420</button>
+</div>
+
+<div id="palco">
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag ruim">HOJE</span><span class="opt-name">Como está — estoura</span></div>
+    <p class="opt-desc">Rótulo inteiro + carimbo solto. Abaixo de ~1150px o texto é cortado e o “⋯” sai do card.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <button class="cli-action-btn frz"><span class="btn-icon">⟳</span><span> Sincronizar FRZ</span></button>
+        <span class="frz-stamp">FRZ: 12/09, 13:17</span>
+        <button class="cli-menu-trigger">⋯</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag">A</span><span class="opt-name">Só o ícone, redondo</span></div>
+    <p class="opt-desc">34×34 igual ao “⋯”, na cor FRZ. Ocupa o mínimo e nunca estoura; a última sincronização vai para o tooltip. Custo: quem nunca usou não adivinha o que o ⟳ faz.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <button class="cli-action-btn frz frz-a" title="Sincronizar FRZ — última: 12/09, 13:17">⟳</button>
+        <button class="cli-menu-trigger">⋯</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag">B</span><span class="opt-name">⟳ FRZ</span></div>
+    <p class="opt-desc">Guarda a palavra que identifica a origem e corta as que não informam nada — “Sincronizar” é justamente o que o ⟳ já diz. ~64px em vez de 150px, e o carimbo encolhe para só a data.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <button class="cli-action-btn frz frz-b" title="Sincronizar FRZ"><span class="btn-icon">⟳</span><span>FRZ</span></button>
+        <span class="frz-stamp">12/09 13:17</span>
+        <button class="cli-menu-trigger">⋯</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag">C</span><span class="opt-name">Dentro do menu “⋯”</span></div>
+    <p class="opt-desc">Sai da barra e vira item do kebab, junto de “Lista de Clientes” e “Importar Planilha” — onde as outras ações de dados já moram. Zero pressão no layout, rótulo inteiro e a data embaixo. Custo: dois cliques.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <div class="menu-wrap">
+          <button class="cli-menu-trigger" style="border-color:var(--accent);color:var(--accent);">⋯</button>
+          <div class="menu-pop">
+            <button class="menu-item is-frz"><span class="ic">⟳</span><span>Sincronizar FRZ<small>última: 12/09, 13:17</small></span></button>
+            <div class="menu-sep"></div>
+            <button class="menu-item"><span class="ic">👥</span><span>Lista de Clientes</span></button>
+            <button class="menu-item"><span class="ic">📊</span><span>Importar Planilha</span></button>
+            <button class="menu-item"><span class="ic">🏆</span><span>Relatório SUPREMO</span></button>
+          </div>
+        </div>
+      </div>
+      <div style="height:150px;"></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag">D</span><span class="opt-name">Pill com o carimbo dentro</span></div>
+    <p class="opt-desc">Elimina o <code>&lt;span&gt;</code> solto — que é metade do problema — trazendo a data para dentro do botão. Um elemento só, e o “quando foi a última” fica onde se olha para clicar.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <button class="cli-action-btn frz frz-d" title="Sincronizar FRZ"><span class="btn-icon">⟳</span><span>FRZ</span><span class="stamp-in">12/09 13:17</span></button>
+        <button class="cli-menu-trigger">⋯</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="opt-tag">E</span><span class="opt-name">Colapso progressivo — 3 estágios</span></div>
+    <p class="opt-desc">Rótulo inteiro quando sobra espaço → “⟳ FRZ” no meio → só o ícone no aperto, reagindo à largura do <strong>card</strong> (container query), não da janela. Arraste até 900px e 620px para ver os dois saltos. É a única que nunca desperdiça espaço nem estoura.</p>
+    <div class="tpanel">
+      <div class="cli-bar">
+        <span class="panel-title">Clientes</span>
+        <div class="search-bar"><span class="search-icon">⌕</span><input placeholder="Buscar..."></div>
+        <button class="ms-filt-trigger"><span>Todos</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinamento</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Treinador</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Consultor</span><span class="ms-filt-caret">▾</span></button>
+        <button class="ms-filt-trigger"><span>Presença</span><span class="ms-filt-caret">▾</span></button>
+        <button class="cli-clear-icon">×</button>
+        <div class="cli-spacer"></div>
+        <button class="cli-action-btn add-btn"><span class="btn-icon">+</span><span> Novo cliente</span></button>
+        <button class="cli-action-btn frz frz-e" title="Sincronizar FRZ — última: 12/09, 13:17"><span class="btn-icon">⟳</span><span class="lbl-full"> Sincronizar FRZ</span><span class="lbl-curto">FRZ</span></button>
+        <span class="frz-stamp frz-e-stamp">12/09 13:17</span>
+        <button class="cli-menu-trigger">⋯</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var palco=document.getElementById('palco'), w=document.getElementById('w'), wv=document.getElementById('wv');
+function ap(v){ palco.style.maxWidth=v+'px'; wv.textContent=v+'px'; w.value=v; }
+w.addEventListener('input',function(){ ap(+w.value); });
+document.querySelectorAll('.preset').forEach(function(b){
+  b.addEventListener('click',function(){ ap(+b.dataset.w); });
+});
+ap(+w.value);
+</script>
+</body>
+</html>
