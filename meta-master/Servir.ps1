@@ -31,6 +31,48 @@ function Log-Erro($contexto, $detalhe) {
   } catch {}
 }
 
+# ---- gravacao atomica de dado do usuario (auditoria 18/09/2026) ----
+# O padrao antigo era WriteAllText direto no arquivo final. Tres problemas:
+#   1. interrupcao no meio (Ctrl+C no servidor, disco cheio) deixa o arquivo
+#      truncado -- e /api/estado le com catch vazio, enxerga {} e o POST
+#      seguinte grava so o patch, apagando 1 MB de fotos e preferencias;
+#   2. nao havia backup de nada;
+#   3. gravar "{}" por cima de um arquivo cheio passava sem reclamar.
+# Aqui: recusa vazio por cima de cheio, guarda o .prev e so entao troca o
+# arquivo. O padrao ja existia em /api/leads (snapshot) -- faltava valer para
+# o dado DIGITADO, que e o insubstituivel.
+function Gravar-Atomico {
+  param(
+    [string]$Arquivo,
+    [string]$Conteudo,
+    [switch]$PermitirVazio   # so para quem quer mesmo esvaziar
+  )
+  if ($null -eq $Conteudo) { throw 'conteudo nulo' }
+
+  $novoVazio = ($Conteudo.Trim() -in @('', '{}', '[]'))
+  if ($novoVazio -and -not $PermitirVazio -and (Test-Path $Arquivo)) {
+    if ((Get-Item $Arquivo).Length -gt 4) {
+      Log-Erro "Gravar-Atomico RECUSADO" "$Arquivo : tentativa de gravar vazio por cima de arquivo com conteudo"
+      throw "recusado: gravar vazio por cima de $([IO.Path]::GetFileName($Arquivo)) que tem conteudo"
+    }
+  }
+
+  $dir = Split-Path $Arquivo -Parent
+  if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+
+  # passo atras antes de qualquer troca
+  if (Test-Path $Arquivo) {
+    try { [IO.File]::Copy($Arquivo, "$Arquivo.prev", $true) } catch {}
+  }
+
+  # grava no temporario e SO ENTAO troca: interrupcao aqui nao deixa o arquivo
+  # final pela metade -- no pior caso sobra o .tmp, que ninguem le
+  $tmp = "$Arquivo.tmp"
+  [IO.File]::WriteAllText($tmp, $Conteudo, (New-Object Text.UTF8Encoding($false)))
+  [IO.File]::Copy($tmp, $Arquivo, $true)
+  Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+}
+
 function Invoke-ScriptTimeout {
   param([string]$Arquivo, [string[]]$Argumentos, [int]$TimeoutSeg = 240)
   # stdout e stderr em arquivos separados: sem capturar o stderr, um erro do script filho virava
@@ -1019,7 +1061,8 @@ while ($listener.IsListening) {
           $bloco['consultores'] = $cons
           $all | Add-Member -NotePropertyName $pp -NotePropertyValue ([pscustomobject]$bloco) -Force
           $json = $all | ConvertTo-Json -Depth 8
-          [IO.File]::WriteAllText($arq, $json, (New-Object Text.UTF8Encoding($false)))
+          # metas sao DIGITADAS pelo usuario: nao se reconstroem de lugar nenhum
+          Gravar-Atomico -Arquivo $arq -Conteudo $json
           $res.StatusCode = 200; $res.ContentType = 'application/json; charset=utf-8'
           $b = [Text.Encoding]::UTF8.GetBytes((@{ ok=$true; periodo=$pp } | ConvertTo-Json -Compress))
           $res.OutputStream.Write($b, 0, $b.Length)
@@ -1232,7 +1275,7 @@ while ($listener.IsListening) {
         if (-not $linkMT) { $mapMT.Remove($chaveMT) }
         elseif ($linkMT -notmatch 'docs\.google\.com/spreadsheets/d/') { RespMT '{"ok":false,"erro":"use o link da planilha do Google Sheets"}' 400; continue }
         else { $mapMT[$chaveMT] = [ordered]@{ link = $linkMT; salvoEm = (Get-Date -Format 'dd/MM/yyyy HH:mm') } }
-        try { [IO.File]::WriteAllText($arqMT, ($mapMT | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding($false))) } catch {}
+        try { Gravar-Atomico -Arquivo $arqMT -Conteudo ($mapMT | ConvertTo-Json -Depth 4) -PermitirVazio } catch { Log-Erro "/api/mapeamento-turma gravacao" $_.Exception.Message }
       }
       $entMT = $mapMT[$chaveMT]
       if (-not $entMT -or -not $entMT.link) { RespMT '{"ok":true,"link":""}' 200; continue }
@@ -1457,11 +1500,20 @@ while ($listener.IsListening) {
       $res.ContentType = 'application/json; charset=utf-8'
       $arqEstado = Join-Path $root 'estado.json'
       $estado = @{}
+      # RAIZ DO MAIOR RISCO DE PERDA DE DADO DO APP (auditoria 18/09/2026):
+      # este catch era vazio. Arquivo truncado -> $estado fica {} -> o POST
+      # seguinte grava so o patch e apaga 1 MB de fotos e preferencias, sem
+      # ninguem notar. Agora a falha e lembrada e o POST se recusa a gravar
+      # por cima de um estado que nao conseguiu ler.
+      $estadoLidoOk = $true
       if (Test-Path $arqEstado) {
         try {
           $o = Get-Content $arqEstado -Raw -Encoding UTF8 | ConvertFrom-Json
           foreach ($pr in $o.PSObject.Properties) { $estado[$pr.Name] = [string]$pr.Value }
-        } catch {}
+        } catch {
+          $estadoLidoOk = $false
+          Log-Erro "/api/estado LEITURA FALHOU" $_.Exception.Message
+        }
       }
 
       if ($req.HttpMethod -eq 'GET') {
@@ -1482,8 +1534,15 @@ while ($listener.IsListening) {
           $nSet = 0; $nDel = 0
           if ($patch.sets) { foreach ($pr in $patch.sets.PSObject.Properties) { $estado[$pr.Name] = [string]$pr.Value; $nSet++ } }
           if ($patch.dels) { foreach ($k in @($patch.dels)) { if ($estado.ContainsKey($k)) { $estado.Remove($k); $nDel++ } } }
+          # estado ilegivel + arquivo com conteudo = NAO GRAVAR. Melhor devolver
+          # erro e manter o que esta la do que trocar 1 MB por um patch.
+          if (-not $estadoLidoOk -and (Test-Path $arqEstado) -and (Get-Item $arqEstado).Length -gt 4) {
+            $res.StatusCode = 500
+            $b = [Text.Encoding]::UTF8.GetBytes('{"ok":false,"erro":"nao consegui ler o estado atual; gravacao recusada para nao apagar o que esta la. Veja o .prev e o _backup."}')
+            $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+          }
           $json = if ($estado.Count) { $estado | ConvertTo-Json -Depth 4 -Compress } else { '{}' }
-          [IO.File]::WriteAllText($arqEstado, $json, (New-Object Text.UTF8Encoding($false)))
+          Gravar-Atomico -Arquivo $arqEstado -Conteudo $json
           $res.StatusCode = 200
           $b = [Text.Encoding]::UTF8.GetBytes("{""ok"":true,""gravadas"":$nSet,""apagadas"":$nDel}")
           Write-Host ("[{0}] /api/estado <- {1} chave(s), {2} apagada(s)" -f (Get-Date -Format 'HH:mm:ss'), $nSet, $nDel) -ForegroundColor DarkCyan
@@ -1511,15 +1570,19 @@ while ($listener.IsListening) {
       }
       $sr = New-Object IO.StreamReader($req.InputStream, [Text.Encoding]::UTF8)
       $corpo = $sr.ReadToEnd(); $sr.Close()
-      if ($corpo -notmatch '^//\s*Fotos do Meta Master') {
+      # A validacao era so o cabecalho: um corpo contendo APENAS o comentario
+      # passava e zerava todas as fotos (e o unico .bak seria sobrescrito no
+      # publish seguinte). Agora tambem exige ter foto de verdade la dentro.
+      $temFoto = ($corpo -match 'mmfoto_|data:image/')
+      if ($corpo -notmatch '^//\s*Fotos do Meta Master' -or -not $temFoto) {
         $res.StatusCode = 400
-        $b = [Text.Encoding]::UTF8.GetBytes('{"ok":false,"erro":"conteudo invalido"}')
+        $b = [Text.Encoding]::UTF8.GetBytes('{"ok":false,"erro":"conteudo invalido (cabecalho ou fotos ausentes)"}')
         $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
       }
       $alvo = Join-Path $root 'mm-fotos.js'
       try {
         if (Test-Path $alvo) { Copy-Item $alvo (Join-Path $root 'mm-fotos.bak.js') -Force }
-        [IO.File]::WriteAllText($alvo, $corpo, (New-Object Text.UTF8Encoding($false)))
+        Gravar-Atomico -Arquivo $alvo -Conteudo $corpo
         $qtd = ([regex]::Matches($corpo, '"[^"]+"\s*:\s*"data:image')).Count
         $res.StatusCode = 200
         $b = [Text.Encoding]::UTF8.GetBytes("{""ok"":true,""fotos"":$qtd}")
