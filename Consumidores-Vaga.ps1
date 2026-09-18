@@ -37,7 +37,7 @@ $ErrorActionPreference = 'Stop'
 $RAIZ = $PSScriptRoot
 
 function Out-Json($o) { $o | ConvertTo-Json -Depth 12 -Compress; exit 0 }
-function Fail($msg)   { @{ ok = $false; erro = "$msg" } | ConvertTo-Json -Compress; exit 0 }
+function Fail($msg)   { @{ ok = $false; erro = "$msg" } | ConvertTo-Json -Compress; exit 1 }
 
 # Sem acento, sem espaço duplo, em maiúsculas: "NATÁLIA" e "Natalia" viram a mesma chave.
 function Norm($s) {

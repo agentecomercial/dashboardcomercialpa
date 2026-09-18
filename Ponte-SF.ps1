@@ -32,7 +32,7 @@ function Fail($msg, $extra){
   $o = [ordered]@{ ok=$false; erro="$msg" }
   if ($extra) { foreach($k in $extra.Keys){ $o[$k] = $extra[$k] } }
   $o | ConvertTo-Json -Depth 6 -Compress
-  exit 0
+  exit 1
 }
 function OnlyDigits($s){ ("$s" -replace '\D','') }
 function FmtCpf($d){ $d=OnlyDigits $d; if($d.Length -eq 11){ '{0}.{1}.{2}-{3}' -f $d.Substring(0,3),$d.Substring(3,3),$d.Substring(6,3),$d.Substring(9,2) } else { $d } }

@@ -62,7 +62,7 @@ function Fail($msg, $extra){
     if ($extra -and $extra.como) { Write-Host "  $($extra.como)" -ForegroundColor Yellow }
     Write-Host ''
   }
-  exit 0
+  exit 1
 }
 function SoqlEsc($s){ ("$s" -replace "\\","\\\\") -replace "'","\'" }
 function Md5Hex($s){
