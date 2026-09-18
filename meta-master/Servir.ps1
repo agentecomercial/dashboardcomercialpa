@@ -244,6 +244,48 @@ function QsUtf8($req, [string]$chave) {
 # Ponto unico por onde as demais rotas chamam script filho. Ganhou limite de tempo: o servidor
 # atende uma requisicao por vez, entao um filho travado congelava tudo, sem erro nem fim.
 # Mantem o comportamento antigo de juntar stderr na saida (EAP Continue + 2>&1).
+# ---- executor unico de script filho (auditoria 18/09/2026) ----
+# Existiam TRES formas de rodar um .ps1 aqui, com garantias diferentes:
+#   Invoke-ScriptTimeout  -> timeout + exit code confiavel (usada por 1 rota)
+#   Rodar-Filho           -> Start-Job, sem exit code
+#   & powershell ... *>&1 -> 17 rotas: SEM TIMEOUT e sem exit code util
+# Num servidor que atende uma requisicao por vez, um filho travado congela o
+# app inteiro -- e era o caso em 17 das 23 rotas.
+#
+# Exec-Filho devolve exatamente o mesmo texto que o "*>&1 | Out-String" devolvia
+# (stdout + stderr juntos, na ordem), para nao mudar o parsing de quem chama.
+# O que muda e o que vem DE BRINDE: timeout, $script:ultimoExit confiavel e
+# stderr registrado no log em vez de descartado.
+function Exec-Filho {
+  param(
+    [string]$Arquivo,
+    [object[]]$Argumentos = @(),
+    [int]$TimeoutSeg = 240,
+    [switch]$SoStdout       # para quem quer o JSON limpo, sem ruido de stderr
+  )
+  $txt = Invoke-ScriptTimeout -Arquivo $Arquivo -Argumentos ([string[]]$Argumentos) -TimeoutSeg $TimeoutSeg
+  if ($SoStdout) { return $txt }
+  # o *>&1 antigo juntava stderr no texto; varias rotas dependem disso
+  # (a /api/lancamentos, por exemplo, procura "ERRO" no log do filho)
+  if ($script:ultimoErr) { return ($txt + "`r`n" + $script:ultimoErr) }
+  return $txt
+}
+
+# ---- a resposta de uma rota que chamou filho ----
+# Regra unica, para nao repetir criterio de sucesso em 22 lugares diferentes.
+# Devolve $null se esta tudo bem; senao devolve o motivo da falha.
+function Falha-DoFilho {
+  param([string]$Saida, [int]$CodigoSaida = 0)
+  if ($CodigoSaida -ne 0 -and $CodigoSaida -ne 124) { return "o script terminou com codigo $CodigoSaida" }
+  if ($CodigoSaida -eq 124) { return 'tempo esgotado consultando o CRM' }
+  # sinais de fonte fora do ar no stderr do filho -- era exatamente o que
+  # acontecia em 18/09/2026 e o servidor descartava
+  if ($Saida -match '(?i)no available server|503|service unavailable|nao foi possivel resolver|timed out') {
+    if ($Saida -notmatch '"ok"\s*:\s*true') { return 'CRM indisponivel' }
+  }
+  return $null
+}
+
 function Rodar-Filho([string]$Arquivo, [object[]]$Argumentos, [int]$TimeoutSeg = 240) {
   $job = Start-Job -ScriptBlock {
     param($arq, $args2)
@@ -532,7 +574,7 @@ while ($listener.IsListening) {
       $qo = $req.QueryString['oppid']; if ($qo -match '^\d+$') { $psArgs += @('-OppId', $qo) }
       # drill de Vendas: funde as oportunidades do mesmo cliente numa linha so
       if ($req.QueryString['dedup'] -eq '1') { $psArgs += @('-Dedup') }
-      $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $out = Exec-Filho $script $psArgs
       $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
       $body = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '{"erro":"sem resposta"}' }
       $res.StatusCode = 200; $res.ContentType = 'application/json; charset=utf-8'
@@ -561,7 +603,7 @@ while ($listener.IsListening) {
       if ($req.QueryString['link'])      { $psArgs += @('-Link', $req.QueryString['link']) }
       $cid = $req.QueryString['classid']; if ($cid -match '^\d+$') { $psArgs += @('-ClassId', $cid) }
       if ($req.QueryString['todas'] -eq '1') { $psArgs += @('-TodasSituacoes') }
-      $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $out = Exec-Filho $script $psArgs
       if ($acao -eq 'buscar') {
         $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
         $body = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '{"erro":"sem resposta"}' }
@@ -659,7 +701,7 @@ while ($listener.IsListening) {
       }
       if (($de -or $ate) -and $id -notin 'leituraTurma','relatorioTurma','pesqSocio','painel','leituraFrz','leituraFrzTurmas','tabelaPrecos') { if($de){$psArgs+=@('-De',$de)}; if($ate){$psArgs+=@('-Ate',$ate)} }   # intervalo de datas
       $full = Join-Path $raiz $script
-      $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $full @psArgs *>&1 | Out-String
+      $out  = Exec-Filho $full $psArgs
       $code = $LASTEXITCODE
       if ($tmpLista) { Remove-Item $tmpLista -ErrorAction SilentlyContinue }
       $okCmd = ($code -eq 0 -or $null -eq $code)
@@ -684,7 +726,7 @@ while ($listener.IsListening) {
       $raiz = Split-Path $root -Parent
       $full = Join-Path $raiz 'Painel-Turma.ps1'
       $ptArgs = @('-ClassId', $cid); if ($req.QueryString['contatos'] -eq '0') { $ptArgs += '-SemContatos' }   # Painel TV pede sem contatos (rapido)
-      $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $full @ptArgs *>&1 | Out-String
+      $out  = Exec-Filho $full $ptArgs
       $code = $LASTEXITCODE
       $res.StatusCode = if ($code -eq 0 -or $null -eq $code) { 200 } else { 500 }
       $buf = [Text.Encoding]::UTF8.GetBytes($out.Trim())
@@ -708,14 +750,14 @@ while ($listener.IsListening) {
       $saidaTA = ''
       if ($acao -eq 'sfCpf') {
         $cpfTA = ''; if ($req.QueryString['cpf']) { $cpfTA = ($req.QueryString['cpf'] -replace '\D','') }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Ponte-SF.ps1') -Acao consultaCpf -Cpf $cpfTA *>&1 | Out-String
+        $o = Exec-Filho (Join-Path $raiz 'Ponte-SF.ps1') @('-Acao', 'consultaCpf', '-Cpf', $cpfTA)
         $saidaTA = Rec-Json2 $o
       }
       elseif ($acao -eq 'sfNome') {
         # nome vem da query em UTF-8 (HttpListener assume Latin1 -> le da query bruta)
         $nomeTA = ''
         try { $mq=[regex]::Match($req.Url.Query,'(?:^\?|&)nome=([^&]*)'); if($mq.Success){ $nomeTA=[Uri]::UnescapeDataString($mq.Groups[1].Value.Replace('+','%20')) } } catch {}
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Ponte-SF.ps1') -Acao consultaNome -Nome $nomeTA *>&1 | Out-String
+        $o = Exec-Filho (Join-Path $raiz 'Ponte-SF.ps1') @('-Acao', 'consultaNome', '-Nome', $nomeTA)
         $saidaTA = Rec-Json2 $o
       }
       elseif ($acao -eq 'credenc') {
@@ -723,7 +765,7 @@ while ($listener.IsListening) {
         $cpfTA = ''; if ($req.QueryString['cpf']) { $cpfTA = ($req.QueryString['cpf'] -replace '\D','') }
         $psC = @('-Acao','credenciamentos','-Cpf',$cpfTA)
         $tA = $req.QueryString['turmaAtual']; if ($tA) { $psC += @('-TurmaAtual', $tA) }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Ponte-SF.ps1') @psC *>&1 | Out-String
+        $o = Exec-Filho (Join-Path $raiz 'Ponte-SF.ps1') $psC
         $saidaTA = Rec-Json2 $o
       }
       elseif ($acao -eq 'credencLote') {
@@ -742,7 +784,7 @@ while ($listener.IsListening) {
         $psC = @('-Acao','credenciamentos','-CpfsFile',$tmpC)
         if ($plano.curso)      { $psC += @('-Curso', [string]$plano.curso) }
         if ($plano.turmaAtual) { $psC += @('-TurmaAtual', [string]$plano.turmaAtual) }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Ponte-SF.ps1') @psC *>&1 | Out-String
+        $o = Exec-Filho (Join-Path $raiz 'Ponte-SF.ps1') $psC
         Remove-Item $tmpC -ErrorAction SilentlyContinue
         $saidaTA = Rec-Json2 $o
       }
@@ -751,7 +793,7 @@ while ($listener.IsListening) {
         $rspTA = $req.QueryString['respId'];     if ($rspTA -notmatch '^\d+$') { $rspTA = '0' }
         $nmTA = ''
         try { $mq=[regex]::Match($req.Url.Query,'(?:^\?|&)nome=([^&]*)'); if($mq.Success){ $nmTA=[Uri]::UnescapeDataString($mq.Groups[1].Value.Replace('+','%20')) } } catch {}
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Turma-Aluno.ps1') -Acao oportunidades -CustomerId $cidTA -Nome $nmTA -RespId $rspTA *>&1 | Out-String
+        $o = Exec-Filho (Join-Path $raiz 'Turma-Aluno.ps1') @('-Acao', 'oportunidades', '-CustomerId', $cidTA, '-Nome', $nmTA, '-RespId', $rspTA)
         $saidaTA = Rec-Json2 $o
       }
       elseif ($acao -in @('responsavel','assignOpp','completar')) {
@@ -765,11 +807,11 @@ while ($listener.IsListening) {
         $tmpTA = Join-Path $env:TEMP ('turmaacao_' + [Guid]::NewGuid().ToString('N') + '.json')
         [System.IO.File]::WriteAllText($tmpTA, $bodyTA, (New-Object System.Text.UTF8Encoding($false)))
         if ($acao -eq 'responsavel') {
-          $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Ponte-ZS.ps1') -Acao responsavel -PlanoFile $tmpTA *>&1 | Out-String
+          $o = Exec-Filho (Join-Path $raiz 'Ponte-ZS.ps1') @('-Acao', 'responsavel', '-PlanoFile', $tmpTA)
         } elseif ($acao -eq 'completar') {
-          $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Turma-Aluno.ps1') -Acao completar -PlanoFile $tmpTA *>&1 | Out-String
+          $o = Exec-Filho (Join-Path $raiz 'Turma-Aluno.ps1') @('-Acao', 'completar', '-PlanoFile', $tmpTA)
         } else {
-          $o = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $raiz 'Turma-Aluno.ps1') -Acao assign -PlanoFile $tmpTA *>&1 | Out-String
+          $o = Exec-Filho (Join-Path $raiz 'Turma-Aluno.ps1') @('-Acao', 'assign', '-PlanoFile', $tmpTA)
         }
         Remove-Item $tmpTA -ErrorAction SilentlyContinue
         $saidaTA = Rec-Json2 $o
@@ -830,7 +872,7 @@ while ($listener.IsListening) {
         $qCid = $req.QueryString['customerId']; if ($qCid -match '^\d+$') { $psArgs += @('-CustomerId', $qCid) }
         $qPid = $req.QueryString['productId']; if ($qPid -match '^\d+$') { $psArgs += @('-ProductId', $qPid) }
       }
-      $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $out  = Exec-Filho $script $psArgs
       if ($tmp) { Remove-Item $tmp -ErrorAction SilentlyContinue; $tmp = $null }
       $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
       $jsonTxt = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '' }
@@ -860,7 +902,7 @@ while ($listener.IsListening) {
         $body = $reader.ReadToEnd(); $reader.Close()
         $tmp = Join-Path $env:TEMP ('acao_plano_' + [Guid]::NewGuid().ToString('N') + '.json')
         [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($false)))
-        $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -Acao $acao -Modo apply -PlanoFile $tmp *>&1 | Out-String
+        $out  = Exec-Filho $script @('-Acao', $acao, '-Modo', 'apply', '-PlanoFile', $tmp)
         $code = $LASTEXITCODE
         Remove-Item $tmp -ErrorAction SilentlyContinue
       } else {
@@ -879,7 +921,7 @@ while ($listener.IsListening) {
         if ($req.QueryString['etapaOrigem'])  { $psArgs += @('-EtapaOrigem', $req.QueryString['etapaOrigem']) }
         if ($req.QueryString['etapaDestino']) { $psArgs += @('-EtapaDestino', $req.QueryString['etapaDestino']) }
         $qtd = $req.QueryString['quantidade']; if ($qtd -match '^\d+$') { $psArgs += @('-Quantidade', $qtd) }
-        $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+        $out  = Exec-Filho $script $psArgs
         $code = $LASTEXITCODE
       }
       # extrai so o objeto JSON (descarta ruido antes/depois)
@@ -919,12 +961,12 @@ while ($listener.IsListening) {
       $bodyOut = ''
       $orgQ = $req.QueryString['org']; if ($orgQ -notmatch '^[123]$') { $orgQ = '2' }
       if ($acao -eq 'status') {
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptSF -Acao status *>&1 | Out-String
+        $o = Exec-Filho $scriptSF @('-Acao', 'status')
         $bodyOut = Rec-Json $o
       }
       elseif ($acao -eq 'usuarios') {
         # lista de consultores da unidade (seletor de responsavel)
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptZS -Acao usuarios -Org $orgQ *>&1 | Out-String
+        $o = Exec-Filho $scriptZS @('-Acao', 'usuarios', '-Org', $orgQ)
         $bodyOut = Rec-Json $o
       }
       elseif ($acao -eq 'espelharPrevia') {
@@ -934,7 +976,7 @@ while ($listener.IsListening) {
           $b = [Text.Encoding]::UTF8.GetBytes((@{ ok=$false; erro='Informe um CPF com 11 digitos.' } | ConvertTo-Json -Compress))
           $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
         }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptZS -Acao previa -Cpf $cpf -Org $orgQ *>&1 | Out-String
+        $o = Exec-Filho $scriptZS @('-Acao', 'previa', '-Cpf', $cpf, '-Org', $orgQ)
         $bodyOut = Rec-Json $o
       }
       elseif ($acao -in @('espelhar','responsavel')) {
@@ -950,7 +992,7 @@ while ($listener.IsListening) {
         $tmpZ = Join-Path $env:TEMP ('sfz_' + [Guid]::NewGuid().ToString('N') + '.json')
         [System.IO.File]::WriteAllText($tmpZ, $bodyIn, (New-Object System.Text.UTF8Encoding($false)))
         $acaoZS = if ($acao -eq 'espelhar') { 'aplicar' } else { 'responsavel' }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptZS -Acao $acaoZS -PlanoFile $tmpZ *>&1 | Out-String
+        $o = Exec-Filho $scriptZS @('-Acao', $acaoZS, '-PlanoFile', $tmpZ)
         Remove-Item $tmpZ -ErrorAction SilentlyContinue
         $bodyOut = Rec-Json $o
         if (-not $bodyOut) { $bodyOut = (@{ ok=$false; erro=("Ponte-ZS: " + $o.Trim()) } | ConvertTo-Json -Compress) }
@@ -959,7 +1001,7 @@ while ($listener.IsListening) {
         $cid = $req.QueryString['customerId']; $org = $req.QueryString['org']
         if ($cid -notmatch '^\d+$') { $cid = '0' }
         if ($org -notmatch '^[123]$') { $org = '2' }
-        $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptSC -Acao detalhe -CustomerId $cid -Org $org *>&1 | Out-String
+        $o = Exec-Filho $scriptSC @('-Acao', 'detalhe', '-CustomerId', $cid, '-Org', $org)
         $bodyOut = Rec-Json $o
       }
       else {
@@ -971,12 +1013,12 @@ while ($listener.IsListening) {
         $sfJson = '{"ok":false,"erro":"nao consultado"}'
         $scJson = '{"ok":false,"erro":"nao consultado"}'
         if ($acao -in @('consulta','sf')) {
-          $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptSF -Acao consultaCpf -Cpf $cpf *>&1 | Out-String
+          $o = Exec-Filho $scriptSF @('-Acao', 'consultaCpf', '-Cpf', $cpf)
           $t = Rec-Json $o
           $sfJson = if ($t) { $t } else { (@{ ok=$false; erro=("Ponte-SF: " + $o.Trim()) } | ConvertTo-Json -Compress) }
         }
         if ($acao -in @('consulta','sc')) {
-          $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptSC -Acao buscar -Termo $cpf -Orgs '1,2,3' *>&1 | Out-String
+          $o = Exec-Filho $scriptSC @('-Acao', 'buscar', '-Termo', $cpf, '-Orgs', '1,2,3')
           $t = Rec-Json $o
           $scJson = if ($t) { $t } else { (@{ ok=$false; erro=("Lancar-Cliente: " + $o.Trim()) } | ConvertTo-Json -Compress) }
         }
@@ -1030,7 +1072,7 @@ while ($listener.IsListening) {
       [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($false)))
       $raiz   = Split-Path $root -Parent
       $script = Join-Path $raiz 'Mover-Etapa-Vitoria.ps1'
-      $out  = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -PlanoFile $tmp *>&1 | Out-String
+      $out  = Exec-Filho $script @('-PlanoFile', $tmp)
       Remove-Item $tmp -ErrorAction SilentlyContinue
       $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
       $jsonTxt = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '' }
@@ -1289,7 +1331,7 @@ while ($listener.IsListening) {
       }
       $entMT = $mapMT[$chaveMT]
       if (-not $entMT -or -not $entMT.link) { RespMT '{"ok":true,"link":""}' 200; continue }
-      $outMT = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path (Split-Path $root -Parent) 'Leitura-Turma.ps1') -Link ([string]$entMT.link) *>&1 | Out-String
+      $outMT = Exec-Filho (Join-Path (Split-Path $root -Parent) 'Leitura-Turma.ps1') @('-Link', ([string]$entMT.link))
       $mMT = [regex]::Match($outMT, '<!--LT-DET:([\s\S]*?)-->')
       $linkJs = ([string]$entMT.link | ConvertTo-Json -Compress); $salvoJs = ([string]$entMT.salvoEm | ConvertTo-Json -Compress)
       if ($mMT.Success) {
@@ -1318,7 +1360,7 @@ while ($listener.IsListening) {
       if (-not $corpoCV -or $corpoCV.Trim().Length -lt 2) { RespCV @{ ok=$false; erro='corpo vazio' } 400; continue }
       $tmpCV = Join-Path $env:TEMP ('consvaga_' + [Guid]::NewGuid().ToString('N') + '.json')
       [IO.File]::WriteAllText($tmpCV, $corpoCV, (New-Object Text.UTF8Encoding($false)))
-      $saidaCV = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -ClientesFile $tmpCV -Json *>&1 | Out-String
+      $saidaCV = Exec-Filho $script @('-ClientesFile', $tmpCV, '-Json')
       Remove-Item $tmpCV -Force -ErrorAction SilentlyContinue
       $iCV = $saidaCV.IndexOf('{'); $jCV = $saidaCV.LastIndexOf('}')
       if ($iCV -ge 0 -and $jCV -gt $iCV) {
@@ -1363,7 +1405,7 @@ while ($listener.IsListening) {
         $psArgs += @('-Aplicar', '-PlanoFile', $tmpPlano)
       }
 
-      $saida = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $saida = Exec-Filho $script $psArgs
       if ($tmpPlano) { Remove-Item $tmpPlano -Force -ErrorAction SilentlyContinue }
       $i = $saida.IndexOf('{'); $j = $saida.LastIndexOf('}')
       if ($i -ge 0 -and $j -gt $i) {
@@ -1423,7 +1465,7 @@ while ($listener.IsListening) {
         $psArgs = @('-Acao', $acao, '-Aplicar')
       }
 
-      $log = & powershell -NoProfile -ExecutionPolicy Bypass -File $script @psArgs *>&1 | Out-String
+      $log = Exec-Filho $script $psArgs
       $rodada = $null
       try {
         $ult = Get-ChildItem (Join-Path $pasta 'previas') -Filter 'rodada-*.json' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -1441,7 +1483,7 @@ while ($listener.IsListening) {
       if ([string]::IsNullOrWhiteSpace($per)) { $per = (Get-Date -Format 'yyyy-MM') }
       if ($per -notmatch '^\d{4}-\d{2}$') { $per = (Get-Date -Format 'yyyy-MM') }
       $gerador = Join-Path $root 'Gerar-Dados-MetaMaster.ps1'
-      $saida = & powershell -NoProfile -ExecutionPolicy Bypass -File $gerador -Periodo $per *>&1 | Out-String
+      $saida = Exec-Filho $gerador @('-Periodo', $per)
       $code  = $LASTEXITCODE
       $okGen = ($code -eq 0 -or $code -eq $null)
       $res.StatusCode = if ($okGen) { 200 } else { 500 }

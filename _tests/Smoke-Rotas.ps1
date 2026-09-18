@@ -165,6 +165,24 @@ try {
       continue
     }
 
+    # DEGRADACAO: status na lista de aceitaveis, mas PIOR do que da ultima vez.
+    # Sem isto o smoke dizia "ok" quando uma rota caia de 200 para 500 -- foi o
+    # que aconteceu ao migrar o executor de scripts (Fase 2) e passou batido.
+    $arqSt = Join-Path $goldenDir ($c.nome + '.status.txt')
+    if ($GravarGolden -or -not (Test-Path $arqSt)) {
+      [IO.File]::WriteAllText($arqSt, [string]$status, (New-Object Text.UTF8Encoding($false)))
+    } else {
+      $stAntes = 0; try { $stAntes = [int]([IO.File]::ReadAllText($arqSt).Trim()) } catch {}
+      if ($stAntes -eq 200 -and $status -ne 200) {
+        Reg $c.nome $false "DEGRADOU: respondia 200, agora $status" $c.conhecido
+        continue
+      }
+      if ($status -eq 200 -and $stAntes -ne 200) {
+        # melhorou: passa a valer como novo piso
+        [IO.File]::WriteAllText($arqSt, [string]$status, (New-Object Text.UTF8Encoding($false)))
+      }
+    }
+
     # rota de escrita: basta ter recusado com o status certo
     if ($c.escrita) { Reg $c.nome $true "status $status (recusou como deve)"; continue }
 
