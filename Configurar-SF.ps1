@@ -40,7 +40,7 @@ function TestarLogin($user, $passToken) {
   </env:Body>
 </env:Envelope>
 "@
-  $r = Invoke-WebRequest -Uri 'https://login.salesforce.com/services/Soap/u/59.0' -Method Post -Body $body `
+  $r = Invoke-WebRequest -Uri 'https://login.salesforce.com/services/Soap/u/59.0' -Method Post -Body $body ` -ErrorAction Stop
         -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction = 'login' } -UseBasicParsing -ErrorAction Stop
   $xml = [xml]$r.Content
   return $xml.Envelope.Body.loginResponse.result

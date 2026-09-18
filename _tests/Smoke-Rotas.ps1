@@ -70,6 +70,15 @@ $casos = @(
   @{ nome='acao-previa';       rota='/api/acao?acao=equilibrio&periodo=2026-09'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='turma-frz-previa';  rota='/api/turma-frz?turma=21&cidade=VITORIA'; esperado=@(200,400,500); lento=$true; chaves=@() }
 
+  # ---- comandos que rodam coletores proprios (Fase 4: cada um tem seu .ps1) ----
+  @{ nome='cmd-faturamento';   rota='/api/cmd?id=faturamento&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-metaUnidade';   rota='/api/cmd?id=metaUnidade&periodo=2026-09';  esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-metaConsult';   rota='/api/cmd?id=metaConsultores&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-negociacoes';   rota='/api/cmd?id=negociacoes&periodo=2026-09';  esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-movimentacao';  rota='/api/cmd?id=movimentacao&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-leads';         rota='/api/cmd?id=leads&periodo=2026-09';        esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-painel';        rota='/api/cmd?id=painel';                        esperado=@(200,500,503); lento=$true; chaves=@() }
+
   # ---- escrita: só o teste NEGATIVO (metodo errado tem de ser recusado) ----
   @{ nome='mover-etapa-GET';   rota='/api/mover-etapa'; esperado=@(405); escrita=$true }
   @{ nome='vendas-zs-GET';     rota='/api/vendas-zs?acao=remover&opp=1'; esperado=@(405); escrita=$true }
@@ -194,8 +203,24 @@ try {
     $obj = $null
     try { $obj = $corpo | ConvertFrom-Json } catch {
       # nem toda rota devolve JSON (algumas devolvem texto/markdown)
-      if ($c.chaves.Count -gt 0) { Reg $c.nome $false "200 mas corpo nao e JSON" $c.conhecido }
-      else { Reg $c.nome $true "200 (texto, $($corpo.Length) bytes)" }
+      if ($c.chaves.Count -gt 0) { Reg $c.nome $false "200 mas corpo nao e JSON" $c.conhecido; continue }
+      # Resposta de TEXTO tambem tem contrato: o tamanho. Um coletor que quebra
+      # costuma devolver 200 com uma linha de erro -- status igual, conteudo
+      # murcho. E a mesma classe do incidente, e sem isto o smoke diria "ok".
+      $arqT = Join-Path $goldenDir ($c.nome + '.bytes.txt')
+      $tam = $corpo.Length
+      if ($GravarGolden -or -not (Test-Path $arqT)) {
+        [IO.File]::WriteAllText($arqT, [string]$tam, (New-Object Text.UTF8Encoding($false)))
+        Reg $c.nome $true "200 (texto, $tam bytes — referencia gravada)"
+      } else {
+        $tamAntes = 0; try { $tamAntes = [int]([IO.File]::ReadAllText($arqT).Trim()) } catch {}
+        if ($tamAntes -gt 0 -and $tam -lt ($tamAntes / 3)) {
+          Reg $c.nome $false "200 mas o conteudo MURCHOU: $tamAntes -> $tam bytes" $c.conhecido
+        } else {
+          if ($tam -gt $tamAntes) { [IO.File]::WriteAllText($arqT, [string]$tam, (New-Object Text.UTF8Encoding($false))) }
+          Reg $c.nome $true "200 (texto, $tam bytes)"
+        }
+      }
       continue
     }
 
