@@ -240,6 +240,21 @@ try {
 }
 Write-Host "Meta Master rodando em $prefixUrl" -ForegroundColor Green
 
+# ---- copia diaria dos dados (auditoria 18/09/2026) ----
+# estado.json, metas e fotos sao reescritos INTEIROS a cada gravacao e estao no
+# .gitignore: ate aqui nao existia copia nenhuma. Uma gravacao interrompida
+# levava tudo junto. Roda ao subir, e uma vez por dia basta.
+try {
+  $bkpScript = Join-Path $root 'Backup-Dados.ps1'
+  if (Test-Path $bkpScript) {
+    $bkpMsg = & $bkpScript -Raiz $root
+    if ($bkpMsg) { Write-Host "  $bkpMsg" -ForegroundColor DarkGray }
+  }
+} catch {
+  # nunca impedir o servidor de subir por causa do backup
+  Write-Host "  backup falhou: $($_.Exception.Message)" -ForegroundColor DarkYellow
+}
+
 # ── Acesso pela rede: conferido a cada vez que o servidor sobe ────────────────
 # Trocar de Wi-Fi nao pode exigir reconfiguracao. Aqui so CONFERIMOS (sem admin) se a
 # reserva de URL e a regra de firewall estao de pe e valendo em qualquer perfil de rede;
