@@ -34,9 +34,13 @@
      seguintes enquanto o total não mudar no HUD.
    • ESPELHO FIEL, mas SÓ do que veio do FRZ: cada sub importado leva
      _frz:true + frzId. Treinamento lançado à mão na turma nunca é tocado.
-   • Aluno que não está na turma é CRIADO (leva _frzCliente:true). Se depois
-     sumir do HUD, o aluno criado some junto; aluno do roster fica, só perde o
-     treinamento importado.
+   • SÓ ENTRA ALUNO DO MAPEAMENTO (regra de 17/09/2026). A janela de datas pega
+     tudo que o consultor fechou no período — venda de carteira, Extraclasse —
+     e isso não é da turma. Lançamento cujo aluno não está na lista da turma vai
+     para "FORA DO MAPEAMENTO" na prévia e NUNCA é criado. Para entrar, o aluno
+     precisa estar cadastrado na turma (mesmo consultor + nome que case).
+     Alunos criados por versões antigas (_frzCliente:true) continuam sendo
+     espelhados: se sumirem do HUD, saem.
    • Sempre com PRÉVIA. A janela de datas pega tudo que o consultor fechou
      naqueles dias — inclusive venda de carteira que não é da turma. Quem decide
      é quem clica.
@@ -386,27 +390,24 @@
   }
 
   function _planejar(itens, data){
-    var novos=[], atualizados=[], removidos=[], fora=[], iguais=[], vivos={}, criados={};
+    var novos=[], atualizados=[], removidos=[], fora=[], iguais=[], semMapa=[], vivos={};
     itens.forEach(function(it){
-      if(it.ignorado){ fora.push({ it:it }); return; }
       var d = _acharCliente(data, it);
+      /* aluno fora do mapeamento não entra nem é criado — só aparece na prévia */
+      if(!d){ semMapa.push({ it:it }); return; }
+      if(it.ignorado){ fora.push({ it:it }); return; }
       var preserva = _rateioPreservado(d, it);
-      var chave = _norm(it.aluno) + '|' + it.consultor;
       var mexeu = false;
       it.partes.forEach(function(p){
         vivos[p.frzId] = true;
-        var sub = d ? _acharSub(d, p.frzId) : null;
+        var sub = _acharSub(d, p.frzId);
         if(sub){
           if(preserva || _igual(sub, it, p)) return;
           mexeu = true;
           atualizados.push({ it:it, parte:p, alvo:d.cliente, de:sub.cod+' · '+_fmt(sub.valor) });
         } else {
-          /* 2 compras do mesmo aluno novo = 1 aluno criado, não 2: na aplicação o
-             2º lançamento já encontra o registro que o 1º criou. */
-          var novoAluno = !d && !criados[chave];
-          if(novoAluno) criados[chave] = true;
           mexeu = true;
-          novos.push({ it:it, parte:p, alvo: d ? d.cliente : null, novoAluno: novoAluno });
+          novos.push({ it:it, parte:p, alvo:d.cliente });
         }
       });
       /* Já está na turma e sem diferença. Entra na prévia assim mesmo, com o
@@ -426,7 +427,7 @@
       });
     });
     return { novos:novos, atualizados:atualizados, removidos:removidos,
-             fora:fora, iguais:iguais, total:itens.length };
+             fora:fora, iguais:iguais, semMapa:semMapa, total:itens.length };
   }
 
   /* ── Aplicação ─────────────────────────────────────────────────── */
@@ -439,30 +440,9 @@
       if(it.ignorado) return;   /* marcado como "não é desta turma": nem entra, nem fica */
       it.partes.forEach(function(p){ vivos[p.frzId] = true; });
       var d = _acharCliente(data, it);
+      /* só aluno do mapeamento: quem não está na lista da turma não é criado */
+      if(!d) return;
       var preserva = _rateioPreservado(d, it);
-
-      if(!d){
-        /* aluno que não está na turma: nasce com a 1ª parte e as demais entram
-           no laço abaixo, já achando este registro */
-        var s0 = _sub(it, it.partes[0]);
-        d = {
-          cliente: it.aluno,
-          treinamento: s0.cod,
-          treinamentos: [],
-          treinador: '-',
-          consultor: it.consultor,
-          valor: 0,
-          status: it.status,
-          entrada: 0,
-          info: '',
-          criadoPor: 'FRZ',
-          presenca: 'pendente',
-          presencaLog: [],
-          _frzCliente: true
-        };
-        data.push(d);
-        n.alunos++;
-      }
       if(!Array.isArray(d.treinamentos)) d.treinamentos = [];
       if(tocados.indexOf(d) < 0) tocados.push(d);
 
@@ -649,8 +629,7 @@
       var it = o.it;
       return _linha(
         _check(it)
-        + '<strong>' + _esc(it.aluno) + '</strong>'
-        + (o.novoAluno ? ' <span style="color:var(--blue);font-size:11px;">(aluno novo)</span>' : '')
+        + '<strong>' + _esc(o.alvo || it.aluno) + '</strong>'
         + ' · ' + _esc(o.parte.cod) + ' · ' + _valorCampo(o)
         + ' · <span style="color:var(--muted);">' + _esc(it.status) + ' · ' + _esc(it.consultor)
         + ' · ' + _esc(it.data.split('-').reverse().join('/')) + '</span>'
@@ -688,12 +667,17 @@
     var lFora = plano.fora.map(function(o){
       return _linha(_check(o.it) + _resumo(o.it, true), '');
     });
+    /* sem aluno no mapeamento — só informativo, sem checkbox: não há como trazer */
+    var lSemMapa = (plano.semMapa||[]).map(function(o){
+      return _linha('<span style="width:16px;display:inline-block;"></span>' + _resumo(o.it, true), '');
+    });
 
     var html = _bloco('ENTRAM', 'var(--accent)', lNovos)
              + _bloco('ATUALIZAM', 'var(--blue)', lAtu)
              + _bloco('SAEM (apagados no HUD)', 'var(--red)', lRem)
              + _bloco('JÁ NA TURMA (desmarque para tirar)', 'var(--muted)', lIgual)
-             + _bloco('FORA DA TURMA (marque para trazer)', 'var(--muted)', lFora);
+             + _bloco('FORA DA TURMA (marque para trazer)', 'var(--muted)', lFora)
+             + _bloco('FORA DO MAPEAMENTO (aluno não está na lista da turma — não entra)', 'var(--muted)', lSemMapa);
     if(!html){
       html = '<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:13px;">'
            + 'Nenhum lançamento do FRZ nesta janela. Amplie as datas acima.</div>';

@@ -3,7 +3,7 @@
 
    ARQUIVO GERADO AUTOMATICAMENTE â€” nÃ£o edite Ã  mÃ£o.
    Fonte: Sync-Extraclasse-ZS.ps1 (lÃª o ZS via API REST).
-   Gerado em: 28/08/2026 18:53 Â· MÃªs: 2026-08 Â· 15 venda(s)
+   Gerado em: 17/09/2026 18:05 Â· MÃªs: 2026-09 Â· 6 venda(s)
 
    O Pablo nÃ£o lanÃ§a no HUD; as vendas dele estÃ£o sÃ³ no ZS, que o navegador
    nÃ£o consegue ler (login + CORS). Este arquivo Ã© a ponte: o 58-frz-sync.js
@@ -14,127 +14,55 @@
    Depois clique em "âŸ³ Sincronizar FRZ" na Pipeline Comercial.
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 window.EXTRACLASSE_ZS = {
-  mes: '2026-08',
-  geradoEm: '28/08/2026 18:53',
+  mes: '2026-09',
+  geradoEm: '17/09/2026 18:05',
   vendas: [
     {
-        "id":  "2000364601",
-        "cliente":  "Renata de Almeida Caires",
-        "produto":  "Coaching Individual - Bruna Paiva",
-        "valor":  20000,
-        "data":  "2026-08-27",
+        "id":  "2000379056",
+        "cliente":  "Giumar de Oliveira",
+        "produto":  "MASTER - Master Coaching x5",
+        "valor":  15892.25,
+        "data":  "2026-09-17",
         "status":  "FECHADO"
     },
     {
-        "id":  "2000349593",
-        "cliente":  "Gabriel Rossoni Azeredo",
-        "produto":  "BHP - Gestão de Negócios",
-        "valor":  2973.89,
-        "data":  "2026-08-11",
+        "id":  "2000379317",
+        "cliente":  "Isabely Vicentim de Oliveira",
+        "produto":  "CEOP - Comunicação Eficaz e Oratória Persuasiva x2",
+        "valor":  6996.46,
+        "data":  "2026-09-17",
         "status":  "FECHADO"
     },
     {
-        "id":  "2000349594",
-        "cliente":  "JOSÉ DE SÁ CAVALCANTE NETO",
-        "produto":  "BHP - Gestão de Negócios",
-        "valor":  4000,
-        "data":  "2026-08-11",
+        "id":  "2000374631",
+        "cliente":  "ADRIANA VERMELHO",
+        "produto":  "Método CIS - Presencial",
+        "valor":  3997,
+        "data":  "2026-09-16",
         "status":  "FECHADO"
     },
     {
-        "id":  "2000349616",
-        "cliente":  "Damião Bonomo",
-        "produto":  "BHP - Gestão de Negócios",
-        "valor":  3232.94,
-        "data":  "2026-08-11",
+        "id":  "2000374630",
+        "cliente":  "ADRIANA VERMELHO",
+        "produto":  "Método CIS - Presencial",
+        "valor":  3997,
+        "data":  "2026-09-15",
         "status":  "FECHADO"
     },
     {
-        "id":  "2000349617",
-        "cliente":  "JOÃO PHILIPI DAMIANI PIRSCHNER",
-        "produto":  "BHP - Gestão de Negócios",
-        "valor":  2768.66,
-        "data":  "2026-08-11",
+        "id":  "2000365314",
+        "cliente":  "Vitor Rafael Dias Borges",
+        "produto":  "Método CIS - Global x2",
+        "valor":  4792.81,
+        "data":  "2026-09-03",
         "status":  "FECHADO"
     },
     {
-        "id":  "2000349618",
-        "cliente":  "MARCOS ANDRE CASAGRANDE PINTO",
-        "produto":  "BHP - Gestão de Negócios",
-        "valor":  2768.66,
-        "data":  "2026-08-11",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349626",
-        "cliente":  "JEAN ALESI SILVA GONÇALVES",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  4499.77,
-        "data":  "2026-08-11",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349625",
-        "cliente":  "Anderson de Abreu Fernandes Fernandes",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  4500,
-        "data":  "2026-08-07",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349620",
-        "cliente":  "FLAVIO DE ARRAZ CRISPIM",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  3749.81,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349622",
-        "cliente":  "Richard Chamberlain Chamberlain",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  4500,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349628",
-        "cliente":  "LETÍCIA HIMENES DA SILVA BIANCHI",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  3749.81,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349630",
-        "cliente":  "pablo comerio",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  3749.81,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349631",
-        "cliente":  "Vander Stoffel Pereira",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  3749.81,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349632",
-        "cliente":  "WENDELL POUBEL CALIMAN",
-        "produto":  "FCIS - Formação em Coaching",
-        "valor":  3749.81,
-        "data":  "2026-08-06",
-        "status":  "FECHADO"
-    },
-    {
-        "id":  "2000349741",
-        "cliente":  "Simone Zamprogno Scalzer",
-        "produto":  "LIVRÃO MÉTODO CIS",
-        "valor":  2000,
-        "data":  "2026-08-05",
+        "id":  "2000365145",
+        "cliente":  "Fabiano De souza Lopes",
+        "produto":  "Método CIS - Global",
+        "valor":  1198.2,
+        "data":  "2026-09-02",
         "status":  "FECHADO"
     }
 ]

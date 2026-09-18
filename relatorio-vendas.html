@@ -248,6 +248,117 @@
   .rlt-add-spinner input::placeholder { color:rgba(241,245,249,.45); }
   .rlt-add-spinner button { background:#f59e0b; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:900; font-size:1rem; cursor:pointer; transition:background .15s; }
   .rlt-add-spinner button:hover { background:#d97706; }
+
+  /* ══ BOAS-VINDAS (escolha de modo) ══ */
+  .welcome-overlay { position:fixed; inset:0; z-index:1400; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(4,10,24,.62); backdrop-filter:blur(5px); }
+  .welcome-overlay.hidden { display:none; }
+  .welcome-box { background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-lg); max-width:640px; width:100%; padding:26px 26px 20px; text-align:center; animation:wcIn .22s ease-out; }
+  @keyframes wcIn { from { opacity:0; transform:translateY(14px) scale(.97) } to { opacity:1; transform:none } }
+  .welcome-box h2 { font-size:1.25rem; font-weight:900; color:var(--text); margin-bottom:6px; letter-spacing:-.02em; }
+  .welcome-box .wc-sub { font-size:.87rem; color:var(--text2); margin-bottom:20px; line-height:1.5; }
+  .welcome-opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px) { .welcome-opts { grid-template-columns:1fr } }
+  .welcome-opt { display:flex; flex-direction:column; align-items:center; gap:6px; padding:20px 14px; border:2px solid var(--border); border-radius:16px; background:var(--surface2); cursor:pointer; font-family:inherit; text-align:center; transition:border-color .16s, transform .16s, box-shadow .16s; }
+  .welcome-opt:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
+  .welcome-opt .wc-ico { font-size:2rem; line-height:1; }
+  .welcome-opt .wc-t { font-size:.95rem; font-weight:800; color:var(--text); }
+  .welcome-opt .wc-d { font-size:.76rem; color:var(--text3); line-height:1.4; }
+  .welcome-opt.wc-file:hover { border-color:var(--primary); }
+  .welcome-opt.wc-manual:hover { border-color:#f59e0b; }
+  .welcome-saved { margin-top:14px; padding:9px 12px; border-radius:11px; background:rgba(5,150,105,.09); border:1.5px solid rgba(5,150,105,.35); color:#047857; font-size:.79rem; font-weight:700; }
+  [data-theme="dark"] .welcome-saved { background:rgba(5,150,105,.14); color:#34d399; }
+  .welcome-opt.wc-manual.has-saved { border-color:#059669; background:rgba(5,150,105,.06); }
+  .welcome-foot { margin-top:16px; font-size:.74rem; color:var(--text3); }
+  .welcome-foot label { display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+
+  /* ══ PAINEL DE CADASTRO MANUAL ══ */
+  .manual-panel { display:none; border:2px dashed #f59e0b; background:rgba(245,158,11,.06); border-radius:16px; padding:16px; margin-bottom:12px; }
+  .manual-panel.is-on { display:block; }
+  .manual-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .manual-head .mp-title { font-size:.98rem; font-weight:900; color:var(--text); }
+  .manual-head .mp-title small { display:block; font-weight:500; font-size:.75rem; color:var(--text3); margin-top:2px; }
+  .manual-head-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .mp-btn { border:none; border-radius:8px; padding:7px 13px; font-weight:800; font-size:.8rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:filter .15s; }
+  .mp-btn:hover { filter:brightness(.92); }
+  .mp-btn-amber { background:#f59e0b; color:#fff; }
+  .mp-btn-ghost { background:var(--surface); color:var(--text2); border:1.5px solid var(--border2); }
+  .mp-btn-red { background:transparent; color:var(--red); border:1.5px solid var(--red); }
+  .manual-input-row { display:flex; gap:6px; align-items:flex-start; }
+  .manual-input-row textarea { flex:1; min-height:44px; max-height:150px; resize:vertical; border:1.5px solid var(--border2); border-radius:9px; padding:9px 11px; font-size:.85rem; font-family:inherit; outline:none; background:var(--surface); color:var(--text); line-height:1.45; }
+  .manual-input-row textarea:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.16); }
+  .manual-hint { font-size:.73rem; color:var(--text3); margin-top:6px; }
+  .manual-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:11px; }
+  .manual-chip { display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1.5px solid #f59e0b; color:var(--text); border-radius:999px; padding:5px 6px 5px 12px; font-size:.82rem; font-weight:700; }
+  .manual-chip button { background:rgba(220,38,38,.1); color:var(--red); border:none; border-radius:50%; width:18px; height:18px; line-height:1; font-weight:900; cursor:pointer; font-size:.8rem; display:flex; align-items:center; justify-content:center; }
+  .manual-chip button:hover { background:var(--red); color:#fff; }
+  .manual-empty { font-size:.8rem; color:var(--text3); font-style:italic; margin-top:11px; }
+  .manual-count { font-size:.78rem; font-weight:800; color:#b45309; }
+
+  /* ══ LANÇAMENTO MANUAL DE VENDAS ══ */
+  .mv-wrap { margin-top:14px; border-top:1.5px dashed rgba(245,158,11,.5); padding-top:12px; }
+  .mv-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:9px; }
+  .mv-title { font-size:.9rem; font-weight:900; color:var(--text); }
+  /* ══ MODAL DE CONFIGURAÇÃO DOS CICLOS ══ */
+  .ciclos-modal { position:fixed; inset:0; z-index:1500; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(4,10,24,.66); backdrop-filter:blur(5px); }
+  .ciclos-modal.hidden { display:none; }
+  .ciclos-box { background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); width:100%; max-width:520px; padding:20px 22px 16px; }
+  .ciclos-head { display:flex; align-items:center; justify-content:space-between; font-size:1.02rem; font-weight:900; color:var(--text); }
+  .ciclos-x { background:transparent; border:none; color:var(--text3); font-size:1rem; font-weight:900; cursor:pointer; padding:2px 6px; border-radius:6px; }
+  .ciclos-x:hover { background:var(--surface3); color:var(--red); }
+  .ciclos-desc { font-size:.79rem; color:var(--text3); margin:6px 0 14px; line-height:1.45; }
+  .ciclos-table { width:100%; border-collapse:collapse; }
+  .ciclos-table th { font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text3); font-weight:800; padding:6px 8px; text-align:center; border-bottom:1px solid var(--border); }
+  .ciclos-table th:first-child { text-align:left; }
+  .ciclos-table td { padding:7px 8px; border-bottom:1px solid var(--border); text-align:center; }
+  .ciclos-table tr:last-child td { border-bottom:none; }
+  .ciclos-table .cfg-setor { text-align:left; font-weight:800; font-size:.86rem; white-space:nowrap; }
+  .cfg-start  { color:#047857; } [data-theme="dark"] .cfg-start  { color:#34d399; }
+  .cfg-bronze { color:#c2410c; } [data-theme="dark"] .cfg-bronze { color:#fb923c; }
+  .cfg-ouro   { color:#a16207; } [data-theme="dark"] .cfg-ouro   { color:#fbbf24; }
+  .cfg-black  { color:#334155; } [data-theme="dark"] .cfg-black  { color:#94a3b8; }
+  .ciclos-table input { width:100%; max-width:130px; border:1.5px solid var(--border2); border-radius:8px; padding:7px 9px; font-size:.86rem; font-weight:800; font-family:inherit; text-align:center; background:var(--surface2); color:var(--text); outline:none; }
+  .ciclos-table input:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+  .ciclos-foot { display:flex; align-items:center; gap:8px; margin-top:16px; font-size:.73rem; color:var(--text3); flex-wrap:wrap; }
+  .ciclos-foot .mp-btn:first-of-type { margin-left:auto; }
+  .corr-config-btn { background:transparent; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:inherit; transition:all .15s; }
+  .corr-config-btn:hover { background:rgba(255,255,255,.08); color:#e2e8f0; border-color:rgba(255,255,255,.3); }
+
+  .mv-config { display:flex; flex-direction:column; gap:7px; margin-bottom:10px; padding:9px 11px; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .mv-config-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.74rem; color:var(--text3); font-weight:600; }
+  .mv-config-lbl { font-size:.78rem; font-weight:800; color:var(--text2); min-width:132px; }
+  .mv-config-row label { display:inline-flex; align-items:center; gap:4px; }
+  .mv-config-row input { border:1.5px solid var(--border2); border-radius:7px; padding:5px 8px; font-size:.79rem; font-weight:700; font-family:inherit; background:var(--surface2); color:var(--text); outline:none; text-align:center; }
+  .mv-config-row input[type="text"] { width:104px; }
+  .mv-config-row input[type="number"] { width:62px; }
+  .mv-config-row input:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+  .mv-config-hint { font-size:.71rem; color:var(--text3); font-weight:500; }
+  .mv-config-gear { background:var(--surface2); border:1.5px solid var(--border2); border-radius:8px; padding:4px 9px; cursor:pointer; font-family:inherit; text-align:left; transition:all .15s; }
+  .mv-config-gear:hover { background:#f59e0b; border-color:#f59e0b; color:#fff; }
+  .mv-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .mv-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .mv-table th { background:var(--surface2); color:var(--text2); font-size:.73rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; padding:8px 10px; text-align:center; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .mv-table th.mv-col-cons, .mv-table td.mv-col-cons { text-align:left; font-weight:800; color:var(--text); white-space:nowrap; }
+  .mv-table td { padding:6px 10px; text-align:center; border-bottom:1px solid var(--border); }
+  .mv-table tr:last-child td { border-bottom:none; }
+  .mv-table tfoot td { font-weight:900; background:var(--surface2); color:var(--text); }
+  .mv-stepper { display:inline-flex; align-items:center; gap:4px; }
+  .mv-stepper button { width:24px; height:24px; border-radius:7px; border:1.5px solid var(--border2); background:var(--surface2); color:var(--text2); font-weight:900; font-size:.9rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+  .mv-stepper button:hover { color:#fff; }
+  .mv-stepper input { width:46px; text-align:center; border:1.5px solid var(--border2); border-radius:7px; padding:4px 2px; font-size:.85rem; font-weight:800; font-family:inherit; background:var(--surface); color:var(--text); outline:none; -moz-appearance:textfield; }
+  .mv-stepper input::-webkit-outer-spin-button, .mv-stepper input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .mv-c-START  .mv-stepper button:hover { background:#059669; border-color:#059669; }
+  .mv-c-BRONZE .mv-stepper button:hover { background:#c2410c; border-color:#c2410c; }
+  .mv-c-OURO   .mv-stepper button:hover { background:#a16207; border-color:#a16207; }
+  .mv-c-BLACK  .mv-stepper button:hover { background:#475569; border-color:#475569; }
+  .mv-c-START  .mv-stepper input:focus  { border-color:#059669; }
+  .mv-c-BRONZE .mv-stepper input:focus  { border-color:#c2410c; }
+  .mv-c-OURO   .mv-stepper input:focus  { border-color:#a16207; }
+  .mv-c-BLACK  .mv-stepper input:focus  { border-color:#475569; }
+  .mv-total { font-weight:900; color:var(--primary); }
+  .mv-receita { font-weight:800; color:var(--green); white-space:nowrap; }
+  .mv-restaurar { background:var(--surface2); border:1.5px solid var(--border2); color:var(--text2); border-radius:6px; padding:3px 7px; font-size:.8rem; font-weight:900; cursor:pointer; }
+  .mv-restaurar:hover { background:#f59e0b; border-color:#f59e0b; color:#fff; }
+  .mv-empty { padding:16px; text-align:center; color:var(--text3); font-style:italic; font-size:.82rem; }
   .cons-drop-list::-webkit-scrollbar { width:4px; }
   .cons-drop-list::-webkit-scrollbar-track { background:transparent; }
   .cons-drop-list::-webkit-scrollbar-thumb { background:var(--border2); border-radius:999px; }
@@ -271,10 +382,12 @@
   .pill { display:inline-flex; align-items:center; gap:5px; padding:5px 13px; border-radius:999px; cursor:pointer; font-size:0.79rem; font-weight:600; border:1.5px solid var(--border2); background:var(--surface); color:var(--text3); transition:all .15s; user-select:none; font-family:inherit; }
   .pill:focus-visible { outline:3px solid var(--primary); outline-offset:2px; }
   .pill.on { border-color:currentColor; }
+  .pill-start.on  { background:#ecfdf5; color:#047857; border-color:#059669; }
   .pill-bronze.on { background:#fff7ed; color:#c2410c; border-color:#c2410c; }
   .pill-ouro.on   { background:#fefce8; color:#a16207; border-color:#a16207; }
   .pill-black.on  { background:#f1f5f9; color:#334155; border-color:#475569; }
   .pill-cons.on   { background:#eef2ff; color:#4338ca; border-color:#4f46e5; }
+  [data-theme="dark"] .pill-start.on  { background:rgba(5,150,105,.16);  color:#34d399; border-color:#059669; }
   [data-theme="dark"] .pill-bronze.on { background:rgba(194,65,12,.15); color:#fb923c; border-color:#c2410c; }
   [data-theme="dark"] .pill-ouro.on   { background:rgba(161,98,7,.15);  color:#fbbf24; border-color:#a16207; }
   [data-theme="dark"] .pill-black.on  { background:rgba(71,85,105,.2);  color:#94a3b8; border-color:#475569; }
@@ -300,6 +413,7 @@
   .card { background:var(--surface); border-radius:var(--radius); padding:14px 16px; border:1px solid var(--border); box-shadow:var(--shadow-sm); position:relative; overflow:hidden; transition:box-shadow .2s,transform .15s; }
   .card:hover { box-shadow:var(--shadow); transform:translateY(-1px); }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--primary),#818cf8); border-radius:var(--radius) var(--radius) 0 0; }
+  .card.c-start::before  { background:linear-gradient(90deg,#065f46,#059669); }
   .card.c-bronze::before { background:linear-gradient(90deg,#9a3412,#ea580c); }
   .card.c-ouro::before   { background:linear-gradient(90deg,#92400e,#d97706); }
   .card.c-black::before  { background:linear-gradient(90deg,#1e293b,#475569); }
@@ -307,6 +421,8 @@
   .card .clabel { font-size:0.65rem; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; margin-bottom:5px; font-weight:700; }
   .card .cval { font-size:1.4rem; font-weight:900; color:var(--text); line-height:1; letter-spacing:-1px; }
   .card .csub { font-size:0.71rem; color:var(--text3); margin-top:4px; font-weight:500; }
+  .card.c-start .cval  { color:#047857; }
+  [data-theme="dark"] .card.c-start .cval { color:#34d399; }
   .card.c-bronze .cval { color:#c2410c; }
   .card.c-ouro .cval   { color:#a16207; }
   .card.c-black .cval  { color:#334155; }
@@ -334,6 +450,13 @@
   .tab-content { display:none; background:var(--surface); border-radius:0 0 var(--radius) var(--radius); border:1px solid var(--border); border-top:none; box-shadow:var(--shadow-sm); overflow:hidden; }
   .tab-content.active { display:block; }
 
+  /* ── BARRA DE CÓPIA POR ABA ── */
+  .tab-actions { display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--border); }
+  .tab-actions .ta-lbl { margin-right:auto; font-size:0.7rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; }
+  .btn-tab-copy { background:var(--surface); border:1px solid var(--border2); color:var(--text2); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:0.77rem; font-weight:700; font-family:inherit; letter-spacing:-.1px; white-space:nowrap; transition:all .15s; }
+  .btn-tab-copy:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
+  .btn-tab-copy:active { transform:translateY(1px); }
+
   /* ── TABLES ── */
   .table-wrap { max-height:550px; overflow-y:auto; contain:layout style; }
   table { width:100%; border-collapse:collapse; font-size:0.85rem; }
@@ -347,6 +470,8 @@
   tr:last-child td { border-bottom:none; }
   tr.highlight td { background:rgba(251,191,36,.07) !important; }
   .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.72rem; font-weight:700; letter-spacing:-.1px; }
+  .badge-start  { background:rgba(5,150,105,.12); color:#047857; }
+  [data-theme="dark"] .badge-start { background:rgba(5,150,105,.22); color:#34d399; }
   .badge-bronze { background:rgba(194,65,12,.1);  color:#c2410c; }
   .badge-ouro   { background:rgba(161,98,7,.1);   color:#a16207; }
   .badge-black  { background:rgba(71,85,105,.1);  color:#334155; }
@@ -382,6 +507,8 @@
   .chart-stat span { font-size:0.68rem; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-right:4px; }
   .chart-stat-detail { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
   .chart-stat-detail .sd-item { font-size:0.76rem; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .sd-start  { background:rgba(5,150,105,.12); color:#047857; }
+  [data-theme="dark"] .sd-start { background:rgba(5,150,105,.22); color:#34d399; }
   .sd-bronze { background:rgba(194,65,12,.1);  color:#c2410c; }
   .sd-ouro   { background:rgba(161,98,7,.1);   color:#a16207; }
   .sd-black  { background:rgba(71,85,105,.1);  color:#334155; }
@@ -447,6 +574,7 @@
   .kmb-purple { background: rgba(167,139,250,.15); color: #a78bfa; }
   .kmb-yellow { background: rgba(251,191,36,.15); color: #fbbf24; }
   .kmb-red    { background: rgba(239,68,68,.15); color: #f87171; }
+  .kmb-start  { background: rgba(5,150,105,.22); color: #34d399; }
   .kmb-bronze { background: rgba(194,65,12,.2); color: #fb923c; }
   .kmb-ouro   { background: rgba(161,98,7,.2);  color: #fbbf24; }
   .kmb-black  { background: rgba(71,85,105,.2); color: #94a3b8; }
@@ -497,6 +625,7 @@
   .corr-cycle-group label { font-size: 0.9rem; font-weight: 700; }
   .corr-cycle-group input { width: 62px; padding: 5px 8px; border-radius: 7px; border: 1.5px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07); color: #f1f5f9; font-size: 0.9rem; font-weight: 800; text-align: center; outline: none; font-family: inherit; }
   .corr-cycle-group input:focus { border-color: #818cf8; }
+  .cycle-start  label { color: #34d399; text-shadow: 0 0 8px rgba(52,211,153,.5); }
   .cycle-bronze label { color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,.5); }
   .cycle-ouro   label { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,.5); }
   .cycle-black  label { color: #cbd5e1; text-shadow: 0 0 8px rgba(203,213,225,.3); }
@@ -520,6 +649,9 @@
   .corr-kpi.kpi-yellow .kpi-val { color: #fbbf24; }
   .corr-kpi.kpi-purple .kpi-val { color: #a78bfa; }
   .corr-kpi.kpi-blue .kpi-val { color: #60a5fa; }
+  .corr-kpi.kpi-money .kpi-val { color: #34d399; font-size: 1.45rem; }
+  .corr-rank-receita { color:#34d399; font-weight:800; white-space:nowrap; }
+  .cf-receita { display:block; font-size:.72rem; font-weight:800; color:#34d399; margin-top:2px; letter-spacing:-.2px; }
 
   /* RANKING */
   .corr-ranking { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px 20px; margin-bottom: 24px; }
@@ -565,6 +697,7 @@
   .cf-prog-fill { height:100%; border-radius:999px; transition: width .6s cubic-bezier(.4,0,.2,1); position:relative; }
   .cf-prog-fill::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(90deg,transparent 0%,rgba(255,255,255,.3) 50%,transparent 100%); animation: shimmer 2s infinite; }
   @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  .cf-prog-fill.ps { background: linear-gradient(90deg,#065f46,#059669,#34d399); box-shadow: 0 0 10px rgba(52,211,153,.5); }
   .cf-prog-fill.pb { background: linear-gradient(90deg,#9a3412,#ea580c,#fb923c); box-shadow: 0 0 10px rgba(251,146,60,.5); }
   .cf-prog-fill.po { background: linear-gradient(90deg,#92400e,#d97706,#fbbf24); box-shadow: 0 0 10px rgba(251,191,36,.5); }
   .cf-prog-fill.pk { background: linear-gradient(90deg,#1e293b,#475569,#94a3b8); box-shadow: 0 0 10px rgba(148,163,184,.4); }
@@ -591,6 +724,7 @@
   .cb-client-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
   .cb-client-name { font-size:.8rem; color:#cbd5e1; flex:1; }
   .cb-client-badge { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:12px; }
+  .cbb-start  { background:rgba(5,150,105,.22); color:#34d399; }
   .cbb-bronze { background:rgba(194,65,12,.2); color:#fb923c; }
   .cbb-ouro   { background:rgba(161,98,7,.2);  color:#fbbf24; }
   .cbb-black  { background:rgba(71,85,105,.2); color:#94a3b8; }
@@ -599,6 +733,8 @@
   .cb-back-btn:hover { color:#a5b4fc; }
   .cb-copy-card-btn { padding:10px 16px; background:transparent; border:none; border-left:1px solid rgba(255,255,255,.06); color:#34d399; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
   .cb-copy-card-btn:hover { background:rgba(52,211,153,.1); color:#6ee7b7; }
+  .cb-copy-img-btn { color:#818cf8; }
+  .cb-copy-img-btn:hover { background:rgba(129,140,248,.12); color:#a5b4fc; }
 
   /* EMPTY */
   .corr-empty { text-align: center; padding: 80px 20px; color: #334155; }
@@ -1478,6 +1614,63 @@
   </div>
 </div>
 
+<!-- CONFIGURAÇÃO DE CICLOS (engrenagem) -->
+<div class="ciclos-modal hidden" id="ciclosModal" onclick="if(event.target===this)fecharCfgCiclos()" role="dialog" aria-modal="true" aria-labelledby="ciclosModalTitle">
+  <div class="ciclos-box">
+    <div class="ciclos-head">
+      <span id="ciclosModalTitle">⚙️ Configuração dos ciclos</span>
+      <button type="button" class="ciclos-x" onclick="fecharCfgCiclos()">✕</button>
+    </div>
+    <p class="ciclos-desc">Quantas vendas fecham um ciclo em cada setor e quanto o consultor ganha ao fechá-lo.</p>
+    <table class="ciclos-table">
+      <thead><tr><th>Setor</th><th>Vendas por ciclo</th><th>Bônus ao completar</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg-setor cfg-start">🌱 Start</td>
+          <td><input type="number" min="1" max="999" id="cfgCicloSTART" onchange="setCiclo('START',this.value)"></td>
+          <td><input type="text" inputmode="decimal" id="cfgBonusSTART" onchange="setBonusCiclo('START',this.value)"></td></tr>
+        <tr><td class="cfg-setor cfg-bronze">🪙 Bronze</td>
+          <td><input type="number" min="1" max="999" id="cfgCicloBRONZE" onchange="setCiclo('BRONZE',this.value)"></td>
+          <td><input type="text" inputmode="decimal" id="cfgBonusBRONZE" onchange="setBonusCiclo('BRONZE',this.value)"></td></tr>
+        <tr><td class="cfg-setor cfg-ouro">💰 Ouro</td>
+          <td><input type="number" min="1" max="999" id="cfgCicloOURO" onchange="setCiclo('OURO',this.value)"></td>
+          <td><input type="text" inputmode="decimal" id="cfgBonusOURO" onchange="setBonusCiclo('OURO',this.value)"></td></tr>
+        <tr><td class="cfg-setor cfg-black">💎 Black</td>
+          <td><input type="number" min="1" max="999" id="cfgCicloBLACK" onchange="setCiclo('BLACK',this.value)"></td>
+          <td><input type="text" inputmode="decimal" id="cfgBonusBLACK" onchange="setBonusCiclo('BLACK',this.value)"></td></tr>
+      </tbody>
+    </table>
+    <div class="ciclos-foot">
+      <span>💾 Salvo automaticamente neste navegador</span>
+      <button type="button" class="mp-btn mp-btn-ghost" onclick="ciclosRestaurar()">↺ Restaurar padrão</button>
+      <button type="button" class="mp-btn mp-btn-amber" onclick="fecharCfgCiclos()">✓ Pronto</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOAS-VINDAS: com ou sem arquivo -->
+<div class="welcome-overlay hidden" id="welcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome-box">
+    <h2 id="welcomeTitle">👋 Como você quer começar?</h2>
+    <div class="wc-sub">Você pode carregar a planilha de vendas ou trabalhar sem arquivo, cadastrando os consultores na mão.</div>
+    <div class="welcome-opts">
+      <button type="button" class="welcome-opt wc-file" onclick="welcomeEscolher('arquivo')">
+        <span class="wc-ico">📂</span>
+        <span class="wc-t">Vou carregar um arquivo</span>
+        <span class="wc-d">Planilha .xlsx do Guru ou link do Google Sheets — relatório completo com vendas.</span>
+      </button>
+      <button type="button" class="welcome-opt wc-manual" onclick="welcomeEscolher('manual')">
+        <span class="wc-ico" id="wcManualIco">✍️</span>
+        <span class="wc-t" id="wcManualT">Sem arquivo — cadastro manual</span>
+        <span class="wc-d" id="wcManualD">Digite os nomes dos consultores para usar a Corridinha e a Roleta.</span>
+      </button>
+    </div>
+    <div class="welcome-saved" id="welcomeSaved" style="display:none"></div>
+    <div class="welcome-foot">
+      <label><input type="checkbox" id="welcomeNaoPerguntar"> Não perguntar de novo neste navegador</label>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal">
     <div class="modal-title" id="modalTitle">✏️ Reatribuir Cliente</div>
@@ -1579,20 +1772,24 @@
 
   <!-- CONFIG CICLOS -->
   <div class="corr-config" id="corrConfig">
-    <span class="corr-config-title">⚙️ Vendas por ciclo</span>
+    <button type="button" class="corr-config-title corr-config-btn" onclick="abrirCfgCiclos()" title="Configurar ciclos e bônus">⚙️ Vendas por ciclo</button>
     <div class="corr-cycle-group cycle-black">
       <label for="cicloBlack"><span class="si">💎</span> Black</label>
-      <input type="number" id="cicloBlack" value="5" min="1" max="999">
+      <input type="number" id="cicloBlack" value="5" min="1" max="999" onchange="setCiclo('BLACK',this.value)">
     </div>
     <div class="corr-cycle-group cycle-ouro">
       <label for="cicloOuro"><span class="si">💰</span> Ouro</label>
-      <input type="number" id="cicloOuro" value="7" min="1" max="999">
+      <input type="number" id="cicloOuro" value="7" min="1" max="999" onchange="setCiclo('OURO',this.value)">
     </div>
     <div class="corr-cycle-group cycle-bronze">
       <label for="cicloBronze"><span class="si">🪙</span> Bronze</label>
-      <input type="number" id="cicloBronze" value="10" min="1" max="999">
+      <input type="number" id="cicloBronze" value="10" min="1" max="999" onchange="setCiclo('BRONZE',this.value)">
     </div>
-    <span style="font-size:.78rem;color:#475569;margin-left:4px">· R$ 100 por ciclo</span>
+    <div class="corr-cycle-group cycle-start">
+      <label for="cicloStart"><span class="si">🌱</span> Start</label>
+      <input type="number" id="cicloStart" value="12" min="1" max="999" onchange="setCiclo('START',this.value)">
+    </div>
+    <span style="font-size:.78rem;color:#475569;margin-left:4px" id="corrBonusHint">· R$ 100,00 por ciclo</span>
     <button class="btn-corr-apply" onclick="calcCorridinha()" style="margin-left:auto">↺ Recalcular</button>
   </div>
 
@@ -1619,7 +1816,7 @@
       <div class="corr-kpi kpi-green" data-icon="💰" id="kpiCardBonus" onclick="kpiClick('bonus')" title="Ver ranking por bônus">
         <div class="kpi-label">Bônus total time</div>
         <div class="kpi-val" id="kpiBonusTotal">R$ 0</div>
-        <div class="kpi-sub">ciclos × R$ 100 · clique para ver ranking</div>
+        <div class="kpi-sub" id="kpiBonusSub">ciclos × R$ 100,00 · clique para ver ranking</div>
       </div>
       <div class="corr-kpi kpi-purple" data-icon="🔄" id="kpiCardCiclos" onclick="kpiClick('ciclos')" title="Ver ranking por ciclos">
         <div class="kpi-label">Ciclos completos</div>
@@ -1630,6 +1827,11 @@
         <div class="kpi-label">Vendas totais</div>
         <div class="kpi-val" id="kpiVendasTotal">0</div>
         <div class="kpi-sub" id="kpiVendasSub">no período · clique para ver cards</div>
+      </div>
+      <div class="corr-kpi kpi-money" data-icon="💵" id="kpiCardReceita" onclick="kpiClick('vendas')" title="Receita das vendas do período">
+        <div class="kpi-label">Receita total</div>
+        <div class="kpi-val" id="kpiReceitaTotal">R$ 0,00</div>
+        <div class="kpi-sub" id="kpiReceitaSub">soma das vendas do período</div>
       </div>
       <div class="corr-kpi kpi-yellow" data-icon="⚠️" id="kpiCardAlertas" onclick="kpiClick('alertas')" title="Destacar consultores com alerta">
         <div class="kpi-label">Alertas ativos</div>
@@ -1645,7 +1847,7 @@
         <table class="corr-rank-table" id="corrRankTable">
           <thead><tr>
             <th>#</th><th>Consultor</th>
-            <th class="corr-rank-tce-only">Ciclos</th><th class="corr-rank-tce-only">Bônus</th><th>Vendas</th><th class="corr-rank-tce-only">Progresso</th>
+            <th class="corr-rank-tce-only">Ciclos</th><th class="corr-rank-tce-only">Bônus</th><th>Vendas</th><th>Receita</th><th class="corr-rank-tce-only">Progresso</th>
           </tr></thead>
           <tbody id="corrRankBody"></tbody>
         </table>
@@ -1906,7 +2108,7 @@
 
 <div class="container">
 
-  <div class="upload-treinamento-bar">
+  <div class="upload-treinamento-bar" id="uploadTreinamentoBar">
     <label for="uploadTreinamento">📂 Treinamento a importar:</label>
     <select id="uploadTreinamento" onchange="onUploadTreinamentoChange()">
       <option value="TCE">🏷️ TCE (Guru)</option>
@@ -1922,12 +2124,63 @@
     <input type="file" id="fileInput" accept=".xlsx,.xls">
   </div>
 
-  <div class="upload-gsheets-bar">
+  <div class="upload-gsheets-bar" id="uploadGsheetsBar">
     <span class="upload-gsheets-icon">🔗</span>
     <label for="gsheetsUrl">Ou cole o link do Google Sheets:</label>
     <input type="url" id="gsheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0" onkeydown="if(event.key==='Enter'){event.preventDefault();carregarDoGoogleSheets();}">
     <button type="button" onclick="carregarDoGoogleSheets()">⬇ Importar</button>
     <span class="upload-gsheets-hint">⚠️ O sheet precisa estar como "Qualquer pessoa com o link pode visualizar"</span>
+  </div>
+
+  <!-- CADASTRO MANUAL (modo sem arquivo) -->
+  <div class="manual-panel" id="manualPanel">
+    <div class="manual-head">
+      <div class="mp-title">✍️ Cadastro manual de consultores
+        <small>💾 Salvo automaticamente neste navegador — ao reabrir, tudo volta como estava. Só zera nos botões abaixo.</small>
+      </div>
+      <div class="manual-head-actions">
+        <span class="manual-count" id="manualCount"></span>
+        <button type="button" class="mp-btn mp-btn-amber" onclick="abrirCorridinha()">🏃 Abrir Corridinha</button>
+        <button type="button" class="mp-btn mp-btn-ghost" onclick="sairModoManual()">📂 Carregar arquivo</button>
+        <button type="button" class="mp-btn mp-btn-red" onclick="limparManuais()">🗑 Limpar todos</button>
+      </div>
+    </div>
+    <div class="manual-input-row">
+      <textarea id="manualInput" placeholder="Digite os nomes — um por linha (ou separados por vírgula)&#10;Ex.:&#10;Ana Karoline&#10;Daniel&#10;Heverton" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();addManualLote();}"></textarea>
+      <button type="button" class="mp-btn mp-btn-amber" onclick="addManualLote()">+ Adicionar</button>
+    </div>
+    <div class="manual-hint">Cole uma lista inteira de uma vez · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> adiciona · duplicados são ignorados · a lista fica salva neste navegador.</div>
+    <div class="manual-chips" id="manualChips"></div>
+
+    <!-- LANÇAMENTO MANUAL DE VENDAS -->
+    <div class="mv-wrap" id="mvWrap">
+      <div class="mv-head">
+        <span class="mv-title">🧾 Lançar vendas na mão</span>
+        <button type="button" class="mp-btn mp-btn-red" onclick="mvZerar()" style="margin-left:auto">↺ Zerar vendas</button>
+      </div>
+
+      <div class="mv-config">
+        <div class="mv-config-row">
+          <span class="mv-config-lbl">💵 Valor por venda</span>
+          <label title="Start">🌱<input type="text" inputmode="decimal" id="mvValSTART" value="R$ 147,00" onchange="mvSetValor('START',this.value)"></label>
+          <label title="Bronze">🪙<input type="text" inputmode="decimal" id="mvValBRONZE" value="R$ 197,00" onchange="mvSetValor('BRONZE',this.value)"></label>
+          <label title="Ouro">💰<input type="text" inputmode="decimal" id="mvValOURO" value="R$ 597,00" onchange="mvSetValor('OURO',this.value)"></label>
+          <label title="Black">💎<input type="text" inputmode="decimal" id="mvValBLACK" value="R$ 1.497,00" onchange="mvSetValor('BLACK',this.value)"></label>
+          <button type="button" class="mv-restaurar" onclick="mvRestaurarValores()" title="Voltar à tabela padrão (R$ 147,00 / R$ 197,00 / R$ 597,00 / R$ 1.497,00)">↺</button>
+        </div>
+        <div class="mv-config-row">
+          <button type="button" class="mv-config-lbl mv-config-gear" onclick="abrirCfgCiclos()" title="Abrir configuração dos ciclos e bônus">⚙️ Vendas por ciclo</button>
+          <label title="Start">🌱<input type="number" min="1" max="999" id="mcCicloSTART" value="12" onchange="setCiclo('START',this.value)"></label>
+          <label title="Bronze">🪙<input type="number" min="1" max="999" id="mcCicloBRONZE" value="10" onchange="setCiclo('BRONZE',this.value)"></label>
+          <label title="Ouro">💰<input type="number" min="1" max="999" id="mcCicloOURO" value="7" onchange="setCiclo('OURO',this.value)"></label>
+          <label title="Black">💎<input type="number" min="1" max="999" id="mcCicloBLACK" value="5" onchange="setCiclo('BLACK',this.value)"></label>
+          <button type="button" class="mv-restaurar" onclick="ciclosRestaurar()" title="Voltar ao padrão (12 / 10 / 7 / 5)">↺</button>
+          <span class="mv-config-hint" id="mvCicloHint">R$ 100,00 de bônus por ciclo · vale também na Corridinha e fica salvo</span>
+        </div>
+      </div>
+      <div class="mv-table-wrap"><table class="mv-table" id="mvTable"></table></div>
+      <div class="manual-hint">Cada clique em <strong>+</strong> lança uma venda no setor e já soma o valor da tabela — 🌱 R$ 147 · 🪙 R$ 197 · 💰 R$ 597 · 💎 R$ 1.497. Tudo alimenta o relatório (cards, ranking, gráficos) e a Corridinha em tempo real.</div>
+    </div>
   </div>
 
   <div class="filters">
@@ -1994,6 +2247,7 @@
         </span>
       </div>
       <div class="pills-wrap" id="setoresPills">
+        <button type="button" class="pill pill-start on"  data-group="setores" data-val="START"  aria-pressed="true" onclick="togglePill(this)"><span class="si">🌱</span> Start</button>
         <button type="button" class="pill pill-bronze on" data-group="setores" data-val="BRONZE" aria-pressed="true" onclick="togglePill(this)"><span class="si">🪙</span> Bronze</button>
         <button type="button" class="pill pill-ouro on"   data-group="setores" data-val="OURO"   aria-pressed="true" onclick="togglePill(this)"><span class="si">💰</span> Ouro</button>
         <button type="button" class="pill pill-black on"  data-group="setores" data-val="BLACK"  aria-pressed="true" onclick="togglePill(this)"><span class="si">💎</span> Black</button>
@@ -2045,6 +2299,7 @@
         <div class="cval" id="cTotal">0</div>
         <div class="csub" id="cClientes">0 clientes únicos</div>
       </div>
+      <div class="card c-start" id="cardStart"><div class="clabel"><span class="si">🌱</span> Start</div><div class="cval" id="cStart">0</div><div class="csub" id="vStart">R$ 0,00</div></div>
       <div class="card c-bronze" id="cardBronze"><div class="clabel"><span class="si">🪙</span> Bronze</div><div class="cval" id="cBronze">0</div><div class="csub" id="vBronze">R$ 0,00</div></div>
       <div class="card c-ouro" id="cardOuro">  <div class="clabel"><span class="si">💰</span> Ouro</div>  <div class="cval" id="cOuro">0</div>  <div class="csub" id="vOuro">R$ 0,00</div></div>
       <div class="card c-black" id="cardBlack"> <div class="clabel"><span class="si">💎</span> Black</div>  <div class="cval" id="cBlack">0</div> <div class="csub" id="vBlack">R$ 0,00</div></div>
@@ -2075,12 +2330,17 @@
 
   <!-- Tab Ranking -->
   <div class="tab-content active" id="tab-ranking" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">🏆 Ranking</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('ranking')" title="Copiar a tabela como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('ranking')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
           <th class="rank-cb-cell"><input type="checkbox" id="rankCbAll" class="rank-cb" title="Selecionar todos" onclick="rankToggleAll(this)"></th>
           <th>#</th><th>Consultor</th>
-          <th class="col-setor"><span class="si">🪙</span> Bronze</th><th class="col-setor"><span class="si">💰</span> Ouro</th><th class="col-setor"><span class="si">💎</span> Black</th>
+          <th class="col-setor"><span class="si">🌱</span> Start</th><th class="col-setor"><span class="si">🪙</span> Bronze</th><th class="col-setor"><span class="si">💰</span> Ouro</th><th class="col-setor"><span class="si">💎</span> Black</th>
           <th>Total Produtos</th><th>Receita Total</th>
         </tr></thead>
         <tbody id="bodyRanking">
@@ -2092,6 +2352,11 @@
 
   <!-- Tab Clientes -->
   <div class="tab-content" id="tab-clientes" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">👥 Clientes</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('clientes')" title="Copiar a tabela como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('clientes')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -2117,6 +2382,11 @@
 
   <!-- Tab Detalhe -->
   <div class="tab-content" id="tab-detalhe" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">📋 Detalhe</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('detalhe')" title="Copiar a tabela como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('detalhe')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -2137,6 +2407,11 @@
 
   <!-- Tab Gráficos -->
   <div class="tab-content" id="tab-graficos" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">📊 Gráficos</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('graficos')" title="Copiar os totais dos gráficos como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('graficos')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <!-- #11 Charts toolbar -->
     <div class="charts-toolbar">
       <div class="chart-toggle">
@@ -2175,6 +2450,11 @@
 
   <!-- Tab Cancelamentos -->
   <div class="tab-content" id="tab-cancelamentos" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">❌ Cancelamentos</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('cancelamentos')" title="Copiar a tabela como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('cancelamentos')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -2191,6 +2471,11 @@
 
   <!-- Tab Histórico -->
   <div class="tab-content" id="tab-historico" role="tabpanel">
+    <div class="tab-actions">
+      <span class="ta-lbl">📜 Histórico</span>
+      <button class="btn-tab-copy" onclick="copiarAbaTexto('historico')" title="Copiar a tabela como texto">📋 Copiar texto</button>
+      <button class="btn-tab-copy" onclick="copiarAbaImagem('historico')" title="Copiar o card desta aba como imagem">📸 Copiar imagem</button>
+    </div>
     <!-- #12 Snapshot diff bar -->
     <div class="hist-snap-bar">
       <span class="hist-snap-lbl">📸 Snapshot</span>
@@ -2281,6 +2566,11 @@ document.addEventListener('DOMContentLoaded', () => {
     _aplicarManuaisNaLista();
     renderConsultoresPills();
   }
+  renderManualChips();
+  _carregarVendasManuais();
+  _carregarCiclos();
+  renderVendasManuais();
+  abrirWelcome();
   try {
     const ut = localStorage.getItem('guru-upload-treinamento');
     if (ut) {
@@ -2295,7 +2585,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s) { const p=JSON.parse(s); guruSnapshot={ts:new Date(p.ts),data:p.data}; const info=`${guruSnapshot.ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} — ${p.data.length} consultores`; document.getElementById('snapInfo').textContent=info; document.getElementById('btnCompareDiff').style.display='inline-block'; }
   } catch(e) {}
   // #2 Restaurar preset de período
-  try { const preset=localStorage.getItem('guru-preset'); if(preset&&preset!=='custom') setTimeout(()=>setPeriodPreset(preset),0); } catch(e) {}
+  // Abre sempre em "Hoje" — nos dois períodos (relatório e Corridinha)
+  setTimeout(() => { try { aplicarPeriodoHoje(); } catch(e) {} }, 0);
   ['dataInicio','horaInicio','dataFim','horaFim'].forEach(id =>
     document.getElementById(id).addEventListener('input', agendarFiltros));
   document.getElementById('statusFiltro').addEventListener('change', agendarFiltros);
@@ -2327,7 +2618,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===e.currentTarget) fecharModal(); });
   document.addEventListener('keydown', e => {
-    if (e.key==='Escape') { fecharModal(); fecharCorridinha(); fecharKpiModal(); }
+    if (e.key==='Escape') { if (!document.getElementById('ciclosModal')?.classList.contains('hidden')) { fecharCfgCiclos(); return; } fecharModal(); fecharCorridinha(); fecharKpiModal(); }
     if (e.altKey) {
       if (e.key==='1') { e.preventDefault(); showTab('ranking'); }
       if (e.key==='2') { e.preventDefault(); showTab('clientes'); }
@@ -2393,6 +2684,13 @@ function _carregarManuais() {
 function _aplicarManuaisNaLista() {
   consultoresManuais.forEach(n => { if (!consultoresUnicos.includes(n)) consultoresUnicos.push(n); });
 }
+function _repintarListasConsultores() {
+  if (document.getElementById('consultoresPills')) renderConsultoresPills();
+  if (document.getElementById('corrConsPills') && document.getElementById('corrConsPills').children.length) renderCorrPills();
+  renderManualChips();
+  _syncDadosManuais();
+  renderVendasManuais();
+}
 function addConsultorManual(panel) {
   const inpId = panel==='corr' ? 'addCorrManualInput' : 'addConsManualInput';
   const inp = document.getElementById(inpId);
@@ -2404,17 +2702,421 @@ function addConsultorManual(panel) {
   consultoresUnicos.push(nome);
   _persistManuais();
   inp.value=''; inp.focus();
-  if (document.getElementById('consultoresPills')) renderConsultoresPills();
-  if (document.getElementById('corrConsPills') && document.getElementById('corrConsPills').children.length) renderCorrPills();
+  _repintarListasConsultores();
   mostrarToast('✅ Consultor "'+nome+'" adicionado.');
 }
 function removeConsultorManual(nome) {
   consultoresManuais = consultoresManuais.filter(n => n !== nome);
   consultoresUnicos = consultoresUnicos.filter(n => n !== nome);
+  delete vendasManuais[nome];
   _persistManuais();
-  if (document.getElementById('consultoresPills')) renderConsultoresPills();
-  if (document.getElementById('corrConsPills') && document.getElementById('corrConsPills').children.length) renderCorrPills();
+  _persistVendasManuais();
+  _repintarListasConsultores();
   mostrarToast('Removido: '+nome);
+}
+
+// ---- Modo sem arquivo (cadastro manual) ----
+let modoManual = false;
+
+function abrirWelcome() {
+  _welcomeAtualizarResumo();
+  try { if (localStorage.getItem('guru-welcome-skip') === '1') { _welcomeRestaurar(); return; } } catch(e) {}
+  const ov = document.getElementById('welcomeOverlay');
+  if (!ov) return;
+  ov.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+// Mostra no modal o que já está salvo, para ficar claro que nada foi perdido.
+function _welcomeAtualizarResumo() {
+  const nCons = consultoresManuais.length;
+  const nVend = mvTotalVendas();
+  const btn = document.querySelector('.welcome-opt.wc-manual');
+  const t = document.getElementById('wcManualT');
+  const d = document.getElementById('wcManualD');
+  const ico = document.getElementById('wcManualIco');
+  const box = document.getElementById('welcomeSaved');
+  if (!t || !d) return;
+  if (nCons || nVend) {
+    if (ico) ico.textContent = '💾';
+    t.textContent = 'Continuar de onde parei';
+    d.textContent = `${nCons} consultor(es) e ${nVend} venda(s) já lançadas — tudo volta como estava.`;
+    btn?.classList.add('has-saved');
+    if (box) {
+      box.style.display = '';
+      box.textContent = `💾 Registro salvo neste navegador: ${nCons} consultor(es) · ${nVend} venda(s). Só some quando você clicar em "Zerar vendas" ou "Limpar todos".`;
+    }
+  } else {
+    if (ico) ico.textContent = '✍️';
+    t.textContent = 'Sem arquivo — cadastro manual';
+    d.textContent = 'Digite os nomes dos consultores para usar a Corridinha e a Roleta.';
+    btn?.classList.remove('has-saved');
+    if (box) box.style.display = 'none';
+  }
+}
+
+// Quando o usuário pediu para não perguntar mais, respeita a última escolha salva.
+function _welcomeRestaurar() {
+  try { if (localStorage.getItem('guru-welcome-modo') === 'manual') aplicarModoManual(true); } catch(e) {}
+}
+
+function welcomeEscolher(modo) {
+  const ov = document.getElementById('welcomeOverlay');
+  if (ov) ov.classList.add('hidden');
+  document.body.style.overflow = '';
+  try {
+    if (document.getElementById('welcomeNaoPerguntar')?.checked) localStorage.setItem('guru-welcome-skip','1');
+    localStorage.setItem('guru-welcome-modo', modo);
+  } catch(e) {}
+  if (modo === 'manual') {
+    aplicarModoManual(true);
+    setTimeout(() => document.getElementById('manualInput')?.focus(), 120);
+  } else {
+    aplicarModoManual(false);
+    document.getElementById('uploadArea')?.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function aplicarModoManual(on) {
+  modoManual = !!on;
+  const hide = (id, esconder) => { const el = document.getElementById(id); if (el) el.style.display = esconder ? 'none' : ''; };
+  hide('uploadArea', modoManual);
+  hide('uploadTreinamentoBar', modoManual);
+  hide('uploadGsheetsBar', modoManual);
+  document.getElementById('manualPanel')?.classList.toggle('is-on', modoManual);
+  if (modoManual) {
+    _aplicarManuaisNaLista();
+    _carregarVendasManuais();
+    renderConsultoresPills();
+    renderManualChips();
+    _prepararFiltrosModoManual();
+    _syncDadosManuais();
+    renderVendasManuais();
+    // Restaura a tela com o que já estava lançado, em vez de abrir zerado
+    if (dadosRaw.length) { try { aplicarFiltros(); } catch(e) {} }
+  } else if (dadosRaw.length && dadosRaw.every(r => r.manual)) {
+    // saindo do modo manual: descarta os registros sintéticos
+    dadosRaw = [];
+    document.getElementById('status-bar').textContent = 'Carregue um arquivo para começar.';
+  }
+}
+
+// No modo manual não existe "período do arquivo": qualquer filtro herdado só
+// esconderia as vendas recém-lançadas, tanto no relatório quanto na Corridinha.
+function _prepararFiltrosModoManual() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  ['horaInicio','horaFim','corrHoraIni','corrHoraFim'].forEach(id => set(id, ''));
+  set('statusFiltro', 'todos');
+  set('corrStatus', 'todos');
+  aplicarPeriodoHoje();
+  const tr = document.getElementById('treinamentoFiltro');
+  if (tr && tr.value !== 'TCE') { tr.value = 'TCE'; applyTreinamentoUI(); }
+  try { localStorage.removeItem('guru-preset'); } catch(e) {}
+  document.querySelectorAll('.pill[data-group="setores"]').forEach(p => { p.classList.add('on'); p.setAttribute('aria-pressed','true'); });
+}
+
+// Marca o chip "Hoje" e aplica a data de hoje nos dois filtros de período.
+function aplicarPeriodoHoje() {
+  const hoje = new Date();
+  const iso = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  set('dataInicio', iso); set('dataFim', iso); set('horaInicio',''); set('horaFim','');
+  set('corrDataIni', iso); set('corrDataFim', iso); set('corrHoraIni',''); set('corrHoraFim','');
+  document.querySelectorAll('.period-chip, .corr-period-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.period-chip[data-preset="today"]')?.classList.add('active');
+  document.querySelector('.corr-period-chip[data-corr-preset="today"]')?.classList.add('active');
+  try { localStorage.setItem('guru-preset','today'); } catch(e) {}
+}
+
+// ---- Vendas por ciclo (persistidas) ----
+const MV_CICLO_INPUT  = { BLACK:'cicloBlack', OURO:'cicloOuro', BRONZE:'cicloBronze', START:'cicloStart' };
+const MV_CICLO_PADRAO = { BLACK:5, OURO:7, BRONZE:10, START:12 };
+const MV_BONUS_PADRAO = { BLACK:100, OURO:100, BRONZE:100, START:100 };
+let ciclosCorridinha = Object.assign({}, MV_CICLO_PADRAO);
+let bonusCiclos      = Object.assign({}, MV_BONUS_PADRAO);
+
+function _carregarCiclos() {
+  try {
+    const c = JSON.parse(localStorage.getItem('guru-ciclos'));
+    if (c && typeof c === 'object') ciclosCorridinha = Object.assign({}, MV_CICLO_PADRAO, c);
+    const b = JSON.parse(localStorage.getItem('guru-bonus-ciclos'));
+    if (b && typeof b === 'object') bonusCiclos = Object.assign({}, MV_BONUS_PADRAO, b);
+  } catch(e) {}
+  _pintarCiclos();
+}
+function _persistCiclos() {
+  try {
+    localStorage.setItem('guru-ciclos', JSON.stringify(ciclosCorridinha));
+    localStorage.setItem('guru-bonus-ciclos', JSON.stringify(bonusCiclos));
+  } catch(e) {}
+}
+function _pintarCiclos() {
+  MV_SETORES.forEach(st => {
+    const a = document.getElementById(MV_CICLO_INPUT[st]);
+    const b = document.getElementById('mcCiclo'+st);
+    const c = document.getElementById('cfgCiclo'+st);
+    const d = document.getElementById('cfgBonus'+st);
+    if (a) a.value = ciclosCorridinha[st];
+    if (b) b.value = ciclosCorridinha[st];
+    if (c) c.value = ciclosCorridinha[st];
+    if (d) d.value = fmtR$(bonusCiclos[st]);
+  });
+  const iguais = MV_SETORES.every(st => bonusCiclos[st] === bonusCiclos.BLACK);
+  const txt = iguais ? `· ${fmtR$(bonusCiclos.BLACK)} por ciclo` : '· bônus por setor';
+  const el1 = document.getElementById('corrBonusHint'); if (el1) el1.textContent = txt;
+  const el2 = document.getElementById('kpiBonusSub');
+  if (el2) el2.textContent = (iguais ? `ciclos × ${fmtR$(bonusCiclos.BLACK)}` : 'bônus por setor') + ' · clique para ver ranking';
+  const el3 = document.getElementById('mvCicloHint');
+  if (el3) el3.textContent = (iguais ? `${fmtR$(bonusCiclos.BLACK)} de bônus por ciclo` : 'bônus por setor') + ' · vale também na Corridinha e fica salvo';
+}
+function setCiclo(setor, v) {
+  ciclosCorridinha[setor] = Math.max(1, Math.min(999, parseInt(v) || MV_CICLO_PADRAO[setor]));
+  _persistCiclos();
+  _pintarCiclos();
+  if (dadosRaw.length) { try { calcCorridinha(); } catch(e) {} }
+}
+// Quanto o consultor ganha ao fechar um ciclo daquele setor
+function setBonusCiclo(setor, v) {
+  bonusCiclos[setor] = Math.max(0, _parseValorFlex(v));
+  _persistCiclos();
+  _pintarCiclos();
+  if (dadosRaw.length) { try { calcCorridinha(); } catch(e) {} }
+}
+function ciclosRestaurar() {
+  ciclosCorridinha = Object.assign({}, MV_CICLO_PADRAO);
+  bonusCiclos      = Object.assign({}, MV_BONUS_PADRAO);
+  _persistCiclos();
+  _pintarCiclos();
+  if (dadosRaw.length) { try { calcCorridinha(); } catch(e) {} }
+  mostrarToast('↺ Ciclos e bônus voltaram ao padrão.');
+}
+function abrirCfgCiclos() {
+  _pintarCiclos();
+  document.getElementById('ciclosModal')?.classList.remove('hidden');
+}
+function fecharCfgCiclos() {
+  document.getElementById('ciclosModal')?.classList.add('hidden');
+}
+
+function sairModoManual() {
+  aplicarModoManual(false);
+  try { localStorage.setItem('guru-welcome-modo','arquivo'); } catch(e) {}
+  document.getElementById('uploadArea')?.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function renderManualChips() {
+  const box = document.getElementById('manualChips');
+  const cnt = document.getElementById('manualCount');
+  if (cnt) cnt.textContent = consultoresManuais.length ? consultoresManuais.length + ' cadastrado(s)' : '';
+  if (!box) return;
+  box.innerHTML = '';
+  if (!consultoresManuais.length) {
+    const p = document.createElement('div');
+    p.className = 'manual-empty';
+    p.textContent = 'Nenhum consultor cadastrado ainda.';
+    box.appendChild(p);
+    return;
+  }
+  consultoresManuais.forEach(nome => {
+    const chip = document.createElement('span');
+    chip.className = 'manual-chip';
+    chip.appendChild(document.createTextNode(nome));
+    const x = document.createElement('button');
+    x.type = 'button'; x.textContent = '×'; x.title = 'Remover ' + nome;
+    x.addEventListener('click', () => removeConsultorManual(nome));
+    chip.appendChild(x);
+    box.appendChild(chip);
+  });
+}
+
+function addManualLote() {
+  const inp = document.getElementById('manualInput');
+  if (!inp) return;
+  const nomes = String(inp.value||'').split(/[\n,;]+/).map(_normalizeNome).filter(Boolean);
+  if (!nomes.length) { inp.focus(); return; }
+  let add = 0, dup = 0;
+  nomes.forEach(nome => {
+    if (consultoresUnicos.includes(nome)) { dup++; return; }
+    consultoresManuais.push(nome);
+    consultoresUnicos.push(nome);
+    add++;
+  });
+  _persistManuais();
+  inp.value = ''; inp.focus();
+  _repintarListasConsultores();
+  mostrarToast(add ? `✅ ${add} consultor(es) adicionado(s)${dup?` · ${dup} já existia(m)`:''}.`
+                   : `⚠️ Nenhum nome novo — ${dup} já estava(m) na lista.`);
+}
+
+// ---- Vendas lançadas na mão (modo sem arquivo) ----
+const MV_SETORES = ['START','BRONZE','OURO','BLACK'];
+const MV_META = {
+  START:  { icone:'🌱', label:'Start'  },
+  BRONZE: { icone:'🪙', label:'Bronze' },
+  OURO:   { icone:'💰', label:'Ouro'   },
+  BLACK:  { icone:'💎', label:'Black'  },
+};
+let vendasManuais = {};   // { consultor: {START:n, BRONZE:n, OURO:n, BLACK:n} }
+// Tabela de preços vigente — aplicada sozinha em toda venda lançada na mão
+const MV_VALOR_PADRAO = { START:147, BRONZE:197, OURO:597, BLACK:1497 };
+let valoresManuais = Object.assign({}, MV_VALOR_PADRAO);
+
+function _persistVendasManuais() {
+  try {
+    localStorage.setItem('guru-vendas-manuais', JSON.stringify(vendasManuais));
+    localStorage.setItem('guru-valores-manuais', JSON.stringify(valoresManuais));
+  } catch(e) {}
+}
+function _carregarVendasManuais() {
+  try {
+    const v = JSON.parse(localStorage.getItem('guru-vendas-manuais'));
+    if (v && typeof v === 'object') vendasManuais = v;
+    // v2 = tabela de preços padrão já vigente; salvos anteriores (zerados) são descartados
+    if (localStorage.getItem('guru-valores-versao') === '2') {
+      const p = JSON.parse(localStorage.getItem('guru-valores-manuais'));
+      if (p && typeof p === 'object') valoresManuais = Object.assign({}, MV_VALOR_PADRAO, p);
+    } else {
+      valoresManuais = Object.assign({}, MV_VALOR_PADRAO);
+      localStorage.setItem('guru-valores-versao', '2');
+      localStorage.setItem('guru-valores-manuais', JSON.stringify(valoresManuais));
+    }
+  } catch(e) {}
+  _mvPintarValores();
+}
+function _mvPintarValores() {
+  MV_SETORES.forEach(s => { const el = document.getElementById('mvVal'+s); if (el) el.value = fmtR$(valoresManuais[s]); });
+}
+function mvRestaurarValores() {
+  valoresManuais = Object.assign({}, MV_VALOR_PADRAO);
+  _persistVendasManuais();
+  _mvPintarValores();
+  _syncDadosManuais();
+  renderVendasManuais();
+  mostrarToast('↺ Valores voltaram para a tabela padrão.');
+}
+function mvGet(cons, setor) { return (vendasManuais[cons] && vendasManuais[cons][setor]) || 0; }
+
+// idx = posição em consultoresUnicos (evita nomes com aspas dentro do onclick)
+function mvSetIdx(idx, setor, qtd) { const c = consultoresUnicos[idx]; if (c) mvSet(c, setor, qtd); }
+function mvStepIdx(idx, setor, delta) { const c = consultoresUnicos[idx]; if (c) mvStep(c, setor, delta); }
+
+function mvSet(cons, setor, qtd) {
+  qtd = Math.max(0, Math.min(9999, parseInt(qtd) || 0));
+  if (!vendasManuais[cons]) vendasManuais[cons] = { START:0, BRONZE:0, OURO:0, BLACK:0 };
+  vendasManuais[cons][setor] = qtd;
+  _persistVendasManuais();
+  _syncDadosManuais();
+  renderVendasManuais();
+}
+function mvStep(cons, setor, delta) { mvSet(cons, setor, mvGet(cons, setor) + delta); }
+
+function mvSetValor(setor, v) {
+  // aceita "1497", "1.497,00", "R$ 1.497,00" — sempre em Real
+  valoresManuais[setor] = Math.max(0, _parseValorFlex(v));
+  _persistVendasManuais();
+  _mvPintarValores();
+  _syncDadosManuais();
+  renderVendasManuais();
+}
+
+function mvZerar() {
+  if (!confirm('Zerar todas as vendas lançadas manualmente?')) return;
+  vendasManuais = {};
+  _persistVendasManuais();
+  _syncDadosManuais();
+  renderVendasManuais();
+  mostrarToast('↺ Vendas manuais zeradas.');
+}
+
+// Converte os contadores em registros equivalentes aos da planilha,
+// para que cards, ranking, gráficos e Corridinha funcionem sem alteração.
+function _syncDadosManuais() {
+  if (!modoManual) return;
+  const agora = new Date();
+  const dataStr = `${String(agora.getDate()).padStart(2,'0')}/${String(agora.getMonth()+1).padStart(2,'0')}/${agora.getFullYear()}`;
+  const out = [];
+  consultoresUnicos.forEach(cons => {
+    MV_SETORES.forEach(setor => {
+      const n = mvGet(cons, setor);
+      for (let i = 1; i <= n; i++) {
+        out.push({
+          status:'Aprovada', dataAprov:agora, dataAprovStr:dataStr,
+          consultor:cons, setor, produto:'TCE',
+          cliente:`${cons} · ${MV_META[setor].label} ${i}`,
+          valor:valoresManuais[setor] || 0, qtd:1, pagamento:'Manual',
+          bonus:false, manual:true
+        });
+      }
+    });
+  });
+  dadosRaw = out;
+  const el = document.getElementById('status-bar');
+  if (el) el.textContent = out.length
+    ? `Modo manual — ${out.length} venda(s) lançada(s). Clique em Aplicar Filtros ou abra a Corridinha.`
+    : 'Modo manual — cadastre os consultores e lance as vendas.';
+  if (!document.getElementById('corridinhaOverlay').classList.contains('hidden')) {
+    try { calcCorridinha(); } catch(e) {}
+  }
+  // No modo manual o relatório se aplica sozinho — nunca é preciso clicar em Aplicar Filtros
+  if (out.length) { try { aplicarFiltros(); } catch(e) {} }
+}
+
+function mvTotalVendas() {
+  return Object.values(vendasManuais).reduce((s,v) =>
+    s + MV_SETORES.reduce((ss,x)=>ss+(v[x]||0),0), 0);
+}
+
+function renderVendasManuais() {
+  const tbl = document.getElementById('mvTable');
+  if (!tbl) return;
+  if (!consultoresUnicos.length) {
+    tbl.innerHTML = '<tbody><tr><td class="mv-empty">Cadastre um consultor acima para lançar vendas.</td></tr></tbody>';
+    return;
+  }
+  const totCol = { START:0, BRONZE:0, OURO:0, BLACK:0 };
+  let totReceita = 0;
+  const linhas = consultoresUnicos.map((cons, idx) => {
+    let totLinha = 0, recLinha = 0;
+    const tds = MV_SETORES.map(setor => {
+      const n = mvGet(cons, setor);
+      totLinha += n; totCol[setor] += n;
+      recLinha += n * (valoresManuais[setor] || 0);
+      return `<td class="mv-c-${setor}"><span class="mv-stepper">
+        <button type="button" title="−1" onclick="mvStepIdx(${idx},'${setor}',-1)">−</button>
+        <input type="number" min="0" value="${n}" onchange="mvSetIdx(${idx},'${setor}',this.value)" aria-label="${MV_META[setor].label} de ${escAttr(cons)}">
+        <button type="button" title="+1" onclick="mvStepIdx(${idx},'${setor}',1)">+</button>
+      </span></td>`;
+    }).join('');
+    totReceita += recLinha;
+    return `<tr><td class="mv-col-cons">${escAttr(cons)}</td>${tds}<td class="mv-total">${totLinha}</td><td class="mv-receita">${fmtR$(recLinha)}</td></tr>`;
+  }).join('');
+  const totGeral = MV_SETORES.reduce((s,x)=>s+totCol[x],0);
+  tbl.innerHTML = `
+    <thead><tr>
+      <th class="mv-col-cons">Consultor</th>
+      ${MV_SETORES.map(s=>`<th>${MV_META[s].icone} ${MV_META[s].label}</th>`).join('')}
+      <th>Total</th>
+      <th>Receita</th>
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+    <tfoot><tr>
+      <td class="mv-col-cons">TOTAL</td>
+      ${MV_SETORES.map(s=>`<td>${totCol[s]}</td>`).join('')}
+      <td class="mv-total">${totGeral}</td>
+      <td class="mv-receita">${fmtR$(totReceita)}</td>
+    </tr></tfoot>`;
+}
+
+function limparManuais() {
+  if (!consultoresManuais.length) { mostrarToast('Nada para limpar.'); return; }
+  if (!confirm(`Remover os ${consultoresManuais.length} consultores cadastrados manualmente (e as vendas lançadas neles)?`)) return;
+  consultoresManuais.forEach(n => { delete vendasManuais[n]; });
+  consultoresUnicos = consultoresUnicos.filter(n => !consultoresManuais.includes(n));
+  consultoresManuais = [];
+  _persistManuais();
+  _persistVendasManuais();
+  _repintarListasConsultores();
+  mostrarToast('🗑 Lista manual limpa.');
 }
 function rltAddSpinnerManual() {
   const inp = document.getElementById('rltAddSpinnerInput');
@@ -2485,6 +3187,7 @@ function ocultarSpinner()    { document.getElementById('spinnerOverlay').style.d
 // ---- Upload / Worker ----
 function carregarArquivo(file) {
   if (!file) return;
+  if (modoManual) aplicarModoManual(false);
   document.getElementById('fileName').textContent = '⏳ ' + file.name;
   const reader = new FileReader();
   reader.onload = e => {
@@ -2598,7 +3301,8 @@ function processarDados(data) {
     const nomeRaw = m ? m[1] : null;
     const consultor = nomeRaw ? (mapNomes[nomeRaw]||nomeRaw) : 'GERAL';
     let setor = null, produto = null;
-    if (oferta.includes('BRONZE')) { setor='BRONZE'; produto='TCE'; }
+    if (oferta.includes('START')) { setor='START'; produto='TCE'; }
+    else if (oferta.includes('BRONZE')) { setor='BRONZE'; produto='TCE'; }
     else if (oferta.includes('OURO')) { setor='OURO'; produto='TCE'; }
     else if (oferta.includes('BLACK')) { setor='BLACK'; produto='TCE'; }
     else if (/M[ÉE]TODO\s+CIS\s+GLOBAL/i.test(oferta)) { produto='CIS'; }
@@ -2732,6 +3436,7 @@ async function carregarDoGoogleSheets() {
     mostrarToast('❌ URL inválida. Use o link copiado da barra do navegador (https://docs.google.com/spreadsheets/d/.../).');
     input.focus(); return;
   }
+  if (modoManual) aplicarModoManual(false);
   if (btn) btn.disabled = true;
   mostrarSpinner('Baixando do Google Sheets...');
   document.getElementById('fileName').textContent = '⏳ Baixando do Google Sheets...';
@@ -2894,7 +3599,7 @@ function updateConsDropLabel() {
   const total = cbs.length, checked = checkedArr.length;
   const lbl = document.getElementById('consDropLabel');
   if (!lbl) return;
-  if (!total) { lbl.textContent = 'Carregue um arquivo...'; return; }
+  if (!total) { lbl.textContent = modoManual ? 'Cadastre um consultor...' : 'Carregue um arquivo...'; return; }
   lbl.textContent = checked === total ? `Todos (${total})` : `${checked} de ${total} selecionados`;
   const btn = document.getElementById('consDropBtn');
   if (btn) btn.classList.toggle('has-filter', checked < total && checked > 0);
@@ -2926,7 +3631,7 @@ function updateCorrDropLabel() {
   const total = cbs.length, checked = checkedArr.length;
   const lbl = document.getElementById('corrDropLabel');
   if (!lbl) return;
-  if (!total) { lbl.textContent = 'Carregue um arquivo...'; return; }
+  if (!total) { lbl.textContent = modoManual ? 'Cadastre um consultor...' : 'Carregue um arquivo...'; return; }
   lbl.textContent = checked === total ? `Todos (${total})` : `${checked} de ${total} selecionados`;
   const btn = document.getElementById('corrDropBtn');
   if (btn) btn.classList.toggle('has-filter', checked < total && checked > 0);
@@ -3032,7 +3737,10 @@ function getSelected(group) {
 
 // ---- Aplicar filtros ----
 function aplicarFiltros() {
-  if (!dadosRaw.length) { mostrarToast('⚠️ Carregue um arquivo primeiro!'); return; }
+  if (!dadosRaw.length) {
+    mostrarToast(modoManual ? '⚠️ Modo manual: não há vendas para filtrar — use a Corridinha.' : '⚠️ Carregue um arquivo primeiro!');
+    return;
+  }
   salvarFiltros();
   const dtIni=buildDt(document.getElementById('dataInicio').value,document.getElementById('horaInicio').value||'00:00');
   const dtFim=buildDt(document.getElementById('dataFim').value,document.getElementById('horaFim').value||'23:59');
@@ -3087,11 +3795,13 @@ function calcRankMap(dados,consSel) {
 // ---- Cards ----
 function renderCards(dados,di,df) {
   const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
-  ['cardBronze','cardOuro','cardBlack'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = isTCE?'':'none'; });
+  ['cardStart','cardBronze','cardOuro','cardBlack'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = isTCE?'':'none'; });
   const cisEl = document.getElementById('cardCIS'); if (cisEl) cisEl.style.display = isTCE?'none':'';
   document.getElementById('cTotal').textContent    = dados.reduce((s,r)=>s+r.qtd,0);
   document.getElementById('cClientes').textContent = new Set(dados.map(r=>r.cliente)).size+' clientes únicos';
   if (isTCE) {
+    document.getElementById('cStart').textContent  = dados.filter(r=>r.setor==='START').reduce((s,r)=>s+r.qtd,0);
+    document.getElementById('vStart').textContent  = fmtR$(dados.filter(r=>r.setor==='START').reduce((s,r)=>s+r.valor,0));
     document.getElementById('cBronze').textContent = dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0);
     document.getElementById('vBronze').textContent = fmtR$(dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.valor,0));
     document.getElementById('cOuro').textContent   = dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0);
@@ -3114,17 +3824,18 @@ function renderCards(dados,di,df) {
 function renderRanking(dados,consSel,rankMap) {
   const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
   document.querySelectorAll('#tab-ranking .col-setor').forEach(el => el.style.display = isTCE ? '' : 'none');
-  const agg={}; consSel.forEach(c=>agg[c]={BRONZE:0,OURO:0,BLACK:0,total:0,valor:0});
+  const agg={}; consSel.forEach(c=>agg[c]={START:0,BRONZE:0,OURO:0,BLACK:0,total:0,valor:0});
   dados.forEach(r=>{ if(agg[r.consultor]===undefined)return; if(r.setor) agg[r.consultor][r.setor]+=r.qtd; agg[r.consultor].total+=r.qtd; agg[r.consultor].valor+=r.valor; });
   const sorted=Object.entries(agg).sort((a,b)=>rankMap[a[0]]-rankMap[b[0]]);
   const medals=['🥇','🥈','🥉'];
   const valorRanks=Object.fromEntries([...sorted].sort((a,b)=>b[1].valor-a[1].valor).map(([c],i)=>[c,i]));
-  const tB=sorted.reduce((s,[,d])=>s+d.BRONZE,0),tO=sorted.reduce((s,[,d])=>s+d.OURO,0),tBk=sorted.reduce((s,[,d])=>s+d.BLACK,0),tT=sorted.reduce((s,[,d])=>s+d.total,0),tV=sorted.reduce((s,[,d])=>s+d.valor,0);
+  const tS=sorted.reduce((s,[,d])=>s+d.START,0),tB=sorted.reduce((s,[,d])=>s+d.BRONZE,0),tO=sorted.reduce((s,[,d])=>s+d.OURO,0),tBk=sorted.reduce((s,[,d])=>s+d.BLACK,0),tT=sorted.reduce((s,[,d])=>s+d.total,0),tV=sorted.reduce((s,[,d])=>s+d.valor,0);
   document.getElementById('bodyRanking').innerHTML=sorted.map(([c,d],i)=>`
     <tr class="${valorRanks[c]<3?'rank-row-'+(valorRanks[c]+1):''}">
       <td class="rank-cb-cell"><input type="checkbox" class="rank-cb" data-cons="${escAttr(c)}" onchange="rankCbChange()"></td>
       <td class="rank-medal">${medals[i]||('#'+(i+1))}</td>
       <td><span class="tag-cons tag-cons-click" onclick="filtrarConsultor('${escAttr(c)}')" title="Filtrar apenas ${escAttr(c)}">${escAttr(c)}</span></td>
+      <td class="col-setor" data-label="Start" style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','START')">${d.START?`<span class="badge badge-start">${d.START}</span>`:'—'}</td>
       <td class="col-setor" data-label="Bronze" style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','BRONZE')">${d.BRONZE?`<span class="badge badge-bronze">${d.BRONZE}</span>`:'—'}</td>
       <td class="col-setor" data-label="Ouro"   style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','OURO')">${d.OURO?`<span class="badge badge-ouro">${d.OURO}</span>`:'—'}</td>
       <td class="col-setor" data-label="Black"  style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','BLACK')">${d.BLACK?`<span class="badge badge-black">${d.BLACK}</span>`:'—'}</td>
@@ -3132,6 +3843,7 @@ function renderRanking(dados,consSel,rankMap) {
       <td data-label="Receita" class="valor">${fmtR$(d.valor)}</td>
     </tr>`).join('')+`
     <tr class="subtotal"><td></td><td colspan="2">TOTAL</td>
+      <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-start">${tS}</span></td>
       <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-bronze">${tB}</span></td>
       <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-ouro">${tO}</span></td>
       <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-black">${tBk}</span></td>
@@ -3141,7 +3853,7 @@ function renderRanking(dados,consSel,rankMap) {
 
 // ---- Clientes ----
 function renderClientes(dados,consSel,rankMap) {
-  const buckets = ['BRONZE','OURO','BLACK','CIS'];
+  const buckets = ['START','BRONZE','OURO','BLACK','CIS'];
   const agg={}; consSel.forEach(c=>{ agg[c]={}; buckets.forEach(b=>agg[c][b]={}); });
   dados.forEach(r=>{
     if(!agg[r.consultor])return;
@@ -3339,7 +4051,7 @@ function setCorrPeriodPreset(preset, event) {
 }
 
 // ══ #4 DRILL-DOWN ══
-const DRILL_DOTS = { BRONZE:'#fb923c', OURO:'#fbbf24', BLACK:'#94a3b8' };
+const DRILL_DOTS = { START:'#34d399', BRONZE:'#fb923c', OURO:'#fbbf24', BLACK:'#94a3b8' };
 function abrirDrill(consultor, setor) {
   const rows = dadosRaw.filter(r => r.consultor===consultor && r.setor===setor && r.status==='Aprovada');
   const setoresFilt = getSelected('setores'); const consFilt = getSelected('consultores');
@@ -3390,18 +4102,20 @@ function abrirCompare() {
     const rows   = dadosRaw.filter(r => r.consultor===c && r.status==='Aprovada');
     const qtd    = rows.reduce((s,r) => s+r.qtd, 0);
     const val    = rows.reduce((s,r) => s+r.valor, 0);
+    const start  = rows.filter(r => r.setor==='START').reduce((s,r) => s+r.qtd, 0);
     const bronze = rows.filter(r => r.setor==='BRONZE').reduce((s,r) => s+r.qtd, 0);
     const ouro   = rows.filter(r => r.setor==='OURO').reduce((s,r) => s+r.qtd, 0);
     const black  = rows.filter(r => r.setor==='BLACK').reduce((s,r) => s+r.qtd, 0);
     const clientes = new Set(rows.map(r => r.cliente)).size;
     const cor      = CORR_COLORS2[ci % CORR_COLORS2.length];
     const initials = c.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-    return { c, qtd, val, bronze, ouro, black, clientes, cor, initials, rows };
+    return { c, qtd, val, start, bronze, ouro, black, clientes, cor, initials, rows };
   });
 
   // Máximos por métrica
   const mQtd    = Math.max(...stats.map(s => s.qtd));
   const mVal    = Math.max(...stats.map(s => s.val));
+  const mStart  = Math.max(...stats.map(s => s.start));
   const mBronze = Math.max(...stats.map(s => s.bronze));
   const mOuro   = Math.max(...stats.map(s => s.ouro));
   const mBlack  = Math.max(...stats.map(s => s.black));
@@ -3411,6 +4125,7 @@ function abrirCompare() {
     let w = 0;
     if (s.qtd    === mQtd    && mQtd    > 0) w++;
     if (s.val    === mVal    && mVal    > 0) w++;
+    if (s.start  === mStart  && mStart  > 0) w++;
     if (s.bronze === mBronze && mBronze > 0) w++;
     if (s.ouro   === mOuro   && mOuro   > 0) w++;
     if (s.black  === mBlack  && mBlack  > 0) w++;
@@ -3425,6 +4140,7 @@ function abrirCompare() {
     const isTop   = wins[i] === maxWins && maxWins > 0;
     const pQtd    = Math.round(s.qtd / Math.max(1, mQtd) * 100);
     const pVal    = Math.round(s.val / Math.max(1, mVal) * 100);
+    const pStart  = Math.round(s.start  / Math.max(1, s.qtd) * 100);
     const pBronze = Math.round(s.bronze / Math.max(1, s.qtd) * 100);
     const pOuro   = Math.round(s.ouro   / Math.max(1, s.qtd) * 100);
     const pBlack  = Math.round(s.black  / Math.max(1, s.qtd) * 100);
@@ -3443,6 +4159,7 @@ function abrirCompare() {
       <div class="compare-bars">
         <div class="compare-bar-row"><div class="compare-bar-lbl">Produtos</div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pQtd}%;background:${s.cor}"></div></div><div class="compare-bar-val" style="display:flex;align-items:center">${s.qtd}${w(s.qtd,mQtd)}</div></div>
         <div class="compare-bar-row"><div class="compare-bar-lbl">Receita</div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pVal}%;background:${s.cor}"></div></div><div class="compare-bar-val is-money" style="display:flex;align-items:center" title="${fmtR$(s.val)}">${fmtValCmp(s.val)}${w(s.val,mVal)}</div></div>
+        <div class="compare-bar-row"><div class="compare-bar-lbl"><span class="si">🌱</span></div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pStart}%;background:#059669"></div></div><div class="compare-bar-val" style="display:flex;align-items:center">${s.start}${w(s.start,mStart)}</div></div>
         <div class="compare-bar-row"><div class="compare-bar-lbl"><span class="si">🪙</span></div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pBronze}%;background:#c2410c"></div></div><div class="compare-bar-val" style="display:flex;align-items:center">${s.bronze}${w(s.bronze,mBronze)}</div></div>
         <div class="compare-bar-row"><div class="compare-bar-lbl"><span class="si">💰</span></div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pOuro}%;background:#a16207"></div></div><div class="compare-bar-val" style="display:flex;align-items:center">${s.ouro}${w(s.ouro,mOuro)}</div></div>
         <div class="compare-bar-row"><div class="compare-bar-lbl"><span class="si">💎</span></div><div class="compare-bar-track"><div class="compare-bar-fill" style="width:${pBlack}%;background:#475569"></div></div><div class="compare-bar-val" style="display:flex;align-items:center">${s.black}${w(s.black,mBlack)}</div></div>
@@ -3589,7 +4306,7 @@ function paintClientes() {
 function renderDetalhe(dados,rankMap) {
   detalheRows=[...dados].sort((a,b)=>{
     const ra=rankMap[a.consultor]||99,rb=rankMap[b.consultor]||99; if(ra!==rb) return ra-rb;
-    const sp=['BRONZE','OURO','BLACK']; if(a.setor!==b.setor) return sp.indexOf(a.setor)-sp.indexOf(b.setor);
+    const sp=['START','BRONZE','OURO','BLACK']; if(a.setor!==b.setor) return sp.indexOf(a.setor)-sp.indexOf(b.setor);
     return a.dataAprovStr>b.dataAprovStr?1:-1;
   });
   pgDetalhe=1; paintDetalhe();
@@ -3663,10 +4380,10 @@ function renderGraficos(dados, consSel, rankMap) {
     }
   });
 
-  const setLabels=['Bronze','Ouro','Black'];
-  const bgSetores=['#c2410c','#a16207','#475569'];
-  const qtdSetor=[dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0),dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0),dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.qtd,0)];
-  const valSetor=[dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.valor,0),dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.valor,0),dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.valor,0)];
+  const setLabels=['Start','Bronze','Ouro','Black'];
+  const bgSetores=['#059669','#c2410c','#a16207','#475569'];
+  const qtdSetor=[dados.filter(r=>r.setor==='START').reduce((s,r)=>s+r.qtd,0),dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0),dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0),dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.qtd,0)];
+  const valSetor=[dados.filter(r=>r.setor==='START').reduce((s,r)=>s+r.valor,0),dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.valor,0),dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.valor,0),dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.valor,0)];
   const totalQtdRaw=qtdSetor.reduce((s,v)=>s+v,0);
   const totalValRaw=valSetor.reduce((s,v)=>s+v,0);
   const totalQtd=totalQtdRaw||1;
@@ -3674,16 +4391,18 @@ function renderGraficos(dados, consSel, rankMap) {
   document.getElementById('statSetores').innerHTML =
     `<span>Total</span>${totalQtdRaw} produtos` +
     `<div class="chart-stat-detail">` +
-      `<span class="sd-item sd-bronze"><span class="si">🪙</span> Bronze: ${qtdSetor[0]}</span>` +
-      `<span class="sd-item sd-ouro"><span class="si">💰</span> Ouro: ${qtdSetor[1]}</span>` +
-      `<span class="sd-item sd-black"><span class="si">💎</span> Black: ${qtdSetor[2]}</span>` +
+      `<span class="sd-item sd-start"><span class="si">🌱</span> Start: ${qtdSetor[0]}</span>` +
+      `<span class="sd-item sd-bronze"><span class="si">🪙</span> Bronze: ${qtdSetor[1]}</span>` +
+      `<span class="sd-item sd-ouro"><span class="si">💰</span> Ouro: ${qtdSetor[2]}</span>` +
+      `<span class="sd-item sd-black"><span class="si">💎</span> Black: ${qtdSetor[3]}</span>` +
     `</div>`;
   document.getElementById('statSetoresValor').innerHTML =
     `<span>Total</span>${fmtR$(totalValRaw)}` +
     `<div class="chart-stat-detail">` +
-      `<span class="sd-item sd-bronze"><span class="si">🪙</span> Bronze: ${fmtR$(valSetor[0])}</span>` +
-      `<span class="sd-item sd-ouro"><span class="si">💰</span> Ouro: ${fmtR$(valSetor[1])}</span>` +
-      `<span class="sd-item sd-black"><span class="si">💎</span> Black: ${fmtR$(valSetor[2])}</span>` +
+      `<span class="sd-item sd-start"><span class="si">🌱</span> Start: ${fmtR$(valSetor[0])}</span>` +
+      `<span class="sd-item sd-bronze"><span class="si">🪙</span> Bronze: ${fmtR$(valSetor[1])}</span>` +
+      `<span class="sd-item sd-ouro"><span class="si">💰</span> Ouro: ${fmtR$(valSetor[2])}</span>` +
+      `<span class="sd-item sd-black"><span class="si">💎</span> Black: ${fmtR$(valSetor[3])}</span>` +
     `</div>`;
 
   criarOuAtualizar('chartSetores','doughnut',setLabels,[{data:qtdSetor,backgroundColor:bgSetores,borderWidth:2,borderColor:'#fff'}],{
@@ -3899,7 +4618,7 @@ function renderFilterChips() {
   if (di||df) chips.push({label:`📅 ${di||'início'} → ${df||'hoje'}`, remove:()=>{ ['dataInicio','horaInicio','dataFim','horaFim'].forEach(id=>document.getElementById(id).value=''); agendarFiltros(); }});
   const st=document.getElementById('statusFiltro').value;
   if (st!=='Aprovada') chips.push({label:st==='todos'?'🔄 Todos status':'❌ Cancelados', remove:()=>{ document.getElementById('statusFiltro').value='Aprovada'; agendarFiltros(); }});
-  const selSet=getSelected('setores'), allSet=['BRONZE','OURO','BLACK'];
+  const selSet=getSelected('setores'), allSet=['START','BRONZE','OURO','BLACK'];
   if (selSet.length<allSet.length&&selSet.length>0) chips.push({label:`🏷️ ${selSet.join(', ')}`, remove:()=>{ toggleAll('setores',true); agendarFiltros(); }});
   chips.forEach(({label,remove})=>{
     const el=document.createElement('span'); el.className='filter-chip';
@@ -3931,7 +4650,7 @@ function abrirCorridinha() {
   document.getElementById('corridinhaOverlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   renderCorrPills();
-  if (dadosRaw.length) calcCorridinha();
+  if (dadosRaw.length || (modoManual && consultoresUnicos.length)) calcCorridinha();
 }
 
 function fecharCorridinha() {
@@ -3970,18 +4689,15 @@ function corrGetSelected() {
 }
 
 function calcCorridinha() {
-  if (!dadosRaw.length) { mostrarToast('⚠️ Carregue um arquivo primeiro!'); return; }
+  // No modo manual não há planilha: a corrida roda zerada, só com os nomes cadastrados.
+  if (!dadosRaw.length && !modoManual) { mostrarToast('⚠️ Carregue um arquivo primeiro!'); return; }
+  if (!dadosRaw.length && modoManual && !consultoresUnicos.length) { mostrarToast('⚠️ Cadastre ao menos um consultor.'); return; }
 
   const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
   const dtIni  = buildCorrDt('corrDataIni','corrHoraIni','00:00');
   const dtFim  = buildCorrDt('corrDataFim','corrHoraFim','23:59');
   const status = document.getElementById('corrStatus').value;
-  const ciclos = isTCE ? {
-    BLACK:  Math.max(1, parseInt(document.getElementById('cicloBlack').value)  || 5),
-    OURO:   Math.max(1, parseInt(document.getElementById('cicloOuro').value)   || 7),
-    BRONZE: Math.max(1, parseInt(document.getElementById('cicloBronze').value) || 10),
-  } : null;
-  const BONUS = 100;
+  const ciclos = isTCE ? Object.assign({}, ciclosCorridinha) : null;
   const treinamento = isTCE ? 'TCE' : 'CIS';
 
   const consSel = corrGetSelected();
@@ -3997,7 +4713,7 @@ function calcCorridinha() {
   const consultores = consSel.length ? consSel : consultoresUnicos;
   const agg = {};
   if (isTCE) {
-    consultores.forEach(c => agg[c] = { BLACK:[], OURO:[], BRONZE:[] });
+    consultores.forEach(c => agg[c] = { BLACK:[], OURO:[], BRONZE:[], START:[] });
     dados.forEach(r => { if (agg[r.consultor] !== undefined && r.setor) agg[r.consultor][r.setor].push(r); });
   } else {
     consultores.forEach(c => agg[c] = { ALL:[] });
@@ -4010,14 +4726,14 @@ function calcCorridinha() {
     let bonusCons = 0, ciclosCons = 0;
     let setores;
     if (isTCE) {
-      setores = ['BLACK','OURO','BRONZE'].map(s => {
+      setores = ['BLACK','OURO','BRONZE','START'].map(s => {
         const rows  = d[s];
         const qtd   = rows.reduce((sum,r)=>sum+r.qtd,0);
         const meta  = ciclos[s];
         const compl = Math.floor(qtd / meta);
         const rest  = qtd % meta;
         const falta = rest === 0 && qtd > 0 ? meta : meta - rest;
-        bonusCons  += compl * BONUS;
+        bonusCons  += compl * (bonusCiclos[s] || 0);
         ciclosCons += compl;
         const clientes = [...new Map(rows.map(r=>[r.cliente,r])).values()];
         return { setor:s, qtd, meta, compl, rest:rest===0&&qtd>0?0:rest, falta, rows, clientes };
@@ -4029,17 +4745,19 @@ function calcCorridinha() {
       setores = [{ setor:'CIS', qtd, meta:0, compl:0, rest:0, falta:0, rows, clientes }];
     }
     const totalVendas = setores.reduce((s,x)=>s+x.qtd,0);
+    const receitaCons = setores.reduce((s,x)=>s+x.rows.reduce((ss,r)=>ss+(r.valor||0),0),0);
     const temAlerta   = isTCE && setores.some(x=>x.falta<=3 && x.falta>0 && x.qtd>0);
     bonusEquipe  += bonusCons;
     ciclosEquipe += ciclosCons;
     vendasEquipe += totalVendas;
     if (temAlerta) alertasTotal++;
-    return { consultor:c, cor:CORR_COLORS[ci%CORR_COLORS.length], setores, bonusCons, ciclosCons, totalVendas, temAlerta };
+    return { consultor:c, cor:CORR_COLORS[ci%CORR_COLORS.length], setores, bonusCons, ciclosCons, totalVendas, receitaCons, temAlerta };
   });
 
   // Resumo para copiar
   const receitaTotal = dados.reduce((s,r)=>s+r.valor,0);
   const clientesU    = new Set(dados.map(r=>r.cliente)).size;
+  const qtdStart     = dados.filter(r=>r.setor==='START').reduce((s,r)=>s+r.qtd,0);
   const qtdBronze    = dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0);
   const qtdOuro      = dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0);
   const qtdBlack     = dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.qtd,0);
@@ -4047,7 +4765,7 @@ function calcCorridinha() {
   const dtFimVal     = document.getElementById('corrDataFim').value;
   function toDisplay(s){ if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
   corrLastData = {
-    receitaTotal, clientesU, qtdBronze, qtdOuro, qtdBlack,
+    receitaTotal, clientesU, qtdStart, qtdBronze, qtdOuro, qtdBlack,
     periodoIni: toDisplay(dtIniVal) || 'início',
     periodoFim: toDisplay(dtFimVal) || 'hoje',
   };
@@ -4058,6 +4776,10 @@ function calcCorridinha() {
   document.getElementById('kpiBonusTotal').textContent  = fmtR$(bonusEquipe);
   document.getElementById('kpiCiclosTotal').textContent = ciclosEquipe;
   document.getElementById('kpiVendasTotal').textContent = vendasEquipe;
+  const elRec = document.getElementById('kpiReceitaTotal');
+  if (elRec) elRec.textContent = fmtR$(receitaTotal);
+  const elRecSub = document.getElementById('kpiReceitaSub');
+  if (elRecSub) elRecSub.textContent = clientesU ? `ticket ${fmtR$(receitaTotal/clientesU)} · ${clientesU} cliente(s)` : 'soma das vendas do período';
   document.getElementById('kpiAlertas').textContent     = alertasTotal;
 
   const grid = document.getElementById('corrGrid');
@@ -4082,27 +4804,28 @@ function calcCorridinha() {
       <td class="corr-rank-tce-only" style="${isTCE?'':'display:none'}"><span class="rank-ciclos">${c.ciclosCons}</span></td>
       <td class="rank-bonus corr-rank-tce-only" style="${isTCE?'':'display:none'}">${fmtR$(c.bonusCons)}</td>
       <td class="rank-vendas">${c.totalVendas}</td>
+      <td class="corr-rank-receita">${fmtR$(c.receitaCons||0)}</td>
       <td class="corr-rank-tce-only" style="${isTCE?'':'display:none'}"><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c.ciclosCons/maxCiclos*100)}%;background:${c.cor}"></div></div></td>
     </tr>`).join('');
   rankWrap.style.display = 'block';
   cardsTitle.style.display = 'flex';
 
   // Cards
-  const setorIcon  = { BLACK:'<span class="si">💎</span>', OURO:'<span class="si">💰</span>', BRONZE:'<span class="si">🪙</span>' };
-  const setorLabel = { BLACK:'Black', OURO:'Ouro', BRONZE:'Bronze' };
-  const progClass  = { BLACK:'pk', OURO:'po', BRONZE:'pb' };
-  const clientDot  = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c' };
-  const clientBadge= { BLACK:'cbb-black', OURO:'cbb-ouro', BRONZE:'cbb-bronze' };
+  const setorIcon  = { BLACK:'<span class="si">💎</span>', OURO:'<span class="si">💰</span>', BRONZE:'<span class="si">🪙</span>', START:'<span class="si">🌱</span>' };
+  const setorLabel = { BLACK:'Black', OURO:'Ouro', BRONZE:'Bronze', START:'Start' };
+  const progClass  = { BLACK:'pk', OURO:'po', BRONZE:'pb', START:'ps' };
+  const clientDot  = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c', START:'#34d399' };
+  const clientBadge= { BLACK:'cbb-black', OURO:'cbb-ouro', BRONZE:'cbb-bronze', START:'cbb-start' };
 
-  const TIER_CLR = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c' };
+  const TIER_CLR = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c', START:'#34d399' };
 
-  grid.innerHTML = cards.map(({ consultor, cor, setores, bonusCons, totalVendas, temAlerta }, idx) => {
+  grid.innerHTML = cards.map(({ consultor, cor, setores, bonusCons, totalVendas, receitaCons, temAlerta }, idx) => {
     const initials = consultor.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const hue = nameToHue(consultor);
     const dominantSetor = isTCE && setores.length ? setores.reduce((a,b)=>a.qtd>=b.qtd?a:b).setor : 'BRONZE';
     const tierRing = isTCE ? (TIER_CLR[dominantSetor] || '#818cf8') : '#0ea5e9';
 
-    const SEG_COLORS = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c' };
+    const SEG_COLORS = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c', START:'#34d399' };
     const frontSetores = !isTCE
       ? `<div class="cf-setor cf-setor-cis">
            <div class="cf-setor-top">
@@ -4130,7 +4853,7 @@ function calcCorridinha() {
         <div class="cf-segs">${segsHtml}${overSegs}</div>
         <div class="cf-setor-foot">
           ${footChip}
-          <span class="cf-ciclos"><b>${compl}</b> ciclo${compl!==1?'s':''} · +${fmtR$(compl*100)}</span>
+          <span class="cf-ciclos"><b>${compl}</b> ciclo${compl!==1?'s':''} · +${fmtR$(compl*(bonusCiclos[setor]||0))}</span>
         </div>
       </div>`;
     }).join('');
@@ -4163,7 +4886,7 @@ function calcCorridinha() {
           <div class="card-front-glow" style="background:radial-gradient(circle at 50% 0%,${tierRing}44,transparent 60%)"></div>
           <div class="cf-header">
             <div class="cf-avatar" style="background:linear-gradient(135deg,hsl(${hue},65%,55%),hsl(${(hue+40)%360},70%,40%));box-shadow:0 0 0 2px ${tierRing},0 2px 8px rgba(0,0,0,.4);color:white">${initials}</div>
-            <span class="cf-name">${escAttr(consultor)}</span>
+            <span class="cf-name">${escAttr(consultor)}<span class="cf-receita">${fmtR$(receitaCons||0)}</span></span>
             ${isTCE ? `<div class="cf-bonus-wrap">
               <span class="cf-bonus-lbl">Bônus</span>
               <span class="cf-bonus ${bonusCons>0?'earned':'zero'}">${fmtR$(bonusCons)}</span>
@@ -4180,7 +4903,8 @@ function calcCorridinha() {
           <div class="cb-client-list">${clientesHTML}</div>
           <div class="cb-btn-row">
             <button class="cb-back-btn" onclick="event.stopPropagation();flipCard(${idx})">↩ Voltar para o card</button>
-            <button class="cb-copy-card-btn" onclick="event.stopPropagation();copiarCard(${idx})">📋 Copiar card</button>
+            <button class="cb-copy-card-btn" onclick="event.stopPropagation();copiarCard(${idx})">📋 Copiar texto</button>
+            <button class="cb-copy-card-btn cb-copy-img-btn" onclick="event.stopPropagation();copiarCardImagem(${idx})">📸 Copiar imagem</button>
           </div>
         </div>
       </div>
@@ -4223,7 +4947,7 @@ function copiarCorridinha() {
   const ranked = [...corrLastCards].sort((a,b)=>b.ciclosCons-a.ciclosCons||b.bonusCons-a.bonusCons||b.totalVendas-a.totalVendas);
   const medalRank = ['🥇','🥈','🥉'];
   ranked.forEach((c,i) => {
-    const setDetalhes = c.setores.map(s=>`${s.setor==='BLACK'?'💎':s.setor==='OURO'?'💰':'🪙'} ${s.setor}: ${s.qtd} venda${s.qtd!==1?'s':''} (${s.compl} ciclo${s.compl!==1?'s':''})`).join(' | ');
+    const setDetalhes = c.setores.map(s=>`${s.setor==='BLACK'?'💎':s.setor==='OURO'?'💰':s.setor==='START'?'🌱':'🪙'} ${s.setor}: ${s.qtd} venda${s.qtd!==1?'s':''} (${s.compl} ciclo${s.compl!==1?'s':''})`).join(' | ');
     linhas.push(`${medalRank[i]||('#'+(i+1))} ${c.consultor} — ${c.ciclosCons} ciclo${c.ciclosCons!==1?'s':''} · ${fmtR$(c.bonusCons)} · ${c.totalVendas} vendas`);
     linhas.push(`   ${setDetalhes}`);
   });
@@ -4247,23 +4971,25 @@ function copiarConsultoresSelecionados() {
   const ranked = [...cardsExp].sort((a,b)=>b.ciclosCons-a.ciclosCons||b.bonusCons-a.bonusCons||b.totalVendas-a.totalVendas);
   const medals = ['🥇','🥈','🥉'];
 
-  let totBr=0, totOu=0, totBk=0, totProd=0, totRec=0;
+  let totSt=0, totBr=0, totOu=0, totBk=0, totProd=0, totRec=0;
   const linhasRanking = ranked.map((c, i) => {
     const bk = c.setores.find(s=>s.setor==='BLACK');
     const ou = c.setores.find(s=>s.setor==='OURO');
     const br = c.setores.find(s=>s.setor==='BRONZE');
+    const st = c.setores.find(s=>s.setor==='START');
     const rec = c.setores.reduce((sum,s)=>sum+s.rows.reduce((ss,r)=>ss+(r.valor||0),0),0);
-    totBr+=br.qtd; totOu+=ou.qtd; totBk+=bk.qtd; totProd+=c.totalVendas; totRec+=rec;
+    totSt+=st?.qtd||0; totBr+=br.qtd; totOu+=ou.qtd; totBk+=bk.qtd; totProd+=c.totalVendas; totRec+=rec;
     const pos = medals[i] !== undefined ? medals[i] : (i+1);
-    return `${pos} | ${c.consultor} | ${br.qtd>0?br.qtd:'—'} | ${ou.qtd>0?ou.qtd:'—'} | ${bk.qtd>0?bk.qtd:'—'} | ${c.totalVendas} | ${fmtR$(rec)}`;
+    const q = x => (x&&x.qtd>0) ? x.qtd : '—';
+    return `${pos} | ${c.consultor} | ${q(st)} | ${q(br)} | ${q(ou)} | ${q(bk)} | ${c.totalVendas} | ${fmtR$(rec)}`;
   });
 
   const linhas = [
     `📅 ${dataHoje}`,
     ``,
-    `# | Consultor | 🪙 Bronze | 💰 Ouro | 💎 Black | Total Produtos | Total R$`,
+    `# | Consultor | 🌱 Start | 🪙 Bronze | 💰 Ouro | 💎 Black | Total Produtos | Total R$`,
     ...linhasRanking,
-    `— | TOTAL | ${totBr} | ${totOu} | ${totBk} | ${totProd} | ${fmtR$(totRec)}`,
+    `— | TOTAL | ${totSt} | ${totBr} | ${totOu} | ${totBk} | ${totProd} | ${fmtR$(totRec)}`,
   ];
 
   navigator.clipboard.writeText(linhas.join('\n'))
@@ -4322,16 +5048,18 @@ function copiarConsultor(idx) {
   const bk = c.setores.find(s=>s.setor==='BLACK');
   const ou = c.setores.find(s=>s.setor==='OURO');
   const br = c.setores.find(s=>s.setor==='BRONZE');
+  const st = c.setores.find(s=>s.setor==='START');
+  const linhaSetores = `🌱 Start: (${st?.qtd||0}) | 🪙 Bronze: (${br.qtd}) | 💰 Ouro: (${ou.qtd}) | 💎 Black: (${bk.qtd})`;
   const receitaCons = c.setores.reduce((sum,s)=>sum+s.rows.reduce((ss,r)=>ss+(r.valor||0),0),0);
   const linhas = [
     `📅 Período: ${d.periodoIni} → ${d.periodoFim}`,
     `👤 Consultor: ${c.consultor}`,
     `📦 Vendas total do periodo: ${c.totalVendas}`,
     `💰 Receita total do periodo: ${fmtR$(receitaCons)}`,
-    `🪙 Bronze: (${br.qtd}) | 💰 Ouro: (${ou.qtd}) | 💎 Black: (${bk.qtd})`,
+    linhaSetores,
     `── Ranking ──`,
     `${medal} ${c.consultor}`,
-    `🪙 Bronze: (${br.qtd}) | 💰 Ouro: (${ou.qtd}) | 💎 Black: (${bk.qtd})`,
+    linhaSetores,
   ];
   navigator.clipboard.writeText(linhas.join('\n'))
     .then(()=>mostrarToast('📋 Dados de '+c.consultor+' copiados!'))
@@ -4347,7 +5075,7 @@ function copiarAlertas() {
   if (!kpiLastAlertas.length) { mostrarToast('⚠️ Nenhum alerta para copiar.'); return; }
   const hoje = new Date();
   const dataHoje = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
-  const setorEmoji = { BLACK:'💎', OURO:'💰', BRONZE:'🪙' };
+  const setorEmoji = { BLACK:'💎', OURO:'💰', BRONZE:'🪙', START:'🌱' };
   const criticos  = kpiLastAlertas.filter(a => a.falta === 1);
   const atencao   = kpiLastAlertas.filter(a => a.falta > 1);
   const linhas = [
@@ -4383,14 +5111,15 @@ function copiarCiclos() {
     `🔄 Ciclos Completos — Detalhamento`,
     `📅 ${dataHoje}`,
     ``,
-    `# | Consultor | Ciclos | 💎 Black | 💰 Ouro | 🪙 Bronze | Bônus`,
+    `# | Consultor | Ciclos | 💎 Black | 💰 Ouro | 🪙 Bronze | 🌱 Start | Bônus`,
   ];
   kpiLastCiclos.forEach((c, i) => {
     const bk = c.setores.find(s=>s.setor==='BLACK');
     const ou = c.setores.find(s=>s.setor==='OURO');
     const br = c.setores.find(s=>s.setor==='BRONZE');
+    const st = c.setores.find(s=>s.setor==='START');
     const pos = medals[i] !== undefined ? medals[i] : ('#'+(i+1));
-    linhas.push(`${pos} | ${c.consultor} | ${c.ciclosCons} | ${bk.compl||'0'} | ${ou.compl||'0'} | ${br.compl||'0'} | ${fmtR$(c.bonusCons)}`);
+    linhas.push(`${pos} | ${c.consultor} | ${c.ciclosCons} | ${bk.compl||'0'} | ${ou.compl||'0'} | ${br.compl||'0'} | ${st?.compl||'0'} | ${fmtR$(c.bonusCons)}`);
   });
   navigator.clipboard.writeText(linhas.join('\n'))
     .then(() => mostrarToast(`📋 Ciclos de ${kpiLastCiclos.length} consultor${kpiLastCiclos.length !== 1 ? 'es' : ''} copiado${kpiLastCiclos.length !== 1 ? 's' : ''}!`))
@@ -4425,6 +5154,168 @@ function copiarImagemModal() {
   }).catch(() => mostrarToast('❌ Erro ao gerar imagem.'));
 }
 
+// Copia o card do consultor como imagem (mesma ideia do 📸 do painel de KPIs).
+// O card vive dentro de um flip 3D, então clonamos a face da frente num container
+// plano e fora da tela — html2canvas não lida bem com transform/backface.
+function copiarCardImagem(idx) {
+  const card = document.getElementById('card3d-'+idx);
+  const c = corrLastCards[idx];
+  if (!card || !c) return;
+  if (typeof html2canvas !== 'function') {
+    mostrarToast('❌ Biblioteca de imagem não carregou — precisa de internet na primeira vez.');
+    return;
+  }
+  const front = card.querySelector('.card-front');
+  if (!front) return;
+
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-10000px;top:0;padding:20px;background:#0b1730;border-radius:20px;z-index:-1';
+  const clone = front.cloneNode(true);
+  clone.style.position = 'relative';
+  clone.style.transform = 'none';
+  clone.style.backfaceVisibility = 'visible';
+  clone.style.width = front.offsetWidth + 'px';
+  clone.style.height = 'auto';
+  clone.querySelector('.cf-flip-hint')?.remove();
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+
+  mostrarToast('⏳ Gerando imagem…');
+  html2canvas(holder, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0b1730', logging: false })
+    .then(canvas => {
+      holder.remove();
+      const nome = 'card-' + c.consultor.toLowerCase().replace(/\s+/g,'-') + '.png';
+      canvas.toBlob(blob => {
+        if (!blob) { mostrarToast('❌ Não foi possível gerar a imagem.'); return; }
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(() => mostrarToast('🖼️ Card de ' + c.consultor + ' copiado como imagem!'))
+          .catch(() => {
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = nome;
+            a.click();
+            mostrarToast('📥 Imagem salva — clipboard indisponível neste browser.');
+          });
+      }, 'image/png');
+    })
+    .catch(() => { holder.remove(); mostrarToast('❌ Erro ao gerar imagem.'); });
+}
+
+// ══ Copiar ABA (texto / imagem) — botões da .tab-actions em cada aba ══
+const ABA_TITULO = {
+  ranking:'🏆 RANKING', clientes:'👥 CLIENTES', detalhe:'📋 DETALHE',
+  graficos:'📊 GRÁFICOS', historico:'📜 HISTÓRICO', cancelamentos:'❌ CANCELAMENTOS'
+};
+
+function _abaCabecalho(aba) {
+  let h = ABA_TITULO[aba] || aba.toUpperCase();
+  const per = (document.getElementById('cPeriodo')?.textContent || '').replace(/\s+/g,' ').trim();
+  if (per && per !== '—') h += ' — ' + per;
+  return h;
+}
+
+// Converte uma <table> renderizada em linhas "a | b | c".
+// Pula a coluna de checkbox, linhas escondidas e o placeholder de tabela vazia.
+function _tabelaParaTexto(tbl) {
+  const linhas = [];
+  tbl.querySelectorAll('tr').forEach(tr => {
+    if (tr.querySelector('.empty-msg')) return;
+    if (tr.closest('thead') === null && getComputedStyle(tr).display === 'none') return;
+    const cels = [];
+    tr.querySelectorAll('th,td').forEach(c => {
+      const txt = (c.innerText || '').replace(/\s+/g,' ').trim();
+      if (!txt && c.querySelector('input[type=checkbox]')) return;   // coluna do check
+      cels.push(txt || '—');
+    });
+    if (cels.some(v => v !== '—')) linhas.push(cels.join(' | '));
+  });
+  return linhas;
+}
+
+function copiarAbaTexto(aba) {
+  const painel = document.getElementById('tab-' + aba);
+  if (!painel) return;
+
+  const linhas = [_abaCabecalho(aba), ''];
+  let houve = false;
+
+  painel.querySelectorAll('table').forEach(tbl => {
+    const ls = _tabelaParaTexto(tbl);
+    if (!ls.length) return;
+    if (houve) linhas.push('');
+    linhas.push(...ls);
+    houve = true;
+  });
+
+  // Aba Gráficos não tem tabela — copia título + total de cada gráfico visível.
+  if (!houve) {
+    painel.querySelectorAll('.chart-box').forEach(box => {
+      if (box.offsetParent === null) return;
+      const t = (box.querySelector('.chart-title')?.innerText || '').replace(/\s+/g,' ').trim();
+      const s = (box.querySelector('.chart-stat')?.innerText  || '').replace(/\s+/g,' ').trim();
+      if (t) { linhas.push(s ? t + ' | ' + s : t); houve = true; }
+    });
+  }
+
+  if (!houve) { mostrarToast('⚠️ Nada para copiar nesta aba.'); return; }
+
+  const pg = painel.querySelector('.pagination');
+  if (pg && pg.offsetParent !== null) {
+    const info = (pg.querySelector('.pg-info')?.innerText || '').replace(/\s+/g,' ').trim();
+    if (info) linhas.push('', '(' + info + ')');
+  }
+
+  navigator.clipboard.writeText(linhas.join('\n'))
+    .then(() => mostrarToast('📋 ' + (ABA_TITULO[aba] || aba) + ' copiado como texto!'))
+    .catch(() => mostrarToast('❌ Não foi possível copiar.'));
+}
+
+// Copia a aba inteira como PNG. Expande temporariamente o scroll das tabelas e
+// esconde a própria barra de botões — html2canvas renderiza o que está no DOM real
+// (clonar quebraria os <canvas> dos gráficos).
+function copiarAbaImagem(aba) {
+  const painel = document.getElementById('tab-' + aba);
+  if (!painel) return;
+  if (typeof html2canvas !== 'function') {
+    mostrarToast('❌ Biblioteca de imagem não carregou — precisa de internet na primeira vez.');
+    return;
+  }
+
+  const restaurar = [];
+  const guarda = el => restaurar.push([el, el.getAttribute('style')]);
+  const desfazer = () => restaurar.forEach(([el, st]) => {
+    if (st === null) el.removeAttribute('style'); else el.setAttribute('style', st);
+  });
+
+  guarda(painel); painel.style.overflow = 'visible';
+  painel.querySelectorAll('.table-wrap').forEach(w => { guarda(w); w.style.maxHeight = 'none'; w.style.overflow = 'visible'; });
+  painel.querySelectorAll('.tab-actions').forEach(b => { guarda(b); b.style.display = 'none'; });
+
+  const w  = Math.max(painel.scrollWidth,  painel.offsetWidth);
+  const h  = Math.max(painel.scrollHeight, painel.offsetHeight);
+  const bg = getComputedStyle(document.body).backgroundColor || '#ffffff';
+
+  mostrarToast('⏳ Gerando imagem…');
+  html2canvas(painel, {
+    scale: 2, useCORS: true, allowTaint: true, backgroundColor: bg, logging: false,
+    width: w, height: h, windowWidth: Math.max(w, document.documentElement.clientWidth),
+  }).then(canvas => {
+    desfazer();
+    canvas.toBlob(blob => {
+      if (!blob) { mostrarToast('❌ Não foi possível gerar a imagem.'); return; }
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        .then(() => mostrarToast('🖼️ ' + (ABA_TITULO[aba] || aba) + ' copiado como imagem!'))
+        .catch(() => {
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = 'aba-' + aba + '.png';
+          a.click();
+          mostrarToast('📥 Imagem salva — clipboard indisponível neste browser.');
+        });
+    }, 'image/png');
+  }).catch(() => { desfazer(); mostrarToast('❌ Erro ao gerar imagem.'); });
+}
+
 function kpiClick(tipo) {
   document.querySelectorAll('.corr-kpi').forEach(k=>k.classList.remove('kpi-active'));
   const kpiMap = { bonus:'kpiCardBonus', ciclos:'kpiCardCiclos', vendas:'kpiCardVendas', alertas:'kpiCardAlertas' };
@@ -4442,7 +5333,7 @@ function kpiClick(tipo) {
   if (tipo === 'alertas') { copyBtn.style.display = ''; copyBtn.onclick = copiarAlertas; }
   else if (tipo === 'ciclos') { copyBtn.style.display = ''; copyBtn.onclick = copiarCiclos; }
   else { copyBtn.style.display = 'none'; copyBtn.onclick = null; }
-  const setorIcon = { BLACK:'<span class="si">💎</span>', OURO:'<span class="si">💰</span>', BRONZE:'<span class="si">🪙</span>' };
+  const setorIcon = { BLACK:'<span class="si">💎</span>', OURO:'<span class="si">💰</span>', BRONZE:'<span class="si">🪙</span>', START:'<span class="si">🌱</span>' };
 
   if (tipo === 'bonus') {
     title.innerHTML = '<span class="si">💰</span> Bônus — Quem está recebendo';
@@ -4450,9 +5341,9 @@ function kpiClick(tipo) {
     const medals = ['🥇','🥈','🥉'];
     body.innerHTML = `
       <table class="kpi-modal-table" style="white-space:nowrap">
-        <thead><tr><th>#</th><th class="col-left">Consultor</th><th>Bônus</th><th>Ciclos</th><th><span class="si">💎</span> Black</th><th><span class="si">💰</span> Ouro</th><th><span class="si">🪙</span> Bronze</th></tr></thead>
+        <thead><tr><th>#</th><th class="col-left">Consultor</th><th>Bônus</th><th>Ciclos</th><th><span class="si">💎</span> Black</th><th><span class="si">💰</span> Ouro</th><th><span class="si">🪙</span> Bronze</th><th><span class="si">🌱</span> Start</th></tr></thead>
         <tbody>${todoBonus.map((c,i)=>{
-          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE');
+          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE'), st=c.setores.find(s=>s.setor==='START');
           const zero = c.bonusCons === 0;
           return `<tr style="${zero?'opacity:.5':''}">
             <td>${medals[i]||('#'+(i+1))}</td>
@@ -4462,6 +5353,7 @@ function kpiClick(tipo) {
             <td>${bk.compl>0?`<span class="kpi-modal-badge kmb-black">${bk.compl} ciclo${bk.compl!==1?'s':''}</span>`:'<span style="color:#334155">0</span>'}</td>
             <td>${ou.compl>0?`<span class="kpi-modal-badge kmb-ouro">${ou.compl} ciclo${ou.compl!==1?'s':''}</span>`:'<span style="color:#334155">0</span>'}</td>
             <td>${br.compl>0?`<span class="kpi-modal-badge kmb-bronze">${br.compl} ciclo${br.compl!==1?'s':''}</span>`:'<span style="color:#334155">0</span>'}</td>
+            <td>${st&&st.compl>0?`<span class="kpi-modal-badge kmb-start">${st.compl} ciclo${st.compl!==1?'s':''}</span>`:'<span style="color:#334155">0</span>'}</td>
           </tr>`;}).join('')}</tbody>
       </table>`;
 
@@ -4472,9 +5364,9 @@ function kpiClick(tipo) {
     const medals = ['🥇','🥈','🥉'];
     body.innerHTML = `
       <table class="kpi-modal-table">
-        <thead><tr><th style="white-space:nowrap">#</th><th class="col-left" style="white-space:nowrap">Consultor</th><th style="white-space:nowrap">Total Ciclos</th><th style="white-space:nowrap"><span class="si">💎</span> Black</th><th style="white-space:nowrap"><span class="si">💰</span> Ouro</th><th style="white-space:nowrap"><span class="si">🪙</span> Bronze</th><th style="white-space:nowrap">Bônus</th></tr></thead>
+        <thead><tr><th style="white-space:nowrap">#</th><th class="col-left" style="white-space:nowrap">Consultor</th><th style="white-space:nowrap">Total Ciclos</th><th style="white-space:nowrap"><span class="si">💎</span> Black</th><th style="white-space:nowrap"><span class="si">💰</span> Ouro</th><th style="white-space:nowrap"><span class="si">🪙</span> Bronze</th><th style="white-space:nowrap"><span class="si">🌱</span> Start</th><th style="white-space:nowrap">Bônus</th></tr></thead>
         <tbody>${todoCiclos.map((c,i)=>{
-          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE');
+          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE'), st=c.setores.find(s=>s.setor==='START');
           const zero = c.ciclosCons === 0;
           return `<tr style="${zero?'opacity:.5':''}">
             <td style="white-space:nowrap">${medals[i]||('#'+(i+1))}</td>
@@ -4496,17 +5388,19 @@ function kpiClick(tipo) {
       const totBk=comVendas.reduce((s,c)=>s+(c.setores.find(x=>x.setor==='BLACK')?.qtd||0),0);
       const totOu=comVendas.reduce((s,c)=>s+(c.setores.find(x=>x.setor==='OURO')?.qtd||0),0);
       const totBr=comVendas.reduce((s,c)=>s+(c.setores.find(x=>x.setor==='BRONZE')?.qtd||0),0);
+      const totSt=comVendas.reduce((s,c)=>s+(c.setores.find(x=>x.setor==='START')?.qtd||0),0);
       body.innerHTML = `
       <table class="kpi-modal-table" style="white-space:nowrap">
-        <thead><tr><th class="col-left">Consultor</th><th>Total</th><th><span class="si">💎</span> Black</th><th><span class="si">💰</span> Ouro</th><th><span class="si">🪙</span> Bronze</th></tr></thead>
+        <thead><tr><th class="col-left">Consultor</th><th>Total</th><th><span class="si">💎</span> Black</th><th><span class="si">💰</span> Ouro</th><th><span class="si">🪙</span> Bronze</th><th><span class="si">🌱</span> Start</th></tr></thead>
         <tbody>${comVendas.map(c=>{
-          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE');
+          const bk=c.setores.find(s=>s.setor==='BLACK'), ou=c.setores.find(s=>s.setor==='OURO'), br=c.setores.find(s=>s.setor==='BRONZE'), st=c.setores.find(s=>s.setor==='START');
           return `<tr>
             <td class="col-left" style="font-weight:800;color:#f1f5f9">${escAttr(c.consultor)}</td>
             <td><span class="kpi-modal-badge kmb-purple">${c.totalVendas}</span></td>
             <td style="color:#94a3b8;font-weight:700">${bk.qtd>0?bk.qtd:'—'}</td>
             <td style="color:#fbbf24;font-weight:700">${ou.qtd>0?ou.qtd:'—'}</td>
             <td style="color:#fb923c;font-weight:700">${br.qtd>0?br.qtd:'—'}</td>
+            <td style="color:#34d399;font-weight:700">${st&&st.qtd>0?st.qtd:'—'}</td>
           </tr>`;}).join('')}</tbody>
         <tfoot><tr style="border-top:2px solid rgba(129,140,248,.3)">
           <td class="col-left" style="font-weight:900;color:#a5b4fc;white-space:nowrap">TOTAL</td>
@@ -4514,6 +5408,7 @@ function kpiClick(tipo) {
           <td style="color:#94a3b8;font-weight:800">${totBk||'—'}</td>
           <td style="color:#fbbf24;font-weight:800">${totOu||'—'}</td>
           <td style="color:#fb923c;font-weight:800">${totBr||'—'}</td>
+          <td style="color:#34d399;font-weight:800">${totSt||'—'}</td>
         </tr></tfoot>
       </table>`;
     }
@@ -4536,7 +5431,7 @@ function kpiClick(tipo) {
           <tbody>${alertas.map(a=>`
             <tr class="${a.falta===1?'alert-row-danger':'alert-row-warn'}">
               <td class="col-left" style="font-weight:800;color:${a.cor};white-space:nowrap">${escAttr(a.consultor)}</td>
-              <td style="white-space:nowrap"><span class="kpi-modal-badge ${a.setor==='BLACK'?'kmb-black':a.setor==='OURO'?'kmb-ouro':'kmb-bronze'}">${setorIcon[a.setor]} ${a.setor}</span></td>
+              <td style="white-space:nowrap"><span class="kpi-modal-badge ${a.setor==='BLACK'?'kmb-black':a.setor==='OURO'?'kmb-ouro':a.setor==='START'?'kmb-start':'kmb-bronze'}">${setorIcon[a.setor]} ${a.setor}</span></td>
               <td style="color:#cbd5e1;white-space:nowrap">${a.rest} / ${a.meta}</td>
               <td style="white-space:nowrap"><span class="kpi-modal-badge ${a.falta===1?'kmb-red':'kmb-yellow'}">${a.falta===1?'🔥':'⚡'} ${a.falta} venda${a.falta!==1?'s':''}</span></td>
               <td style="color:#a78bfa;white-space:nowrap">${a.compl} completo${a.compl!==1?'s':''}</td>
@@ -4719,10 +5614,10 @@ const PTV_PHRASES = {
   last:    ['ÚLTIMO ATO! Tudo ou nada! 🚨','OS PRÓXIMOS MINUTOS DEFINEM O DIA! ⏰','NÃO PARA! FECHA! 🔥']
 };
 
-const PTV_SETOR_ICON  = { BLACK:'💎', OURO:'💰', BRONZE:'🪙' };
-const PTV_SETOR_LABEL = { BLACK:'Black', OURO:'Ouro', BRONZE:'Bronze' };
-const PTV_PROG_COLOR  = { BLACK:'linear-gradient(90deg,#475569,#94a3b8)', OURO:'linear-gradient(90deg,#d97706,#fbbf24)', BRONZE:'linear-gradient(90deg,#ea580c,#fb923c)' };
-const PTV_DOT_COLOR   = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c' };
+const PTV_SETOR_ICON  = { BLACK:'💎', OURO:'💰', BRONZE:'🪙', START:'🌱' };
+const PTV_SETOR_LABEL = { BLACK:'Black', OURO:'Ouro', BRONZE:'Bronze', START:'Start' };
+const PTV_PROG_COLOR  = { BLACK:'linear-gradient(90deg,#475569,#94a3b8)', OURO:'linear-gradient(90deg,#d97706,#fbbf24)', BRONZE:'linear-gradient(90deg,#ea580c,#fb923c)', START:'linear-gradient(90deg,#059669,#34d399)' };
+const PTV_DOT_COLOR   = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c', START:'#34d399' };
 
 // ── #1 ARCO DO DIA ───────────────────────
 function ptvUpdateDayArc() {
@@ -5180,10 +6075,10 @@ function ptvRenderFeatured(animate = true) {
             <span class="cf-setor-count"><strong>${s.qtd}</strong> venda${s.qtd!==1?'s':''}</span>
           </div>
           <div class="cf-prog-track">
-            <div class="cf-prog-fill ${s.setor==='BLACK'?'pk':s.setor==='OURO'?'po':'pb'}" style="width:${pct}%"></div>
+            <div class="cf-prog-fill ${s.setor==='BLACK'?'pk':s.setor==='OURO'?'po':s.setor==='START'?'ps':'pb'}" style="width:${pct}%"></div>
           </div>
           <div class="cf-setor-foot">
-            <span class="cf-ciclos"><b>${s.compl}</b> ciclo${s.compl!==1?'s':''} · +${fmtR$(s.compl*100)}</span>
+            <span class="cf-ciclos"><b>${s.compl}</b> ciclo${s.compl!==1?'s':''} · +${fmtR$(s.compl*(bonusCiclos[s.setor]||0))}</span>
             ${alertHtml}
           </div>
         </div>`;
@@ -5206,7 +6101,7 @@ function ptvRenderFeatured(animate = true) {
         <div class="cb-client">
           <div class="cb-client-dot" style="background:${PTV_DOT_COLOR[cl.setor]}"></div>
           <span class="cb-client-name">${escAttr(cl.nome)}</span>
-          <span class="cb-client-badge ${cl.setor==='BLACK'?'cbb-black':cl.setor==='OURO'?'cbb-ouro':'cbb-bronze'}">${PTV_SETOR_ICON[cl.setor]} ${cl.setor}</span>
+          <span class="cb-client-badge ${cl.setor==='BLACK'?'cbb-black':cl.setor==='OURO'?'cbb-ouro':cl.setor==='START'?'cbb-start':'cbb-bronze'}">${PTV_SETOR_ICON[cl.setor]} ${cl.setor}</span>
         </div>`).join('')
       : '<div style="padding:20px;text-align:center;color:#475569;font-size:.85rem">Nenhum cliente</div>';
 

@@ -705,7 +705,16 @@
     /* um lado só com primeiro nome (ex.: "Wellington") casa pelo primeiro */
     return pa.length===1||pb.length===1;
   }
-  var _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0};
+  /* Coaching Individual entra BRUTO na turma e LÍQUIDO (metade) no CRM/HUD —
+     é regra do produto, não divergência entre as bases. Sem tratar isso o
+     cliente que comprou CI nunca casa e a venda inteira conta duas vezes
+     (Marcelo/FCIS31: turma 64.584 × CRM 44.584 = R$ 64.584 a mais no KPI).
+     "MASTER COACHING" é outro produto e NÃO entra aqui. */
+  function _npEhCI(cod){
+    var c=_npDedupNorm(cod);
+    return c==='CI'||c.indexOf('COACHING INDIVIDUAL')===0;
+  }
+  var _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0,ajustadosCI:[]};
 
   /* ── Todas as vendas do mês (A + B, sem dupla contagem) ── */
   function _npTodasVendas(){
@@ -727,10 +736,12 @@
       if((v.status||'').toLowerCase()==='pago') pagoTurma.push(v); else restoTurma.push(v);
     });
 
-    /* soma paga por cliente na turma */
-    var somaT={};
+    /* soma paga por cliente na turma (e, à parte, quanto disso é CI) */
+    var somaT={},somaCI={};
     pagoTurma.forEach(function(v){
-      var k=_npDedupNorm(v.cliente); somaT[k]=(somaT[k]||0)+(+(v.valor)||0);
+      var k=_npDedupNorm(v.cliente),val=(+(v.valor)||0);
+      somaT[k]=(somaT[k]||0)+val;
+      if(_npEhCI(v.treinamento)) somaCI[k]=(somaCI[k]||0)+val;
     });
     var pagosB=avulsos.filter(function(v){return (v.status||'').toLowerCase()==='pago';});
 
@@ -756,7 +767,7 @@
       return out;
     }
 
-    _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0};
+    _npDedupInfo={cobertas:[],semPar:[],valorCoberto:0,ajustadosCI:[]};
     var cobertoPorCliente={},jaUsada=[];
     Object.keys(somaT).forEach(function(kt){
       var forc=over[kt];                          /* 'crm' | 'contar' */
@@ -764,12 +775,21 @@
       var cands=pagosB.filter(function(v){
         return jaUsada.indexOf(v)<0 && _npDedupMesmoCliente(kt,_npDedupNorm(v.cliente));
       });
-      var par=_npSubconjunto(cands,somaT[kt]);
+      var par=_npSubconjunto(cands,somaT[kt]),ajusteCI=false;
+      /* 2ª tentativa: descontar metade do CI, que no CRM vem líquido */
+      if(!par&&somaCI[kt]>0){
+        par=_npSubconjunto(cands,somaT[kt]-somaCI[kt]/2);
+        if(par) ajusteCI=true;
+      }
       if(forc==='crm'&&!par) par=cands.slice();   /* override: cobre com o que houver */
       if(par&&par.length){
         par.forEach(function(v){ jaUsada.push(v); });  /* consumo 1:1, sem reuso */
-        cobertoPorCliente[kt]={vendasB:par,valor:somaT[kt],forcado:forc==='crm'};
-        _npDedupInfo.valorCoberto+=somaT[kt];
+        /* o que deixou de ser contado é o valor que o CRM já traz, não o da
+           turma — divergem quando há CI (ou override forçado) */
+        var valorPar=par.reduce(function(s,v){return s+(+v.valor||0);},0);
+        cobertoPorCliente[kt]={vendasB:par,valor:somaT[kt],forcado:forc==='crm',ajusteCI:ajusteCI};
+        _npDedupInfo.valorCoberto+=valorPar;
+        if(ajusteCI) _npDedupInfo.ajustadosCI.push({cliente:kt,turma:somaT[kt],crm:valorPar,ci:somaCI[kt]});
       } else {
         var somaCand=cands.reduce(function(s,v){return s+(+v.valor||0);},0);
         _npDedupInfo.semPar.push({cliente:kt,valor:somaT[kt],
@@ -1008,11 +1028,15 @@
     set('npKpiFaturado',_fmtR(kpis.faturado));
     /* o sub mostra quantas vendas de turma foram ignoradas por já virem do CRM,
        para o número não parecer "menor do que deveria" sem explicação */
-    var _dd=window._npDedupInfo||{cobertas:[],semPar:[],valorCoberto:0};
+    var _dd=window._npDedupInfo||{cobertas:[],semPar:[],valorCoberto:0,ajustadosCI:[]};
     var _subFat=kpis.qtdPago+' pago'+(kpis.qtdPago!==1?'s':'');
     if(_dd.cobertas.length){
       _subFat+=' · 🎓 '+_dd.cobertas.length+' de turma já contadas via CRM ('
         +_fmtR(_dd.valorCoberto)+')';
+    }
+    if((_dd.ajustadosCI||[]).length){
+      _subFat+=' · ½ CI: '+_dd.ajustadosCI.length+' casado'
+        +(_dd.ajustadosCI.length!==1?'s':'')+' pelo líquido';
     }
     if(_dd.semPar.length){
       _subFat+=' · ⚠ '+_dd.semPar.length+' de turma sem par no CRM';
