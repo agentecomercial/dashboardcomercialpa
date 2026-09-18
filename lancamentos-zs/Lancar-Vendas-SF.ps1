@@ -23,6 +23,11 @@ param(
   [string]$Venda   = '',            # venda avulsa: Id da Opportunity (006...) ou o link do Lightning
   [string]$Rodada  = '',            # NAO criar variavel local chamada $rodada: colide com este param
                                      # tipado (PS e case-insensitive) e o objeto vira string.
+  [string]$Vagas   = '',            # VAGAS EXTRAS: CPFs dos consumidores das vagas secundarias,
+                                     # separados por virgula. Cada uma entra na MESMA turma por
+                                     # R$ 0,00 — o titular fica com o valor cheio. O Salesforce
+                                     # NAO conhece essas vagas (o pedido tem um item so), entao
+                                     # elas so existem se forem informadas aqui.
   [switch]$Aplicar,
   [switch]$Abrir,
   [int]$Org = 0
@@ -212,6 +217,30 @@ function Web-Get($path) {
   $h = @{ Authorization = "Bearer $(Web-Token)"; 'X-Organization-Id' = "$ORG" }
   try { return Invoke-RestMethod -Uri "https://api.zsales.com.br$path" -Headers $h -TimeoutSec 30 } catch { return $null }
 }
+function Web-Patch($path, $obj) {
+  $h = @{ Authorization = "Bearer $(Web-Token)"; 'X-Organization-Id' = "$ORG" }
+  $b = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $obj -Depth 8))
+  try { return Invoke-RestMethod -Uri "https://api.zsales.com.br$path" -Method Patch -Headers $h -ContentType 'application/json' -Body $b -TimeoutSec 30 }
+  catch { return $null }
+}
+
+# PARCELAS — sempre conferir, nunca confiar na gravacao.
+# O 'create_payment' do MCP NAO tem o campo 'installments' (so 'protocol'), entao todo pagamento
+# nasce 1x mesmo com protocol "12x". O numero real so entra por PATCH na API REST web.
+# Esta funcao LE o pagamento, compara com o esperado, corrige e LE DE NOVO para provar que pegou.
+# Chamar sempre ANTES de fechar a venda: um PATCH em payments derruba o outcome para 'negotiating'.
+function Conferir-Parcelas($payId, $esperado) {
+  $alvo = [int]$esperado; if ($alvo -lt 1) { $alvo = 1 }
+  $lido = 0
+  for ($t = 1; $t -le 3; $t++) {
+    $p = Web-Get "/api/payments/$([int]$payId)/"
+    if ($p) { $lido = [int]$p.installments } else { $lido = 0 }
+    if ($lido -eq $alvo) { return @{ ok = $true;  esperado = $alvo; parcelas = $lido } }
+    if ($t -eq 3) { break }
+    Web-Patch "/api/payments/$([int]$payId)/" @{ installments = $alvo } | Out-Null
+  }
+  return @{ ok = $false; esperado = $alvo; parcelas = $lido }
+}
 # Vendas ja existentes DO CLIENTE. O MCP nao filtra por cliente (e o limit dele e 100),
 # entao a checagem de duplicidade vai pela API web, que filtra direto.
 function Vendas-Do-Cliente($cid) {
@@ -309,6 +338,32 @@ function E-Cashback($nomeForma) { return ("$nomeForma" -match '(?i)cashback') }
 
 # ============================ TURMA: SF -> ZS ============================
 # "2026 - FCIS31" -> sigla FCIS + numero 31 -> procura "FCIS 31" nas turmas do produto.
+# ============================ VAGAS EXTRAS ============================
+# Venda de duas (ou mais) vagas: o titular paga tudo e as vagas secundarias entram na
+# MESMA turma por R$ 0,00, cada uma com o seu consumidor. Isso NAO vem do Salesforce —
+# la o pedido tem um item so e a segunda pessoa costuma nem existir como cliente. Por
+# isso a lista chega por -Vagas e cada CPF precisa ja estar cadastrado no ZS.
+function Resolver-Vagas($csv, $cpfTitular) {
+  $out = @()
+  foreach ($bruto in ("$csv" -split '[,;]')) {
+    $cpf = OnlyDigits $bruto
+    if (-not $cpf) { continue }
+    $v = [ordered]@{ cpf=$cpf; cpf_fmt=(FmtCpf $cpf); nome=''; customer_id=0; erro='' }
+    if ($cpf.Length -ne 11) { $v.erro = 'CPF com tamanho invalido.' }
+    elseif ($cpf -eq (OnlyDigits $cpfTitular)) { $v.erro = 'E o mesmo CPF do titular.' }
+    else {
+      $achado = @(ZS 'list_customers' @{ search=$cpf; limit=3; organization_id=$ORG } | Where-Object { $_.id })
+      if ($achado.Count -eq 0) { $v.erro = 'Nao existe no ZS desta unidade — cadastre antes.' }
+      else { $v.customer_id = [int]$achado[0].id; $v.nome = "$($achado[0].name)" }
+    }
+    $out += $v
+  }
+  # SEM a virgula: quem chama usa @(Resolver-Vagas ...). Com "return ,$out" o @() recebe
+  # o array inteiro como UM item — com duas vagas, $v virava System.Object[] e as duas
+  # linhas apareciam grudadas numa so.
+  return $out
+}
+
 function Resolver-Turma($turmaSf) {
   $chave = "$turmaSf".Trim()
   # 1) de-para manual do config.json vence sempre
@@ -540,6 +595,18 @@ if ($Acao -eq 'previa') {
     }
     if ($valor -le 0 -and $bloq.Count -eq 0) { $bloq += 'Valor zerado — confira o relatorio.' }
 
+    # Vagas extras: so fazem sentido numa venda avulsa (nao da para adivinhar a qual
+    # linha de um lote elas pertencem).
+    # NAO chamar esta variavel de $vagas: colide com o param([string]$Vagas) — PS e
+    # case-insensitive — e o array vira a string vazia, exatamente como no caso do
+    # $rodada/$Rodada la em cima. Sintoma: a vaga some sem erro nenhum.
+    $vagasExtras = @()
+    if ($Vagas) {
+      if ($registros.Count -gt 1) { throw '-Vagas so vale para UMA venda (-Venda). Num lote, rode a venda com vagas extras separada.' }
+      $vagasExtras = @(Resolver-Vagas $Vagas $r.cpf)
+      foreach ($v in $vagasExtras) { if ($v.erro) { $bloq += "Vaga extra $($v.cpf_fmt): $($v.erro)" } }
+    }
+
     $itens += [ordered]@{
       nome_rel   = $r.nome
       nome_zs    = $nomeAlvo
@@ -562,11 +629,16 @@ if ($Acao -eq 'previa') {
       responsavel= $resp
       resp_id    = $respId
       endereco_ok= $endOk
+      vagas      = $vagasExtras
       ja_lancada = [bool]$ja
       opp_id     = $(if ($ja) { [int]$ja.id } else { 0 })
       bloqueios  = $bloq
     }
     Write-Host ("  · {0,-38} {1,-14} R$ {2,10:N2}  {3}" -f $r.nome, $r.turma, $valor, $(if ($bloq.Count) { "BLOQUEIO: $($bloq[0])" } elseif ($ja) { 'ja lancada' } else { 'ok' }))
+    foreach ($v in $vagasExtras) {
+      Write-Host ("    + vaga extra: {0,-30} {1}  R$ 0,00  {2}" -f $(if ($v.nome) { $v.nome } else { '(sem cadastro)' }), $v.cpf_fmt, $v.erro) `
+        -ForegroundColor $(if ($v.erro) { 'Red' } else { 'DarkGray' })
+    }
   }
 
   $carimbo = (Get-Date).ToString('yyyy-MM-dd-HHmm')
@@ -659,7 +731,7 @@ if ($Acao -eq 'vendas') {
   $formasTodas = $null
   if ($Aplicar) { $formasTodas = Formas-Da-Venda @($rod.itens | ForEach-Object { $_.venda_nome }) }
 
-  $feitas = @(); $abertas = @(); $puladas = @()
+  $feitas = @(); $abertas = @(); $puladas = @(); $parcRuins = @()
   foreach ($it in $rod.itens) {
     $rotulo = "{0,-38}" -f $it.nome_zs
     if ($it.bloqueios.Count) { Write-Host ("  - $rotulo PULADA — $($it.bloqueios[0])") -ForegroundColor Yellow; $puladas += $it.nome_zs; continue }
@@ -682,12 +754,26 @@ if ($Acao -eq 'vendas') {
     if (-not $opp -or $opp.__erro -or -not $opp.id) { Write-Host ("  !! $rotulo create_opportunity: $($opp.__erro)") -ForegroundColor Red; continue }
     $oppId = [int]$opp.id
 
-    # 2) produto
+    # 2) produto — a vaga do TITULAR, com o valor cheio
     $prod = ZS1 'create_opportunity_product' @{
       opportunity_id=$oppId; product_id=[int]$it.product_id; class_id=[int]$it.class_id
       price=(R2 $it.valor); beneficiary_profile_id=[int]$it.cliente_id
     }
     if ($prod -and $prod.__erro) { Write-Host ("  !! $rotulo create_opportunity_product: $($prod.__erro)") -ForegroundColor Red; continue }
+
+    # 2B) vagas extras — mesma turma, R$ 0,00, um consumidor cada.
+    # Depois do titular de proposito: o create recusa consumidor JA associado a turma,
+    # e a vaga do titular tem que ser a dele.
+    $vagasFeitas = 0
+    foreach ($v in @($it.vagas)) {
+      if (-not $v -or [int]$v.customer_id -le 0) { continue }
+      $pv = ZS1 'create_opportunity_product' @{
+        opportunity_id=$oppId; product_id=[int]$it.product_id; class_id=[int]$it.class_id
+        price=0; beneficiary_profile_id=[int]$v.customer_id
+      }
+      if ($pv -and $pv.__erro) { Write-Host ("  !! $rotulo vaga extra $($v.cpf_fmt): $($pv.__erro)") -ForegroundColor Red }
+      else { $vagasFeitas++ }
+    }
 
     # 3) pagamento (so o que entrou em dinheiro; cashback NAO entra)
     $argsPg = @{
@@ -699,6 +785,15 @@ if ($Acao -eq 'vendas') {
     if ([int]$it.parcelas -gt 1) { $argsPg['protocol'] = "$([int]$it.parcelas)x" }
     $pg = ZS1 'create_payment' $argsPg
     if (-not $pg -or $pg.__erro -or -not $pg.id) { Write-Host ("  !! $rotulo create_payment: $($pg.__erro)") -ForegroundColor Red; continue }
+
+    # 3B) parcelas — SEMPRE conferir no ZS (o MCP grava 1x mesmo com protocol "Nx")
+    $parc = Conferir-Parcelas $pg.id $it.parcelas
+    $selo = "$($parc.parcelas)x"
+    if (-not $parc.ok) {
+      $selo = "$($parc.parcelas)x != $($parc.esperado)x"
+      Write-Host ("  !! $rotulo PARCELAS: o SF diz $($parc.esperado)x e o ZS ficou $($parc.parcelas)x — corrigir na mao no pagamento $($pg.id)") -ForegroundColor Red
+      $parcRuins += [pscustomobject]@{ nome=$it.nome_zs; pagamento=[int]$pg.id; esperado=$parc.esperado; gravado=$parc.parcelas }
+    }
 
     # 4) anotacao principal (+ a do cashback, quando houver)
     $n1 = ZS1 'create_opportunity_note' @{ opportunity_id=$oppId; content_html=(Nota-Principal $formas $it.turma_sf) }
@@ -712,12 +807,13 @@ if ($Acao -eq 'vendas') {
     $fim = ZS1 'close_opportunity' @{ opportunity_id=$oppId; outcome='won' }
     $ok  = ($fim -and -not $fim.__erro)
     $it.opp_id = $oppId; $it.ja_lancada = $true
+    if ($vagasFeitas -gt 0) { $selo += " +$vagasFeitas vaga$(if ($vagasFeitas -gt 1) { 's' })" }
     if ($ok) {
-      Write-Host ("  · $rotulo GANHA    R$ {0,10:N2}  opp {1}" -f $it.valor, $oppId) -ForegroundColor Green
-      $feitas += [pscustomobject]@{ nome=$it.nome_zs; opp=$oppId; valor=$it.valor }
+      Write-Host ("  · $rotulo GANHA    R$ {0,10:N2}  {1,-12} opp {2}" -f $it.valor, $selo, $oppId) -ForegroundColor Green
+      $feitas += [pscustomobject]@{ nome=$it.nome_zs; opp=$oppId; valor=$it.valor; parcelas=$parc.parcelas }
     } else {
-      Write-Host ("  · $rotulo ABERTA   R$ {0,10:N2}  opp {1} — {2}" -f $it.valor, $oppId, $fim.__erro) -ForegroundColor Yellow
-      $abertas += [pscustomobject]@{ nome=$it.nome_zs; opp=$oppId; valor=$it.valor; motivo="$($fim.__erro)" }
+      Write-Host ("  · $rotulo ABERTA   R$ {0,10:N2}  {1,-12} opp {2} — {3}" -f $it.valor, $selo, $oppId, $fim.__erro) -ForegroundColor Yellow
+      $abertas += [pscustomobject]@{ nome=$it.nome_zs; opp=$oppId; valor=$it.valor; parcelas=$parc.parcelas; motivo="$($fim.__erro)" }
     }
   }
 
@@ -727,6 +823,13 @@ if ($Acao -eq 'vendas') {
     Write-Host ("  ganhas : {0}  (R$ {1:N2})" -f $feitas.Count,  (Somar $feitas 'valor'))
     Write-Host ("  abertas: {0}  (R$ {1:N2})" -f $abertas.Count, (Somar $abertas 'valor'))
     Write-Host ("  puladas: {0}" -f $puladas.Count)
+    if ($parcRuins.Count) {
+      Write-Host ''
+      Write-Host '  ⚠ PARCELAS DIVERGENTES (corrigir na mao no Sales Cube):' -ForegroundColor Red
+      foreach ($x in $parcRuins) { Write-Host ("    - {0}  pagamento {1}: SF {2}x, ZS {3}x" -f $x.nome, $x.pagamento, $x.esperado, $x.gravado) -ForegroundColor Red }
+    } else {
+      Write-Host '  parcelas: conferidas uma a uma no ZS — todas batem com o SF' -ForegroundColor DarkGray
+    }
     if ($abertas.Count) {
       Write-Host ''
       Write-Host '  EM ABERTO (falta endereco do cliente):' -ForegroundColor Yellow
