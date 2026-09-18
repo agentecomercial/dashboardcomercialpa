@@ -96,3 +96,9 @@ meta-master/_backup/
 # Alem da regra do projeto, a pasta tem binarios de 200-255 MB (video e .zip)
 # que o GitHub recusa (limite de 100 MB/arquivo) e que incham o repositorio.
 pitch/
+
+# Testes: os scripts e o checklist sao versionados; os goldens e o retrato NAO.
+# Eles sao gerados na maquina (regenera com -GravarGolden), refletem os dados
+# reais desta instalacao e chegam a conter nome de pessoa nas chaves.
+_tests/golden/
+_tests/retrato-dados.json
