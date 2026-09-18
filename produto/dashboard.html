@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Metas · Agente Comercial IA</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--bg2:#0f1438;--card:#151b3d;--card2:#1a2147;
+    --text:#e8ecff;--muted:#9aa3c7;--line:#1f2752;
+    --accent:#6366f1;--accent2:#8b5cf6;
+    --green:#10b981;--gold:#fbbf24;--red:#ef4444;--blue:#3b82f6;--orange:#f97316;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+  button{font-family:inherit;cursor:pointer;border:none}
+  input,select{font-family:inherit;background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+
+  /* TOPBAR */
+  .topbar{background:rgba(10,14,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;gap:16px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:16px;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+  .nav-links{display:flex;gap:4px;flex-wrap:wrap}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px;transition:.2s}
+  .nav-links a:hover{color:var(--text);background:var(--card)}
+  .nav-links a.active{color:#a5b4fc;background:rgba(99,102,241,.15)}
+  .actions{display:flex;gap:8px;align-items:center}
+  .actions select{width:auto;min-width:150px}
+  .btn{padding:9px 14px;border-radius:8px;font-weight:600;font-size:13px;transition:.2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(99,102,241,.4)}
+  .btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--accent)}
+
+  .container{max-width:1400px;margin:0 auto;padding:24px}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+  h1{font-size:24px;font-weight:800;letter-spacing:-.01em}
+  .page-sub{color:var(--muted);font-size:13px;margin-top:2px}
+
+  .sec{margin-bottom:28px}
+  .sec-title{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .sec-title .hint{font-weight:600;letter-spacing:normal;text-transform:none;font-size:11px;color:#5d6690}
+
+  /* METAS */
+  .metas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .meta-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+  .meta-card.batida{border-color:rgba(16,185,129,.5)}
+  .meta-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+  .meta-nome{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+  .meta-nome.minima{color:var(--blue)}
+  .meta-nome.basica{color:var(--gold)}
+  .meta-nome.super{color:var(--accent2)}
+  .meta-pct{font-size:13px;font-weight:800}
+  .meta-alvo{font-size:11px;color:var(--muted);margin-bottom:12px}
+  .meta-val{font-size:26px;font-weight:800;line-height:1.1;margin-bottom:10px}
+  .bar{height:10px;background:var(--bg2);border-radius:6px;overflow:hidden;position:relative}
+  .bar-fill{height:100%;border-radius:6px;transition:width .5s ease}
+  .bar-fill.minima{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+  .bar-fill.basica{background:linear-gradient(90deg,#d97706,#fbbf24)}
+  .bar-fill.super{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+  .bar-fill.ok{background:linear-gradient(90deg,#059669,#34d399)}
+  .meta-falta{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+  .meta-falta strong{color:var(--text)}
+  .meta-badge{background:rgba(16,185,129,.15);color:#6ee7b7;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.05em;white-space:nowrap}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .stat-val{font-size:21px;font-weight:800;line-height:1.2}
+  .stat-val.green{color:var(--green)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:#a5b4fc}.stat-val.red{color:var(--red)}
+  .stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+  /* GRID 2 COLUNAS */
+  .duo{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+  @media(max-width:1000px){.duo{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+  .panel-title{font-size:14px;font-weight:800}
+  .panel-sub{font-size:11px;color:var(--muted)}
+
+  /* GRAFICO */
+  .chart-wrap{position:relative}
+  svg.chart{display:block;width:100%;height:auto;overflow:visible}
+  .grid-line{stroke:var(--line);stroke-width:1}
+  .axis-txt{fill:var(--muted);font-size:10px;font-family:inherit}
+  .line-real{fill:none;stroke:var(--green);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .line-ideal{fill:none;stroke:var(--gold);stroke-width:2;stroke-dasharray:5 4;opacity:.7}
+  .area-real{fill:url(#gradReal)}
+  .dot-hover{fill:var(--green);stroke:var(--card);stroke-width:2}
+  .crosshair{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;opacity:.6}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .lg-swatch{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .tip{position:absolute;background:var(--card2);border:1px solid var(--accent);border-radius:8px;padding:8px 11px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .tip.on{opacity:1}
+  .tip b{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px}
+
+  /* FUNIL */
+  .funil-row{margin-bottom:14px}
+  .funil-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:5px;gap:10px}
+  .funil-nome{font-weight:700;display:flex;align-items:center;gap:7px}
+  .funil-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .funil-qtd{color:var(--muted);font-size:11px;font-weight:600}
+  .funil-val{font-weight:800;font-size:12px}
+  .funil-bar{height:22px;background:var(--bg2);border-radius:5px;overflow:hidden}
+  .funil-fill{height:100%;border-radius:5px;transition:width .5s ease;min-width:2px}
+  .funil-passo{font-size:10px;color:#5d6690;margin-top:4px;padding-left:16px}
+
+  /* TABELA */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+  th{background:var(--bg2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:11px 14px;font-weight:700;white-space:nowrap}
+  td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:middle}
+  tr:hover td{background:rgba(99,102,241,.05)}
+  .nome-cell{display:flex;align-items:center;gap:10px}
+  .avatar{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+  .nome-titulo{font-weight:700;display:block}
+  .nome-sub{font-size:11px;color:var(--muted)}
+  .mini-bar{height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-top:5px;min-width:90px}
+  .mini-fill{height:100%;border-radius:4px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;white-space:nowrap}
+  .pill.ok{background:rgba(16,185,129,.15);color:#6ee7b7}
+  .pill.warn{background:rgba(251,191,36,.15);color:#fde68a}
+  .pill.risco{background:rgba(239,68,68,.15);color:#fca5a5}
+  .pill.zero{background:rgba(154,163,199,.12);color:var(--muted)}
+
+  /* ALERTAS */
+  .alertas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .alerta{background:var(--card);border:1px solid var(--line);border-left-width:3px;border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+  .alerta.risco{border-left-color:var(--red)}
+  .alerta.warn{border-left-color:var(--gold)}
+  .alerta.ok{border-left-color:var(--green)}
+  .alerta-ico{font-size:18px;line-height:1.2;flex-shrink:0}
+  .alerta-tit{font-weight:700;font-size:13px;margin-bottom:3px}
+  .alerta-txt{font-size:12px;color:var(--muted)}
+  .alerta-txt a{color:#a5b4fc}
+
+  /* AVISO */
+  .aviso{background:rgba(251,191,36,.08);border:1px dashed rgba(251,191,36,.4);border-radius:10px;padding:14px 16px;font-size:13px;color:#fde68a;display:flex;gap:10px;align-items:flex-start;margin-bottom:16px}
+  .aviso a{color:#fde68a;font-weight:700}
+  .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty-emoji{font-size:34px;margin-bottom:10px}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+  .modal h3{font-size:18px;margin-bottom:6px;font-weight:800}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .field .dica{font-size:11px;color:#5d6690;margin-top:4px}
+  .modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+  .check{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px}
+  .check input{width:auto}
+
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--green);color:var(--green);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;display:none}
+  .toast.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📊 Dashboard de Metas</div>
+  <div class="nav-links">
+    <a href="pipeline.html">Pipeline</a>
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="biblioteca-cold-call.html">Cold Call</a>
+    <a href="usuarios.html">Usuários</a>
+    <a href="trilhas.html">Trilhas</a>
+    <a href="index.html">Suíte</a>
+  </div>
+  <div class="actions">
+    <select id="periodo" onchange="render()">
+      <option value="mes">Mês atual</option>
+      <option value="anterior">Mês anterior</option>
+      <option value="90d">Últimos 90 dias</option>
+      <option value="tudo">Desde o início</option>
+    </select>
+    <button class="btn btn-ghost" onclick="abrirMetas()">🎯 Metas</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div>
+      <h1 id="tituloPeriodo">Resultado do mês</h1>
+      <div class="page-sub" id="subPeriodo"></div>
+    </div>
+    <div class="page-sub" id="atualizadoEm"></div>
+  </div>
+
+  <div id="avisoDono"></div>
+
+  <!-- METAS -->
+  <div class="sec">
+    <div class="sec-title">Metas <span class="hint">— quanto falta pra cada nível</span></div>
+    <div class="metas" id="metas"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="sec">
+    <div class="sec-title">Números do período</div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <!-- GRAFICO + FUNIL -->
+  <div class="sec duo">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Ritmo de fechamento</div>
+          <div class="panel-sub" id="chartSub">Acumulado real × ritmo ideal pra bater a meta Básica</div>
+        </div>
+      </div>
+      <div class="chart-wrap" id="chartWrap"></div>
+      <div class="legend">
+        <span><i class="lg-swatch" style="background:#10b981"></i> Fechado (acumulado)</span>
+        <span><i class="lg-swatch" style="background:#fbbf24"></i> Ritmo ideal (meta Básica)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Funil agora</div>
+          <div class="panel-sub">Quanto cada etapa vale hoje e o quanto dela entra na projeção</div>
+        </div>
+      </div>
+      <div id="funil"></div>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <div class="sec">
+    <div class="sec-title">Time <span class="hint">— quem está no ritmo e quem precisa de 1:1</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Consultor</th>
+            <th>Fechado no período</th>
+            <th>Meta individual</th>
+            <th>Pipeline ativo</th>
+            <th>Vendas</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyTime"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="sec">
+    <div class="sec-title">O que exige ação hoje</div>
+    <div class="alertas" id="alertas"></div>
+  </div>
+
+</div>
+
+<!-- MODAL METAS -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Metas do time</h3>
+    <div class="modal-sub">Definidas por mês, para o time todo. A meta individual de cada consultor fica no cadastro de <a href="usuarios.html" style="color:#a5b4fc">Usuários</a>.</div>
+    <div class="check">
+      <input type="checkbox" id="f-auto" onchange="toggleAuto()">
+      <label for="f-auto" style="margin:0;color:var(--text);font-size:13px">Calcular a partir da soma das metas individuais</label>
+    </div>
+    <div class="field">
+      <label>Meta Mínima (R$)</label>
+      <input id="f-minima" type="number" step="1000" min="0">
+      <div class="dica">O piso. Abaixo disso o mês é prejuízo.</div>
+    </div>
+    <div class="field">
+      <label>Meta Básica (R$)</label>
+      <input id="f-basica" type="number" step="1000" min="0">
+      <div class="dica">O compromisso do time. É ela que define o ritmo diário.</div>
+    </div>
+    <div class="field">
+      <label>Meta Super (R$)</label>
+      <input id="f-super" type="number" step="1000" min="0">
+      <div class="dica">O esticado, que paga bônus.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharMetas()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMetas()">Salvar metas</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="dados-demo.js"></script>
+<script>
+/* ===== Modelo compartilhado com o Pipeline e a Gestão de Usuários ===== */
+const ETAPAS = [
+  {id:'lead',       nome:'Lead',        cor:'#9aa3c7', peso:.05},
+  {id:'qualif',     nome:'Qualificado', cor:'#3b82f6', peso:.15},
+  {id:'reuniao',    nome:'Reunião',     cor:'#8b5cf6', peso:.30},
+  {id:'proposta',   nome:'Proposta',    cor:'#fbbf24', peso:.50},
+  {id:'negociacao', nome:'Negociação',  cor:'#f97316', peso:.75},
+  {id:'fechado',    nome:'Fechado ✅',  cor:'#10b981', peso:1},
+];
+const ABERTAS = ETAPAS.filter(e=>e.id!=='fechado');
+
+let leads = JSON.parse(localStorage.getItem('pipeline_leads') || '[]');
+let users = JSON.parse(localStorage.getItem('pipeline_users') || '[]');
+let metas = JSON.parse(localStorage.getItem('pipeline_metas') || 'null');
+
+function salvarMetasLS(){ localStorage.setItem('pipeline_metas', JSON.stringify(metas)); }
+function fmt(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(v||0); }
+function fmtCurto(v){
+  v = v||0;
+  if(Math.abs(v)>=1000000) return 'R$ '+(v/1000000).toFixed(1).replace('.',',')+'M';
+  if(Math.abs(v)>=1000) return 'R$ '+Math.round(v/1000)+'k';
+  return 'R$ '+Math.round(v);
+}
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function inicial(s){ return (s||'').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase() || '?'; }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ===== Metas: soma das individuais quando não houver configuração manual ===== */
+function metasAtivas(){
+  const somaInd = users.filter(u=>u.status==='ativo').reduce((s,u)=>s+(parseFloat(u.meta)||0),0);
+  if(metas && !metas.auto) return {minima:metas.minima||0, basica:metas.basica||0, super:metas.super||0, auto:false, somaInd};
+  const basica = somaInd;
+  return {minima:Math.round(basica*.7), basica, super:Math.round(basica*1.3), auto:true, somaInd};
+}
+
+/* ===== Período ===== */
+function dataFechamento(l){ return l.fechadoEm || l.atualizado || l.criado; }
+function limitesPeriodo(){
+  const modo = document.getElementById('periodo').value;
+  const hoje = new Date();
+  if(modo==='mes'){
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0, 23,59,59);
+    return {ini, fim, modo, rotulo:'Resultado do mês', mesCorrente:true};
+  }
+  if(modo==='anterior'){
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23,59,59);
+    return {ini, fim, modo, rotulo:'Resultado do mês anterior', mesCorrente:false};
+  }
+  if(modo==='90d'){
+    const ini = new Date(hoje.getTime()-90*86400000);
+    return {ini, fim:hoje, modo, rotulo:'Últimos 90 dias', mesCorrente:false};
+  }
+  return {ini:new Date(2000,0,1), fim:hoje, modo, rotulo:'Desde o início', mesCorrente:false};
+}
+function noPeriodo(iso, p){
+  if(!iso) return false;
+  const d = new Date(iso);
+  return d >= p.ini && d <= p.fim;
+}
+
+/* ===== Dias úteis ===== */
+function diasUteis(ini, fim){
+  let n = 0;
+  const d = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate());
+  while(d <= fim){
+    const dia = d.getDay();
+    if(dia!==0 && dia!==6) n++;
+    d.setDate(d.getDate()+1);
+  }
+  return n;
+}
+
+/* ===== Dono do lead (aceita id ou nome) ===== */
+function donoDoLead(l){
+  const ref = l.dono || l.responsavel || l.consultor || '';
+  if(!ref) return null;
+  const u = users.find(x=>x.id===ref) || users.find(x=>(x.nome||'').toLowerCase()===String(ref).toLowerCase());
+  return u ? u.nome : String(ref);
+}
+
+/* ===== RENDER ===== */
+function render(){
+  const p = limitesPeriodo();
+  const m = metasAtivas();
+
+  const fechadosPer = leads.filter(l=>l.etapa==='fechado' && noPeriodo(dataFechamento(l), p));
+  const totalFechado = fechadosPer.reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+  const abertos = leads.filter(l=>l.etapa!=='fechado');
+  const pipelineVal = abertos.reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+  const ponderado = abertos.reduce((s,l)=>{
+    const e = ETAPAS.find(x=>x.id===l.etapa);
+    return s + (parseFloat(l.valor)||0) * (e?e.peso:.05);
+  },0);
+
+  document.getElementById('tituloPeriodo').textContent = p.rotulo;
+  document.getElementById('subPeriodo').textContent =
+    p.modo==='tudo' ? `${leads.length} leads no total` :
+    `${p.ini.toLocaleDateString('pt-BR')} a ${p.fim.toLocaleDateString('pt-BR')} · ${fechadosPer.length} venda${fechadosPer.length===1?'':'s'}`;
+  document.getElementById('atualizadoEm').textContent = 'Atualizado agora · dados locais deste navegador';
+
+  renderAvisoDono();
+  renderMetas(m, totalFechado, p);
+  renderStats(m, totalFechado, fechadosPer, pipelineVal, ponderado, abertos, p);
+  renderChart(m, fechadosPer, p);
+  renderFunil(abertos, fechadosPer);
+  renderTime(m, p);
+  renderAlertas(m, totalFechado, ponderado, abertos, p);
+}
+
+function renderAvisoDono(){
+  const semDono = leads.filter(l=>!donoDoLead(l)).length;
+  const el = document.getElementById('avisoDono');
+  if(semDono === 0){ el.innerHTML=''; return; }
+  el.innerHTML = `<div class="aviso"><span>⚠️</span><div><strong>${semDono} lead${semDono===1?'':'s'} sem responsável.</strong>
+    O ranking por consultor só fica completo quando cada lead tem um dono — defina no campo <em>Responsável</em> do
+    <a href="pipeline.html">Pipeline</a>.</div></div>`;
+}
+
+function renderMetas(m, fechado, p){
+  const linhas = [
+    {k:'minima', nome:'Mínima', alvo:m.minima},
+    {k:'basica', nome:'Básica', alvo:m.basica},
+    {k:'super',  nome:'Super',  alvo:m.super},
+  ];
+  document.getElementById('metas').innerHTML = linhas.map(l=>{
+    const pct = l.alvo>0 ? Math.round(fechado/l.alvo*100) : 0;
+    const batida = l.alvo>0 && fechado>=l.alvo;
+    const falta = Math.max(0, l.alvo-fechado);
+    return `
+      <div class="meta-card ${batida?'batida':''}">
+        <div class="meta-top">
+          <span class="meta-nome ${l.k}">Meta ${l.nome}</span>
+          <span class="meta-pct">${l.alvo>0?pct+'%':'—'}</span>
+        </div>
+        <div class="meta-alvo">alvo ${l.alvo>0?fmt(l.alvo):'não definido'}</div>
+        <div class="meta-val">${fmt(fechado)}</div>
+        <div class="bar"><div class="bar-fill ${batida?'ok':l.k}" style="width:${Math.min(100,pct)}%"></div></div>
+        <div class="meta-falta">${
+          l.alvo<=0 ? '<span>Defina o valor em 🎯 Metas</span>' :
+          batida ? `<span class="meta-badge">✓ BATIDA</span><span>${fechado>l.alvo?`excedente de <strong>${fmt(fechado-l.alvo)}</strong>`:'cravou o alvo exato'}</span>` :
+          `<span>Faltam <strong>${fmt(falta)}</strong></span>`
+        }</div>
+      </div>`;
+  }).join('');
+}
+
+function renderStats(m, fechado, fechadosPer, pipelineVal, ponderado, abertos, p){
+  const ticket = fechadosPer.length ? fechado/fechadosPer.length : 0;
+  const ciclos = fechadosPer.map(l=>{
+    if(!l.criado) return null;
+    const d = (new Date(dataFechamento(l)) - new Date(l.criado))/86400000;
+    return d>=0 ? d : null;
+  }).filter(v=>v!==null);
+  const cicloMedio = ciclos.length ? Math.round(ciclos.reduce((a,b)=>a+b,0)/ciclos.length) : 0;
+  const projecao = fechado + ponderado;
+  const faltaBasica = Math.max(0, m.basica - fechado);
+
+  let ritmoTxt = '—', ritmoSub = 'só no mês corrente';
+  if(p.mesCorrente){
+    const hoje = new Date();
+    const restantes = diasUteis(hoje, p.fim);
+    ritmoTxt = restantes>0 ? fmt(faltaBasica/restantes) : fmt(faltaBasica);
+    ritmoSub = restantes>0 ? `em ${restantes} ${restantes===1?'dia útil restante':'dias úteis restantes'}` : 'último dia do mês';
+    if(faltaBasica===0){ ritmoTxt = 'Meta batida'; ritmoSub = 'foco na Super'; }
+  }
+  const convertidos = leads.filter(l=>l.etapa==='fechado').length;
+  const taxa = leads.length ? Math.round(convertidos/leads.length*100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Fechado no período</div><div class="stat-val green">${fmt(fechado)}</div><div class="stat-sub">${fechadosPer.length} venda${fechadosPer.length===1?'':'s'}</div></div>
+    <div class="stat"><div class="stat-label">Pipeline ativo</div><div class="stat-val blue">${fmt(pipelineVal)}</div><div class="stat-sub">${abertos.length} oportunidades em aberto</div></div>
+    <div class="stat"><div class="stat-label">Projeção do período</div><div class="stat-val gold">${fmt(projecao)}</div><div class="stat-sub">fechado + pipeline ponderado por etapa</div></div>
+    <div class="stat"><div class="stat-label">Precisa por dia</div><div class="stat-val ${faltaBasica>0?'red':'green'}">${ritmoTxt}</div><div class="stat-sub">${ritmoSub}</div></div>
+    <div class="stat"><div class="stat-label">Ticket médio</div><div class="stat-val">${fmt(ticket)}</div><div class="stat-sub">por venda fechada</div></div>
+    <div class="stat"><div class="stat-label">Ciclo médio</div><div class="stat-val">${cicloMedio} dia${cicloMedio===1?'':'s'}</div><div class="stat-sub">da entrada ao fechamento</div></div>
+    <div class="stat"><div class="stat-label">Taxa de conversão</div><div class="stat-val">${taxa}%</div><div class="stat-sub">fechados / total de leads</div></div>
+  `;
+}
+
+/* ===== Gráfico: acumulado real × ritmo ideal ===== */
+function renderChart(m, fechadosPer, p){
+  const wrap = document.getElementById('chartWrap');
+  const W = 720, H = 260, ml = 56, mr = 16, mt = 14, mb = 28;
+  const iw = W-ml-mr, ih = H-mt-mb;
+
+  // eixo x = dias do período (limitado a 92 pontos)
+  const diasTotal = Math.max(1, Math.round((p.fim - p.ini)/86400000)+1);
+  const passo = diasTotal>92 ? Math.ceil(diasTotal/92) : 1;
+  const pontos = [];
+  let acc = 0;
+  const porDia = {};
+  fechadosPer.forEach(l=>{
+    const d = new Date(dataFechamento(l));
+    const chave = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    porDia[chave] = (porDia[chave]||0) + (parseFloat(l.valor)||0);
+  });
+  const hojeMs = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+  for(let i=0;i<diasTotal;i+=passo){
+    const d = new Date(p.ini.getFullYear(), p.ini.getMonth(), p.ini.getDate()+i);
+    for(let j=0;j<passo && (i+j)<diasTotal;j++){
+      const dd = new Date(p.ini.getFullYear(), p.ini.getMonth(), p.ini.getDate()+i+j);
+      acc += porDia[dd.getTime()]||0;
+    }
+    pontos.push({d, v:acc, futuro: d.getTime() > hojeMs});
+  }
+
+  const alvo = m.basica || Math.max(acc, 1);
+  const maxY = Math.max(alvo, acc) * 1.1 || 1;
+  const x = i => ml + (pontos.length<2 ? iw/2 : iw * i/(pontos.length-1));
+  const y = v => mt + ih - (ih * (v/maxY));
+
+  // ritmo ideal: só faz sentido no mês corrente/anterior com meta definida
+  const mostrarIdeal = m.basica > 0 && (p.modo==='mes' || p.modo==='anterior');
+  const uteisTotal = diasUteis(p.ini, p.fim) || 1;
+  let idealPath = '';
+  if(mostrarIdeal){
+    let uteisAcum = 0;
+    const idealPts = pontos.map((pt,i)=>{
+      uteisAcum = diasUteis(p.ini, pt.d);
+      return {x:x(i), y:y(alvo * uteisAcum/uteisTotal)};
+    });
+    idealPath = 'M'+idealPts.map(q=>`${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' L');
+  }
+
+  // linha real: para no dia de hoje (não desenha futuro achatado)
+  const reais = pontos.filter(pt=>!pt.futuro);
+  const usados = reais.length ? reais : pontos.slice(0,1);
+  const realPath = 'M'+usados.map((pt,i)=>`${x(i).toFixed(1)},${y(pt.v).toFixed(1)}`).join(' L');
+  const areaPath = usados.length>1
+    ? realPath + ` L${x(usados.length-1).toFixed(1)},${(mt+ih).toFixed(1)} L${x(0).toFixed(1)},${(mt+ih).toFixed(1)} Z`
+    : '';
+
+  // grid + rótulos y
+  const ticks = 4;
+  let gridSvg = '';
+  for(let i=0;i<=ticks;i++){
+    const v = maxY*i/ticks;
+    const yy = y(v);
+    gridSvg += `<line class="grid-line" x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}"/>
+      <text class="axis-txt" x="${ml-8}" y="${(yy+3).toFixed(1)}" text-anchor="end">${fmtCurto(v)}</text>`;
+  }
+  // rótulos x (5 marcos)
+  let xSvg = '';
+  const marcos = Math.min(5, pontos.length);
+  for(let i=0;i<marcos;i++){
+    const idx = Math.round(i*(pontos.length-1)/Math.max(1,marcos-1));
+    const d = pontos[idx].d;
+    xSvg += `<text class="axis-txt" x="${x(idx).toFixed(1)}" y="${H-8}" text-anchor="middle">${d.getDate()}/${d.getMonth()+1}</text>`;
+  }
+
+  wrap.innerHTML = `
+    <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" id="svgChart">
+      <defs>
+        <linearGradient id="gradReal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity=".28"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridSvg}${xSvg}
+      ${areaPath?`<path class="area-real" d="${areaPath}"/>`:''}
+      ${mostrarIdeal?`<path class="line-ideal" d="${idealPath}"/>`:''}
+      <path class="line-real" d="${realPath}"/>
+      <line class="crosshair" id="chCross" x1="0" y1="${mt}" x2="0" y2="${mt+ih}" style="display:none"/>
+      <circle class="dot-hover" id="chDot" r="5" style="display:none"/>
+      <rect id="chHit" x="${ml}" y="${mt}" width="${iw}" height="${ih}" fill="transparent" style="cursor:crosshair"/>
+    </svg>
+    <div class="tip" id="chTip"></div>
+  `;
+  document.getElementById('chartSub').textContent = mostrarIdeal
+    ? 'Acumulado real × ritmo ideal pra bater a meta Básica'
+    : 'Acumulado real no período (defina a meta Básica pra ver o ritmo ideal)';
+
+  // hover
+  const svg = document.getElementById('svgChart');
+  const hit = document.getElementById('chHit');
+  const tip = document.getElementById('chTip');
+  const dot = document.getElementById('chDot');
+  const cross = document.getElementById('chCross');
+  hit.addEventListener('mousemove', ev=>{
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width * W;
+    let i = Math.round((px-ml)/(iw||1)*(usados.length-1));
+    i = Math.max(0, Math.min(usados.length-1, i));
+    const pt = usados[i];
+    const cx = x(i), cy = y(pt.v);
+    dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.style.display='';
+    cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.style.display='';
+    let idealTxt = '';
+    if(mostrarIdeal){
+      const alvoDia = alvo * diasUteis(p.ini, pt.d)/uteisTotal;
+      const dif = pt.v - alvoDia;
+      idealTxt = `<div style="color:${dif>=0?'#6ee7b7':'#fca5a5'}">${dif>=0?'▲':'▼'} ${fmt(Math.abs(dif))} ${dif>=0?'acima':'abaixo'} do ritmo</div>`;
+    }
+    tip.innerHTML = `<b>${pt.d.toLocaleDateString('pt-BR')}</b>${fmt(pt.v)} acumulado${idealTxt}`;
+    tip.classList.add('on');
+    const wrapR = wrap.getBoundingClientRect();
+    const left = (cx/W)*wrapR.width;
+    tip.style.left = Math.min(wrapR.width-tip.offsetWidth-4, Math.max(0, left+12))+'px';
+    tip.style.top = Math.max(0, (cy/H)*wrapR.height - 46)+'px';
+  });
+  hit.addEventListener('mouseleave', ()=>{
+    tip.classList.remove('on'); dot.style.display='none'; cross.style.display='none';
+  });
+}
+
+/* ===== Funil ===== */
+function renderFunil(abertos, fechadosPer){
+  const dados = ETAPAS.map(e=>{
+    const lista = e.id==='fechado' ? fechadosPer : abertos.filter(l=>l.etapa===e.id);
+    return {...e, qtd:lista.length, val:lista.reduce((s,l)=>s+(parseFloat(l.valor)||0),0)};
+  });
+  const maxVal = Math.max(1, ...dados.map(d=>d.val));
+  const el = document.getElementById('funil');
+  if(dados.every(d=>d.qtd===0)){
+    el.innerHTML = `<div class="empty"><div class="empty-emoji">📭</div><div>Nenhum lead cadastrado ainda</div>
+      <div style="font-size:12px;margin-top:6px">Comece pelo <a href="pipeline.html" style="color:#a5b4fc">Pipeline</a></div></div>`;
+    return;
+  }
+  el.innerHTML = dados.map((d,i)=>{
+    // o que esta etapa contribui para a projeção — honesto e ligado ao número do topo
+    const nota = d.id==='fechado'
+      ? 'já realizado — entra inteiro no resultado'
+      : `× ${Math.round(d.peso*100)}% de chance = <strong style="color:var(--gold)">${fmt(d.val*d.peso)}</strong> na projeção`;
+    return `
+      <div class="funil-row">
+        <div class="funil-top">
+          <span class="funil-nome"><i class="funil-dot" style="background:${d.cor}"></i>${d.nome}
+            <span class="funil-qtd">${d.qtd} lead${d.qtd===1?'':'s'}</span></span>
+          <span class="funil-val">${fmt(d.val)}</span>
+        </div>
+        <div class="funil-bar"><div class="funil-fill" style="width:${(d.val/maxVal*100).toFixed(1)}%;background:${d.cor}"></div></div>
+        <div class="funil-passo">${nota}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ===== Ranking do time ===== */
+function renderTime(m, p){
+  const consultores = users.filter(u=>u.papel==='consultor' || u.papel==='gestor');
+  const porDono = {};
+  leads.forEach(l=>{
+    const d = donoDoLead(l) || '__sem__';
+    (porDono[d] = porDono[d] || []).push(l);
+  });
+
+  const linhas = consultores.map(u=>{
+    const meus = porDono[u.nome] || [];
+    const fech = meus.filter(l=>l.etapa==='fechado' && noPeriodo(dataFechamento(l), p));
+    const val = fech.reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+    const pipe = meus.filter(l=>l.etapa!=='fechado').reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+    return {nome:u.nome, email:u.email, papel:u.papel, status:u.status, meta:parseFloat(u.meta)||0, val, pipe, n:fech.length};
+  });
+
+  const orfaos = porDono['__sem__'] || [];
+  if(orfaos.length){
+    const fech = orfaos.filter(l=>l.etapa==='fechado' && noPeriodo(dataFechamento(l), p));
+    linhas.push({
+      nome:'Sem responsável', email:orfaos.length+' leads sem dono definido', papel:'—', status:'ativo', meta:0,
+      val:fech.reduce((s,l)=>s+(parseFloat(l.valor)||0),0),
+      pipe:orfaos.filter(l=>l.etapa!=='fechado').reduce((s,l)=>s+(parseFloat(l.valor)||0),0),
+      n:fech.length, orfao:true
+    });
+  }
+
+  const tbody = document.getElementById('tbodyTime');
+  if(!linhas.length){
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-emoji">👥</div>
+      <div>Nenhum consultor cadastrado</div>
+      <div style="font-size:12px;margin-top:6px">Cadastre o time em <a href="usuarios.html" style="color:#a5b4fc">Usuários</a> pra ver o ranking</div></div></td></tr>`;
+    return;
+  }
+
+  // fração do mês já percorrida, para julgar quem está atrasado
+  const fracao = p.mesCorrente ? fracaoDecorrida(p) : 1;
+
+  linhas.sort((a,b)=>b.val-a.val);
+  tbody.innerHTML = linhas.map(l=>{
+    const pct = l.meta>0 ? Math.round(l.val/l.meta*100) : null;
+    let pill;
+    if(l.orfao) pill = '<span class="pill zero">⚠️ Sem dono</span>';
+    else if(l.status!=='ativo') pill = '<span class="pill zero">⏸ Inativo</span>';
+    else if(l.meta<=0) pill = '<span class="pill zero">— Sem meta</span>';
+    else if(pct>=100) pill = '<span class="pill ok">✓ Meta batida</span>';
+    else if(pct >= fracao*100*0.9) pill = '<span class="pill ok">✓ No ritmo</span>';
+    else if(pct >= fracao*100*0.6) pill = '<span class="pill warn">▲ Atenção</span>';
+    else pill = '<span class="pill risco">▼ Risco — chamar pro 1:1</span>';
+    const cor = pct===null ? 'var(--muted)' : pct>=100 ? 'var(--green)' : pct>=fracao*90 ? 'var(--gold)' : 'var(--red)';
+    return `
+      <tr>
+        <td>
+          <div class="nome-cell">
+            <div class="avatar">${l.orfao?'?':inicial(l.nome)}</div>
+            <div>
+              <span class="nome-titulo">${esc(l.nome)}</span>
+              <span class="nome-sub">${esc(l.email||'')}</span>
+            </div>
+          </div>
+        </td>
+        <td><strong style="color:var(--green)">${fmt(l.val)}</strong></td>
+        <td>
+          ${l.meta>0 ? `${fmt(l.meta)} <span style="color:var(--muted);font-size:11px">· ${pct}%</span>
+            <div class="mini-bar"><div class="mini-fill" style="width:${Math.min(100,pct)}%;background:${cor}"></div></div>` : '<span style="color:var(--muted)">—</span>'}
+        </td>
+        <td style="color:#a5b4fc">${fmt(l.pipe)}</td>
+        <td>${l.n}</td>
+        <td>${pill}</td>
+      </tr>`;
+  }).join('');
+}
+
+function fracaoDecorrida(p){
+  const hoje = new Date();
+  const total = diasUteis(p.ini, p.fim) || 1;
+  const passados = diasUteis(p.ini, hoje > p.fim ? p.fim : hoje) || 0;
+  return Math.min(1, passados/total);
+}
+
+/* ===== Alertas acionáveis ===== */
+function renderAlertas(m, fechado, ponderado, abertos, p){
+  const av = [];
+  const hoje = Date.now();
+
+  const parados = abertos.filter(l=>{
+    const ref = l.atualizado || l.criado;
+    return ref && (hoje - new Date(ref))/86400000 > 14;
+  });
+  if(parados.length){
+    const val = parados.reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+    av.push({t:'risco', i:'🥶', tit:`${parados.length} lead${parados.length===1?'':'s'} esfriando`,
+      txt:`Sem movimento há mais de 14 dias, somando ${fmt(val)}. Retome hoje ou marque como perdido — pipeline inflado engana a projeção.`});
+  }
+
+  const quentesParados = abertos.filter(l=>{
+    if(!['proposta','negociacao'].includes(l.etapa)) return false;
+    const ref = l.atualizado || l.criado;
+    return ref && (hoje - new Date(ref))/86400000 > 7;
+  });
+  if(quentesParados.length){
+    const val = quentesParados.reduce((s,l)=>s+(parseFloat(l.valor)||0),0);
+    av.push({t:'warn', i:'⏳', tit:`${quentesParados.length} proposta/negociação parada`,
+      txt:`${fmt(val)} em jogo há mais de 7 dias sem follow-up. É aqui que o mês vira.`});
+  }
+
+  if(m.basica>0){
+    const falta = Math.max(0, m.basica - fechado);
+    if(falta>0 && ponderado < falta){
+      av.push({t:'risco', i:'📉', tit:'Pipeline insuficiente pra meta Básica',
+        txt:`Faltam ${fmt(falta)} e o pipeline ponderado projeta só ${fmt(ponderado)}. Precisa entrar oportunidade nova — não dá pra fechar o mês só com o que já existe.`});
+    } else if(falta===0){
+      av.push({t:'ok', i:'🎯', tit:'Meta Básica batida',
+        txt:`Foco agora na Super (${fmt(m.super)}). Faltam ${fmt(Math.max(0, m.super-fechado))}.`});
+    } else {
+      av.push({t:'ok', i:'✅', tit:'Pipeline cobre a meta',
+        txt:`Faltam ${fmt(falta)} e o ponderado projeta ${fmt(ponderado)}. Execução resolve — sem precisar de lead novo.`});
+    }
+  } else {
+    av.push({t:'warn', i:'🎯', tit:'Metas não definidas',
+      txt:'Sem meta o dashboard vira só um relatório. Defina em <strong>🎯 Metas</strong> ou cadastre a meta individual de cada consultor.'});
+  }
+
+  const semValor = abertos.filter(l=>!parseFloat(l.valor)).length;
+  if(semValor){
+    av.push({t:'warn', i:'💸', tit:`${semValor} lead${semValor===1?'':'s'} sem valor`,
+      txt:'Oportunidade sem valor não entra na projeção. Estime um ticket, mesmo que aproximado.'});
+  }
+
+  const consultoresAtivos = users.filter(u=>u.papel==='consultor' && u.status==='ativo');
+  if(consultoresAtivos.length===0 && users.length>0){
+    av.push({t:'warn', i:'👥', tit:'Nenhum consultor ativo',
+      txt:'Ative os consultores em <a href="usuarios.html">Usuários</a> pra o ranking funcionar.'});
+  }
+
+  document.getElementById('alertas').innerHTML = av.map(a=>`
+    <div class="alerta ${a.t}">
+      <span class="alerta-ico">${a.i}</span>
+      <div><div class="alerta-tit">${a.tit}</div><div class="alerta-txt">${a.txt}</div></div>
+    </div>`).join('');
+}
+
+/* ===== Modal de metas ===== */
+function abrirMetas(){
+  const m = metasAtivas();
+  document.getElementById('f-auto').checked = m.auto;
+  document.getElementById('f-minima').value = m.minima||'';
+  document.getElementById('f-basica').value = m.basica||'';
+  document.getElementById('f-super').value = m.super||'';
+  toggleAuto();
+  document.getElementById('modalBg').classList.add('open');
+}
+function toggleAuto(){
+  const auto = document.getElementById('f-auto').checked;
+  ['f-minima','f-basica','f-super'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.disabled = auto;
+    el.style.opacity = auto ? .5 : 1;
+  });
+  if(auto){
+    const soma = users.filter(u=>u.status==='ativo').reduce((s,u)=>s+(parseFloat(u.meta)||0),0);
+    document.getElementById('f-minima').value = Math.round(soma*.7);
+    document.getElementById('f-basica').value = soma;
+    document.getElementById('f-super').value = Math.round(soma*1.3);
+  }
+}
+function fecharMetas(){ document.getElementById('modalBg').classList.remove('open'); }
+function salvarMetas(){
+  const auto = document.getElementById('f-auto').checked;
+  metas = {
+    auto,
+    minima: parseFloat(document.getElementById('f-minima').value)||0,
+    basica: parseFloat(document.getElementById('f-basica').value)||0,
+    super:  parseFloat(document.getElementById('f-super').value)||0
+  };
+  salvarMetasLS();
+  fecharMetas(); render();
+  toast('Metas salvas');
+}
+
+document.getElementById('modalBg').addEventListener('click', e=>{ if(e.target.id==='modalBg') fecharMetas(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') fecharMetas(); });
+
+/* Recarrega se outra aba (Pipeline/Usuários) alterar os dados */
+window.addEventListener('storage', e=>{
+  if(['pipeline_leads','pipeline_users','pipeline_metas'].includes(e.key)){
+    leads = JSON.parse(localStorage.getItem('pipeline_leads') || '[]');
+    users = JSON.parse(localStorage.getItem('pipeline_users') || '[]');
+    metas = JSON.parse(localStorage.getItem('pipeline_metas') || 'null');
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

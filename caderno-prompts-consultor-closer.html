@@ -5915,5 +5915,172 @@ Próxima ação imediata: agendar reunião D-60 essa semana</pre>
 })();
 </script>
 
+<!-- ===== NAVEGAÇÃO ÍNDICE → PROMPT (adicionado) ===== -->
+<style>
+  html { scroll-behavior: smooth; }
+  .prompt-card { scroll-margin-top: 90px; }
+  .secao { scroll-margin-top: 80px; }
+  .sumario { scroll-margin-top: 80px; }
+
+  /* linha do índice vira alvo clicável */
+  .tabela-indice tbody tr.linha-ir { cursor: pointer; transition: background .15s; }
+  .tabela-indice tbody tr.linha-ir:hover { background: rgba(37,99,235,.06); }
+  .tabela-indice tbody tr.linha-ir:hover .prompt-titulo { color: var(--azul, #2563eb); }
+  .tabela-indice tbody tr.linha-ir:focus-visible { outline: 2px solid var(--azul, #2563eb); outline-offset: -2px; }
+  .tabela-indice tbody tr.linha-ir:hover .badge { background: var(--azul, #2563eb); color: #fff; }
+  .tabela-indice tbody tr.linha-ir .badge { transition: background .15s, color .15s; }
+  .tabela-indice tbody tr.linha-ir .ir-seta {
+    float: right; color: var(--azul, #2563eb); font-weight: 700; opacity: 0;
+    transition: opacity .15s; font-size: 12px; white-space: nowrap;
+  }
+  .tabela-indice tbody tr.linha-ir:hover .ir-seta { opacity: 1; }
+
+  /* destaque ao chegar no prompt */
+  @keyframes flashPrompt {
+    0%   { box-shadow: 0 0 0 3px rgba(37,99,235,.55); }
+    100% { box-shadow: 0 0 0 3px rgba(37,99,235,0); }
+  }
+  .prompt-card.destacado { animation: flashPrompt 1.6s ease-out 1; border-radius: 8px; }
+
+  /* botões de retorno */
+  .voltar-indice, .voltar-inicio {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; color: var(--azul, #2563eb);
+    background: none; border: 1px solid rgba(37,99,235,.3); border-radius: 6px;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .voltar-indice:hover, .voltar-inicio:hover { background: rgba(37,99,235,.08); }
+
+  /* no cabeçalho do prompt */
+  .voltar-indice { margin-left: auto; padding: 3px 9px; }
+  .prompt-card-header { display: flex; align-items: center; gap: 10px; }
+
+  /* no cabeçalho da seção, ao lado do "Seção N de M" */
+  .secao-header .voltar-inicio { margin-left: auto; align-self: flex-start; flex-shrink: 0; padding: 6px 12px; }
+
+  @media print {
+    .voltar-indice, .voltar-inicio, .ir-seta { display: none !important; }
+  }
+</style>
+<script>
+(function(){
+  // âncora do topo: o sumário (nem todo caderno tem id nele)
+  var sumario = document.getElementById('sumario') || document.querySelector('.sumario');
+  if(sumario && !sumario.id) sumario.id = 'sumario';
+
+  function irInicio(){
+    if(sumario){
+      if(history.pushState) history.pushState(null, '', '#sumario');
+      sumario.scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  }
+
+  function irPara(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    if(history.pushState) history.pushState(null, '', '#' + id);
+    else location.hash = id;
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    destacar(el);
+  }
+
+  function destacar(el){
+    el.classList.remove('destacado');
+    void el.offsetWidth;           // reinicia a animação
+    el.classList.add('destacado');
+  }
+
+  function botao(classe, texto, aoClicar){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = classe;
+    b.textContent = texto;
+    b.addEventListener('click', aoClicar);
+    return b;
+  }
+
+  document.querySelectorAll('.secao').forEach(function(secao, i){
+    var sid = secao.id || ('secao' + (i+1));
+    var mapa = {};
+
+    // 1) "voltar ao início" no cabeçalho da seção, junto do "Seção N de M"
+    var secHeader = secao.querySelector('.secao-header');
+    if(secHeader && !secHeader.querySelector('.voltar-inicio')){
+      secHeader.appendChild(botao('voltar-inicio', '↑ voltar ao início', irInicio));
+    }
+
+    // 2) cada prompt completo ganha um id estável.
+    // IMPORTANTE: a busca (Ctrl+K) já define card.id = 'prompt-<num>' e navega por
+    // getElementById('prompt-'+num). Sobrescrever esse id quebra a busca — por isso
+    // reaproveitamos o id existente e só criamos um quando não houver.
+    secao.querySelectorAll('.prompt-card').forEach(function(card){
+      var b = card.querySelector('.badge');
+      var n = b ? b.textContent.trim() : '';
+      if(!n) return;
+      var id = card.id || (sid + '-p' + n);
+      card.id = id;
+      mapa[n] = id;
+
+      var header = card.querySelector('.prompt-card-header');
+      if(header && !header.querySelector('.voltar-indice')){
+        header.appendChild(botao('voltar-indice', '↑ índice da seção', function(){
+          if(history.pushState) history.pushState(null, '', '#' + sid);
+          secao.scrollIntoView({behavior:'smooth', block:'start'});
+        }));
+      }
+    });
+
+    // 3) cada linha do índice aponta para o prompt correspondente
+    secao.querySelectorAll('.tabela-indice tbody tr').forEach(function(tr){
+      var b = tr.querySelector('.badge');
+      var n = b ? b.textContent.trim() : '';
+      var alvo = mapa[n];
+      if(!alvo) return;
+
+      tr.classList.add('linha-ir');
+      tr.setAttribute('role', 'link');
+      tr.setAttribute('tabindex', '0');
+      tr.setAttribute('aria-label', 'Ir para o prompt ' + n);
+
+      var titulo = tr.querySelector('.prompt-titulo');
+      if(titulo && !titulo.querySelector('.ir-seta')){
+        var seta = document.createElement('span');
+        seta.className = 'ir-seta';
+        seta.textContent = 'ver prompt ↓';
+        titulo.appendChild(seta);
+      }
+
+      tr.addEventListener('click', function(){ irPara(alvo); });
+      tr.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); irPara(alvo); }
+      });
+    });
+  });
+
+  // contador da busca: conta os prompts de verdade (o número no HTML nunca era atualizado)
+  var contador = document.getElementById('paletteContador');
+  if(contador){
+    var totalPrompts = document.querySelectorAll('.prompt-card').length;
+    if(totalPrompts) contador.textContent = totalPrompts + ' prompts';
+  }
+
+  // chegou por link direto (#secao1-p7) ou pelo botão voltar do navegador
+  function destacarDoHash(){
+    var h = location.hash.slice(1);
+    if(!h) return;
+    var el = document.getElementById(h);
+    if(el && el.classList.contains('prompt-card')) destacar(el);
+  }
+  window.addEventListener('hashchange', destacarDoHash);
+  setTimeout(destacarDoHash, 120);
+})();
+</script>
+<!-- ===== FIM NAVEGAÇÃO ÍNDICE → PROMPT ===== -->
+
+
+
+
 </body>
 </html>

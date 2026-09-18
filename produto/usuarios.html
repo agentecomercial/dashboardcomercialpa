@@ -189,6 +189,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="dados-demo.js"></script>
 <script>
 const PAPEIS = {
   admin: {label:'Admin', desc:'Acesso total + gestão de usuários'},
@@ -359,18 +360,6 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape') fecharModal();
   if(e.key==='Enter' && document.getElementById('modalBg').classList.contains('open')) salvarUser();
 });
-
-// Demo data se vazio
-if(users.length===0){
-  users = [
-    {id:uid(), nome:'Pablo Correia', email:'pablo@empresa.com', papel:'admin', status:'ativo', whatsapp:'(11) 98765-4321', senha:'admin123', meta:50000, criado:new Date(Date.now()-30*86400000).toISOString(), atualizado:new Date().toISOString()},
-    {id:uid(), nome:'João Silva', email:'joao@empresa.com', papel:'gestor', status:'ativo', whatsapp:'(11) 91234-5678', senha:'gestor123', meta:80000, criado:new Date(Date.now()-20*86400000).toISOString(), atualizado:new Date().toISOString()},
-    {id:uid(), nome:'Maria Souza', email:'maria@empresa.com', papel:'consultor', status:'ativo', whatsapp:'', senha:'mudar123', meta:30000, criado:new Date(Date.now()-15*86400000).toISOString(), atualizado:new Date().toISOString()},
-    {id:uid(), nome:'Pedro Lima', email:'pedro@empresa.com', papel:'consultor', status:'ativo', whatsapp:'', senha:'mudar123', meta:30000, criado:new Date(Date.now()-10*86400000).toISOString(), atualizado:new Date().toISOString()},
-    {id:uid(), nome:'Ana Castro', email:'ana@empresa.com', papel:'consultor', status:'inativo', whatsapp:'', senha:'mudar123', meta:30000, criado:new Date(Date.now()-60*86400000).toISOString(), atualizado:new Date().toISOString()}
-  ];
-  salvar();
-}
 
 render();
 </script>
