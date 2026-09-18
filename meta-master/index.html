@@ -4505,6 +4505,97 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   const MM = window.MM || {mes:'',periodo:'',consultores:[],fotos:{}};
   const $ = id => document.getElementById(id);
 
+  /* ===================== mmApi — toda chamada de API passa por aqui =====================
+     POR QUE EXISTE (auditoria de 18/09/2026): das 65 chamadas fetch() do arquivo,
+     63 não distinguiam "não há dado" de "não consegui buscar". O padrão era
+        try{ ... }catch(e){ ALGUMA_COISA = []; }
+     e a tela mostrava zero como se fosse resposta. Foi assim que uma queda do CRM
+     virou "os leads sumiram".
+
+     mmApi LANÇA em vez de devolver vazio. Quem chama decide o que fazer, mas não
+     tem mais como confundir erro com lista vazia por descuido.
+
+     O servidor agora responde 503 quando a FONTE (CRM) está fora — diferente de
+     500, que é defeito nosso. O erro carrega .fonteFora para a tela poder dizer
+     "o CRM não respondeu" em vez de "deu erro". */
+  const MMAPI_TIMEOUT = 300000;                 /* algumas rotas leem o CRM inteiro */
+  function mmErro(msg, extra){
+    const e = new Error(msg);
+    Object.assign(e, extra || {});
+    return e;
+  }
+  async function mmApi(rota, opcoes){
+    const o = opcoes || {};
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const tmr = ctrl ? setTimeout(()=>ctrl.abort(), o.timeout || MMAPI_TIMEOUT) : null;
+    let r;
+    try{
+      r = await fetch(rota, Object.assign({ cache:'no-store' }, o.fetch || {}, ctrl ? {signal:ctrl.signal} : {}));
+    }catch(err){
+      if (tmr) clearTimeout(tmr);
+      /* servidor local fora do ar, ou a requisição estourou o tempo */
+      const demorou = (err && err.name === 'AbortError');
+      throw mmErro(demorou ? 'a consulta demorou demais e foi cancelada'
+                           : 'o servidor local não respondeu', { offline:!demorou, timeout:demorou });
+    }
+    if (tmr) clearTimeout(tmr);
+
+    let corpo = null, txt = '';
+    try{ txt = await r.text(); }catch(e){}
+    if (txt) { try{ corpo = JSON.parse(txt); }catch(e){ corpo = null; } }
+
+    /* 503 = a FONTE caiu. Não é defeito do app e não é "zero registros". */
+    if (r.status === 503){
+      throw mmErro((corpo && (corpo.erro || corpo.detalhe)) || 'o CRM não respondeu',
+                   { fonteFora:true, detalhe: corpo && corpo.detalhe });
+    }
+    if (!r.ok){
+      throw mmErro((corpo && corpo.erro) || ('o servidor respondeu ' + r.status), { status:r.status });
+    }
+    if (corpo === null){
+      if (o.texto) return txt;                  /* rota que devolve texto/markdown */
+      throw mmErro('a resposta não veio em formato válido');
+    }
+    /* erro in-band: vários scripts respondem 200 com {ok:false} */
+    if (corpo.erro) throw mmErro(corpo.erro, { fonteFora: !!corpo.fonteIndisponivel });
+    if (corpo.ok === false) throw mmErro(corpo.erro || 'a operação não foi concluída', { corpo });
+    return corpo;
+  }
+  /* mensagem única para falha de API — some da tela o que não pôde ser carregado,
+     mas NUNCA troca o dado anterior por zero */
+  function mmAvisar(err, onde){
+    const msg = (err && err.message) || 'falha ao carregar';
+    const pref = (err && err.fonteFora) ? 'CRM indisponível' : 'Não foi possível carregar';
+    if (typeof toast === 'function') toast('⚠ ' + pref + (onde ? (' — ' + onde) : '') + ': ' + msg);
+    try{ console.warn('[mmApi]', onde || '', err); }catch(e){}
+  }
+  window.mmApi = mmApi; window.mmAvisar = mmAvisar;
+
+  /* Erro de JS que ninguem ve e erro que volta amanha. Manda para o
+     servir-erros.log, junto com os erros do servidor. Nao faz nada quando a
+     pagina esta aberta por file:// (sem servidor para receber). */
+  (function(){
+    if (location.protocol.indexOf('http') !== 0) return;
+    let ultima = '';
+    function registrar(onde, msg){
+      const chave = onde + '|' + msg;
+      if (chave === ultima) return;          /* nao inundar o log com o mesmo erro */
+      ultima = chave;
+      try{
+        fetch('/api/log-front', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ onde: onde, msg: msg }) });
+      }catch(e){}
+    }
+    window.addEventListener('error', function(ev){
+      const src = (ev.filename ? (' @' + String(ev.filename).split('/').pop() + ':' + ev.lineno) : '');
+      registrar('window.onerror', (ev.message || 'erro') + src);
+    });
+    window.addEventListener('unhandledrejection', function(ev){
+      const r = ev.reason;
+      registrar('promise', (r && (r.message || r)) ? String(r.message || r) : 'promise rejeitada');
+    });
+  })();
+
   // Botao RECARREGAR DADOS: pede ao servidor para puxar o faturamento atual
   // (roda o Gerar-Dados-MetaMaster.ps1) e so depois recarrega a pagina.
   async function recarregarDados(btn, periodo){
@@ -11207,6 +11298,10 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
 
   let RGC_CTX=null;        // consultor + dados carregados
   let RGC_LEADS=null;      // leads individuais (carregados sob demanda)
+  /* null sozinho ja queria dizer "ainda carregando". Como falha tambem deixa
+     RGC_LEADS null, sem isto a regua ficaria com "carregando..." para sempre.
+     RGC_ERRO separa "nao consegui" de "ainda nao chegou". */
+  let RGC_ERRO=null;
 
   function rgcFmtR(v){ return 'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function rgcPct(a,b){ return b>0?(a/b*100):0; }
@@ -11231,7 +11326,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     const c=(d.consultores||[]).find(x=>x.nome===nome)||{};
     RGC_CTX={ nome, r, cru:c, equipe:M, periodo:(typeof leadsPerLabel==='function'?leadsPerLabel():''),
               campanha:(d.campanhas&&d.campanhas[0]?d.campanhas[0].curto:'campanha vigente') };
-    RGC_LEADS=null;
+    RGC_LEADS=null; RGC_ERRO=null;
     const box=$('rgcBox'); if(!box) return;
     box.classList.add('on');
     rgcRender();
@@ -11249,11 +11344,17 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     // só a campanha vigente, igual ao card: as listas de recuperação e de oportunidades
     // não podem trazer lead de outra origem que o número do card não conta
     qs.set('campanha','camp');
+    /* Este era o proximo "zerou do nada": nao checava r.ok e, em qualquer falha,
+       fazia RGC_LEADS=[] -- a regua desenhava zeros como se fossem dados reais,
+       sobre a MESMA fonte que caiu em 18/09/2026. Agora falha avisa e a regua
+       mantem o que ja tinha na tela. */
     try{
-      const rr=await fetch('/api/carteira-leads?'+qs.toString(),{cache:'no-store'});
-      const dd=await rr.json();
-      RGC_LEADS=Array.isArray(dd.leads)?dd.leads:[];
-    }catch(e){ RGC_LEADS=[]; }
+      const dd = await mmApi('/api/carteira-leads?'+qs.toString());
+      RGC_LEADS = Array.isArray(dd.leads) ? dd.leads : [];
+    }catch(e){
+      mmAvisar(e, 'leads do consultor');
+      RGC_LEADS = null; RGC_ERRO = e;   /* "nao sei", diferente de [] = "nao ha" */
+    }
     rgcRender();
   }
 
@@ -11440,6 +11541,8 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     return n;
   }
   function rgcRecuperacao(r){
+    if(RGC_ERRO) return '<div class="rgc-load" style="color:#e8b45a">⚠ não foi possível carregar os leads deste consultor'
+      + (RGC_ERRO.fonteFora ? ' — o CRM não respondeu' : '') + '. Tente de novo em instantes.</div>';
     if(RGC_LEADS===null) return '<div class="rgc-load">⏳ carregando os leads…</div>';
     const parados=RGC_LEADS.filter(l=>/^1 |^2 /.test(l.etapa||''));
     if(!parados.length) return '<div class="rgc-ok">Nenhum lead parado — carteira limpa.</div>';
@@ -11466,6 +11569,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
 
   /* ---------- oportunidades em aberto ---------- */
   function rgcOportunidades(r){
+    if(RGC_ERRO) return '<div class="rgc-load" style="color:#e8b45a">⚠ não foi possível carregar.</div>';
     if(RGC_LEADS===null) return '<div class="rgc-load">⏳ carregando…</div>';
     const neg=RGC_LEADS.filter(l=>/^4 /.test(l.etapa||''));
     if(!neg.length) return '<div class="rgc-vazio">Nenhuma negociação em aberto no período.</div>';
@@ -14165,11 +14269,13 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   async function carregarMetasHab(){
     if(!document.getElementById('cbxConsultor')) return;
     const de=valEl('pDe'); const per=(de&&de.length>=7)?de.substring(0,7):hojeYM();
+    /* METAS_HAB=null ja significa "sem filtro" no cbxInit, entao falha aqui
+       abria o seletor inteiro em silencio -- parecendo que ninguem tem meta.
+       Agora avisa; o null continua sendo o fallback seguro (mostra todos). */
     try{
-      const r=await fetch('/api/metas-consultores?periodo='+encodeURIComponent(per),{cache:'no-store'});
-      const nomes=await r.json();
+      const nomes = await mmApi('/api/metas-consultores?periodo='+encodeURIComponent(per));
       METAS_HAB = CONSULTORES.filter(c=>nomes.indexOf(c.nome)>=0).map(c=>c.val);
-    }catch(e){ METAS_HAB=null; }
+    }catch(e){ mmAvisar(e, 'metas dos consultores'); METAS_HAB=null; }
     cbxInit(); cbxAtualiza();
   }
   function cbxToggle(e){
@@ -18035,7 +18141,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   function renderFaturamento(txt,res){
     let body=(txt||'').trim(); FATVD=null;
     const m=body.match(/<!--FATVD:([\s\S]*?)-->/);
-    if(m){ try{ FATVD=JSON.parse(m[1]); }catch(e){ FATVD=null; } body=body.replace(m[0],'').trim(); }
+    if(m){ try{ FATVD=JSON.parse(m[1]); }catch(e){ FATVD=null; console.warn('[FATVD] bloco de dados ilegivel', e); if(typeof toast==='function') toast('⚠ faturamento detalhado: dados vieram ilegíveis'); } body=body.replace(m[0],'').trim(); }
     /* barra "Ver card" no topo do resultado, igual à do comando 8.1 (Leitura FRZ):
        é onde o olho procura a imagem depois de rodar. O botão do rodapé, ao lado de
        Atualizar dados, continua valendo — os dois abrem a mesma janela. */
@@ -18235,7 +18341,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   function renderPainel(txt,res){
     let body=(txt||'').trim(); PAINEL_DATA=null;
     const m=body.match(/<!--PAINEL:([\s\S]*?)-->/);
-    if(m){ try{ PAINEL_DATA=JSON.parse(m[1]); }catch(e){ PAINEL_DATA=null; } body=body.replace(m[0],'').trim(); }
+    if(m){ try{ PAINEL_DATA=JSON.parse(m[1]); }catch(e){ PAINEL_DATA=null; console.warn('[PAINEL_DATA] bloco de dados ilegivel', e); if(typeof toast==='function') toast('⚠ painel de turmas: dados vieram ilegíveis'); } body=body.replace(m[0],'').trim(); }
     let bar='';
     if(PAINEL_DATA && PAINEL_DATA.itens && PAINEL_DATA.itens.length){
       bar='<div class="pnf-bar">'
@@ -19145,7 +19251,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   function renderFrzVit(txt,res){
     let body=(txt||'').trim(); FRZ_DATA=null;
     const m=body.match(/<!--FRZVIT:([\s\S]*?)-->/);
-    if(m){ try{ FRZ_DATA=JSON.parse(m[1]); }catch(e){ FRZ_DATA=null; } body=body.replace(m[0],'').trim(); }
+    if(m){ try{ FRZ_DATA=JSON.parse(m[1]); }catch(e){ FRZ_DATA=null; console.warn('[FRZ_DATA] bloco de dados ilegivel', e); if(typeof toast==='function') toast('⚠ leitura FRZ: dados vieram ilegíveis'); } body=body.replace(m[0],'').trim(); }
     let topo='';
     if(FRZ_DATA && FRZ_DATA.tot){
       const t=FRZ_DATA.tot;

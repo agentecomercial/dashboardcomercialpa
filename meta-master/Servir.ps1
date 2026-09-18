@@ -1531,6 +1531,30 @@ while ($listener.IsListening) {
     }
 
     # ---- endereco para abrir no celular (o IP muda a cada rede/DHCP) ----
+    # ---- erro de JavaScript vira linha de log (auditoria 18/09/2026) ----
+    # O front nao tem teste automatizado; o que da para ter e rastro. window.onerror
+    # e unhandledrejection mandam para ca, e o erro que hoje some no console fica
+    # registrado junto com os erros do servidor.
+    if ($path -eq '/api/log-front') {
+      $res.ContentType = 'application/json; charset=utf-8'
+      if ($req.HttpMethod -ne 'POST') {
+        $res.StatusCode = 405
+        $b = [Text.Encoding]::UTF8.GetBytes('{"ok":false,"erro":"use POST"}')
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
+      try {
+        $srLF = New-Object IO.StreamReader($req.InputStream, [Text.Encoding]::UTF8)
+        $corpoLF = $srLF.ReadToEnd(); $srLF.Close()
+        $oLF = $corpoLF | ConvertFrom-Json
+        $msgLF = [string]$oLF.msg
+        if ($msgLF.Length -gt 500) { $msgLF = $msgLF.Substring(0,500) }
+        $ondeLF = [string]$oLF.onde
+        Log-Erro "[front] $ondeLF" $msgLF
+      } catch {}
+      $res.StatusCode = 204
+      $res.Close(); continue
+    }
+
     if ($path -eq '/api/ip') {
       $ips = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
                Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.IPAddress -notlike '169.*' -and $_.PrefixOrigin -ne 'WellKnown' } |
