@@ -1,0 +1,5 @@
+# Dados de execucao (chamados, usuarios com hash de senha, anexos enviados)
+dados/
+
+# Credencial de servico do fluxo de abertura pelo IDE (login/senha em texto)
+abrir-chamado.config.json
