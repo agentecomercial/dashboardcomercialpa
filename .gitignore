@@ -55,20 +55,44 @@ Buscar-Treinamento.ps1
 Mover-Etapa-Vitoria.ps1
 Carteira-Leads-Vitoria.ps1
 Buscar-Clientes-Vitoria.ps1
+Lancar-Cliente.ps1
+sc-web-auth.json
 meta-master/Gerar-Dados-MetaMaster.ps1
+Painel-Vitoria.ps1
+Painel-Turma.ps1
+Turma-Aluno.ps1
 
 # Meta Master — dados de negócio + credenciais (NUNCA publicar)
 meta-master/dados.js
 meta-master/.auth
 meta-master/fotos/
+meta-master/mm-fotos.bak.js
+meta-master/estado.json
+meta-master/_tmp/
 
 # Dados de negócio exportados (receita/faturamento/metas — não publicar)
 RECEITA_*.csv
 Faturamento_Vitoria_*.csv
 Leads_Vitoria_*.csv
 metas-vitoria.json
+metas-leads-vitoria.json
 
 # Previews de design (não fazem parte da app de produção)
 *-preview.html
 botao-copiar-card-consultor-10-opcoes.html
 relatorio-filtros-status-simulacao.html
+
+# Scripts que carregam o token do CRM em texto claro (auditoria 18/09/2026).
+# Ficam fora do git para que um "git add ." nao amplie a exposicao do token.
+Extraclasse-Pablo.ps1
+Ponte-ZS.ps1
+
+# Backups locais gerados pelo proprio app (copias de .ps1/.html com credenciais dentro)
+meta-master/_bkp/
+meta-master/_backups/
+meta-master/_backup/
+
+# Pitch: mora em disco e e publicado na Vercel, nunca pelo git.
+# Alem da regra do projeto, a pasta tem binarios de 200-255 MB (video e .zip)
+# que o GitHub recusa (limite de 100 MB/arquivo) e que incham o repositorio.
+pitch/
