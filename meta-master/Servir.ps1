@@ -801,6 +801,16 @@ while ($listener.IsListening) {
         $b = [Text.Encoding]::UTF8.GetBytes((@{ ok=$false; erro="Acao invalida: $acao" } | ConvertTo-Json -Compress))
         $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
       }
+      # A whitelist acima junta leitura+escrita, entao um GET com acao de
+      # escrita passava por ela, caia no ramo de leitura mais abaixo e RODAVA o
+      # script -- so que sem -PlanoFile. Quem recusava era o filho ("opportunity_id
+      # e obrigatorio"), nao o servidor: a protecao dependia da sorte. Agora acao
+      # de escrita exige POST aqui, antes de qualquer execucao.
+      if ($acao -in $escrita -and $req.HttpMethod -ne 'POST') {
+        $res.StatusCode = 405; $res.ContentType = 'application/json; charset=utf-8'
+        $b = [Text.Encoding]::UTF8.GetBytes((@{ ok=$false; erro="A acao '$acao' altera dados: use POST." } | ConvertTo-Json -Compress))
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
       $psArgs = @('-Acao', $acao)
       $qOrg = $req.QueryString['org']; if ($qOrg -match '^[123]$') { $psArgs += @('-Org', $qOrg) }
       if ($req.HttpMethod -eq 'POST' -and $acao -in $escrita) {
@@ -1598,9 +1608,24 @@ while ($listener.IsListening) {
     if ($path -eq '/' ) { $path = '/index.html' }
     $rel = $path.TrimStart('/').Replace('/', [IO.Path]::DirectorySeparatorChar)
     $full = Join-Path $root $rel
-    # nao servir scripts/bat por seguranca
+    # Nao servir o que nao e da pagina. A lista cobria so .ps1/.bat/.cmd, entao
+    # GET /estado.json entregava 1 MB do estado do app, /.auth entregava a
+    # credencial em texto claro e /servir-erros.log entregava saida bruta com
+    # dado de cliente (auditoria 18/09/2026).
+    # O front nao carrega NENHUM .json estatico (so dados.js e mm-fotos.js),
+    # entao bloquear a extensao inteira nao tira nada dele.
     $ext = [IO.Path]::GetExtension($full).ToLower()
-    if ($ext -in '.ps1','.bat','.cmd') { $res.StatusCode = 403; $res.Close(); continue }
+    if ($ext -in '.ps1','.bat','.cmd','.vbs','.json','.log','.auth','.prev','.tmp','.bak','.psm1') {
+      $res.StatusCode = 403; $res.Close(); continue
+    }
+    # pastas internas: backups, temporarios e o proprio .git
+    # comparacao por SEGMENTO em vez de regex: o caminho pode vir com \ ou /,
+    # e regex com barra invertida escapada aqui e receita de erro silencioso
+    $segs = $rel -split '[\\/]'
+    $proibidas = @('_tmp','_backup','_backups','_bkp','.git','previas')
+    $temProibida = $false
+    foreach ($sg in $segs) { if ($sg.ToLower() -in $proibidas) { $temProibida = $true; break } }
+    if ($temProibida) { $res.StatusCode = 403; $res.Close(); continue }
 
     if ((Test-Path $full -PathType Leaf) -and ($full.StartsWith($root))) {
       $ct = $mime[$ext]; if (-not $ct) { $ct = 'application/octet-stream' }
