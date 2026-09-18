@@ -1,4 +1,4 @@
-<#
+﻿<#
   Publicar-Online.ps1
   Liga o servidor do Meta Master (com login) + o tunel Cloudflare e mostra a URL publica.
   Para PARAR: feche esta janela (o tunel cai; o app volta a ser so local).
@@ -23,13 +23,42 @@ Write-Host ''
 Write-Host '  Iniciando o Meta Master para publicacao...' -ForegroundColor Cyan
 
 # 1) garante o servidor (Servir.ps1) rodando
+# Quem abre o localhost no navegador e o proprio Servir.ps1 QUANDO ELE SOBE. Se o servidor
+# ja estava no ar (outra janela, ou um processo esquecido segurando a porta), essa etapa e
+# pulada e so a URL publica abria — por isso guardamos aqui quem subiu o servidor.
+$subimosOServidor = $false
 if (-not (Porta-Ativa)) {
   # lanca o Servir.bat (ele ja faz cd e -File "..." com aspas; robusto p/ caminhos com espaco/acento)
   Start-Process -FilePath (Join-Path $root 'Servir.bat') -WindowStyle Minimized
+  $subimosOServidor = $true
   for ($i=0; $i -lt 30; $i++) { Start-Sleep -Milliseconds 700; if (Porta-Ativa) { break } }
 }
 if (-not (Porta-Ativa)) { Write-Host '  ERRO: o servidor (porta 8765) nao subiu. Veja o Servir.ps1.' -ForegroundColor Red; pause; exit 1 }
 Write-Host '  Servidor OK (porta 8765, com login).' -ForegroundColor Green
+
+# Porta ocupada nao garante servidor bom: um processo pendurado tambem prende a porta.
+# Se ele nao responder, avisamos com o caminho da solucao em vez de seguir para o tunel.
+if (-not $subimosOServidor) {
+  $respondeu = $false
+  try {
+    $r = Invoke-WebRequest -Uri "http://localhost:$porta/index.html" -TimeoutSec 8 -UseBasicParsing
+    $respondeu = ($r.StatusCode -eq 200 -or $r.StatusCode -eq 401)
+  } catch {
+    # 401 (login) tambem conta como servidor vivo
+    if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 401) { $respondeu = $true }
+  }
+  if (-not $respondeu) {
+    Write-Host ''
+    Write-Host '  ATENCAO: a porta 8765 esta ocupada por um processo que NAO responde.' -ForegroundColor Red
+    Write-Host '  Feche a janela preta antiga do servidor (ou rode o comando abaixo) e tente de novo:' -ForegroundColor Yellow
+    Write-Host '    Get-Process powershell | Where-Object { $_.MainWindowTitle -like "*Servir*" } | Stop-Process -Force' -ForegroundColor DarkGray
+    Write-Host ''
+    pause; exit 1
+  }
+  # servidor de outra janela: abre o localhost aqui, senao so o online abriria
+  Write-Host '  Abrindo tambem o endereco local...' -ForegroundColor DarkGray
+  try { Start-Process "http://localhost:$porta/index.html" } catch {}
+}
 
 # 2) localiza o cloudflared
 $cf = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source

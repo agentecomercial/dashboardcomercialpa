@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel TV — Turmas</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{ --gold:#F0C84A; }
+  html,body{height:100%;}
+  body{background:radial-gradient(1200px 700px at 50% -10%, #16233b 0%, #0e1826 45%, #070a11 100%);color:#eef1f6;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  .tv-top{display:flex;align-items:center;gap:16px;padding:16px 30px 12px;position:sticky;top:0;background:linear-gradient(180deg,rgba(9,13,20,.97),rgba(9,13,20,.75));backdrop-filter:blur(6px);z-index:6;border-bottom:1px solid rgba(240,200,74,.16);}
+  .tv-logo{font-size:24px;font-weight:900;letter-spacing:1px;display:flex;align-items:center;gap:12px;}
+  .tv-logo .g{color:var(--gold);}
+  .tv-logo .unit{font-size:13px;font-weight:700;color:#9fb2c9;border-left:1px solid #3a4150;padding-left:12px;}
+  .tv-spacer{flex:1;}
+  .tv-clock{font-size:22px;font-weight:800;color:#cfe0f5;font-variant-numeric:tabular-nums;text-align:right;}
+  .tv-upd{color:#7f8ea0;font-size:12px;text-align:right;}
+  .tv-btn{background:rgba(240,200,74,.12);border:1px solid #a2872e;color:var(--gold);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:800;cursor:pointer;}
+  .tv-btn.on{background:var(--gold);color:#101010;}
+
+  .scorebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 30px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.05);}
+  .kpi{display:flex;flex-direction:column;padding:8px 16px;border-radius:12px;background:rgba(255,255,255,.03);min-width:112px;}
+  .kpi .v{font-size:26px;font-weight:900;line-height:1;}
+  .kpi .l{font-size:11px;font-weight:700;color:#8a94a2;letter-spacing:.5px;margin-top:4px;}
+  .sb-health{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+  .hchip{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:30px;font-size:15px;font-weight:800;cursor:pointer;border:1.5px solid transparent;background:rgba(255,255,255,.04);transition:all .14s;}
+  .hchip .dot{width:13px;height:13px;border-radius:50%;}
+  .hchip.on{background:rgba(255,255,255,.10);box-shadow:0 0 0 1px currentColor inset;}
+
+  .tv-ctrls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 30px;position:sticky;top:64px;background:linear-gradient(180deg,rgba(9,13,20,.9),rgba(9,13,20,.5));backdrop-filter:blur(6px);z-index:5;border-bottom:1px solid rgba(255,255,255,.05);}
+  .ctl-lbl{font-size:12px;font-weight:800;color:#7f8ea0;letter-spacing:.5px;text-transform:uppercase;}
+  .seg{display:flex;background:rgba(255,255,255,.04);border:1px solid #3a4150;border-radius:10px;overflow:hidden;}
+  .seg button{background:transparent;border:0;color:#c9d6ea;padding:8px 13px;font-size:13px;font-weight:800;cursor:pointer;}
+  .seg button.on{background:var(--gold);color:#101010;}
+  .fbtn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1.5px solid #3a4150;color:#c9d6ea;border-radius:30px;padding:8px 15px;font-size:14px;font-weight:800;cursor:pointer;}
+  .fbtn .dot{width:12px;height:12px;border-radius:50%;background:currentColor;opacity:.85;}
+  .fbtn .cnt{opacity:.85;font-size:13px;}
+  .fbtn.on{background:rgba(255,255,255,.10);box-shadow:0 0 0 1px currentColor inset;}
+
+  .tv-grid{display:grid;gap:22px;padding:24px 30px 44px;grid-template-columns:repeat(auto-fit,minmax(min(470px,100%),1fr));align-content:start;}
+  /* ===== MODO DESTAQUE: card em destaque + esteira (flat, sem 3D) ===== */
+  .tv-grid.hero-mode{display:flex !important;flex-direction:column;gap:16px;padding:22px 30px 96px;min-height:auto;}
+  .hero-feature .card{min-height:auto;animation:featFade .45s ease;}
+  @keyframes featFade{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:none;} }
+  .hero-feature .c-head{padding:30px 34px 6px;}
+  .hero-feature .c-name{font-size:52px;line-height:1.04;padding-right:230px;}
+  .hero-feature .c-badge{font-size:22px;padding:10px 20px;top:30px;right:34px;border-radius:26px;}
+  .hero-feature .c-meta{gap:14px;margin-top:14px;}
+  .hero-feature .c-date{font-size:22px;} .hero-feature .c-cd{font-size:19px;padding:5px 15px;}
+  .hero-feature .c-body{padding:16px 34px 6px;gap:34px;}
+  .hero-feature .c-total{font-size:150px;} .hero-feature .c-total small{font-size:20px;max-width:none;}
+  .hero-feature .c-ring .pc{font-size:60px;} .hero-feature .c-ring .lb{font-size:16px;}
+  .hero-feature .c-act{font-size:27px;margin:4px 34px;}
+  .hero-feature .c-barwrap{margin:16px 34px 10px;} .hero-feature .c-bar{height:26px;border-radius:14px;}
+  .hero-feature .c-goal::after{font-size:13px;bottom:-20px;}
+  .hero-feature .c-legend{padding:18px 34px 26px;gap:14px 28px;}
+  .hero-feature .lg{font-size:23px;} .hero-feature .lg .dot{width:17px;height:17px;} .hero-feature .lg .t{font-size:21px;} .hero-feature .lg .n{font-size:26px;}
+  /* esteira das outras turmas */
+  .hero-strip{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 8px;}
+  .mini{flex:0 0 auto;width:212px;background:linear-gradient(160deg,#16273f,#0d1626);border:1px solid rgba(255,255,255,.08);border-left:4px solid var(--mc,#9fb2c9);border-radius:14px;padding:12px 15px;cursor:pointer;transition:filter .15s,box-shadow .15s;}
+  .mini:hover{filter:brightness(1.18);}
+  .mini.on{box-shadow:0 0 0 2px var(--mc) inset;}
+  .mini-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .mini-dot{width:11px;height:11px;border-radius:50%;background:var(--mc);flex:0 0 auto;}
+  .mini-nm{font-size:14px;font-weight:800;color:#eef1f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-pc{font-size:26px;font-weight:900;color:var(--mc);line-height:1;}
+  .mini-sub{font-size:11px;color:#8a94a2;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-bar{height:8px;border-radius:5px;background:#222a38;overflow:hidden;margin-top:8px;}
+  .mini-bar span{display:block;height:100%;}
+  .hero-nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:16px;z-index:9;background:rgba(9,13,20,.82);border:1px solid rgba(240,200,74,.25);border-radius:40px;padding:8px 14px;backdrop-filter:blur(6px);}
+  .hero-nav.show{display:flex;}
+  .hero-nav button{background:rgba(255,255,255,.08);border:0;color:#eef1f6;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;}
+  .hero-nav button:hover{background:var(--gold);color:#101010;}
+  .hero-nav .pos{font-size:16px;font-weight:800;color:#cfe0f5;min-width:64px;text-align:center;font-variant-numeric:tabular-nums;}
+  .hero-nav .dots{display:flex;gap:7px;}
+  .hero-nav .dots i{width:9px;height:9px;border-radius:50%;background:#3a4150;cursor:pointer;}
+  .hero-nav .dots i.on{background:var(--gold);transform:scale(1.25);}
+
+  .card{position:relative;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#16273f 0%,#0d1626 70%);border:1px solid rgba(240,200,74,.22);box-shadow:0 18px 46px rgba(0,0,0,.55);display:flex;flex-direction:column;min-height:300px;transition:transform .2s;}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--accent,linear-gradient(90deg,var(--gold),#c79a2e));}
+  .card.urgent{border-color:#e06a5a;animation:urg 1.3s ease-in-out infinite;}
+  @keyframes urg{0%,100%{box-shadow:0 18px 46px rgba(0,0,0,.55), 0 0 0 0 rgba(224,106,90,0);}50%{box-shadow:0 18px 46px rgba(0,0,0,.55), 0 0 0 4px rgba(224,106,90,.5);}}
+  .c-head{padding:20px 24px 4px;position:relative;}
+  .c-badge{position:absolute;top:20px;right:24px;font-size:15px;font-weight:900;padding:7px 14px;border-radius:22px;letter-spacing:.5px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .c-badge.ok{color:#08150c;background:#46d17a;} .c-badge.pend{color:#2a2205;background:#F0C84A;} .c-badge.bad{color:#fff;background:#e06a5a;} .c-badge.neu{color:#fff;background:#5b6472;}
+  .c-name{font-size:29px;font-weight:900;line-height:1.06;padding-right:150px;}
+  .c-meta{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .c-date{color:#9fb2c9;font-size:15px;font-weight:700;}
+  .c-cd{font-size:13px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.06);color:#cfe0f5;}
+  .c-cd.soon{background:rgba(224,106,90,.16);color:#f0a99e;}
+  .c-cd.urg{background:#e06a5a;color:#fff;}
+  .c-body{display:flex;align-items:center;gap:18px;padding:10px 24px 4px;}
+  .c-total{font-size:82px;font-weight:900;line-height:1;color:var(--big,#fff);text-shadow:0 3px 18px rgba(0,0,0,.5);}
+  .c-total small{display:block;font-size:14px;font-weight:800;color:#8a94a2;letter-spacing:1.5px;margin-top:6px;max-width:230px;}
+  .c-ring{margin-left:auto;text-align:center;}
+  .c-ring .pc{font-size:32px;font-weight:900;color:var(--ringc,#46d17a);}
+  .c-ring .lb{font-size:11px;color:#8a94a2;font-weight:700;}
+  .c-act{margin:2px 24px 0;font-size:15px;font-weight:800;}
+  .c-act .fN{color:#f0a99e;} .c-act .okmeta{color:#46d17a;}
+  .c-barwrap{position:relative;margin:12px 24px 8px;}
+  .c-bar{height:16px;border-radius:9px;overflow:hidden;display:flex;background:#222a38;}
+  .c-bar span{height:100%;transition:opacity .2s;}
+  .c-goal{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.7;border-radius:2px;}
+  .c-goal::after{content:attr(data-l);position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:800;color:#cfe0f5;opacity:.8;}
+  .c-legend{display:flex;flex-wrap:wrap;gap:8px 14px;padding:14px 24px 20px;}
+  .lg{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;transition:opacity .2s;}
+  .lg .dot{width:12px;height:12px;border-radius:50%;}
+  .lg .n{font-variant-numeric:tabular-nums;}
+  .lg .t{color:#c9d6ea;font-weight:600;font-size:14px;}
+  .lg.dim{opacity:.28;}
+  .c-load{padding:26px 24px;color:#8a94a2;font-size:15px;}
+  .tv-empty{padding:80px 30px;text-align:center;color:#9fb2c9;}
+  .tv-empty h2{font-size:24px;color:#eef1f6;margin-bottom:10px;}
+  .pulse{animation:pl 1.2s ease-in-out infinite;}
+  @keyframes pl{0%,100%{opacity:.5}50%{opacity:1}}
+</style>
+</head>
+<body>
+  <div class="tv-top">
+    <div class="tv-logo">📺 PAINEL <span class="g">DE TURMAS</span><span class="unit">Unidade Vitória</span></div>
+    <div class="tv-sub" id="tvSub" style="color:#9fb2c9;font-size:14px;font-weight:600"></div>
+    <div class="tv-spacer"></div>
+    <button class="tv-btn" id="btnHero" onclick="toggleHero()">🔆 Modo destaque</button>
+    <button class="tv-btn" onclick="recarregar()">↻ Atualizar</button>
+    <button class="tv-btn" id="btnFull" onclick="toggleFull()">⛶ Tela cheia</button>
+    <div><div class="tv-clock" id="tvClock">--:--</div><div class="tv-upd" id="tvUpd"></div></div>
+  </div>
+
+  <div class="scorebar" id="scorebar"></div>
+  <div class="tv-ctrls" id="tvCtrls">
+    <span class="ctl-lbl">Ordenar</span>
+    <div class="seg" id="sortSeg">
+      <button data-s="risco" class="on">Risco</button>
+      <button data-s="data">Data</button>
+      <button data-s="saude">Saúde</button>
+      <button data-s="pessoas">Pessoas</button>
+    </div>
+    <span class="ctl-lbl" style="margin-left:10px">Indicador</span>
+    <div id="tvFilters" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+
+  <div id="tvGrid" class="tv-grid"></div>
+  <div id="heroNav" class="hero-nav"><button onclick="heroStep(-1)" title="Anterior">◀</button><span class="pos" id="heroPos"></span><div class="dots" id="heroDots"></div><button onclick="heroStep(1)" title="Próxima">▶</button></div>
+  <div id="tvEmpty" class="tv-empty" style="display:none"><h2>Nenhuma turma selecionada</h2><p>Volte ao Meta Master, clique em <b>📺 PAINEL TV</b>, escolha as turmas e abra novamente.</p></div>
+
+<script>
+  var IDS = (new URLSearchParams(location.search).get('ids')||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var DATA = {};   // cache por id: resposta do /api/turma
+  var FILTER='total', SORT='risco', HEALTHFILT='all', HERO=false, heroIdx=0, heroTimer=null;
+
+  var COR={ok:'#46d17a',pend:'#F0C84A',bad:'#e06a5a',warn:'#e8913a',info:'#5b9bd5',neu:'#9fb2c9',total:'#F0C84A'};
+  var FILTERS=[
+    {key:'total',label:'Total',cls:null},
+    {key:'ok',label:'Presença Confirmada',cls:'ok'},
+    {key:'pend',label:'Pendente de Confirmação',cls:'pend'},
+    {key:'warn',label:'Sem retorno',cls:'warn'},
+    {key:'info',label:'Solicitou transferência de turma',cls:'info'},
+    {key:'bad',label:'Cancelamento',cls:'bad'}
+  ];
+  function statusClasse(st){ var s=(st||'').toLowerCase();
+    if(s.indexOf('cancel')>=0) return 'bad';
+    if(s.indexOf('transfer')>=0) return 'info';
+    if(s.indexOf('confirm')>=0 && s.indexOf('pend')<0) return 'ok';
+    if(s.indexOf('pend')>=0||s.indexOf('aguard')>=0) return 'pend';
+    if(s.indexOf('sem retorno')>=0||s.indexOf('sem contato')>=0) return 'warn';
+    return 'neu'; }
+  function ordemStatus(k){ return {ok:0,pend:1,warn:2,info:3,bad:4,neu:5}[k]; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function saude(pct,total){
+    if(!total) return {cls:'neu',cor:'#9fb2c9',grad:'linear-gradient(90deg,#5b6472,#3a4150)',label:'SEM DADOS'};
+    if(pct>=75) return {cls:'ok',cor:'#46d17a',grad:'linear-gradient(90deg,#46d17a,#2e9d5a)',label:'SAUDÁVEL'};
+    if(pct>=50) return {cls:'pend',cor:'#F0C84A',grad:'linear-gradient(90deg,#F0C84A,#c79a2e)',label:'ATENÇÃO'};
+    return {cls:'bad',cor:'#e06a5a',grad:'linear-gradient(90deg,#e06a5a,#b34436)',label:'CRÍTICO'};
+  }
+  // aceita 'dd/mm/aaaa' (o /api/turma) ou 'aaaa-mm-dd'
+  function parseData(s){ if(!s) return null; var m=String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(m) return new Date(+m[3],+m[2]-1,+m[1]); var i=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/); if(i) return new Date(+i[1],+i[2]-1,+i[3]); return null; }
+
+  function turmasCarregadas(){ return IDS.map(function(id){ return DATA[id]; }).filter(function(d){ return d && !d.erro; }); }
+  function gruposDe(d){ var g={ok:0,pend:0,warn:0,info:0,bad:0,neu:0}; if(d&&d.resumo){ Object.keys(d.resumo).forEach(function(st){ g[statusClasse(st)]+=d.resumo[st]; }); } return g; }
+  function metricas(d){
+    var g=gruposDe(d), total=d.total||0, conf=g.ok||0, pctRaw=total?conf/total*100:0;
+    var s=saude(pctRaw,total), faltam=Math.max(0,Math.ceil(total*0.75)-conf);
+    var hoje=new Date(); hoje.setHours(0,0,0,0);
+    var di=parseData(d.ini), dias = di? Math.round((di-hoje)/86400000) : null;
+    var urgente = s.cls==='bad' && dias!=null && dias>=0 && dias<=7;
+    return {g:g,total:total,conf:conf,pct:Math.round(pctRaw),s:s,faltam:faltam,dias:dias,urgente:urgente};
+  }
+  function riscoScore(m){ var base={bad:0,pend:1,ok:2,neu:3}[m.s.cls]; var prox=(m.dias==null||m.dias<0?9999:m.dias)/100; return base+prox; }
+
+  function relogio(){ var d=new Date(); document.getElementById('tvClock').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+  function renderScore(){
+    var ts=turmasCarregadas(), cont={ok:0,pend:0,bad:0,neu:0}, pessoas=0, conf=0;
+    ts.forEach(function(d){ var m=metricas(d); if(cont[m.s.cls]!=null)cont[m.s.cls]++; pessoas+=m.total; conf+=m.conf; });
+    var pctGeral=pessoas?Math.round(conf/pessoas*100):0, sg=saude(pessoas?conf/pessoas*100:0,pessoas);
+    document.getElementById('scorebar').innerHTML=''
+      +'<div class="kpi"><div class="v">'+ts.length+'</div><div class="l">TURMAS</div></div>'
+      +'<div class="kpi"><div class="v">'+pessoas+'</div><div class="l">PESSOAS</div></div>'
+      +'<div class="kpi"><div class="v" style="color:'+sg.cor+'">'+pctGeral+'%</div><div class="l">CONFIRMAÇÃO GERAL</div></div>'
+      +'<div class="sb-health">'
+      +hchip('all','Todas',ts.length,'#cfe0f5')+hchip('ok','Saudáveis',cont.ok,'#46d17a')
+      +hchip('pend','Atenção',cont.pend,'#F0C84A')+hchip('bad','Críticas',cont.bad,'#e06a5a')+'</div>';
+  }
+  function hchip(key,label,n,cor){ return '<div class="hchip '+key+(HEALTHFILT===key?' on':'')+'" style="color:'+cor+'" onclick="setHealth(\''+key+'\')"><span class="dot" style="background:'+cor+'"></span>'+label+' <b>'+n+'</b></div>'; }
+  function setHealth(k){ HEALTHFILT=k; renderScore(); render(); }
+
+  function renderFiltros(){
+    var g={ok:0,pend:0,warn:0,info:0,bad:0,neu:0,total:0};
+    turmasCarregadas().forEach(function(d){ var m=metricas(d); ['ok','pend','warn','info','bad','neu'].forEach(function(k){g[k]+=m.g[k];}); g.total+=m.total; });
+    document.getElementById('tvFilters').innerHTML=FILTERS.map(function(f){
+      var cor=f.cls?COR[f.cls]:COR.total, cnt=f.cls?(g[f.cls]||0):g.total, on=FILTER===f.key;
+      return '<button class="fbtn'+(on?' on':'')+'" style="color:'+cor+(on?';border-color:'+cor:'')+'" onclick="setFiltro(\''+f.key+'\')"><span class="dot"></span>'+esc(f.label)+' <span class="cnt">'+cnt+'</span></button>';
+    }).join('');
+  }
+  function setFiltro(k){ FILTER=k; renderFiltros(); render(); }
+
+  function cardHTML(d){
+    var m=metricas(d), fCls=(FILTER==='total')?null:FILTER;
+    var per=[d.ini,d.fim].filter(Boolean).join(' – ');
+    var big,bigLbl,bigCor,ringPc,ringLb,ringCor;
+    if(fCls){ big=m.g[fCls]||0; bigCor=COR[fCls]; bigLbl=(FILTERS.filter(function(x){return x.key===fCls;})[0]||{}).label||'';
+      if(fCls==='ok'){ ringPc=m.pct; ringLb=m.s.label; ringCor=m.s.cor; } else { ringPc=m.total?Math.round(big/m.total*100):0; ringLb='DA TURMA'; ringCor=COR[fCls]; }
+    } else { big=m.total; bigCor='#fff'; bigLbl='PESSOAS'; ringPc=m.pct; ringLb='CONFIRMADOS'; ringCor=m.s.cor; }
+    var accent=fCls?COR[fCls]:m.s.grad;
+    var cd,cdcls='';
+    if(m.dias==null) cd=''; else if(m.dias<0) cd='em andamento'; else if(m.dias===0){ cd='começa HOJE'; cdcls=m.urgente?'urg':'soon'; }
+    else { cd='faltam '+m.dias+'d'; if(m.urgente) cdcls='urg'; else if(m.dias<=7) cdcls='soon'; }
+    var cdHtml = cd? '<span class="c-cd '+cdcls+'">'+(m.urgente?'⚠ ':'')+cd+'</span>' : '';
+    var acao=(m.total===0)?'<span class="fN">sem matrículas</span>':((m.s.cls==='ok')?'<span class="okmeta">✓ acima da meta (75%)</span>':'<span class="fN">faltam '+m.faltam+' confirmações p/ 75%</span>');
+    var chaves=Object.keys(m.g).filter(function(k){return m.g[k]>0;}).sort(function(a,b){return ordemStatus(a)-ordemStatus(b);});
+    var barra=chaves.map(function(cl){ var w=m.total?(m.g[cl]/m.total*100):0; var op=(!fCls||fCls===cl)?1:0.18; return '<span style="width:'+w+'%;background:'+COR[cl]+';opacity:'+op+'"></span>'; }).join('');
+    var byCls={}; if(d.resumo) Object.keys(d.resumo).forEach(function(st){ var cl=statusClasse(st); (byCls[cl]=byCls[cl]||[]).push({t:st,n:d.resumo[st]}); });
+    var legenda=chaves.map(function(cl){ return (byCls[cl]||[]).map(function(r){ var dim=fCls&&fCls!==cl?' dim':''; return '<div class="lg'+dim+'"><span class="dot" style="background:'+COR[cl]+'"></span><span class="n" style="color:'+COR[cl]+'">'+r.n+'</span><span class="t">'+esc(r.t)+'</span></div>'; }).join(''); }).join('');
+    return '<div class="card'+(m.urgente?' urgent':'')+'" style="--accent:'+accent+';--big:'+bigCor+';--ringc:'+ringCor+'">'
+      +'<div class="c-head"><span class="c-badge '+m.s.cls+'">● '+m.s.label+'</span>'
+      +'<div class="c-name">'+esc(d.nome||('Turma '+d.id))+'</div>'
+      +'<div class="c-meta"><span class="c-date">'+per+'</span>'+cdHtml+'</div></div>'
+      +'<div class="c-body"><div class="c-total">'+big+'<small>'+esc(bigLbl)+'</small></div>'
+      +'<div class="c-ring"><div class="pc">'+ringPc+'%</div><div class="lb">'+ringLb+'</div></div></div>'
+      +'<div class="c-act">'+acao+'</div>'
+      +'<div class="c-barwrap"><div class="c-bar">'+barra+'</div><i class="c-goal" data-l="50%" style="left:50%"></i><i class="c-goal" data-l="75%" style="left:75%"></i></div>'
+      +'<div class="c-legend">'+legenda+'</div></div>';
+  }
+
+  function render(){
+    var lista=turmasCarregadas();
+    if(HEALTHFILT!=='all') lista=lista.filter(function(d){ return metricas(d).s.cls===HEALTHFILT; });
+    lista.sort(function(a,b){ var ma=metricas(a),mb=metricas(b);
+      if(SORT==='data'){ var da=parseData(a.ini),db=parseData(b.ini); return (da?da:0)-(db?db:0); }
+      if(SORT==='saude') return ma.pct-mb.pct;
+      if(SORT==='pessoas') return mb.total-ma.total;
+      return riscoScore(ma)-riscoScore(mb);
+    });
+    var grid=document.getElementById('tvGrid');
+    if(HERO){
+      var n=Math.max(1,lista.length), cur=((heroIdx%n)+n)%n, feat=lista[cur];
+      grid.innerHTML='<div class="hero-feature">'+(feat?cardHTML(feat):'')+'</div>'
+        +'<div class="hero-strip">'+lista.map(function(d,i){ return miniHTML(d,i,i===cur); }).join('')+'</div>';
+      document.getElementById('heroPos').textContent=(cur+1)+' / '+n;
+      document.getElementById('heroDots').innerHTML='';   // a esteira já é o seletor
+    } else {
+      grid.innerHTML=lista.map(cardHTML).join('');
+    }
+  }
+  // mini-card da esteira (barra = % de presença confirmada)
+  function miniHTML(d,i,active){
+    var m=metricas(d);
+    return '<div class="mini'+(active?' on':'')+'" style="--mc:'+m.s.cor+'" onclick="heroGo('+i+')">'
+      +'<div class="mini-top"><span class="mini-dot"></span><span class="mini-nm">'+esc(d.nome||('Turma '+d.id))+'</span></div>'
+      +'<div class="mini-pc">'+m.pct+'%</div>'
+      +'<div class="mini-sub">'+m.s.label+((m.s.cls!=='ok'&&m.total>0)?(' · faltam '+m.faltam):'')+'</div>'
+      +'<div class="mini-bar"><span style="width:'+m.pct+'%;background:'+m.s.cor+'"></span></div></div>';
+  }
+  function resetHeroTimer(){ clearInterval(heroTimer); heroTimer=setInterval(function(){ heroIdx++; render(); }, 9000); }
+  function heroStep(dd){ heroIdx+=dd; render(); resetHeroTimer(); }
+  function heroGo(i){ heroIdx=i; render(); resetHeroTimer(); }
+  function toggleHero(){
+    HERO=!HERO; document.getElementById('btnHero').classList.toggle('on',HERO);
+    document.getElementById('tvGrid').classList.toggle('hero-mode',HERO);
+    document.getElementById('heroNav').classList.toggle('show',HERO);
+    if(HERO){ heroIdx=0; render(); resetHeroTimer(); enterFull(); }
+    else { clearInterval(heroTimer); render(); }
+  }
+  function enterFull(){ var el=document.documentElement; if(!document.fullscreenElement && el.requestFullscreen){ el.requestFullscreen().catch(function(){}); } }
+  function exitFull(){ if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(function(){}); } }
+  function toggleFull(){ if(document.fullscreenElement) exitFull(); else enterFull(); }
+  document.addEventListener('fullscreenchange', function(){ document.getElementById('btnFull').classList.toggle('on', !!document.fullscreenElement); });
+
+  document.getElementById('sortSeg').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); SORT=b.dataset.s; render(); });
+
+  function carregarTurma(id){
+    return fetch('/api/turma?classId='+encodeURIComponent(id)+'&contatos=0',{cache:'no-store'})
+      .then(function(r){ return r.json(); }).then(function(d){ DATA[id]=d; }).catch(function(e){ DATA[id]={erro:e.message}; });
+  }
+  function recarregar(){
+    if(!IDS.length){ document.getElementById('tvGrid').style.display='none'; document.getElementById('tvCtrls').style.display='none'; document.getElementById('scorebar').style.display='none'; document.getElementById('tvEmpty').style.display='block'; return; }
+    if(!Object.keys(DATA).length) document.getElementById('tvGrid').innerHTML='<div class="c-load pulse">Carregando '+IDS.length+' turma(s)…</div>';
+    document.getElementById('tvSub').textContent=IDS.length+' turma(s) no painel';
+    Promise.all(IDS.map(carregarTurma)).then(function(){
+      renderScore(); renderFiltros(); render();
+      var d=new Date(); document.getElementById('tvUpd').textContent='atualizado '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    });
+  }
+
+  relogio(); setInterval(relogio,10000);
+  recarregar();
+  setInterval(recarregar, 180000);   // auto-atualiza a cada 3 min
+</script>
+</body>
+</html>
