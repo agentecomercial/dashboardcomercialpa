@@ -172,7 +172,7 @@ function ZS-Init {
   $ri = Invoke-WebRequest -Uri 'https://mcp.zsales.com.br/mcp' -Method Post -Headers $base -ContentType 'application/json' `
         -Body '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"lancamentos-zs","version":"1"}}}' -UseBasicParsing
   $sid = $ri.Headers['Mcp-Session-Id']; if ($sid -is [array]) { $sid = $sid[0] }
-  $h = $base.Clone(); $h['Mcp-Session-Id'] = $sid
+  $h = $base.Clone(); if ($sid) { $h['Mcp-Session-Id'] = $sid }   # MCP 1.27 nao devolve mais o header; header nulo quebra o Invoke-WebRequest
   Invoke-WebRequest -Uri 'https://mcp.zsales.com.br/mcp' -Method Post -Headers $h -ContentType 'application/json' -Body '{"jsonrpc":"2.0","method":"notifications/initialized"}' -UseBasicParsing | Out-Null
   $script:zsH = $h
 }

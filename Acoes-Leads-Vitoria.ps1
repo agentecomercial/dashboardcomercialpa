@@ -116,7 +116,7 @@ if ($Modo -eq 'apply') {
     $initBody = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ps","version":"1"}}}'
     $ri  = Invoke-WebRequest -Uri $Url -Method Post -Headers $baseHeaders -ContentType 'application/json' -Body $initBody -UseBasicParsing
     $sid = $ri.Headers['Mcp-Session-Id']; if ($sid -is [array]) { $sid = $sid[0] }
-    $h = $baseHeaders.Clone(); $h['Mcp-Session-Id'] = $sid
+    $h = $baseHeaders.Clone(); if ($sid) { $h['Mcp-Session-Id'] = $sid }   # MCP 1.27 nao devolve mais o header; header nulo quebra o Invoke-WebRequest
     Invoke-WebRequest -Uri $Url -Method Post -Headers $h -ContentType 'application/json' -Body '{"jsonrpc":"2.0","method":"notifications/initialized"}' -UseBasicParsing | Out-Null
 
     # O banco do Sales Cube entra em somente-leitura por alguns minutos (failover para replica).
@@ -270,7 +270,7 @@ try {
   $initBody = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ps","version":"1"}}}'
   $ri  = Invoke-WebRequest -Uri $Url -Method Post -Headers $baseHeaders -ContentType 'application/json' -Body $initBody -UseBasicParsing
   $sid = $ri.Headers['Mcp-Session-Id']; if ($sid -is [array]) { $sid = $sid[0] }
-  $h = $baseHeaders.Clone(); $h['Mcp-Session-Id'] = $sid
+  $h = $baseHeaders.Clone(); if ($sid) { $h['Mcp-Session-Id'] = $sid }   # MCP 1.27 nao devolve mais o header; header nulo quebra o Invoke-WebRequest
   Invoke-WebRequest -Uri $Url -Method Post -Headers $h -ContentType 'application/json' -Body '{"jsonrpc":"2.0","method":"notifications/initialized"}' -UseBasicParsing | Out-Null
 
   # Uma pagina do relatorio, com nova tentativa quando o banco esta em somente-leitura.
