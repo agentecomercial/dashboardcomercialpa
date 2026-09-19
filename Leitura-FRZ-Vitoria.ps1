@@ -287,6 +287,8 @@ foreach ($v in $vendas) {
     vl = [double]$v.valor
     lq = if ($null -ne $v.liquidez) { [double]$v.liquidez } else { [double]$v.valor }
     st = $k
+    # data da venda: vira a coluna Data do dossie de treinamentos (Meta Master)
+    dt = try { ([datetime]$v.created_at).ToString('dd/MM/yyyy') } catch { '' }
   }
 }
 

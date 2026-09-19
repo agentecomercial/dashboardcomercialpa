@@ -7,7 +7,7 @@
 <!-- Carimbo da versão: serve para saber, em 2 segundos, se a atualização entrou no navegador.
      Digite MM_BUILD no console (F12) ou veja a dica do mouse no título do painel. Quem edita o
      arquivo atualiza esta data. Se aparecer uma data velha, é cache: abra com ?nosw=1. -->
-<meta name="mm-build" content="2026-09-17 18:15">
+<meta name="mm-build" content="2026-09-19 00:20">
 <script>window.MM_BUILD=(document.querySelector('meta[name=mm-build]')||{}).content||'';console.info('Meta Master · versão '+window.MM_BUILD);</script>
 <!-- ===== PWA (atalho instalavel no Android e no iPhone) ===== -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -1800,6 +1800,11 @@
   .fc-mb{background:#1c1c1c;border:1px solid #3a3a3a;color:#cfcfcf;font-weight:800;font-size:12px;
     padding:6px 14px;border-radius:18px;cursor:pointer;font-family:inherit;}
   .fc-mb.on{background:#F0C84A;border-color:#F0C84A;color:#111;}
+  /* ação, não modelo: o dossiê baixa um arquivo em vez de trocar o desenho do card */
+  .fc-mb.acao{border-color:#3f7a55;color:#8fdcab;background:#14281c;}
+  .fc-mb.acao:hover{background:#1a3524;border-color:#57a874;}
+  .fc-mb.acao.ok{background:#16301f;border-color:#57a874;}
+  .fc-modelo .sep{width:1px;height:20px;background:#3a3a3a;flex:0 0 auto;}
   /* card da turma (Leitura FRZ): os 5 modelos numa linha so; o modal alarga para caber */
   .mc-box.mc-largo{max-width:1060px;}
   #fcModeloBar{flex-wrap:nowrap;overflow-x:auto;margin-top:22px;}
@@ -19980,6 +19985,114 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       setTimeout(function(){ bt.textContent=o; bt.classList.remove('ok'); },1600); }
   }
 
+  /* ── Dossiê dos treinamentos ──────────────────────────────────────────────
+     Último botão da barra de modelos e o único que não desenha card: baixa um
+     .html com uma seção por treinamento e, dentro de cada uma, quem fechou —
+     cliente, consultor, valor e líquido. Abre no navegador e vira PDF no Ctrl+P:
+     é o material da reunião de turma. Sai do mesmo recorte que o bloco já leu
+     (mesmo filtro de situação), sem consulta nova ao FRZ nem ao ZS. */
+  function fcDossieSecoes(){
+    const vend=(FRZ_DATA&&Array.isArray(FRZ_DATA.vendas))?FRZ_DATA.vendas:[];
+    const sel=(FRZ_DATA&&Array.isArray(FRZ_DATA.statusSel)&&FRZ_DATA.statusSel.length)?FRZ_DATA.statusSel:['fin'];
+    const porCurso={};
+    vend.filter(function(v){ return sel.indexOf(v.st)>=0; }).forEach(function(v){
+      const cu=String(v.cu||'—').trim()||'—';
+      (porCurso[cu]=porCurso[cu]||[]).push(v); });
+    return FC.tre.map(function(t){
+      return { t:t, linhas:(porCurso[t.curso]||[]).slice().sort(function(a,b){
+        return (+b.vl||0)-(+a.vl||0) || String(a.al||'').localeCompare(String(b.al||''),'pt-BR'); }) };
+    });
+  }
+  function fcDossieHtml(){
+    const secs=fcDossieSecoes();
+    // a data só existe se a Leitura FRZ mandar `dt` na venda; sem ela a coluna some
+    const temData=secs.some(function(s){ return s.linhas.some(function(v){ return v.dt; }); });
+    const turma=fcTituloTurma()||'turma', praca=(FRZ_DATA&&FRZ_DATA.praca)||'',
+          sit=(FRZ_DATA&&FRZ_DATA.situacao)||'Pagamento finalizado';
+    const corpo=secs.map(function(s){
+      const t=s.t, cor=fcCorCurso(t.curso);
+      const linhas=s.linhas.map(function(v){
+        const lq=(v.lq==null?v.vl:v.lq);
+        return '<tr>'+(temData?'<td class="d">'+esc(v.dt||'—')+'</td>':'')
+          +'<td>'+esc(v.al||'—')+'</td><td class="c">'+esc(v.cs||'—')+'</td>'
+          +'<td class="v">'+fcMoeda(v.vl)+'</td><td class="v lq">'+fcMoeda(lq)+'</td></tr>'; }).join('')
+        || '<tr><td colspan="'+(temData?5:4)+'" class="vz">sem detalhe de venda neste recorte</td></tr>';
+      return '<section><h2><i style="background:'+cor+'"></i>'+esc(t.curso)+'</h2>'
+        +'<p class="res">'+t.q+' cliente(s) · '+s.linhas.length+' venda(s) · <b>'+fcMoeda(t.v)+'</b>'
+        +(FC.total?' · '+(t.v/FC.total*100).toFixed(1).replace('.',',')+'% da turma':'')+'</p>'
+        +'<table><thead><tr>'+(temData?'<th>Data</th>':'')
+        +'<th>Cliente</th><th>Consultor</th><th class="v">Valor</th><th class="v">Líquido</th>'
+        +'</tr></thead><tbody>'+linhas+'</tbody></table></section>';
+    }).join('');
+    /* Quantidade de cada treinamento logo abaixo do resumo da turma: o número que se
+       procura primeiro é quantas vendas saíram de cada curso. O de clientes só aparece
+       quando difere das vendas — é o caso de quem levou duas vagas do mesmo treinamento. */
+    const quadro='<h3 class="qtd-h">Quantidade por treinamento</h3><ul class="qtd">'
+      +secs.map(function(s){
+        const t=s.t, n=s.linhas.length||t.q;
+        return '<li><i style="background:'+fcCorCurso(t.curso)+'"></i>'
+          +'<span class="q-nm">'+esc(t.curso)+'</span><span class="q-pt"></span>'
+          +'<b>'+n+'</b><span class="q-un">'+(n===1?'venda':'vendas')+'</span>'
+          +(t.q!==n?'<em>'+t.q+' cliente'+(t.q===1?'':'s')+'</em>':'')
+          +'<span class="q-vl">'+fcMoeda(t.v)+'</span></li>'; }).join('')
+      +'<li class="q-tot"><i></i><span class="q-nm">TOTAL</span><span class="q-pt"></span>'
+        +'<b>'+FC.vendas+'</b><span class="q-un">vendas</span>'
+        +'<span class="q-vl">'+fcMoeda(FC.total)+'</span></li></ul>';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+      +'<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+      +'<title>Treinamentos vendidos — '+esc(turma)+'</title><style>'
+      +'*{box-sizing:border-box;margin:0;padding:0}'
+      +'body{font-family:Archivo,Segoe UI,system-ui,sans-serif;background:#fff;color:#1c1c22;padding:34px;max-width:900px;margin:0 auto}'
+      +'h1{font-size:23px}.cab{color:#5c6470;font-size:12.5px;margin:6px 0 4px;font-weight:700}'
+      +'.tot{font-size:13px;color:#1c7a45;font-weight:800;margin-bottom:16px}'
+      +'.qtd-h{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#8b8b95;margin-bottom:6px}'
+      +'.qtd{list-style:none;margin:0 0 26px;border:1px solid #e6e6ec;border-radius:10px;padding:8px 14px;page-break-inside:avoid}'
+      +'.qtd li{display:flex;align-items:baseline;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid #f4f4f8}'
+      +'.qtd li:last-child{border-bottom:0}'
+      +'.qtd i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;align-self:center}'
+      +'.qtd .q-nm{font-weight:700}'
+      +'.qtd .q-pt{flex:1;border-bottom:1px dotted #d8d8e0;min-width:14px}'
+      +'.qtd b{font-variant-numeric:tabular-nums;font-size:15px;color:#1c1c22}'
+      +'.qtd .q-un{font-size:10.5px;color:#8b8b95;font-weight:700}'
+      +'.qtd em{font-style:normal;font-size:10.5px;color:#8b8b95;font-weight:700}'
+      +'.qtd .q-vl{font-variant-numeric:tabular-nums;font-weight:700;color:#1c7a45;font-size:12px;min-width:88px;text-align:right}'
+      +'.qtd .q-tot{border-top:1px solid #e6e6ec;margin-top:2px;padding-top:8px}'
+      +'.qtd .q-tot .q-nm,.qtd .q-tot b{color:#1c7a45}'
+      +'section{margin-bottom:24px;page-break-inside:avoid}'
+      +'h2{font-size:15px;display:flex;align-items:center;gap:8px;border-bottom:2px solid #e6e6ec;padding-bottom:6px}'
+      +'h2 i{width:11px;height:11px;border-radius:3px;display:inline-block}'
+      +'.res{font-size:12px;color:#5c6470;margin:7px 0 9px;font-weight:600}'
+      +'table{width:100%;border-collapse:collapse;font-size:12.5px}'
+      +'th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#8b8b95;padding:5px 7px;border-bottom:1px solid #e6e6ec}'
+      +'td{padding:6px 7px;border-bottom:1px solid #f1f1f5}'
+      +'td.v,th.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}'
+      +'td.lq{color:#1c7a45}td.c,td.d{color:#6f757f}'
+      +'td.vz{color:#8b8b95;font-style:italic}'
+      +'.pe{margin-top:26px;font-size:11px;color:#8b8b95;border-top:1px solid #e6e6ec;padding-top:10px}'
+      +'@media print{body{padding:0}}</style></head><body>'
+      +'<h1>🎓 Treinamentos vendidos</h1>'
+      +'<p class="cab">'+esc(praca?praca+' · ':'')+esc(turma)+' · '+esc(sit)+'</p>'
+      +'<p class="tot">'+FC.tre.length+' treinamento(s) · '+FC.vendas+' venda(s) · '
+        +FC.cli.length+' cliente(s) · '+fcMoeda(FC.total)+'</p>'
+      +quadro
+      +corpo
+      +'<p class="pe">Meta Master · Leitura FRZ · gerado em '+new Date().toLocaleString('pt-BR')
+      +' · imprima em PDF com Ctrl+P</p></body></html>';
+  }
+  function fcBaixarDossie(bt){
+    if(!FC.tre.length){ toast('Rode a Leitura FRZ primeiro'); return; }
+    const nome=('treinamentos-'+(fcTituloTurma()||'turma')).toLowerCase().normalize('NFD')
+      .replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.html';
+    const url=URL.createObjectURL(new Blob([fcDossieHtml()],{type:'text/html;charset=utf-8'}));
+    const a=document.createElement('a'); a.href=url; a.download=nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    window.open(url,'_blank');            // abre para conferir; o arquivo baixado é o mesmo
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+    toast('Dossiê gerado: '+FC.tre.length+' treinamento(s) · arquivo '+nome);
+    if(bt){ const o=bt.textContent; bt.textContent='✓ Baixado'; bt.classList.add('ok');
+      setTimeout(function(){ bt.textContent=o; bt.classList.remove('ok'); },1700); }
+  }
+
   // card de imagem: o modelo é escolhido na hora, dentro do próprio modal
   function fcAbrirCard(){
     if(!FC.cli.length){ toast('Rode a Leitura FRZ primeiro'); return; }
@@ -19993,7 +20106,12 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
         +'<button class="fc-mb" data-m="ranking" onclick="fcTrocarModelo(\'ranking\')">🏆 Ranking por valor</button>'
         +'<button class="fc-mb" data-m="janela" onclick="fcTrocarModelo(\'janela\')">🪟 Janela</button>'
         +'<button class="fc-mb" data-m="janelaNeg" onclick="fcTrocarModelo(\'janelaNeg\')">🪟 Janela + negociação</button>'
-        +'<button class="fc-mb" data-m="janelaMeta" onclick="fcTrocarModelo(\'janelaMeta\')">🪟 Janela + meta</button>';
+        +'<button class="fc-mb" data-m="janelaMeta" onclick="fcTrocarModelo(\'janelaMeta\')">🪟 Janela + meta</button>'
+        /* último da fila e separado: não desenha card nenhum — baixa o dossiê dos treinamentos */
+        +'<span class="sep"></span>'
+        +'<button class="fc-mb acao" onclick="fcBaixarDossie(this)"'
+        +' title="Baixa um arquivo com uma seção por treinamento e quem fechou cada um (abre no navegador, Ctrl+P salva em PDF)">'
+        +'📄 Dossiê dos treinamentos</button>';
       const cv=document.getElementById('mcCanvas'); cv.parentNode.insertBefore(bar,cv);
     }
     bar.style.display='flex';
@@ -20008,6 +20126,52 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   }
   function fcCorta(ctx,t,max){ let s=String(t); if(ctx.measureText(s).width<=max) return s;
     while(s.length>1 && ctx.measureText(s+'…').width>max) s=s.slice(0,-1); return s+'…'; }
+
+  /* ── Quem fechou cada treinamento, dentro do card ────────────────────────
+     Contar não basta: o gestor quer os nomes, principalmente dos treinamentos que
+     não são o carro-chefe da turma (o CEOP, o CI, a vaga avulsa). Três ajudantes:
+     nome curto para caber, quebra de linha medida no canvas e as siglas coloridas. */
+  // "Maria Gerúzia Gervásio de Souza" → "Maria Gerúzia"; preposição não conta como sobrenome
+  function fcNomeCurto(n){
+    const p=String(n||'').split(' ').filter(Boolean);
+    const out=[];
+    for(let i=0;i<p.length && out.length<2;i++){
+      if(i>0 && FC_PREP.indexOf(p[i].toLowerCase())>=0) continue;
+      out.push(p[i]);
+    }
+    return out.join(' ')||String(n||'');
+  }
+  /* Quebra a lista de nomes em até `maxLin` linhas; o que não couber na última
+     vira "+N" — nunca some gente do card sem o leitor saber quantos ficaram. */
+  function fcQuebraNomes(ctx, nomes, max, maxLin){
+    const linhas=[]; let cur='';
+    for(let i=0;i<nomes.length;i++){
+      const t=cur?cur+', '+nomes[i]:nomes[i];
+      if(ctx.measureText(t).width<=max){ cur=t; continue; }
+      if(linhas.length===maxLin-1){          // última linha: fecha com o "+N"
+        let ult=cur||nomes[i], j=cur?i:i+1;
+        while(j<nomes.length && ctx.measureText(ult+', '+nomes[j]+' +'+(nomes.length-j-1)).width<=max){
+          ult+=', '+nomes[j]; j++; }
+        if(j<nomes.length) ult+=' +'+(nomes.length-j);
+        linhas.push(ult); return linhas;
+      }
+      if(cur) linhas.push(cur);
+      cur=nomes[i];
+    }
+    if(cur) linhas.push(cur);
+    return linhas;
+  }
+  // siglas dos treinamentos do cliente, cada uma na cor do seu curso
+  function fcCursosTxt(ctx, cursos, x, by, max, font){
+    ctx.font=font; let cx=x;
+    for(let i=0;i<cursos.length;i++){
+      const sep=i?' + ':'', sg=fcSigla(cursos[i]);
+      const ws=ctx.measureText(sep).width, wg=ctx.measureText(sg).width;
+      if(cx-x+ws+wg>max){ ctx.fillStyle='#6f8098'; ctx.fillText(' +'+(cursos.length-i), cx, by); return; }
+      if(sep){ ctx.fillStyle='#5d6d82'; ctx.fillText(sep,cx,by); cx+=ws; }
+      ctx.fillStyle=fcCorCurso(cursos[i]); ctx.fillText(sg,cx,by); cx+=wg;
+    }
+  }
 
   /* ── Card "Janela" (escolhido em 10/09/2026, prévias 2, 4 e 5 do _preview-card-janela.html) ──
      Print preto e branco da tabela de situação: Situação · Linhas · Bruto · Líquido, com
@@ -20118,10 +20282,18 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   function fcDraw(modelo){
     if(modelo==='janela'||modelo==='janelaNeg'||modelo==='janelaMeta') return fcDrawJanela(modelo);
     const cv=document.getElementById('mcCanvas'); if(!cv) return;
-    const W=1040, pad=34, DPR=2, head=132;
+    const W=1040, pad=34, DPR=2, head=132, lw=430;
+    /* As linhas de nomes de cada treinamento são medidas num canvas de rascunho: a altura
+       do card depende delas, e medir depois de definir cv.height zeraria o contexto. */
+    const rasc=document.createElement('canvas').getContext('2d'); rasc.font='600 14px Arial';
+    /* Sem teto de linhas: o card cresce e mostra TODO mundo — nome de cliente não some
+       atrás de um "+N" (o limite de 99 é só rede de segurança contra turma gigante). */
+    const linhasTre=(modelo==='ranking') ? [] : FC.tre.map(function(t){
+      return fcQuebraNomes(rasc, t.clientes.map(fcNomeCurto), lw, 99); });
+    const altTre=linhasTre.reduce(function(a,l){ return a+62+l.length*18; },0);
     const H = (modelo==='ranking')
       ? head+30+FC.cli.length*40+70
-      : head+30+Math.max(FC.tre.length*62, Math.ceil(FC.cli.length/2)*40)+84;
+      : head+30+Math.max(altTre, Math.ceil(FC.cli.length/2)*48)+84;
     cv.width=W*DPR; cv.height=H*DPR;
     const c=cv.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0);
     let bg=c.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0e1826'); bg.addColorStop(1,'#0b0f18');
@@ -20146,35 +20318,41 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
         const by=y+i*40;
         c.fillStyle='rgba(255,255,255,0.045)'; mcRR(c,pad,by-20,W-pad*2,32,8); c.fill();
         c.font='800 14px Consolas,monospace'; c.fillStyle='#5d6d82'; c.fillText(('0'+(i+1)).slice(-2), pad+12, by);
-        c.font='800 19px Arial'; c.fillStyle='#e6edf6'; c.fillText(fcCorta(c,cl.nome,300), pad+48, by);
-        c.font='800 13px Arial'; c.fillStyle=fcCorCurso(cl.cursos[0]);
-        c.fillText(fcCorta(c,cl.cursos.join(' + '),180), pad+370, by);
-        const bx=pad+560, bw=W-pad-160-bx;
+        c.font='800 19px Arial'; c.fillStyle='#e6edf6'; c.fillText(fcCorta(c,cl.nome,290), pad+48, by);
+        // todos os treinamentos do cliente, não só o primeiro: quem fechou dois aparece com os dois
+        fcCursosTxt(c, cl.cursos, pad+352, by, 258, '800 13px Arial');
+        const bx=pad+630, bw=W-pad-160-bx;
         c.fillStyle='rgba(255,255,255,0.07)'; mcRR(c,bx,by-9,bw,10,5); c.fill();
         c.fillStyle=fcCorCurso(cl.cursos[0]); mcRR(c,bx,by-9,Math.max(10,bw*cl.v/FC.maiorCli),10,5); c.fill();
         c.textAlign='right'; c.font='900 17px Consolas,monospace'; c.fillStyle='#f0d98a';
         c.fillText(fcMoeda(cl.v), W-pad-14, by); c.textAlign='left';
       });
     } else {
-      const lw=340;
-      c.font='800 13px Arial'; c.fillStyle='#7f8ea0'; c.fillText('TREINAMENTOS FECHADOS', pad, y+6);
+      c.font='800 13px Arial'; c.fillStyle='#7f8ea0'; c.fillText('TREINAMENTOS FECHADOS · QUEM FECHOU', pad, y+6);
+      let ty=y+38;
       FC.tre.forEach(function(t,i){
-        const by=y+38+i*62;
-        c.font='800 18px Arial'; c.fillStyle='#dbe3ee'; c.fillText(fcCorta(c,t.curso,lw-52), pad, by);
+        c.font='800 18px Arial'; c.fillStyle='#dbe3ee'; c.fillText(fcCorta(c,t.curso,lw-52), pad, ty);
         c.textAlign='right'; c.font='900 18px Arial'; c.fillStyle=fcCorCurso(t.curso);
-        c.fillText(String(t.q), pad+lw, by); c.textAlign='left';
-        c.fillStyle='rgba(255,255,255,0.07)'; mcRR(c,pad,by+10,lw,10,5); c.fill();
-        c.fillStyle=fcCorCurso(t.curso); mcRR(c,pad,by+10,Math.max(12,lw*t.q/FC.maiorTre),10,5); c.fill();
+        c.fillText(String(t.q), pad+lw, ty); c.textAlign='left';
+        c.fillStyle='rgba(255,255,255,0.07)'; mcRR(c,pad,ty+10,lw,10,5); c.fill();
+        c.fillStyle=fcCorCurso(t.curso); mcRR(c,pad,ty+10,Math.max(12,lw*t.q/FC.maiorTre),10,5); c.fill();
+        // os nomes de quem fechou ESTE treinamento, logo abaixo da barra
+        const lin=linhasTre[i]||[];
+        c.font='600 14px Arial'; c.fillStyle='#8ea0b6';
+        lin.forEach(function(ln,k){ c.fillText(ln, pad, ty+42+k*18); });
+        ty+=62+lin.length*18;
       });
       c.strokeStyle='rgba(255,255,255,0.09)'; c.lineWidth=1; c.beginPath();
       c.moveTo(pad+lw+34,y-4); c.lineTo(pad+lw+34,H-56); c.stroke();
       const rx=pad+lw+62, rw=(W-pad-rx-20)/2;
-      c.font='800 13px Arial'; c.fillStyle='#7f8ea0'; c.fillText('CLIENTES', rx, y+6);
+      c.font='800 13px Arial'; c.fillStyle='#7f8ea0'; c.fillText('CLIENTES · O QUE CADA UM FECHOU', rx, y+6);
       FC.cli.forEach(function(cl,i){
-        const bx=rx+(i%2)*(rw+20), by=y+40+Math.floor(i/2)*40;
+        const bx=rx+(i%2)*(rw+20), by=y+40+Math.floor(i/2)*48;
         c.fillStyle=fcCorCurso(cl.cursos[0]); c.beginPath(); c.arc(bx+5,by-6,5,0,Math.PI*2); c.fill();
-        c.font='700 18px Arial'; c.fillStyle='#e6edf6'; c.fillText(fcCorta(c,cl.nome,rw-26), bx+18, by);
-        c.strokeStyle='rgba(255,255,255,0.06)'; c.beginPath(); c.moveTo(bx,by+12); c.lineTo(bx+rw-6,by+12); c.stroke();
+        c.font='700 17px Arial'; c.fillStyle='#e6edf6'; c.fillText(fcCorta(c,cl.nome,rw-26), bx+18, by);
+        // as siglas do que este cliente fechou, cada uma na cor do treinamento
+        fcCursosTxt(c, cl.cursos, bx+18, by+17, rw-26, '700 12px Arial');
+        c.strokeStyle='rgba(255,255,255,0.06)'; c.beginPath(); c.moveTo(bx,by+26); c.lineTo(bx+rw-6,by+26); c.stroke();
       });
     }
     c.font='600 15px Arial'; c.fillStyle='#5d6d82';
