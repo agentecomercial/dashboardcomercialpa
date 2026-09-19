@@ -244,11 +244,14 @@ function QsUtf8($req, [string]$chave) {
 # Ponto unico por onde as demais rotas chamam script filho. Ganhou limite de tempo: o servidor
 # atende uma requisicao por vez, entao um filho travado congelava tudo, sem erro nem fim.
 # Mantem o comportamento antigo de juntar stderr na saida (EAP Continue + 2>&1).
-# ---- executor unico de script filho (auditoria 18/09/2026) ----
+# ---- executor unico de script filho (auditoria 18/09/2026, concluida em 19/09/2026) ----
 # Existiam TRES formas de rodar um .ps1 aqui, com garantias diferentes:
 #   Invoke-ScriptTimeout  -> timeout + exit code confiavel (usada por 1 rota)
-#   Rodar-Filho           -> Start-Job, sem exit code
+#   Rodar-Filho           -> Start-Job, sem exit code  [REMOVIDA em 19/09/2026]
 #   & powershell ... *>&1 -> 17 rotas: SEM TIMEOUT e sem exit code util
+# Hoje TODAS as rotas usam Exec-Filho. A ultima a migrar foi /api/vendas-zs, que
+# fecha Ganho e remove vaga no ZS -- a rota de maior poder de escrita estava no
+# mecanismo que nao sabia dizer se o filho tinha falhado.
 # Num servidor que atende uma requisicao por vez, um filho travado congela o
 # app inteiro -- e era o caso em 17 das 23 rotas.
 #
@@ -286,24 +289,6 @@ function Falha-DoFilho {
   return $null
 }
 
-function Rodar-Filho([string]$Arquivo, [object[]]$Argumentos, [int]$TimeoutSeg = 240) {
-  $job = Start-Job -ScriptBlock {
-    param($arq, $args2)
-    & { $ErrorActionPreference = 'Continue'
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $arq @args2 2>&1
-      } | ForEach-Object { "$_" } | Out-String
-  } -ArgumentList $Arquivo, (,@($Argumentos))
-  $fim = Wait-Job $job -Timeout $TimeoutSeg
-  if (-not $fim) {
-    try { Stop-Job $job -ErrorAction SilentlyContinue } catch {}
-    try { Remove-Job $job -Force -ErrorAction SilentlyContinue } catch {}
-    return ('{"erro":"tempo esgotado (' + $TimeoutSeg + ' s) executando ' + (Split-Path $Arquivo -Leaf) + '"}')
-  }
-  $out = ''
-  try { $out = (Receive-Job $job -ErrorAction SilentlyContinue | Out-String) } catch {}
-  try { Remove-Job $job -Force -ErrorAction SilentlyContinue } catch {}
-  return $out
-}
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add($prefix)
@@ -702,10 +687,14 @@ while ($listener.IsListening) {
       if (($de -or $ate) -and $id -notin 'leituraTurma','relatorioTurma','pesqSocio','painel','leituraFrz','leituraFrzTurmas','tabelaPrecos') { if($de){$psArgs+=@('-De',$de)}; if($ate){$psArgs+=@('-Ate',$ate)} }   # intervalo de datas
       $full = Join-Path $raiz $script
       $out  = Exec-Filho $full $psArgs
-      $code = $LASTEXITCODE
+      # $LASTEXITCODE nao e populado por Start-Process: ficava travado no valor de outro
+      # processo e TODA falha do filho virava 200 (auditoria 19/09/2026). O codigo real
+      # esta em $script:ultimoExit. A heuristica de texto le o STDERR, nunca o stdout:
+      # um relatorio com "R$ 2.503,00" casaria com o padrao '503' e viraria 500 falso.
+      $falha = Falha-DoFilho $script:ultimoErr $script:ultimoExit
       if ($tmpLista) { Remove-Item $tmpLista -ErrorAction SilentlyContinue }
-      $okCmd = ($code -eq 0 -or $null -eq $code)
-      $res.StatusCode = if ($okCmd) { 200 } else { 500 }
+      if ($falha) { Log-Erro "/api/cmd id=$id -> $falha" $script:ultimoErr }
+      $res.StatusCode = if ($falha) { 500 } else { 200 }
       $res.ContentType = 'text/plain; charset=utf-8'
       $buf = [Text.Encoding]::UTF8.GetBytes($out)
       $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
@@ -727,8 +716,9 @@ while ($listener.IsListening) {
       $full = Join-Path $raiz 'Painel-Turma.ps1'
       $ptArgs = @('-ClassId', $cid); if ($req.QueryString['contatos'] -eq '0') { $ptArgs += '-SemContatos' }   # Painel TV pede sem contatos (rapido)
       $out  = Exec-Filho $full $ptArgs
-      $code = $LASTEXITCODE
-      $res.StatusCode = if ($code -eq 0 -or $null -eq $code) { 200 } else { 500 }
+      $falha = Falha-DoFilho $script:ultimoErr $script:ultimoExit   # ver comentario em /api/cmd
+      if ($falha) { Log-Erro "/api/turma classId=$cid -> $falha" $script:ultimoErr }
+      $res.StatusCode = if ($falha) { 500 } else { 200 }
       $buf = [Text.Encoding]::UTF8.GetBytes($out.Trim())
       $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
       $stamp = (Get-Date -Format 'HH:mm:ss')
@@ -903,7 +893,6 @@ while ($listener.IsListening) {
         $tmp = Join-Path $env:TEMP ('acao_plano_' + [Guid]::NewGuid().ToString('N') + '.json')
         [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($false)))
         $out  = Exec-Filho $script @('-Acao', $acao, '-Modo', 'apply', '-PlanoFile', $tmp)
-        $code = $LASTEXITCODE
         Remove-Item $tmp -ErrorAction SilentlyContinue
       } else {
         # PREVIEW: monta os argumentos a partir da querystring (so os preenchidos)
@@ -922,14 +911,20 @@ while ($listener.IsListening) {
         if ($req.QueryString['etapaDestino']) { $psArgs += @('-EtapaDestino', $req.QueryString['etapaDestino']) }
         $qtd = $req.QueryString['quantidade']; if ($qtd -match '^\d+$') { $psArgs += @('-Quantidade', $qtd) }
         $out  = Exec-Filho $script $psArgs
-        $code = $LASTEXITCODE
       }
+      # Esta rota ESCREVE no CRM. Antes, o sucesso era so "tem { e } na saida" -- um script
+      # morto por timeout no meio da gravacao ainda podia devolver 200. Agora o codigo de
+      # saida real (via $script:ultimoExit) manda, e a heuristica le o stderr.
+      $falha = Falha-DoFilho $script:ultimoErr $script:ultimoExit
       # extrai so o objeto JSON (descarta ruido antes/depois)
       $i = $out.IndexOf('{'); $j = $out.LastIndexOf('}')
       $jsonTxt = if ($i -ge 0 -and $j -gt $i) { $out.Substring($i, $j - $i + 1) } else { '' }
-      $res.StatusCode = if ($jsonTxt) { 200 } else { 500 }
+      if ($falha) { Log-Erro "/api/acao acao=$acao metodo=$($req.HttpMethod) -> $falha" $script:ultimoErr }
+      $res.StatusCode = if ($falha -or -not $jsonTxt) { 500 } else { 200 }
       $res.ContentType = 'application/json; charset=utf-8'
-      $body2 = if ($jsonTxt) { $jsonTxt } else { (@{ erro = ($out.Trim()) } | ConvertTo-Json -Compress) }
+      $body2 = if ($falha) { (@{ ok=$false; erro=$falha; detalhe=($out.Trim()) } | ConvertTo-Json -Compress) }
+               elseif ($jsonTxt) { $jsonTxt }
+               else { (@{ ok=$false; erro = ($out.Trim()) } | ConvertTo-Json -Compress) }
       $buf = [Text.Encoding]::UTF8.GetBytes($body2)
       $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
       $stamp = (Get-Date -Format 'HH:mm:ss')
@@ -1048,7 +1043,7 @@ while ($listener.IsListening) {
       if ($esc -in 'todas','rede','unidade') { $argsLK += @('-Escopo', $esc) }
       $prod = $req.QueryString['produto']
       if ($prod -match '^[A-Za-z0-9\-\+ ]{1,40}$') { $argsLK += @('-Produto', $prod) }
-      $o = Rodar-Filho $scriptLK $argsLK
+      $o = Exec-Filho $scriptLK $argsLK
       $i = $o.IndexOf('{'); $j = $o.LastIndexOf('}')
       $bodyLK = if ($i -ge 0 -and $j -gt $i) { $o.Substring($i, $j - $i + 1) } else { '' }
       if (-not $bodyLK) { $bodyLK = (@{ ok=$false; erro=("Pegar-Link-SF: " + $o.Trim()) } | ConvertTo-Json -Compress) }
@@ -1168,7 +1163,7 @@ while ($listener.IsListening) {
         $qG = [string]$req.QueryString['org']; if ($qG -notmatch '^[123]$') { $qG = '2' }
         if ($qV -notmatch '^\d{1,12}$') { RespVZ @{ ok=$false; erro='vaga invalida' } 400; continue }
         if ($qO -notmatch '^\d{1,12}$') { $qO = '0' }
-        $sR = Rodar-Filho $script @('-Acao','remover','-Vaga',$qV,'-Opp',$qO,'-Org',$qG,'-Aplicar','-Json')
+        $sR = Exec-Filho $script @('-Acao','remover','-Vaga',$qV,'-Opp',$qO,'-Org',$qG,'-Aplicar','-Json')
         $kr = $sR.IndexOf('{'); $mr = $sR.LastIndexOf('}')
         if ($kr -ge 0 -and $mr -gt $kr) {
           $res.StatusCode = 200
@@ -1185,7 +1180,7 @@ while ($listener.IsListening) {
         $qOppL = [string]$req.QueryString['opp']
         $qOrgL = [string]$req.QueryString['org']; if ($qOrgL -notmatch '^[123]$') { $qOrgL = '2' }
         if ($qOppL -notmatch '^\d{1,12}$') { RespVZ @{ ok=$false; erro='opp invalida' } 400; continue }
-        $sL = Rodar-Filho $script @('-Acao','ler','-Opp',$qOppL,'-Org',$qOrgL,'-Json')
+        $sL = Exec-Filho $script @('-Acao','ler','-Opp',$qOppL,'-Org',$qOrgL,'-Json')
         $kl = $sL.IndexOf('{'); $ml = $sL.LastIndexOf('}')
         if ($kl -ge 0 -and $ml -gt $kl) {
           $res.StatusCode = 200
@@ -1201,7 +1196,7 @@ while ($listener.IsListening) {
         $qOppE = [string]$req.QueryString['opp']
         $qOrgE = [string]$req.QueryString['org']; if ($qOrgE -notmatch '^[123]$') { $qOrgE = '2' }
         if ($qOppE -notmatch '^[0-9]{1,12}$') { RespVZ @{ ok=$false; erro='opp invalida' } 400; continue }
-        $sE = Rodar-Filho $script @('-Acao','etapa5','-Opp',$qOppE,'-Org',$qOrgE,'-Aplicar','-Json')
+        $sE = Exec-Filho $script @('-Acao','etapa5','-Opp',$qOppE,'-Org',$qOrgE,'-Aplicar','-Json')
         $ke = $sE.IndexOf('{'); $me = $sE.LastIndexOf('}')
         if ($ke -ge 0 -and $me -gt $ke) {
           $res.StatusCode = 200
@@ -1217,7 +1212,7 @@ while ($listener.IsListening) {
         $qOpp2 = [string]$req.QueryString['opp']
         $qOrg2 = [string]$req.QueryString['org']; if ($qOrg2 -notmatch '^[123]$') { $qOrg2 = '2' }
         if ($qOpp2 -notmatch '^\d{1,12}$') { RespVZ @{ ok=$false; erro='opp invalida' } 400; continue }
-        $sF = Rodar-Filho $script @('-Acao','fechar','-Opp',$qOpp2,'-Org',$qOrg2,'-Aplicar','-Json')
+        $sF = Exec-Filho $script @('-Acao','fechar','-Opp',$qOpp2,'-Org',$qOrg2,'-Aplicar','-Json')
         $kf = $sF.IndexOf('{'); $mf = $sF.LastIndexOf('}')
         if ($kf -ge 0 -and $mf -gt $kf) {
           $res.StatusCode = 200
@@ -1241,7 +1236,7 @@ while ($listener.IsListening) {
         # a API nao acha as vagas e devolve 404 em todas.
         $qOrg = [string]$req.QueryString['org']
         if ($qOrg -notmatch '^[123]$') { $qOrg = '2' }
-        $sOut = Rodar-Filho $script @('-Acao','consumidores','-Opp',$qOpp,'-Org',$qOrg,'-PlanoFile',$tmpP,'-Aplicar','-Json')
+        $sOut = Exec-Filho $script @('-Acao','consumidores','-Opp',$qOpp,'-Org',$qOrg,'-PlanoFile',$tmpP,'-Aplicar','-Json')
         Remove-Item $tmpP -Force -ErrorAction SilentlyContinue
         $k = $sOut.IndexOf('{'); $m = $sOut.LastIndexOf('}')
         if ($k -ge 0 -and $m -gt $k) {
@@ -1267,14 +1262,14 @@ while ($listener.IsListening) {
       $tmpL = $null
       if ($qArq) {
         if (-not (Test-Path $qArq)) { RespVZ @{ ok=$false; erro="Arquivo nao encontrado: $qArq" } 400; continue }
-        $saida = Rodar-Filho $script @('-Acao','classificar','-Relatorio',$qArq,'-Json')
+        $saida = Exec-Filho $script @('-Acao','classificar','-Relatorio',$qArq,'-Json')
       } else {
         $sr = New-Object IO.StreamReader($req.InputStream, [Text.Encoding]::UTF8)
         $linhasTxt = $sr.ReadToEnd(); $sr.Close()
         if (-not $linhasTxt -or -not $linhasTxt.Trim()) { RespVZ @{ ok=$false; erro='Cole as linhas ou escolha um relatorio.' } 400; continue }
         $tmpL = Join-Path $env:TEMP ('vendaszs_' + [Guid]::NewGuid().ToString('N') + '.txt')
         [IO.File]::WriteAllText($tmpL, $linhasTxt, (New-Object Text.UTF8Encoding($false)))
-        $saida = Rodar-Filho $script @('-Acao','classificar','-LinhasFile',$tmpL,'-Json')
+        $saida = Exec-Filho $script @('-Acao','classificar','-LinhasFile',$tmpL,'-Json')
       }
       if ($tmpL) { Remove-Item $tmpL -Force -ErrorAction SilentlyContinue }
       $i = $saida.IndexOf('{'); $j = $saida.LastIndexOf('}')
@@ -1492,8 +1487,11 @@ while ($listener.IsListening) {
       if ($per -notmatch '^\d{4}-\d{2}$') { $per = (Get-Date -Format 'yyyy-MM') }
       $gerador = Join-Path $root 'Gerar-Dados-MetaMaster.ps1'
       $saida = Exec-Filho $gerador @('-Periodo', $per)
-      $code  = $LASTEXITCODE
-      $okGen = ($code -eq 0 -or $code -eq $null)
+      # Era aqui que o botao RECARREGAR DADOS devolvia "OK" com o gerador quebrado:
+      # $LASTEXITCODE nunca e do filho. Agora vale o codigo real + stderr.
+      $falhaGen = Falha-DoFilho $script:ultimoErr $script:ultimoExit
+      if ($falhaGen) { Log-Erro "/api/atualizar periodo=$per -> $falhaGen" $script:ultimoErr }
+      $okGen = (-not $falhaGen)
       $res.StatusCode = if ($okGen) { 200 } else { 500 }
       $res.ContentType = 'text/plain; charset=utf-8'
       $buf = [Text.Encoding]::UTF8.GetBytes($saida)

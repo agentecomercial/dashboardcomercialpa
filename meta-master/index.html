@@ -7,7 +7,7 @@
 <!-- Carimbo da versão: serve para saber, em 2 segundos, se a atualização entrou no navegador.
      Digite MM_BUILD no console (F12) ou veja a dica do mouse no título do painel. Quem edita o
      arquivo atualiza esta data. Se aparecer uma data velha, é cache: abra com ?nosw=1. -->
-<meta name="mm-build" content="2026-09-19 00:20">
+<meta name="mm-build" content="2026-09-19 14:50">
 <script>window.MM_BUILD=(document.querySelector('meta[name=mm-build]')||{}).content||'';console.info('Meta Master · versão '+window.MM_BUILD);</script>
 <!-- ===== PWA (atalho instalavel no Android e no iPhone) ===== -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -123,8 +123,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="bg.css">
-<script src="dados.js"></script>
-<script src="mm-fotos.js"></script>
+<!-- dados.js cria o window.MM (faturamento, consultores, metas): e a base do app.
+     Sem onerror, arquivo ausente/corrompido quebrava a pagina em silencio — o erro ia
+     para o log do servidor e a tela ficava morta (auditoria 19/09/2026, Fase 1). -->
+<script src="dados.js" onerror="window.__mmSemDados=1"></script>
+<script src="mm-fotos.js" onerror="window.__mmSemFotos=1"></script>
+<script>
+  /* Avisa NA TELA, antes de qualquer outro script rodar e tentar ler MM.consultores. */
+  (function(){
+    if (!window.__mmSemDados && typeof window.MM !== 'undefined') return;
+    var oQue = window.__mmSemDados ? 'nao carregou' : 'carregou vazio';
+    document.addEventListener('DOMContentLoaded', function(){
+      var d = document.createElement('div');
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#12151c;color:#e6edf6;'
+        + 'font-family:system-ui,sans-serif;padding:40px;line-height:1.7';
+      d.innerHTML = '<h2 style="color:#f0d98a">Os dados do Meta Master nao carregaram</h2>'
+        + '<p>O arquivo <b>dados.js</b> ' + oQue + '. A tela seria exibida com tudo zerado, '
+        + 'entao ela foi bloqueada de proposito — numero errado e pior que numero nenhum.</p>'
+        + '<p><b>O que fazer:</b> abra o Meta Master pelo <b>Meta Master.vbs</b> e clique em '
+        + '<b>RECARREGAR DADOS</b>. Se o erro continuar, o CRM pode estar fora do ar.</p>'
+        + '<p style="color:#8ea0b6;font-size:13px">Detalhe tecnico no servir-erros.log do servidor.</p>';
+      document.body.appendChild(d);
+    });
+  })();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>

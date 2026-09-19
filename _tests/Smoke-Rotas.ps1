@@ -65,7 +65,11 @@ $casos = @(
   @{ nome='treinamento';       rota='/api/treinamento?query=CIS'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='link-sf';           rota='/api/link-sf'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='sfxsc';             rota='/api/sfxsc?acao=usuarios'; esperado=@(200,400,500); lento=$true; chaves=@() }
-  @{ nome='turma';             rota='/api/turma?classId=0&contatos=0'; esperado=@(200,400,500); lento=$true; chaves=@() }
+  # classId=0 nao existe: o Painel-Turma sai com exit 1 e {"erro":"ClassId invalido."}.
+  # Ate 19/09/2026 a rota devolvia 200 com o erro escondido no corpo, porque lia
+  # $LASTEXITCODE (que nunca era do filho). Agora 500 e o esperado — turma VALIDA
+  # continua 200 (conferido a mao nas turmas 296 e 297).
+  @{ nome='turma';             rota='/api/turma?classId=0&contatos=0'; esperado=@(400,500); lento=$true; chaves=@() }
   @{ nome='turma-acao-leitura';rota='/api/turma-acao?acao=opps&turma=21'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='acao-previa';       rota='/api/acao?acao=equilibrio&periodo=2026-09'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='turma-frz-previa';  rota='/api/turma-frz?turma=21&cidade=VITORIA'; esperado=@(200,400,500); lento=$true; chaves=@() }
