@@ -148,7 +148,22 @@ function Leads-PayloadSuspeito($Json, $Snapshot) {
     }
   }
   $total = 0; if ($o.PSObject.Properties['totalGeral']) { $total = [int]$o.totalGeral }
-  if ($total -gt 0) { return '' }          # tem lead: e carga boa, nao ha o que suspeitar
+  # --- carga DEGRADADA (auditoria 19/09/2026, Fase 2) --------------------------
+  # Antes bastava "totalGeral > 0" para o payload ser aceito. Se o CRM caisse DEPOIS
+  # das 6 etapas, durante o enriquecimento (produtos/notas), a carga entrava com os
+  # leads certos mas com vendas CIS, conversao e "parado" degradados -- e ficava
+  # 2 h no snapshot, carimbada como fresca.
+  # Calibragem com dado real (19/09/2026): 439 leads, 3 produtos sem leitura (0,7%).
+  # Falha pontual e normal; o que denuncia queda no meio e a falha em MASSA.
+  if ($av -and $total -gt 0) {
+    $fn = 0; if ($av.PSObject.Properties['notasSemLeitura'])    { $fn = [int]$av.notasSemLeitura }
+    $fp = 0; if ($av.PSObject.Properties['produtosSemLeitura']) { $fp = [int]$av.produtosSemLeitura }
+    $limite = [Math]::Max(10, [int]($total * 0.10))
+    if (($fn + $fp) -gt $limite) {
+      return ("leitura degradada: $fn nota(s) e $fp produto(s) sem leitura em $total leads (limite $limite)")
+    }
+  }
+  if ($total -gt 0) { return '' }          # tem lead e enriquecimento sadio: carga boa
   # --- daqui para baixo, o payload diz "zero". Zero pode ser verdade, mas exige prova. ---
   # Impressao digital do CRM mudo: nenhum nome de etapa veio do CRM (nome == curto nas 6) e
   # nenhum lead. Numa leitura real os rotulos do Sales Cube sao diferentes dos de fallback.
