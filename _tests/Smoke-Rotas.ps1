@@ -85,12 +85,13 @@ $casos = @(
   @{ nome='consumidores-GET';  rota='/api/consumidores-vaga'; esperado=@(405); escrita=$true }
   @{ nome='img-GET';           rota='/api/img'; esperado=@(405); escrita=$true }
   @{ nome='fotos-GET';         rota='/api/fotos'; esperado=@(405); escrita=$true }
-  # Bug conhecido (auditoria C.5): a whitelist junta leitura+escrita, entao um GET
-  # com acao de escrita passa. Deve virar 405 na Fase 2 — enquanto nao vira, este
-  # caso FALHA de proposito e serve de lembrete.
-  @{ nome='lancar-GET-escrita'; rota='/api/lancar?acao=excluirOportunidade&id=0'; esperado=@(405); escrita=$true; conhecido='Fase 2 corrige: GET executa acao de escrita' }
+  @{ nome='lancar-GET-escrita'; rota='/api/lancar?acao=excluirOportunidade&id=0'; esperado=@(405); escrita=$true }
+  # /api/atualizar regera o dados.js. O POST nao pode ser testado aqui (sobrescreve
+  # dado de verdade), mas o GET tem de ser RECUSADO — antes da Fase 0 da auditoria
+  # de 19/09/2026 um GET qualquer disparava o gerador.
+  @{ nome='atualizar-GET';     rota='/api/atualizar?periodo=2026-09'; esperado=@(405); escrita=$true }
 )
-# /api/atualizar: DE FORA. Sobrescreve o dados.js — teste nao pode fazer isso.
+# /api/atualizar via POST: DE FORA. Sobrescreve o dados.js — teste nao pode fazer isso.
 
 # ---------------------------------------------------------------- sobe o servidor
 $jaEmUso = $null

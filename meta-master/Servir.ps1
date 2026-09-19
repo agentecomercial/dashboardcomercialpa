@@ -1478,6 +1478,14 @@ while ($listener.IsListening) {
     }
 
     if ($path -eq '/api/atualizar') {
+      # Esta rota ESCREVE (regera o dados.js). Sem checagem de metodo, um GET qualquer
+      # -- link, <img src>, pre-fetch do navegador -- disparava o gerador. Mesma correcao
+      # ja feita em /api/lancar (auditoria 19/09/2026).
+      if ($req.HttpMethod -ne 'POST') {
+        $res.StatusCode = 405; $res.ContentType = 'application/json; charset=utf-8'
+        $b = [Text.Encoding]::UTF8.GetBytes((@{ ok=$false; erro='/api/atualizar regera o dados.js: use POST.' } | ConvertTo-Json -Compress))
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
       # roda o gerador (faturamento atual -> dados.js)
       $per = $req.QueryString['periodo']
       if ([string]::IsNullOrWhiteSpace($per)) { $per = (Get-Date -Format 'yyyy-MM') }

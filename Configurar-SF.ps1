@@ -40,8 +40,8 @@ function TestarLogin($user, $passToken) {
   </env:Body>
 </env:Envelope>
 "@
-  $r = Invoke-WebRequest -Uri 'https://login.salesforce.com/services/Soap/u/59.0' -Method Post -Body $body ` -ErrorAction Stop
-        -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction = 'login' } -UseBasicParsing -ErrorAction Stop
+  # Uma linha so: o backtick seguido de texto nao continuava a linha, e o -Testar sempre falhava.
+  $r = Invoke-WebRequest -Uri 'https://login.salesforce.com/services/Soap/u/59.0' -Method Post -Body $body -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction = 'login' } -UseBasicParsing -ErrorAction Stop
   $xml = [xml]$r.Content
   return $xml.Envelope.Body.loginResponse.result
 }

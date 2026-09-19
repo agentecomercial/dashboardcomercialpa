@@ -102,8 +102,8 @@ function Login-SF {
 </env:Envelope>
 "@
   try {
-    $r = Invoke-WebRequest -Uri "https://login.salesforce.com/services/Soap/u/$API" -Method Post -Body $body ` -ErrorAction Stop
-          -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction='login' } -UseBasicParsing -ErrorAction Stop -TimeoutSec 60
+    # Uma linha so: o backtick seguido de texto nao continuava a linha, e o relogin sempre falhava.
+    $r = Invoke-WebRequest -Uri "https://login.salesforce.com/services/Soap/u/$API" -Method Post -Body $body -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction='login' } -UseBasicParsing -ErrorAction Stop -TimeoutSec 60
     $xml = [xml]$r.Content
     $res = $xml.Envelope.Body.loginResponse.result
     if (-not $res.sessionId) { throw 'resposta sem sessionId' }

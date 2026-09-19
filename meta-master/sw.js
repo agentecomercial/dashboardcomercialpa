@@ -1,7 +1,7 @@
 /* Meta Master — Service Worker (PWA / atalho no celular) */
 /* Bump a cada mudança de comportamento: o `activate` apaga os caches antigos e o app volta
    a servir o index novo. Sem isso, o celular em PWA (e a aba já aberta) fica com a versão velha. */
-const CACHE = 'mm-shell-v6';   // v6: dossie dos treinamentos + quem fechou cada treinamento nos cards
+const CACHE = 'mm-shell-v7';   // v7: fallback de navegacao so para o shell (Fase 0 da auditoria 19/09)
 const SHELL = ['/index.html', '/bg.css', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -20,9 +20,22 @@ self.addEventListener('fetch', e => {
   // API e dados SEMPRE pela rede — faturamento/ranking nao podem vir de cache
   if (url.pathname.startsWith('/api') ||
       url.pathname === '/dados.js' || url.pathname === '/mm-fotos.js') return;
-  // navegacao: rede primeiro, cai para o cache se estiver offline
+  // navegacao: rede primeiro, cai para o cache se estiver offline.
+  // O fallback so vale para a PROPRIA pagina do shell. Antes, qualquer navegacao que
+  // falhasse recebia o index.html cacheado -- com o servidor fora, clicar em
+  // "Slides p/ painel" abria o dashboard na URL da apresentacao, sem erro nenhum,
+  // na frente da turma (auditoria 19/09/2026).
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).catch(() => caches.match('/index.html')));
+    const ehShell = (url.pathname === '/' || url.pathname === '/index.html');
+    e.respondWith(fetch(req).catch(() => ehShell
+      ? caches.match('/index.html')
+      : new Response(
+          '<!doctype html><meta charset="utf-8">'
+          + '<body style="font-family:system-ui,sans-serif;background:#12151c;color:#e6edf6;padding:40px;line-height:1.6">'
+          + '<h2 style="color:#f0d98a">Servidor do Meta Master fora do ar</h2>'
+          + '<p>A pagina <b>' + url.pathname + '</b> precisa do servidor local para carregar.</p>'
+          + '<p>Abra o <b>Meta Master.vbs</b> (ou o Servir.ps1) e recarregue esta pagina.</p>',
+          { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } })));
     return;
   }
   // estaticos (css, icones): cache primeiro, atualiza em segundo plano

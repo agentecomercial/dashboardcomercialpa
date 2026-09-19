@@ -83,8 +83,9 @@ function Login-SF {
 </env:Envelope>
 "@
   try {
-    $r = Invoke-WebRequest -Uri "https://login.salesforce.com/services/Soap/u/$API" -Method Post -Body $body ` -ErrorAction Stop
-          -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction='login' } -UseBasicParsing -ErrorAction Stop -TimeoutSec 60
+    # Uma linha so: o backtick estava seguido de texto (` -ErrorAction Stop), entao NAO continuava
+    # a linha -- o -ContentType virava comando inexistente e todo relogin caia no catch.
+    $r = Invoke-WebRequest -Uri "https://login.salesforce.com/services/Soap/u/$API" -Method Post -Body $body -ContentType 'text/xml; charset=UTF-8' -Headers @{ SOAPAction='login' } -UseBasicParsing -ErrorAction Stop -TimeoutSec 60
     $xml = [xml]$r.Content
     $res = $xml.Envelope.Body.loginResponse.result
     if (-not $res.sessionId) { throw 'resposta sem sessionId' }

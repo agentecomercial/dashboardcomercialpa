@@ -4610,7 +4610,9 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       try{
         const per = periodo || hojeYM();   // período escolhido no seletor, ou o mês vigente por padrão
         if(!btn && typeof toast==='function') toast('⏳ Atualizando '+per+'…');
-        const r = await fetch('/api/atualizar'+(per?('?periodo='+encodeURIComponent(per)):''), {cache:'no-store'});
+        /* POST: a rota REGERA o dados.js. Em GET, qualquer pre-fetch do navegador
+           disparava o gerador sozinho (auditoria 19/09/2026). */
+        const r = await fetch('/api/atualizar'+(per?('?periodo='+encodeURIComponent(per)):''), {method:'POST', cache:'no-store'});
         if(!r.ok) throw new Error((await r.text()) || ('HTTP '+r.status));
         await recarregarDadosLocais();     // re-lê o dados.js e re-renderiza SEM recarregar a página
         if(typeof toast==='function') toast('✓ '+(MM.mes||'atualizado'));

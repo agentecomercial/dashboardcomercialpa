@@ -67,8 +67,13 @@ meta-master/dados.js
 meta-master/.auth
 meta-master/fotos/
 meta-master/mm-fotos.bak.js
+# mm-fotos.js = fotos de pessoas em base64 (~512 KB). Estava versionado por engano,
+# ao contrario de estado.json/dados.js (auditoria 19/09/2026).
+meta-master/mm-fotos.js
+meta-master/mapeamentos-turma.json
 meta-master/estado.json
 meta-master/_tmp/
+meta-master/_backup/
 
 # Dados de negócio exportados (receita/faturamento/metas — não publicar)
 RECEITA_*.csv
