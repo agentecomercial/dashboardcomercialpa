@@ -1,7 +1,7 @@
 /* Meta Master — Service Worker (PWA / atalho no celular) */
 /* Bump a cada mudança de comportamento: o `activate` apaga os caches antigos e o app volta
    a servir o index novo. Sem isso, o celular em PWA (e a aba já aberta) fica com a versão velha. */
-const CACHE = 'mm-shell-v8';   // v8: Fase 1 da auditoria (falha do filho vira 500, onerror no dados.js)
+const CACHE = 'mm-shell-v9';   // v9: Fase 3 (erro nao vira "sem turma"; guardas de corrida)
 const SHELL = ['/index.html', '/bg.css', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {

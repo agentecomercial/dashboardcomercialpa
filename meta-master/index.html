@@ -7,7 +7,7 @@
 <!-- Carimbo da versão: serve para saber, em 2 segundos, se a atualização entrou no navegador.
      Digite MM_BUILD no console (F12) ou veja a dica do mouse no título do painel. Quem edita o
      arquivo atualiza esta data. Se aparecer uma data velha, é cache: abra com ?nosw=1. -->
-<meta name="mm-build" content="2026-09-19 14:50">
+<meta name="mm-build" content="2026-09-19 15:40">
 <script>window.MM_BUILD=(document.querySelector('meta[name=mm-build]')||{}).content||'';console.info('Meta Master · versão '+window.MM_BUILD);</script>
 <!-- ===== PWA (atalho instalavel no Android e no iPhone) ===== -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -7626,9 +7626,19 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     const det=$('tzDet');
     det.innerHTML='<div class="dt-empty"><div>⏳</div><div><b>Carregando alunos da turma…</b></div>'
       +'<div style="font-size:12px;margin-top:6px">Busca telefone, CPF e responsável de cada matrícula (pode levar alguns segundos).</div></div>';
+    /* Clicar na turma A e, antes de responder, na turma B deixava os alunos de A sob o
+       cabeçalho de B — a função irmã tzBeltCarregar já tinha essa guarda (TZ.beltReq),
+       esta não (auditoria 19/09/2026, Fase 3). Só a última turma clicada vale. */
+    const req=(TZ.abrirReq=(TZ.abrirReq||0)+1);        // mesmo padrão lazy do TZ.beltReq
     try{
       const r=await fetch('/api/turma?classId='+encodeURIComponent(id),{cache:'no-store'});
+      /* HTTP 500 agora existe de verdade (Fase 1): tratar antes de ler o corpo. */
+      if(!r.ok){
+        let det2=''; try{ const j=await r.json(); det2=j&&(j.erro||j.detalhe)||''; }catch(_){}
+        throw new Error(det2 || ('o servidor respondeu '+r.status));
+      }
       const d=await r.json();
+      if(req !== TZ.abrirReq) return;                    // outra turma foi clicada: descarta
       if(d.erro) throw new Error(d.erro);
       TZ.det=d; TZ.pessoas=Array.isArray(d.pessoas)?d.pessoas:[]; TZ.fstat='';
       TZ.cred=null; TZ.credSemCpf=0;                      // participação é por turma: zera ao trocar
@@ -7637,7 +7647,12 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       TZ.fbelt=''; TZ.fqtd=''; TZ.qAluno='';
       tzDetRender();
       tzBeltCarregar(id);                                 // faixas GGB entram depois, sem travar a tabela
-    }catch(e){ det.innerHTML='<div class="dt-empty"><div>⚠</div><div><b>Falhou: '+esc(e.message)+'</b></div></div>'; }
+    }catch(e){
+      if(req !== TZ.abrirReq) return;                    // erro de uma turma que nem esta mais aberta
+      det.innerHTML='<div class="dt-empty"><div>⚠</div><div><b>Não consegui carregar os alunos desta turma</b></div>'
+        +'<div style="font-size:12px;margin-top:6px">'+esc(e.message)+'</div>'
+        +'<div style="margin-top:10px"><button class="btn btn-sec" onclick="tzAbrir('+JSON.stringify(String(id))+')">↻ Tentar de novo</button></div></div>';
+    }
   }
   /* ---------- faixa GGB da turma: 1 consulta em lote no Salesforce (CPF de todo mundo) ----------
      Regra: conta treinamentos DISTINTOS da grade que o aluno JÁ REALIZOU (crachá impresso).
@@ -16782,11 +16797,25 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       twCarregando('Buscando turmas de '+TW.produto.nome);
       try{
         const d=await lwGet('turmas', {org:TW.org, productId:TW.produto.id});
-        TW.turmas=d.turmas||[];
-      }catch(e){ TW.turmas=[]; }
+        TW.turmas=d.turmas||[]; TW.turmasErro='';
+      }catch(e){
+        /* "nao consegui perguntar" != "nao tem turma" (auditoria 19/09/2026, Fase 3).
+           Antes: TW.turmas=[] — a tela AFIRMAVA "este produto nao tem turma cadastrada"
+           e oferecia "Continuar sem turma", gravando matricula sem class_id no CRM por
+           causa de uma falha de rede. */
+        TW.turmas=null; TW.turmasErro=(e && e.message) ? e.message : 'falha na consulta';
+      }
     }
     const stLbl={scheduled:'Agendada', active:'Ativa', completed:'Concluída', canceled:'Cancelada'};
     let h=twHead()+'<div class="tw-sub">Em qual turma de <b>'+esc(TW.produto.nome)+'</b>? Turmas cadastradas em '+esc(TW.orgNome)+'.</div>';
+    if(TW.turmasErro){
+      h+='<div class="cmd-aviso">⚠ <b>Não consegui consultar as turmas deste produto.</b><br>'
+        +esc(TW.turmasErro)+'<br><br>Não dá para afirmar que o produto está sem turma — '
+        +'lançar sem <i>class_id</i> agora pode gravar a matrícula errada no CRM.</div>'
+        +'<div class="cmd-actions"><button class="btn btn-ouro" onclick="TW.turmasErro=\'\';twP2()">↻ Tentar de novo</button>'
+        +'<button class="btn btn-sec" onclick="twP1()">↩︎ Voltar</button></div>';
+      twBox(h); return;
+    }
     if(!TW.turmas.length){
       h+='<div class="cmd-aviso">Este produto <b>não tem turma</b> cadastrada nesta unidade. Dá para lançar sem turma (a matrícula fica sem <i>class_id</i>) ou voltar e escolher outro produto.</div>'
         +'<div class="cmd-actions"><button class="btn btn-ouro" onclick="twSemTurma()">Continuar sem turma →</button>'
@@ -17266,7 +17295,15 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     try{
       const d = await lwGet('oportunidades', {org:LW.destino, query:nome});
       LW._opps = d.oportunidades||[]; lwRenderOppsCliente();
-    }catch(e){ wrap.innerHTML=''; }
+    }catch(e){
+      /* Sumir em branco fazia o consultor acreditar que o cliente não tem venda nenhuma
+         e lançar de novo — duplicata no CRM (auditoria 19/09/2026, Fase 3). */
+      LW._opps = null;
+      wrap.innerHTML = '<div class="lw-sub" style="margin-top:10px;color:#e0a878">'
+        + '⚠ Não consegui verificar as oportunidades deste cliente ('+lwEsc((e&&e.message)||'falha')+'). '
+        + 'Confira no Sales Cube antes de lançar, para não duplicar. '
+        + '<a href="#" onclick="lwCarregarOppsCliente();return false" style="color:#f0d98a">tentar de novo</a></div>';
+    }
   }
   function lwRenderOppsCliente(){
     const wrap=$('lwOppsWrap'); if(!wrap) return;
@@ -17291,7 +17328,19 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     const o=(LW._opps||[]).find(x=>x.id===oppId); if(!o) return;
     const wrap=$('lwEditWrap'); if(!wrap) return;
     wrap.innerHTML='<div class="cmd-loading" style="margin-top:8px">⏳ carregando etapas…</div>';
-    try{ if(!LW.etapas || !LW.etapas.length){ const d=await lwGet('etapas',{org:LW.destino}); LW.etapas=d.etapas||[]; } }catch(e){}
+    /* Sem as etapas, o <select> nasceria vazio e um "salvar" mandaria a oportunidade
+       para uma etapa indefinida. Melhor recusar a edição (auditoria 19/09/2026). */
+    try{ if(!LW.etapas || !LW.etapas.length){ const d=await lwGet('etapas',{org:LW.destino}); LW.etapas=d.etapas||[]; } }
+    catch(e){
+      wrap.innerHTML='<div class="cmd-aviso" style="margin-top:8px">⚠ Não consegui carregar as etapas do funil ('
+        + lwEsc((e&&e.message)||'falha') + '). Editar agora poderia mover a oportunidade para a etapa errada. '
+        + '<a href="#" onclick="lwEditarOpp('+JSON.stringify(oppId)+');return false" style="color:#f0d98a">tentar de novo</a></div>';
+      return;
+    }
+    if(!LW.etapas || !LW.etapas.length){
+      wrap.innerHTML='<div class="cmd-aviso" style="margin-top:8px">⚠ O CRM não devolveu nenhuma etapa do funil. Edição cancelada.</div>';
+      return;
+    }
     const stageAtual=(LW.etapas.find(e=>e.label===o.stage_name)||{}).id||0;
     const valTxt=(o.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
     let h='<div class="lw-addbox" style="margin-top:10px"><div class="lw-sub"><b>✏️ Editar oportunidade #'+oppId+'</b></div>';
@@ -17336,7 +17385,12 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       const d = await lwGet('usuarios', {org:dest});
       LW.usuarios = d.usuarios||[];
       const dl = $('lwUsersDL'); if(dl) dl.innerHTML = LW.usuarios.map(u=>'<option data-id="'+u.id+'" value="'+lwEsc(u.name)+'">').join('');
-    }catch(e){ /* silencioso */ }
+    }catch(e){
+      /* Autocomplete mudo levava a digitar o responsável à mão e cair em "não achei o
+         usuário" mais adiante, sem explicação (auditoria 19/09/2026). */
+      LW.usuarios = [];
+      try{ toast('⚠ não consegui carregar a lista de responsáveis — digite o nome exato'); }catch(_){}
+    }
   }
   function lwPickUser(inp){
     const nm = inp.value.trim().toLowerCase();
@@ -17538,15 +17592,28 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   }
   function lwFiltrarProduto(){ lwCarregarCatalogo(valEl('lwpBusca')); }
   // turmas do produto escolhido (só aparece se houver)
+  /* Guarda de sequência: trocar de produto duas vezes rápido fazia a resposta da
+     PRIMEIRA consulta chegar depois e preencher o select com as turmas do produto
+     errado. Mesmo padrão do TZ.beltReq (auditoria 19/09/2026, Fase 3). */
+  let LW_TURMAS_SEQ = 0;
   async function lwCarregarTurmas(){
     const sel = $('lwpProd'), wrap = $('lwpTurmaWrap'); if(!sel || !wrap) return;
     const prodId = +(sel.value||0);
     if(!prodId){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+    const req = ++LW_TURMAS_SEQ;
     wrap.style.display=''; wrap.innerHTML = lwField('Turma', '<select class="lw-inp" disabled><option>⏳ buscando turmas…</option></select>');
     try{
       const d = await lwGet('turmas', {org:LW.destino, productId:prodId});
+      if(req !== LW_TURMAS_SEQ) return;                     // resposta velha: descarta
       const ts = d.turmas||[];
-      if(!ts.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+      /* Produto sem turma: DIZER que não tem, em vez de sumir com o campo. Antes, este
+         caminho e o catch produziam exatamente o mesmo DOM (nada), então erro de rede
+         era indistinguível de "não tem turma" — e a matrícula ia sem class_id. */
+      if(!ts.length){
+        wrap.innerHTML = lwField('Turma', '<div class="lw-inp" style="opacity:.75">'
+          + 'Este produto não tem turma cadastrada nesta unidade — a matrícula fica sem turma.</div>');
+        return;
+      }
       const stLbl = {scheduled:'Agendada', active:'Ativa', completed:'Concluída', canceled:'Cancelada'};
       const opts = '<option value="">— sem turma —</option>' + ts.map(t=>{
         const dt = t.start_date ? (' · '+lwFmtData(t.start_date)) : '';
@@ -17554,7 +17621,14 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
         return '<option value="'+t.id+'" data-nome="'+lwEsc(t.name)+'">'+lwEsc(t.name)+dt+st+'</option>';
       }).join('');
       wrap.innerHTML = lwField('Turma', '<select id="lwpTurma" class="lw-inp">'+opts+'</select>');
-    }catch(e){ wrap.style.display='none'; wrap.innerHTML=''; }
+    }catch(e){
+      if(req !== LW_TURMAS_SEQ) return;                     // resposta velha: descarta
+      /* Erro NÃO pode virar campo vazio: o consultor lançaria sem turma sem saber. */
+      wrap.innerHTML = lwField('Turma',
+        '<div class="lw-inp" style="border-color:#5c3d2a;color:#e0a878">⚠ não consegui consultar as turmas ('
+        + lwEsc((e && e.message) ? e.message : 'falha na consulta') + ') — '
+        + '<a href="#" onclick="lwCarregarTurmas();return false" style="color:#f0d98a">tentar de novo</a></div>');
+    }
   }
   function lwFmtData(iso){ if(!iso) return ''; const p=String(iso).substring(0,10).split('-'); return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : iso; }
   function lwParseValor(s){ s=(s||'').trim().replace(/\s|R\$/g,''); if(s.indexOf(',')>=0){ s=s.replace(/\./g,'').replace(',','.'); } return parseFloat(s)||0; }
