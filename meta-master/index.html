@@ -39,7 +39,10 @@
   var doServidor = {};
   try {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/estado', false);               // sincrono de proposito: o app le
+    /* ?leve=1: sem a curadoria da apresentacao de turma (1 MB de fotos em base64 que
+       so a turma-apresentacao.html usa). Este XHR e SINCRONO e roda em todo boot --
+       era 1 MB de espera por abertura do app (auditoria 19/09/2026, Fase 4). */
+    xhr.open('GET', '/api/estado?leve=1', false);        // sincrono de proposito: o app le
     xhr.send(null);                                      // localStorage varias vezes durante o boot
     if (xhr.status === 200) doServidor = JSON.parse(xhr.responseText || '{}');
   } catch(e) { return; }                                 // servidor fora: segue 100% local

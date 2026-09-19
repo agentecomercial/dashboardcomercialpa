@@ -1615,8 +1615,20 @@ while ($listener.IsListening) {
 
       if ($req.HttpMethod -eq 'GET') {
         # as fotos sao pesadas (base64) e ja tem canal proprio -> nao entram nesta resposta
+        #
+        # ?leve=1 tira TAMBEM a curadoria da apresentacao de turma (turmaFcis): sao as fotos
+        # dos alunos em base64, ~93 KB cada, 1 MB hoje. O index.html le este endpoint no boot
+        # de forma SINCRONA -- estava baixando 1 MB que so a turma-apresentacao.html usa, a
+        # cada abertura do app (auditoria 19/09/2026, Fase 4). A apresentacao continua pedindo
+        # o estado completo (sem o parametro), entao nada muda para ela.
+        $pesadas = @('turmaFcis')
+        $soLeve  = ($req.QueryString['leve'] -eq '1')
         $leve = @{}
-        foreach ($k in $estado.Keys) { if ($k -notlike 'mmfoto_*') { $leve[$k] = $estado[$k] } }
+        foreach ($k in $estado.Keys) {
+          if ($k -like 'mmfoto_*') { continue }
+          if ($soLeve -and ($pesadas -contains $k)) { continue }
+          $leve[$k] = $estado[$k]
+        }
         $txt = if ($leve.Count) { $leve | ConvertTo-Json -Depth 4 -Compress } else { '{}' }
         $b = [Text.Encoding]::UTF8.GetBytes($txt)
         $res.StatusCode = 200
