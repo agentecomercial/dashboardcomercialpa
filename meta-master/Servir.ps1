@@ -643,6 +643,61 @@ while ($listener.IsListening) {
     if ($path -eq '/api/cmd') {
       # executor generico da aba Comandos: mapeia um id whitelisted -> script + args validados
       $id  = $req.QueryString['id']
+
+      # ---- cache curto dos comandos CAROS (auditoria de desempenho, 21/09/2026) -------
+      # Medido: negociacoes ~20 s, movimentacao ~9 s, metas/faturamento ~7 s. Reabrir o
+      # mesmo recorte pagava tudo de novo. Aqui vale o mesmo padrao que o /api/leads ja
+      # usava (snapshot em _tmp), com tres regras que vieram da auditoria:
+      #   1. so entram comandos que batem no CRM. tabelaPrecos e regrasComerciais leem
+      #      ARQUIVO LOCAL -- cachear faria uma edicao do .md demorar 10 min para aparecer.
+      #   2. resposta de ERRO nunca e gravada (senao o cache serviria a falha por 10 min).
+      #   3. ?fresh=1 ignora o cache: e o que o botao "Atualizar dados" manda.
+      $CMD_CACHE_OK  = @('faturamento','metaUnidade','metaConsultores','metaGeral',
+                         'negociacoes','movimentacao','leads','painel')
+      $CMD_CACHE_TTL = 600     # segundos (10 min)
+      $cmdCacheArq   = ''
+      if ($id -and ($CMD_CACHE_OK -contains $id)) {
+        $cacheDir = Join-Path $root '_tmp\cache-cmd'
+        if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+        # faxina: cada periodo/filtro vira um arquivo, entao sem isso a pasta cresce para
+        # sempre. Roda no maximo 1x por hora para nao pesar em toda requisicao.
+        if (-not $script:ultimaFaxinaCache -or ((Get-Date) - $script:ultimaFaxinaCache).TotalMinutes -gt 60) {
+          $script:ultimaFaxinaCache = Get-Date
+          try {
+            Get-ChildItem $cacheDir -Filter '*.txt' -ErrorAction SilentlyContinue |
+              Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) } |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          } catch { }
+        }
+        # chave = id + todos os parametros que mudam o resultado (menos o proprio fresh)
+        $parts = @()
+        foreach ($k in ($req.QueryString.AllKeys | Where-Object { $_ -and $_ -ne 'fresh' } | Sort-Object)) {
+          $parts += ($k + '=' + $req.QueryString[$k])
+        }
+        $chaveTxt = ($parts -join '&')
+        $md5 = [System.Security.Cryptography.MD5]::Create()
+        $hash = [BitConverter]::ToString($md5.ComputeHash([Text.Encoding]::UTF8.GetBytes($chaveTxt))).Replace('-','').Substring(0,16)
+        $cmdCacheArq = Join-Path $cacheDir ($id + '-' + $hash + '.txt')
+        $fresh = ($req.QueryString['fresh'] -eq '1')
+        if (-not $fresh -and (Test-Path $cmdCacheArq)) {
+          $idade = ((Get-Date) - (Get-Item $cmdCacheArq).LastWriteTime).TotalSeconds
+          if ($idade -lt $CMD_CACHE_TTL) {
+            try {
+              $txtCache = [IO.File]::ReadAllText($cmdCacheArq, [Text.Encoding]::UTF8)
+              if ($txtCache.Trim()) {
+                $res.StatusCode = 200
+                $res.ContentType = 'text/plain; charset=utf-8'
+                $res.Headers.Add('X-MM-Cache', 'hit')
+                $res.Headers.Add('X-MM-Cache-Age', [string][int]$idade)
+                $bC = [Text.Encoding]::UTF8.GetBytes($txtCache)
+                $res.OutputStream.Write($bC, 0, $bC.Length); $res.Close()
+                Write-Host ("[{0}] /api/cmd id={1} -> 200 (cache {2}s)" -f (Get-Date -Format 'HH:mm:ss'), $id, [int]$idade) -ForegroundColor DarkGray
+                continue
+              }
+            } catch { }   # cache ilegivel: segue e roda o script
+          }
+        }
+      }
       $de  = $req.QueryString['de'];  if ($de  -notmatch '^\d{4}-\d{2}-\d{2}$') { $de = '' }
       $ate = $req.QueryString['ate']; if ($ate -notmatch '^\d{4}-\d{2}-\d{2}$') { $ate = '' }
       # mes de contexto (metas/rotulos) = mes da data inicial; senao 'periodo'; senao mes atual
@@ -711,6 +766,17 @@ while ($listener.IsListening) {
       if ($falha) { Log-Erro "/api/cmd id=$id -> $falha" $script:ultimoErr }
       $res.StatusCode = if ($falha) { 500 } else { 200 }
       $res.ContentType = 'text/plain; charset=utf-8'
+      # grava o cache SO quando deu certo e veio conteudo: cachear erro serviria a falha
+      # por 10 minutos, que e exatamente o tipo de coisa que a auditoria mandou evitar.
+      if ($cmdCacheArq -and -not $falha -and $out -and $out.Trim().Length -gt 40) {
+        try {
+          $tmpC = $cmdCacheArq + '.tmp'
+          [IO.File]::WriteAllText($tmpC, $out, (New-Object Text.UTF8Encoding($false)))
+          Copy-Item $tmpC $cmdCacheArq -Force
+          Remove-Item $tmpC -ErrorAction SilentlyContinue
+        } catch { Log-Erro "/api/cmd cache id=$id" $_.Exception.Message }
+      }
+      if ($cmdCacheArq) { $res.Headers.Add('X-MM-Cache', $(if ($falha) { 'erro' } else { 'miss' })) }
       $buf = [Text.Encoding]::UTF8.GetBytes($out)
       $res.OutputStream.Write($buf, 0, $buf.Length); $res.Close()
       $stamp = (Get-Date -Format 'HH:mm:ss')

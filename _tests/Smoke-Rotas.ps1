@@ -72,16 +72,21 @@ $casos = @(
   @{ nome='turma';             rota='/api/turma?classId=0&contatos=0'; esperado=@(400,500); lento=$true; chaves=@() }
   @{ nome='turma-acao-leitura';rota='/api/turma-acao?acao=opps&turma=21'; esperado=@(200,400,500); lento=$true; chaves=@() }
   @{ nome='acao-previa';       rota='/api/acao?acao=equilibrio&periodo=2026-09'; esperado=@(200,400,500); lento=$true; chaves=@() }
-  @{ nome='turma-frz-previa';  rota='/api/turma-frz?turma=21&cidade=VITORIA'; esperado=@(200,400,500); lento=$true; chaves=@() }
+  # 'aviso'/'vazio' só vêm quando não há nada a lançar; 'consultores'/'data' só quando há.
+  # Sem marcá-las como opcionais, o teste falha sempre que a turma muda de estado.
+  @{ nome='turma-frz-previa';  rota='/api/turma-frz?turma=21&cidade=VITORIA'; esperado=@(200,400,500); lento=$true; chaves=@()
+     opcionais=@('aviso','vazio','consultores','data','itens','plano') }
 
   # ---- comandos que rodam coletores proprios (Fase 4: cada um tem seu .ps1) ----
-  @{ nome='cmd-faturamento';   rota='/api/cmd?id=faturamento&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-metaUnidade';   rota='/api/cmd?id=metaUnidade&periodo=2026-09';  esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-metaConsult';   rota='/api/cmd?id=metaConsultores&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-negociacoes';   rota='/api/cmd?id=negociacoes&periodo=2026-09';  esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-movimentacao';  rota='/api/cmd?id=movimentacao&periodo=2026-09'; esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-leads';         rota='/api/cmd?id=leads&periodo=2026-09';        esperado=@(200,500,503); lento=$true; chaves=@() }
-  @{ nome='cmd-painel';        rota='/api/cmd?id=painel';                        esperado=@(200,500,503); lento=$true; chaves=@() }
+  # fresh=1 obrigatorio: sem ele o cache de 10 min (Servir.ps1) devolveria a resposta
+  # guardada e o smoke passaria a testar o cache em vez do script.
+  @{ nome='cmd-faturamento';   rota='/api/cmd?id=faturamento&periodo=2026-09&fresh=1'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-metaUnidade';   rota='/api/cmd?id=metaUnidade&periodo=2026-09&fresh=1';  esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-metaConsult';   rota='/api/cmd?id=metaConsultores&periodo=2026-09&fresh=1'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-negociacoes';   rota='/api/cmd?id=negociacoes&periodo=2026-09&fresh=1';  esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-movimentacao';  rota='/api/cmd?id=movimentacao&periodo=2026-09&fresh=1'; esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-leads';         rota='/api/cmd?id=leads&periodo=2026-09&fresh=1';        esperado=@(200,500,503); lento=$true; chaves=@() }
+  @{ nome='cmd-painel';        rota='/api/cmd?id=painel&fresh=1';                        esperado=@(200,500,503); lento=$true; chaves=@() }
 
   # ---- escrita: só o teste NEGATIVO (metodo errado tem de ser recusado) ----
   @{ nome='mover-etapa-GET';   rota='/api/mover-etapa'; esperado=@(405); escrita=$true }
@@ -243,7 +248,12 @@ try {
       Reg $c.nome $true "200 — golden gravado ($($agora.Count) chaves)"
     } else {
       $antes = @([IO.File]::ReadAllLines($arqG))
-      $sumiu = @($antes | Where-Object { $_ -and $agora -notcontains $_ })
+      # Chaves CONDICIONAIS (aparecem só em certos estados do dado) não são regressão.
+      # Ex.: /api/turma-frz devolve 'aviso' e 'vazio' quando não há nada a lançar, e
+      # 'consultores'/'data' quando há. O golden guardou um dos dois estados e o teste
+      # acusava o outro como quebra (21/09/2026).
+      $opc = @(); if ($c.ContainsKey('opcionais')) { $opc = @($c.opcionais) }
+      $sumiu = @($antes | Where-Object { $_ -and $agora -notcontains $_ -and $opc -notcontains $_ })
       if ($sumiu.Count) { Reg $c.nome $false "200 mas SUMIRAM chaves: $((($sumiu | Select-Object -First 4) -join ', '))" $c.conhecido }
       else {
         $novas = @($agora | Where-Object { $antes -notcontains $_ })

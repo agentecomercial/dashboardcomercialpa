@@ -7,7 +7,7 @@
 <!-- Carimbo da versão: serve para saber, em 2 segundos, se a atualização entrou no navegador.
      Digite MM_BUILD no console (F12) ou veja a dica do mouse no título do painel. Quem edita o
      arquivo atualiza esta data. Se aparecer uma data velha, é cache: abra com ?nosw=1. -->
-<meta name="mm-build" content="2026-09-21 16:35">
+<meta name="mm-build" content="2026-09-21 17:20">
 <script>window.MM_BUILD=(document.querySelector('meta[name=mm-build]')||{}).content||'';console.info('Meta Master · versão '+window.MM_BUILD);</script>
 <!-- ===== PWA (atalho instalavel no Android e no iPhone) ===== -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -14777,7 +14777,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     form.style.display='block';
     if(c.exec){
       let acts='<button class="btn btn-ouro" onclick="executarComando(\''+c.id+'\',this)">▶ Executar</button>'
-        +'<button class="btn btn-sec" onclick="executarComando(\''+c.id+'\',this)">↻ Atualizar dados</button>';
+        +'<button class="btn btn-sec" onclick="executarComando(\''+c.id+'\',this,true)" title="Refaz a consulta no CRM, ignorando o cache de 10 minutos">↻ Atualizar dados</button>';
       if(c.id==='faturamento') acts+='<button class="btn btn-img" onclick="fvAbrirCard()" title="Resumo por consultor como imagem">🖼️ Copiar imagem</button>';
       if(c.id==='relatorioTurma') acts+='<button class="btn btn-sec" onclick="rtMostrarUltima()">📌 Última tabela</button>'
         +'<button class="btn btn-sec" onclick="rtLimparUltima()">🗑 Limpar</button>';
@@ -15955,7 +15955,9 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     res.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
-  async function executarComando(id, btn){
+  /* `fresh` = ignorar o cache curto do servidor (comandos caros ficam 10 min em
+     _tmp/cache-cmd). O botão "↻ Atualizar dados" manda true; abrir o comando não.  */
+  async function executarComando(id, btn, fresh){
     const c=CMDS.find(x=>x.id===id); if(!c) return;
     const res=$('cmdResultado');
     if(!isHttp){
@@ -15965,6 +15967,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     if(id==='leadsCampanha'){ return executarLeadsCampanha(btn); }   // tabela rica (igual à aba Leads)
     if(c.wizard){ return lwStart(res); }   // fluxo guiado "Lançar Cliente" (máquina de passos própria)
     const qs=new URLSearchParams({id});
+    if(fresh) qs.set('fresh','1');          // "Atualizar dados" refaz a consulta no CRM
     if(c.campos.includes('periodo')){
       const pipelineAtual = $('pPipeline') && $('pPipeline').checked;
       if(!pipelineAtual){ const de=valEl('pDe'), ate=valEl('pAte'); if(de) qs.set('de',de); if(ate) qs.set('ate',ate); }
