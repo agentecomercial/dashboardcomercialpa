@@ -7,7 +7,7 @@
 <!-- Carimbo da versão: serve para saber, em 2 segundos, se a atualização entrou no navegador.
      Digite MM_BUILD no console (F12) ou veja a dica do mouse no título do painel. Quem edita o
      arquivo atualiza esta data. Se aparecer uma data velha, é cache: abra com ?nosw=1. -->
-<meta name="mm-build" content="2026-09-19 15:40">
+<meta name="mm-build" content="2026-09-21 16:35">
 <script>window.MM_BUILD=(document.querySelector('meta[name=mm-build]')||{}).content||'';console.info('Meta Master · versão '+window.MM_BUILD);</script>
 <!-- ===== PWA (atalho instalavel no Android e no iPhone) ===== -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -1825,6 +1825,72 @@
   .fc-mb{background:#1c1c1c;border:1px solid #3a3a3a;color:#cfcfcf;font-weight:800;font-size:12px;
     padding:6px 14px;border-radius:18px;cursor:pointer;font-family:inherit;}
   .fc-mb.on{background:#F0C84A;border-color:#F0C84A;color:#111;}
+  /* ── Termômetro do time (aba Conversão) ────────────────────────────────────
+     Faixa entre os controles e os cards: primeiro como a equipe está contra a
+     meta, depois quem puxa para cima ou para baixo. Reflete os chips marcados. */
+  .cvt{background:#101015;border:1px solid #2b2b36;border-radius:11px;padding:13px 15px;margin:12px 0 4px;}
+  .cvt-top{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .cvt-top .vl{font-size:29px;font-weight:900;line-height:1;}
+  .cvt-top .lb{font-size:12px;color:#9aa4b2;font-weight:700;}
+  .cvt-top .meta{margin-left:auto;font-size:11px;color:#8b8b95;font-weight:800;}
+  .cvt-bar{position:relative;height:24px;border-radius:12px;overflow:hidden;border:1px solid #2b2b36;
+    background:linear-gradient(90deg,#3a1f1f 0%,#3d3520 55%,#1d3d2a 100%);}
+  .cvt-bar .mk{position:absolute;top:0;bottom:0;width:2px;background:#e2c878;}
+  .cvt-bar .ag{position:absolute;top:-3px;bottom:-3px;width:3px;background:#fff;border-radius:2px;box-shadow:0 0 6px rgba(255,255,255,.5);}
+  .cvt-esc{display:flex;justify-content:space-between;font-size:10px;color:#6f757f;margin-top:5px;font-weight:700;}
+  .cvt-fat{display:flex;gap:16px;margin-top:10px;font-size:11px;color:#8b8b95;flex-wrap:wrap;align-items:center;}
+  .cvt-fat b{color:#dcdce2;font-weight:800;}
+  body[data-mmtema^="claro"] .cvt{background:#fbfbfb!important;border-color:#dcdcdf!important;}
+  body[data-mmtema^="claro"] .cvt-top .lb{color:#5c6470!important;}
+  body[data-mmtema^="claro"] .cvt-fat b{color:#1c1c22!important;}
+  body[data-mmtema^="claro"] .cvt-bar{background:linear-gradient(90deg,#f7d7d7 0%,#fbeccd 55%,#d6f0de 100%)!important;}
+  body[data-mmtema^="claro"] .cvt-bar .ag{background:#1c1c22!important;box-shadow:none!important;}
+
+  /* modal do dossiê: escolher de quais consultores sai o arquivo.
+     Contraste subido em 21/09/2026 — no tema claro e com realce ligado, os tons
+     originais (#f0e6c8 no título, #8b8b95 nos apoios) ficavam ilegíveis. */
+  .fc-dos-h{font-size:15.5px;font-weight:900;color:#ffe9a8;margin:0 40px 6px 0;}
+  .fc-dos-sub{font-size:12px;color:#b6bcc6;line-height:1.55;margin-bottom:12px;}
+  .fc-dos-acts{display:flex;gap:6px;margin-bottom:8px;}
+  .fc-dos-lista{display:flex;flex-direction:column;gap:2px;max-height:46vh;overflow:auto;
+    background:#101015;border:1px solid #2b2b36;border-radius:10px;padding:8px;}
+  .fc-dos-it{display:grid;grid-template-columns:18px 1fr auto auto;gap:10px;align-items:center;
+    padding:7px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;}
+  .fc-dos-it:hover{background:#17171f;}
+  .fc-dos-it input{accent-color:#46d17a;width:15px;height:15px;cursor:pointer;}
+  .fc-dos-it .nm{font-weight:700;color:#e6e6ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fc-dos-it .qt{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#8b8b95;white-space:nowrap;}
+  .fc-dos-it .vl{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;font-weight:800;
+    color:#8fdcab;min-width:92px;text-align:right;}
+  /* linha separada: não é filtro de venda, é omitir a coluna Consultor do arquivo */
+  .fc-dos-anon{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;
+    border-top:1px solid #2a2a33;cursor:pointer;}
+  .fc-dos-anon input{accent-color:#F0C84A;width:15px;height:15px;margin-top:2px;cursor:pointer;flex:0 0 auto;}
+  .fc-dos-anon b{display:block;font-size:12.5px;color:#f2f2f6;font-weight:800;}
+  .fc-dos-anon i{display:block;font-style:normal;font-size:11.5px;color:#aab1bd;line-height:1.5;margin-top:3px;}
+  .fc-dos-ft{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:11px;
+    border-top:1px solid #2a2a33;flex-wrap:wrap;}
+  .fc-dos-ft .res{font-size:12px;color:#c2c9d4;font-weight:600;flex:1;min-width:200px;line-height:1.6;}
+  .fc-dos-ft .res b{color:#8fdcab;font-weight:800;}
+  /* tema claro: o modal ganha fundo branco pelas regras globais, então as cores
+     de texto precisam inverter — senão fica claro sobre claro. */
+  body[data-mmtema^="claro"] .fc-dos-h{color:#8a6d1f!important;}
+  body[data-mmtema^="claro"] .fc-dos-sub,
+  body[data-mmtema^="claro"] .fc-dos-anon i{color:#5c6470!important;}
+  body[data-mmtema^="claro"] .fc-dos-anon b,
+  body[data-mmtema^="claro"] .fc-dos-it .nm{color:#1c1c22!important;}
+  body[data-mmtema^="claro"] .fc-dos-ft .res{color:#3a4250!important;}
+  body[data-mmtema^="claro"] .fc-dos-ft .res b,
+  body[data-mmtema^="claro"] .fc-dos-it .vl{color:#1c7a45!important;}
+  body[data-mmtema^="claro"] .fc-dos-it .qt{color:#6f757f!important;}
+  body[data-mmtema^="claro"] .fc-dos-lista{background:#fbfbfb!important;border-color:#dcdcdf!important;}
+  body[data-mmtema^="claro"] .fc-dos-it:hover{background:#f0f0f3!important;}
+  .fc-bt.mini{font-size:10.5px;padding:3px 10px;}
+  .fc-bt.dl{border-color:#3f7a55;color:#8fdcab;background:#14281c;}
+  .fc-bt.dl:hover{background:#1a3524;border-color:#57a874;}
+  .fc-bt[disabled]{opacity:.45;cursor:not-allowed;}
+  @media(max-width:560px){ .fc-dos-it{grid-template-columns:18px 1fr auto;} .fc-dos-it .qt{display:none;} }
+
   /* ação, não modelo: o dossiê baixa um arquivo em vez de trocar o desenho do card */
   .fc-mb.acao{border-color:#3f7a55;color:#8fdcab;background:#14281c;}
   .fc-mb.acao:hover{background:#1a3524;border-color:#57a874;}
@@ -4249,7 +4315,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
         <div class="dp-wrap"><div class="dp-field" id="leadsPerFld" onclick="abrirLeadsPicker(event)">📅 <span id="leadsPerVal">mês vigente</span> <span class="car">▾</span></div><div id="leadsPerDp"></div></div>
         <button class="btn btn-ouro" style="width:auto;padding:9px 16px;font-size:12px" id="btnLeads" onclick="carregarLeads(this)">↻ Atualizar agora</button>
         <span class="eqcfg-wrap">
-          <button class="btn btn-eq" style="width:auto;padding:9px 16px;font-size:12px" id="btnEq1c" onclick="eq1cAbrir(this)" title="Equilibra a carteira da campanha vigente entre os consultores (etapas 1 e 2 → etapa 1). Você revisa tudo antes de aplicar.">⚖️ Equilibrar leads</button>
+          <button class="btn btn-eq" style="width:auto;padding:9px 16px;font-size:12px" id="btnEq1c" onclick="eq1cAbrir(this)" title="Equilibra a carteira da campanha vigente entre os consultores (etapas 1 e 2 → etapa 1; a etapa 2 pode ser desligada no próprio modal). Você revisa tudo antes de aplicar.">⚖️ Equilibrar leads</button>
           <button type="button" class="eqcfg-bt" id="eqcfgBt" onclick="eqcfgToggle()" aria-label="Quem entra na distribuição" aria-expanded="false" title="Quem entra e quem sai da distribuição"><span>⚙</span></button>
         </span>
         <input type="text" id="leadsBusca" class="cart-busca" placeholder="🔎 buscar lead por nome…" oninput="leadsBuscarDebounce(this.value)" autocomplete="off">
@@ -4264,6 +4330,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       <div class="conv-head">
         <h2>📈 TAXA DE CONVERSÃO POR CONSULTOR</h2>
         <span class="conv-sub" id="convSub"></span>
+        <button class="rcc-btn" onclick="convCardTime()" title="Card de imagem com a conversão do time, para repassar no grupo. Respeita os consultores selecionados.">🖼️ Card do time</button>
         <button class="rcc-btn" onclick="rccAbrir()" title="Abre na tela a leitura gerencial da equipe inteira; o PDF sai de dentro do relatório">📄 Relatório Consolidado</button>
       </div>
       <div class="conv-ctrls">
@@ -4283,6 +4350,8 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
           <input type="number" id="convMeta" class="conv-meta" value="15" min="0" max="100" step="1" oninput="renderConversao()"> <span class="clbl" style="min-width:auto">% conversão</span>
         </div>
       </div>
+      <!-- faixa do TIME: como a equipe selecionada está contra a meta, antes do detalhe por pessoa -->
+      <div id="convTime"></div>
       <div id="convView"></div>
       <div class="conv-leg" id="convLeg"></div>
       <!-- a busca fica FORA do #convDiag: ele e repintado a cada clique em chip/meta e apagaria o que foi digitado -->
@@ -6483,6 +6552,38 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     EQ1C_TZER=setTimeout(()=>eq1cBuscar(null), 350);
   }
 
+  /* Etapa 2 (Farmer) dentro do recorte: ligada = o equilibrio pega as etapas 1 e 2; desligada =
+     so a etapa 1 (Novo Lead), e quem esta em Farmer nao e tocado. Fica salvo, e sem nada salvo
+     vale LIGADO — que e como o botao sempre funcionou (EQ1C.base = '1,2'). */
+  const EQ1C_E2_K='mm_eq1c_etapa2';
+  function eq1cE2(){
+    /* so '1' e '0' contam: qualquer outra coisa na chave volta ao padrao de fabrica, em vez de
+       silenciosamente encolher o recorte sem ninguem ter pedido */
+    try{ const v=localStorage.getItem(EQ1C_E2_K); if(v==='1'||v==='0') return v==='1'; }catch(e){}
+    return String(EQ1C.base||'').split(',').indexOf('2')>=0;
+  }
+  /* A base VIVA do botao: '1,2' com a etapa 2 ligada, '1' sem ela. Tudo que fala de etapa
+     (query, chip da engrenagem, subtitulo do modal) le daqui — nunca de EQ1C.base direto. */
+  function eq1cBase(){
+    const ets=String(EQ1C.base||'1').split(',').map(s=>s.trim()).filter(Boolean);
+    const vivo=eq1cE2()?ets:ets.filter(x=>x!=='2');
+    return vivo.length?vivo.join(','):'1';   // nunca deixa a base vazia
+  }
+  function eq1cE2Tog(el){
+    try{ localStorage.setItem(EQ1C_E2_K, el.checked?'1':'0'); }catch(e){}
+    eq1cSincronizarFaixas();
+    /* o subtitulo do modal afirma o recorte; mudou o recorte, muda a afirmacao na mesma hora */
+    eq1cCabecalho('⚖️ Equilibrar leads','campanha vigente · '+eq1cSubBase(), true);
+    const st=$('eq1cStatus'); if(st) st.textContent='· recalculando…';
+    clearTimeout(EQ1C_TZER);
+    EQ1C_TZER=setTimeout(()=>eq1cBuscar(null), 350);
+  }
+  /* "etapas 1 e 2 → etapa 1" ou "etapa 1 → etapa 1", conforme a caixa */
+  function eq1cSubBase(){
+    const ets=eq1cEtapasBase();
+    return (ets.length>1?'etapas ':'etapa ')+ets.join(' e ')+' → etapa '+(EQ1C.destino||'1');
+  }
+
   /* Repinta tudo que mostra numero de carteira fora do modal. Chamada depois de cada carga de
      leads (inclusive o "↻ Atualizar agora") e quando o cruzamento muda, para faixa, selo e modal
      nunca contarem coisas diferentes. Roda mesmo com a faixa fechada: sai correta ao abrir. */
@@ -6507,7 +6608,7 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
   /* As etapas que o equilibrio realmente mexe, lidas de EQ1C.base ('1,2') para o numero do chip
      nunca sair do passo com o que o modal faz. */
   function eq1cEtapasBase(){
-    return String(EQ1C.base||'').split(',').map(x=>parseInt(x,10)).filter(x=>x>=1&&x<=6);
+    return String(eq1cBase()||'').split(',').map(x=>parseInt(x,10)).filter(x=>x>=1&&x<=6);
   }
   /* O chip mostra o MESMO recorte da coluna "Antes" do modal: campanha vigente, etapas 1 e 2, no
      periodo carregado. Antes mostrava r.tot (a campanha em TODAS as etapas), e dai o gestor via
@@ -6530,7 +6631,9 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     f.innerHTML='<span class="eqcfg-t">Quem entra</span>'
       +CONSULTORES.map(c=>{
         const off=fora.indexOf(c.val)>=0, n=cart[c.val];
-        const rotN=(n!=null)?(esc(c.val)+': '+n+' lead(s) nas etapas '+eq1cEtapasBase().join(' e ')
+        const ets=eq1cEtapasBase();
+        const rotN=(n!=null)?(esc(c.val)+': '+n+' lead(s) na'+(ets.length>1?'s etapas ':' etapa ')
+                    +ets.join(' e ')
                     +' da campanha, no período carregado — é o que entra no rateio')
                             :esc(c.val);
         return '<button type="button" class="eqcfg-ch'+(off?' off':'')+'" data-v="'+esc(c.val)+'"'
@@ -6543,7 +6646,9 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       +(dentro<2 ? '⚠ marque ao menos <b>2</b>'
                  : '<b>'+dentro+'</b> no rateio · <b>'+(fora.length||'nenhum')+'</b> fora')
       +'</span>'
-      +'<span class="eqcfg-fix">campanha <b>vigente</b> · etapas <b>1 e 2</b> → <b>1</b> · <b>'
+      +'<span class="eqcfg-fix">campanha <b>vigente</b> · '
+      +(eq1cEtapasBase().length>1?'etapas ':'etapa ')+'<b>'+eq1cEtapasBase().join(' e ')+'</b> → <b>'
+      +esc(EQ1C.destino||'1')+'</b> · <b>'
       +(eq1cCruz()?'cruzamento':'só excedente')+'</b></span>';
     f.querySelectorAll('.eqcfg-ch').forEach(b=>{
       b.onclick=function(){
@@ -6560,16 +6665,18 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     const fora=eq1cFora().slice().sort().join(',');
     const pad =EQ1C.excluir.slice().sort().join(',');
     const cruz=eq1cCruz();
-    b.classList.toggle('tem', fora!==pad || cruz!==!!EQ1C.cruzamento);
+    const baseMudou=eq1cBase()!==String(EQ1C.base||'');
+    b.classList.toggle('tem', fora!==pad || cruz!==!!EQ1C.cruzamento || baseMudou);
     b.title='Quem entra na distribuição: '+(CONSULTORES.length-eq1cFora().length)
             +' de '+CONSULTORES.length+' consultores · '
+            +(eq1cEtapasBase().length>1?'etapas ':'etapa ')+eq1cEtapasBase().join(' e ')+' · '
             +(cruz?'todos trocam de dono':'só o excedente se move');
   }
   function eq1cQuery(){
     const qs=new URLSearchParams({acao:'equilibrioCampanha'});
     qs.set('campanha', EQ1C.campanha);
     qs.set('participantes', eq1cParticipantes().join(','));
-    qs.set('base', EQ1C.base);
+    qs.set('base', eq1cBase());   // '1,2' ou so '1' — a caixa "incluir a etapa 2" manda aqui
     if(EQ1C.destino) qs.set('etapaDestino', EQ1C.destino);
     qs.set('ordem', EQ1C.ordem);
     if(eq1cCruz()) qs.set('cruzamento','1');   // ausente = backend roda sem cruzamento
@@ -6825,17 +6932,20 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     EQ1C_ZER.clear(); EQ1C_IGNOROU=[];
     /* O modal e compartilhado com a transferencia de leads, que abre a mesma caixa. Quem abre
        escreve o proprio cabecalho e decide se o cruzamento faz sentido ali. */
-    eq1cCabecalho('⚖️ Equilibrar leads','campanha vigente · etapas 1 e 2 → etapa 1', true);
+    eq1cCabecalho('⚖️ Equilibrar leads','campanha vigente · '+eq1cSubBase(), true);
     const ck=$('eq1cCruz'); if(ck) ck.checked=eq1cCruz();
+    const ce=$('eq1cE2');   if(ce) ce.checked=eq1cE2();
     box.classList.add('on');
     $('eq1cCorpo').innerHTML='<div class="cmd-loading">⏳ Montando o equilíbrio…</div>';
     await eq1cBuscar(btn);
   }
-  /* titulo + subtitulo + visibilidade do cruzamento, num lugar so */
+  /* titulo + subtitulo + visibilidade das opcoes do equilibrio (cruzamento e etapa 2), num
+     lugar so. A transferencia usa o mesmo modal e passa `false`: la nenhuma das duas se aplica. */
   function eq1cCabecalho(titulo, sub, comCruz){
     const t=$('eq1cTit'); if(t) t.textContent=titulo;
     const s=$('eq1cSub'); if(s) s.textContent=sub||'';
     const c=$('eq1cCruzBox'); if(c) c.style.display=comCruz?'':'none';
+    const e=$('eq1cE2Box');   if(e) e.style.display=comCruz?'':'none';
   }
   /* A previa e sempre um GET sem efeito no CRM, entao refazer a consulta a cada marcacao e
      seguro. O que grava e so o POST do botao "Aplicar". */
@@ -12925,6 +13035,105 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       return '<b>'+pn+':</b> '+t; });
     return '<b>Diagnóstico (onde trava):</b><br>'+parts.join(' · ');
   }
+  /* ── Conversão do TIME (21/09/2026) ────────────────────────────────────────
+     A conta já existia em convGeral(); o que faltava era destaque. Duas peças:
+     a faixa-termômetro acima dos cards e o card de imagem para repassar.
+     Ambas usam convGeral(SELECIONADOS) — não da equipe inteira: se o gestor
+     marcou 3 dos 5 chips, o número do time é daqueles 3. */
+  function convTimeHtml(sel, meta){
+    const T=convGeral(sel);
+    const conv=+T.conversao||0;
+    const cor = conv>=meta ? '#7fd98a' : (conv>=meta*0.55 ? '#e2c878' : '#e89090');
+    const teto = Math.max(meta*1.4, conv*1.15, 1);
+    const posA = Math.min(100, conv/teto*100);
+    const posM = Math.min(100, meta/teto*100);
+    const falta = Math.max(0, meta-conv);
+    const quem = sel.length===1 ? esc(sel[0].nome.split(' ')[0])
+               : sel.length+' consultores';
+    return '<div class="cvt">'
+      +'<div class="cvt-top"><span class="vl" style="color:'+cor+'">'+convF1(conv)+'%</span>'
+        +'<span class="lb">conversão do time · '+T.ven+' venda(s) em '+T.tot+' leads · '+quem+'</span>'
+        +'<span class="meta">meta '+convF1(meta)+'%'+(falta>0?(' · faltam '+convF1(falta)+' p.p.'):' · <b style="color:#7fd98a">batida</b>')+'</span></div>'
+      +'<div class="cvt-bar"><div class="mk" style="left:'+posM+'%"></div><div class="ag" style="left:'+posA+'%"></div></div>'
+      +'<div class="cvt-esc"><span>0%</span><span style="color:#e2c878">meta '+convF1(meta)+'%</span><span>'+convF1(teto)+'%</span></div>'
+      +'<div class="cvt-fat">'
+        +'<span>Trabalhados <b>'+T.trab+'</b> ('+convF1(T.trabP)+'%)</span>'
+        +'<span>Em negociação <b>'+T.emNeg+'</b></span>'
+        +'<span>Oportunidades CIS <b>'+T.oportCis+'</b></span>'
+        +'<span>Fechamento <b>'+convF1(T.fechCis)+'%</b> <span style="color:#6f757f">(venda ÷ oportunidade)</span></span>'
+        +'<span style="margin-left:auto;color:#6f757f">▎ time agora · a faixa segue os consultores marcados</span>'
+      +'</div></div>';
+  }
+  /* Card de imagem do time — mesmo caminho dos demais cards (MC_CUR + mcCanvas). */
+  function convCardTime(){
+    const M=convMetrics();
+    if(!M.length){ toast('Carregue os leads primeiro'); return; }
+    const sel=convSelRows(M);
+    if(!sel.length){ toast('Selecione ao menos um consultor'); return; }
+    MC_CUR={ chip:'conversao-time', competencia:(typeof leadsPerLabel==='function'?leadsPerLabel():'') };
+    const modal=mcEnsureModal();
+    convDrawTime(sel, Math.max(0,+($('convMeta').value||15)));
+    modal.querySelector('.mc-box').classList.remove('mc-largo');
+    modal.style.display='flex';
+  }
+  function convDrawTime(sel, meta){
+    const cv=document.getElementById('mcCanvas'); if(!cv) return;
+    const T=convGeral(sel), conv=+T.conversao||0;
+    const W=560, pad=20, DPR=2, head=92;
+    const H=head+150+sel.length*20+46;
+    cv.width=W*DPR; cv.height=H*DPR;
+    const c=cv.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0);
+    let bg=c.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0e1826'); bg.addColorStop(1,'#0b0f18');
+    c.fillStyle=bg; c.fillRect(0,0,W,H);
+    let hg=c.createLinearGradient(0,0,W,0); hg.addColorStop(0,'#16273f'); hg.addColorStop(1,'#0c1626');
+    c.fillStyle=hg; c.fillRect(0,0,W,head);
+    const cor = conv>=meta ? '#46d17a' : (conv>=meta*0.55 ? '#F0C84A' : '#e05a5a');
+    c.textAlign='left'; c.textBaseline='alphabetic';
+    c.fillStyle='#f4f6fa'; c.font='900 21px Arial';
+    c.fillText('🎯 Conversão do time', pad, 35);
+    c.fillStyle='#9fb2c9'; c.font='700 12px Arial';
+    c.fillText(((FRZ_DATA&&FRZ_DATA.praca)||'Vitória')+' · '+(typeof leadsPerLabel==='function'?leadsPerLabel():'')
+      +(LEADS_CAMP?(' · '+(CAMP_LBL[LEADS_CAMP]||LEADS_CAMP)):''), pad, 56);
+    c.fillStyle='#6f8098'; c.font='600 11px Arial';
+    c.fillText(T.ven+' venda(s) em '+T.tot+' leads · '+sel.length+' consultor(es) · '+T.trab+' trabalhados', pad, 74);
+    c.textAlign='right';
+    c.fillStyle=cor; c.font='900 42px Arial'; c.fillText(convF1(conv)+'%', W-pad, 48);
+    c.fillStyle='#7f8ea0'; c.font='800 10px Arial'; c.fillText('META '+convF1(meta)+'%', W-pad, 68);
+    c.textAlign='left';
+    /* régua contra a meta */
+    const bw=W-pad*2, by=head+18, teto=Math.max(meta*1.4, conv*1.15, 1);
+    c.fillStyle='rgba(255,255,255,0.08)'; mcRR(c,pad,by,bw,12,6); c.fill();
+    c.fillStyle=cor; mcRR(c,pad,by,Math.max(5,Math.min(bw, conv/teto*bw)),12,6); c.fill();
+    c.fillStyle='#F0C84A'; c.fillRect(pad+meta/teto*bw, by-4, 2, 20);
+    c.fillStyle='#6f8098'; c.font='700 9.5px Arial';
+    c.fillText('0%', pad, by+28);
+    c.textAlign='center'; c.fillText('meta '+convF1(meta)+'%', pad+meta/teto*bw, by+28);
+    c.textAlign='right'; c.fillText(convF1(teto)+'%', pad+bw, by+28); c.textAlign='left';
+    /* etapas do funil */
+    let y=by+58;
+    [['Carteira',T.tot,'#5aa9e6'],['Trabalhados',T.trab,'#7f9ce0'],
+     ['Oportunidade CIS',T.oportCis,'#b98ae0'],['Venda',T.ven,'#46d17a']].forEach(function(et){
+      c.fillStyle='#dbe3ee'; c.font='800 12px Arial'; c.fillText(et[0], pad, y);
+      c.fillStyle='rgba(255,255,255,0.07)'; mcRR(c,160,y-10,280,11,5); c.fill();
+      c.fillStyle=et[2]; mcRR(c,160,y-10,Math.max(5, (T.tot?et[1]/T.tot:0)*280),11,5); c.fill();
+      c.textAlign='right'; c.fillStyle='#c9c9d2'; c.font='900 11.5px Consolas,monospace';
+      c.fillText(String(et[1]), W-pad, y); c.textAlign='left';
+      y+=26;
+    });
+    /* por consultor */
+    c.fillStyle='#7f8ea0'; c.font='800 9.5px Arial'; c.fillText('POR CONSULTOR', pad, y+2); y+=17;
+    sel.slice().sort(function(a,b){ return (+b.conversao||0)-(+a.conversao||0); }).forEach(function(r){
+      const rc=(+r.conversao||0)>=meta ? '#46d17a' : ((+r.conversao||0)>=meta*0.55 ? '#F0C84A' : '#e05a5a');
+      c.fillStyle='#e6edf6'; c.font='700 11.5px Arial'; c.fillText(fcCorta(c,r.nome,190), pad, y);
+      c.textAlign='right';
+      c.fillStyle=rc; c.font='900 11.5px Consolas,monospace'; c.fillText(convF1(+r.conversao||0)+'%', 280, y);
+      c.fillStyle='#6f8098'; c.font='600 10.5px Arial'; c.fillText((r.ven||0)+'/'+(r.tot||0), 345, y);
+      c.textAlign='left'; y+=20;
+    });
+    c.fillStyle='#565c66'; c.font='600 9.5px Arial';
+    c.fillText('Meta Master · Leads · '+new Date().toLocaleString('pt-BR').slice(0,16), pad, H-14);
+  }
+
   function renderConversao(){
     const panel=$('convPanel'); if(!panel) return;
     const M=convMetrics();
@@ -12958,8 +13167,10 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
     }
     document.querySelectorAll('#convModoSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.m===CONV.modo));
     document.querySelectorAll('#convViewSeg .cchip').forEach(b=>b.classList.toggle('on', b.dataset.v===CONV.view));
-    if(!CONV.sel.size){ $('convSub').textContent='Nenhum consultor selecionado — clique num chip ou em "Todos".'; $('convView').innerHTML='<div class="wiz-info">Selecione ao menos um consultor para ver a conversão.</div>'; $('convLeg').innerHTML=''; $('convDiag').innerHTML=''; const db=$('convDrillBox'); if(db) db.innerHTML=''; return; }
+    if(!CONV.sel.size){ $('convSub').textContent='Nenhum consultor selecionado — clique num chip ou em "Todos".'; $('convView').innerHTML='<div class="wiz-info">Selecione ao menos um consultor para ver a conversão.</div>'; $('convLeg').innerHTML=''; $('convDiag').innerHTML=''; const ct=$('convTime'); if(ct) ct.innerHTML=''; const db=$('convDrillBox'); if(db) db.innerHTML=''; return; }
     const sel=convSelRows(M);
+    /* faixa do time: sai do MESMO recorte que os cards abaixo (os chips marcados) */
+    const ctBox=$('convTime'); if(ctBox) ctBox.innerHTML=convTimeHtml(sel, meta);
     $('convSub').innerHTML=(CONV.sel.size===M.length?'todos os consultores':CONV.sel.size+' selecionado(s): '+sel.map(r=>esc(r.nome.split(' ')[0])).join(', '))
       +' · <b>'+(CONV.modo==='movimentacao'?'Movimentação (coorte do período)':'Retrato (estado do funil)')+'</b> · meta '+meta+'%'
       +' · <span style="color:#7fd98a">'+esc(leadsPerLabel())+(LEADS_CAMP?(' · '+(CAMP_LBL[LEADS_CAMP]||LEADS_CAMP)):'')+'</span>';
@@ -20092,37 +20303,85 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
      cliente, consultor, valor e líquido. Abre no navegador e vira PDF no Ctrl+P:
      é o material da reunião de turma. Sai do mesmo recorte que o bloco já leu
      (mesmo filtro de situação), sem consulta nova ao FRZ nem ao ZS. */
-  function fcDossieSecoes(){
+  /* Vendas do recorte (situação escolhida no bloco), opcionalmente só dos consultores
+     marcados no modal. `cons` null/vazio = todos. */
+  function fcDossieVendas(cons){
     const vend=(FRZ_DATA&&Array.isArray(FRZ_DATA.vendas))?FRZ_DATA.vendas:[];
     const sel=(FRZ_DATA&&Array.isArray(FRZ_DATA.statusSel)&&FRZ_DATA.statusSel.length)?FRZ_DATA.statusSel:['fin'];
-    const porCurso={};
-    vend.filter(function(v){ return sel.indexOf(v.st)>=0; }).forEach(function(v){
-      const cu=String(v.cu||'—').trim()||'—';
-      (porCurso[cu]=porCurso[cu]||[]).push(v); });
-    return FC.tre.map(function(t){
-      return { t:t, linhas:(porCurso[t.curso]||[]).slice().sort(function(a,b){
-        return (+b.vl||0)-(+a.vl||0) || String(a.al||'').localeCompare(String(b.al||''),'pt-BR'); }) };
+    const filtra=!!(cons && cons.length);
+    return vend.filter(function(v){
+      if(sel.indexOf(v.st)<0) return false;
+      return filtra ? (cons.indexOf(String(v.cs||'').trim())>=0) : true;
     });
   }
-  function fcDossieHtml(){
-    const secs=fcDossieSecoes();
+  /* Lista de consultores do recorte, com quantas vendas e quanto cada um fez.
+     Sai do MESMO conjunto que alimenta o dossiê, então o que está aqui é o que entra lá. */
+  function fcDossieConsultores(){
+    const m={}, ordem=[];
+    fcDossieVendas(null).forEach(function(v){
+      const c=String(v.cs||'').trim()||'— sem consultor —';
+      if(!m[c]){ m[c]={ nome:c, vendas:0, valor:0, clientes:{} }; ordem.push(c); }
+      m[c].vendas++; m[c].valor+=(+v.vl||0); m[c].clientes[fcK(v.al||'')]=1;
+    });
+    return ordem.map(function(c){ const o=m[c]; o.qtdClientes=Object.keys(o.clientes).length; return o; })
+      .sort(function(a,b){ return b.valor-a.valor || a.nome.localeCompare(b.nome,'pt-BR'); });
+  }
+  /* Seções do dossiê + totais DO RECORTE. Com filtro de consultor, nada pode sair de
+     FC.tre/FC.total (que são da turma inteira): tudo é recalculado do subconjunto. */
+  function fcDossieSecoes(cons){
+    const alvo=fcDossieVendas(cons);
+    const m={}, ordem=[];
+    alvo.forEach(function(v){
+      const cu=String(v.cu||'—').trim()||'—';
+      if(!m[cu]){ m[cu]={ curso:cu, linhas:[], valor:0, clientes:{} }; ordem.push(cu); }
+      const t=m[cu]; t.linhas.push(v); t.valor+=(+v.vl||0); t.clientes[fcK(v.al||'')]=1;
+    });
+    return ordem.map(function(cu){
+        const t=m[cu];
+        return { t:{ curso:t.curso, q:Object.keys(t.clientes).length, v:t.valor }, linhas:t.linhas.slice()
+          .sort(function(a,b){ return (+b.vl||0)-(+a.vl||0) || String(a.al||'').localeCompare(String(b.al||''),'pt-BR'); }) };
+      })
+      .sort(function(a,b){ return b.t.q-a.t.q || b.t.v-a.t.v; });   // mesma ordem do bloco na tela
+  }
+  function fcDossieTotais(secs, cons){
+    const alvo=fcDossieVendas(cons), cli={};
+    alvo.forEach(function(v){ cli[fcK(v.al||'')]=1; });
+    return { treinamentos:secs.length, vendas:alvo.length,
+             clientes:Object.keys(cli).length,
+             valor:alvo.reduce(function(a,v){ return a+(+v.vl||0); },0) };
+  }
+  /* `semCons` = tira só a COLUNA Consultor do arquivo. Nada a ver com o filtro de
+     consultor acima: aqui o dossiê sai completo (todas as vendas de todo mundo),
+     apenas sem dizer quem vendeu. Pedido do gestor em 21/09/2026. */
+  function fcDossieHtml(cons, semCons){
+    const secs=fcDossieSecoes(cons);
+    const TOT=fcDossieTotais(secs, cons);
     // a data só existe se a Leitura FRZ mandar `dt` na venda; sem ela a coluna some
     const temData=secs.some(function(s){ return s.linhas.some(function(v){ return v.dt; }); });
     const turma=fcTituloTurma()||'turma', praca=(FRZ_DATA&&FRZ_DATA.praca)||'',
           sit=(FRZ_DATA&&FRZ_DATA.situacao)||'Pagamento finalizado';
+    /* Filtro de consultor no cabeçalho: quem recebe o PDF precisa saber que ele é
+       parcial, senão compara com o total da turma e acha que falta venda. */
+    const todosCons=fcDossieConsultores().length;
+    const filtrou=!!(cons && cons.length && cons.length<todosCons);
     const corpo=secs.map(function(s){
       const t=s.t, cor=fcCorCurso(t.curso);
+      const nCols=(temData?1:0)+1+(semCons?0:1)+2;
       const linhas=s.linhas.map(function(v){
         const lq=(v.lq==null?v.vl:v.lq);
         return '<tr>'+(temData?'<td class="d">'+esc(v.dt||'—')+'</td>':'')
-          +'<td>'+esc(v.al||'—')+'</td><td class="c">'+esc(v.cs||'—')+'</td>'
+          +'<td>'+esc(v.al||'—')+'</td>'+(semCons?'':'<td class="c">'+esc(v.cs||'—')+'</td>')
           +'<td class="v">'+fcMoeda(v.vl)+'</td><td class="v lq">'+fcMoeda(lq)+'</td></tr>'; }).join('')
-        || '<tr><td colspan="'+(temData?5:4)+'" class="vz">sem detalhe de venda neste recorte</td></tr>';
+        || '<tr><td colspan="'+nCols+'" class="vz">sem detalhe de venda neste recorte</td></tr>';
       return '<section><h2><i style="background:'+cor+'"></i>'+esc(t.curso)+'</h2>'
         +'<p class="res">'+t.q+' cliente(s) · '+s.linhas.length+' venda(s) · <b>'+fcMoeda(t.v)+'</b>'
-        +(FC.total?' · '+(t.v/FC.total*100).toFixed(1).replace('.',',')+'% da turma':'')+'</p>'
-        +'<table><thead><tr>'+(temData?'<th>Data</th>':'')
-        +'<th>Cliente</th><th>Consultor</th><th class="v">Valor</th><th class="v">Líquido</th>'
+        +(TOT.valor?' · '+(t.v/TOT.valor*100).toFixed(1).replace('.',',')+'% do recorte':'')+'</p>'
+        /* Cabeçalho clicável: ordena a tabela DAQUELE curso. O arquivo é autônomo
+           (roda por file://), então o ordenador vai embutido no próprio HTML. */
+        +'<table><thead><tr>'+(temData?'<th class="ord" data-t="data">Data</th>':'')
+        +'<th class="ord" data-t="txt">Cliente</th>'
+        +(semCons?'':'<th class="ord" data-t="txt">Consultor</th>')
+        +'<th class="ord v" data-t="num">Valor</th><th class="ord v" data-t="num">Líquido</th>'
         +'</tr></thead><tbody>'+linhas+'</tbody></table></section>';
     }).join('');
     /* Quantidade de cada treinamento logo abaixo do resumo da turma: o número que se
@@ -20137,8 +20396,8 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
           +(t.q!==n?'<em>'+t.q+' cliente'+(t.q===1?'':'s')+'</em>':'')
           +'<span class="q-vl">'+fcMoeda(t.v)+'</span></li>'; }).join('')
       +'<li class="q-tot"><i></i><span class="q-nm">TOTAL</span><span class="q-pt"></span>'
-        +'<b>'+FC.vendas+'</b><span class="q-un">vendas</span>'
-        +'<span class="q-vl">'+fcMoeda(FC.total)+'</span></li></ul>';
+        +'<b>'+TOT.vendas+'</b><span class="q-un">vendas</span>'
+        +'<span class="q-vl">'+fcMoeda(TOT.valor)+'</span></li></ul>';
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
       +'<meta name="viewport" content="width=device-width, initial-scale=1.0">'
       +'<title>Treinamentos vendidos — '+esc(turma)+'</title><style>'
@@ -20146,6 +20405,9 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       +'body{font-family:Archivo,Segoe UI,system-ui,sans-serif;background:#fff;color:#1c1c22;padding:34px;max-width:900px;margin:0 auto}'
       +'h1{font-size:23px}.cab{color:#5c6470;font-size:12.5px;margin:6px 0 4px;font-weight:700}'
       +'.tot{font-size:13px;color:#1c7a45;font-weight:800;margin-bottom:16px}'
+      +'.filtro{font-size:12px;color:#8a6d1f;background:#fdf6e3;border:1px solid #efe0b8;'
+      +'border-radius:8px;padding:7px 10px;margin:8px 0 10px}'
+      +'.filtro span{color:#a08b52;font-weight:600}'
       +'.qtd-h{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#8b8b95;margin-bottom:6px}'
       +'.qtd{list-style:none;margin:0 0 26px;border:1px solid #e6e6ec;border-radius:10px;padding:8px 14px;page-break-inside:avoid}'
       +'.qtd li{display:flex;align-items:baseline;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid #f4f4f8}'
@@ -20170,26 +20432,151 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
       +'td.lq{color:#1c7a45}td.c,td.d{color:#6f757f}'
       +'td.vz{color:#8b8b95;font-style:italic}'
       +'.pe{margin-top:26px;font-size:11px;color:#8b8b95;border-top:1px solid #e6e6ec;padding-top:10px}'
-      +'@media print{body{padding:0}}</style></head><body>'
+      +'th.ord{cursor:pointer;user-select:none;white-space:nowrap}'
+      +'th.ord:hover{color:#1c7a45}'
+      +'th.ord:after{content:"\\2195";opacity:.35;margin-left:4px;font-weight:700}'
+      +'th.ord.asc:after{content:"\\2191";opacity:1;color:#1c7a45}'
+      +'th.ord.desc:after{content:"\\2193";opacity:1;color:#1c7a45}'
+      +'.dica-ord{font-size:10.5px;color:#a0a6b0;margin:-4px 0 9px}'
+      +'@media print{body{padding:0}th.ord{cursor:auto}th.ord:after{content:""}.dica-ord{display:none}}'
+      +'</style></head><body>'
       +'<h1>🎓 Treinamentos vendidos</h1>'
       +'<p class="cab">'+esc(praca?praca+' · ':'')+esc(turma)+' · '+esc(sit)+'</p>'
-      +'<p class="tot">'+FC.tre.length+' treinamento(s) · '+FC.vendas+' venda(s) · '
-        +FC.cli.length+' cliente(s) · '+fcMoeda(FC.total)+'</p>'
+      /* Com "não mostrar o consultor", o nome não pode vazar NEM aqui: o aviso de recorte
+         parcial dizia "Recorte por consultor: Fulano" e entregava justamente o que a
+         opção promete esconder (pego no teste das 4 combinações, 21/09/2026). */
+      +(filtrou ? (semCons
+          ? '<p class="filtro">Recorte parcial: <b>'+cons.length+' de '+todosCons+' consultores</b>'
+            + ' <span>(nomes omitidos a pedido; os demais ficaram de fora)</span></p>'
+          : '<p class="filtro">Recorte por consultor: <b>'+esc(cons.join(' · '))+'</b>'
+            + ' <span>('+cons.length+' de '+todosCons+' — os demais ficaram de fora)</span></p>') : '')
+      +'<p class="tot">'+TOT.treinamentos+' treinamento(s) · '+TOT.vendas+' venda(s) · '
+        +TOT.clientes+' cliente(s) · '+fcMoeda(TOT.valor)+'</p>'
       +quadro
+      +'<p class="dica-ord">Clique no cabeçalho de qualquer coluna para ordenar aquele treinamento '
+      +'(Data, Cliente'+(semCons?'':', Consultor')+', Valor ou Líquido). A ordenação não vai para a impressão.</p>'
       +corpo
       +'<p class="pe">Meta Master · Leitura FRZ · gerado em '+new Date().toLocaleString('pt-BR')
-      +' · imprima em PDF com Ctrl+P</p></body></html>';
+      +' · imprima em PDF com Ctrl+P</p>'
+      /* Ordenador por seção. Vai como texto dentro do arquivo gerado — por isso as
+         chaves e o cifrão não podem ser interpretados aqui: é tudo string. */
+      +'<script>(function(){'
+      +'function val(td,t){var s=(td.textContent||"").trim();'
+      +'if(t==="num"){var n=s.replace(/[^0-9,.-]/g,"").replace(/\\./g,"").replace(",",".");return parseFloat(n)||0;}'
+      +'if(t==="data"){var m=s.match(/(\\d{2})\\/(\\d{2})(?:\\/(\\d{4}))?/);'
+      +'return m?((m[3]||"2000")+m[2]+m[1]):"";}'
+      +'return s.toLowerCase();}'
+      +'document.querySelectorAll("table").forEach(function(tb){'
+      +'var ths=[].slice.call(tb.querySelectorAll("th.ord"));'
+      +'ths.forEach(function(th,i){th.addEventListener("click",function(){'
+      +'var asc=!th.classList.contains("asc");'
+      +'ths.forEach(function(o){o.classList.remove("asc","desc");});'
+      +'th.classList.add(asc?"asc":"desc");'
+      +'var t=th.getAttribute("data-t")||"txt";'
+      +'var body=tb.querySelector("tbody");'
+      +'var rows=[].slice.call(body.querySelectorAll("tr")).filter(function(r){return r.cells.length===ths.length;});'
+      +'rows.sort(function(a,b){var x=val(a.cells[i],t),y=val(b.cells[i],t);'
+      +'if(x<y)return asc?-1:1; if(x>y)return asc?1:-1; return 0;});'
+      +'rows.forEach(function(r){body.appendChild(r);});'
+      +'});});});'
+      +'})();<\/script>'
+      +'</body></html>';
   }
-  function fcBaixarDossie(bt){
+  /* ── Modal: quais consultores entram no dossiê ────────────────────────────
+     O botão 📄 abre esta escolha antes de gerar. Todos vêm marcados: o caso comum
+     é a turma inteira, e desmarcar é a exceção (mandar para um consultor só o que
+     é dele). O rodapé recalcula a cada clique, para o total ser conferido ANTES
+     de gerar o arquivo. */
+  let FC_DOS_SEL=null;                     // Set com os nomes marcados; null = ainda não abriu
+  function fcDossieModal(){
+    let m=document.getElementById('fcDosModal');
+    if(!m){
+      m=document.createElement('div'); m.id='fcDosModal'; m.className='rt-modal';
+      m.onclick=function(e){ if(e.target===m) fcDossieFechar(); };
+      document.body.appendChild(m);
+    }
+    return m;
+  }
+  function fcDossieFechar(){ const m=document.getElementById('fcDosModal'); if(m) m.style.display='none'; }
+  function fcDossieAbrir(){
     if(!FC.tre.length){ toast('Rode a Leitura FRZ primeiro'); return; }
-    const nome=('treinamentos-'+(fcTituloTurma()||'turma')).toLowerCase().normalize('NFD')
+    const cons=fcDossieConsultores();
+    if(!cons.length){ toast('Nenhuma venda no recorte atual'); return; }
+    /* Um consultor só no recorte: não há o que escolher — gera direto. */
+    if(cons.length===1){ fcDossieGerar([cons[0].nome]); return; }
+    FC_DOS_SEL=new Set(cons.map(function(c){ return c.nome; }));   // todos marcados
+    const m=fcDossieModal();
+    m.innerHTML='<div class="rt-modal-box" style="max-width:560px">'
+      +'<button class="rt-x" onclick="fcDossieFechar()" title="Fechar">✕</button>'
+      +'<div class="fc-dos-h">📄 Dossiê dos treinamentos</div>'
+      +'<div class="fc-dos-sub">Quem entra no arquivo? Desmarque para tirar do dossiê — '
+        +'os treinamentos, as quantidades e o total são recalculados só com quem ficar.</div>'
+      +'<div class="fc-dos-acts"><button class="fc-bt mini" onclick="fcDossieTodos(1)">Marcar todos</button>'
+        +'<button class="fc-bt mini" onclick="fcDossieTodos(0)">Limpar</button></div>'
+      +'<div class="fc-dos-lista">'
+      +cons.map(function(c,i){
+        return '<label class="fc-dos-it"><input type="checkbox" checked data-nome="'+esc(c.nome)+'" onchange="fcDossieMarcar(this)">'
+          +'<span class="nm">'+esc(c.nome)+'</span>'
+          +'<span class="qt">'+c.qtdClientes+' cli · '+c.vendas+' vd</span>'
+          +'<span class="vl">'+fcMoeda(c.valor)+'</span></label>'; }).join('')
+      +'</div>'
+      /* Opção independente do filtro: o arquivo sai inteiro, só sem dizer quem vendeu. */
+      +'<label class="fc-dos-anon"><input type="checkbox" id="fcDosSemCons" onchange="fcDossiePintar()">'
+        +'<span><b>Não mostrar o nome do consultor no arquivo</b>'
+        +'<i>O dossiê sai completo — todas as vendas, de todos — só sem a coluna Consultor.</i></span></label>'
+      +'<div class="fc-dos-ft"><span class="res" id="fcDosRes"></span>'
+        +'<button class="fc-bt dl" id="fcDosGerar" onclick="fcDossieGerarDoModal(this)">📄 Gerar dossiê</button></div>'
+      +'</div>';
+    m.style.display='flex';
+    fcDossiePintar();
+  }
+  function fcDossieTodos(liga){
+    const m=document.getElementById('fcDosModal'); if(!m) return;
+    m.querySelectorAll('.fc-dos-it input').forEach(function(c){
+      c.checked=!!liga;
+      if(liga) FC_DOS_SEL.add(c.dataset.nome); else FC_DOS_SEL.delete(c.dataset.nome);
+    });
+    fcDossiePintar();
+  }
+  function fcDossieMarcar(inp){
+    if(inp.checked) FC_DOS_SEL.add(inp.dataset.nome); else FC_DOS_SEL.delete(inp.dataset.nome);
+    fcDossiePintar();
+  }
+  function fcDossiePintar(){
+    const res=document.getElementById('fcDosRes'), bt=document.getElementById('fcDosGerar');
+    if(!res) return;
+    const sel=[...FC_DOS_SEL];
+    if(!sel.length){ res.innerHTML='<span style="color:#e08a5a">Nenhum consultor marcado</span>';
+      if(bt) bt.disabled=true; return; }
+    const secs=fcDossieSecoes(sel), t=fcDossieTotais(secs, sel);
+    res.innerHTML='Vai no arquivo: <b>'+t.treinamentos+'</b> treinamento(s) · <b>'+t.vendas+'</b> venda(s) · '
+      +'<b>'+t.clientes+'</b> cliente(s) · <b>'+fcMoeda(t.valor)+'</b>'
+      +(fcDossieSemCons() ? '<em style="font-style:normal;color:#e0c07a"> · sem a coluna Consultor</em>' : '');
+    if(bt) bt.disabled=false;
+  }
+  function fcDossieSemCons(){ const c=document.getElementById('fcDosSemCons'); return !!(c && c.checked); }
+  function fcDossieGerarDoModal(bt){
+    const sel=[...FC_DOS_SEL];
+    if(!sel.length){ toast('Marque pelo menos um consultor'); return; }
+    const semCons=fcDossieSemCons();
+    fcDossieFechar();
+    fcDossieGerar(sel, bt, semCons);
+  }
+  function fcDossieGerar(cons, bt, semCons){
+    const secs=fcDossieSecoes(cons);
+    if(!secs.length){ toast('Nenhuma venda para os consultores marcados'); return; }
+    const todos=fcDossieConsultores().length;
+    const parcial=(cons && cons.length && cons.length<todos);
+    const sufixo=(parcial ? ('-'+cons.length+'-de-'+todos+'-consultores') : '')
+               + (semCons ? '-sem-consultor' : '');
+    const nome=('treinamentos-'+(fcTituloTurma()||'turma')+sufixo).toLowerCase().normalize('NFD')
       .replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.html';
-    const url=URL.createObjectURL(new Blob([fcDossieHtml()],{type:'text/html;charset=utf-8'}));
+    const url=URL.createObjectURL(new Blob([fcDossieHtml(cons, semCons)],{type:'text/html;charset=utf-8'}));
     const a=document.createElement('a'); a.href=url; a.download=nome;
     document.body.appendChild(a); a.click(); a.remove();
     window.open(url,'_blank');            // abre para conferir; o arquivo baixado é o mesmo
     setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
-    toast('Dossiê gerado: '+FC.tre.length+' treinamento(s) · arquivo '+nome);
+    toast('Dossiê gerado: '+secs.length+' treinamento(s)'+(parcial?(' · '+cons.length+' consultor(es)'):'')+' · '+nome);
     if(bt){ const o=bt.textContent; bt.textContent='✓ Baixado'; bt.classList.add('ok');
       setTimeout(function(){ bt.textContent=o; bt.classList.remove('ok'); },1700); }
   }
@@ -20210,8 +20597,8 @@ body[data-mmtema^="claro"] :is(#fatImgCap,#leadsImgCap,.lt-cap) :is(button,.bt,.
         +'<button class="fc-mb" data-m="janelaMeta" onclick="fcTrocarModelo(\'janelaMeta\')">🪟 Janela + meta</button>'
         /* último da fila e separado: não desenha card nenhum — baixa o dossiê dos treinamentos */
         +'<span class="sep"></span>'
-        +'<button class="fc-mb acao" onclick="fcBaixarDossie(this)"'
-        +' title="Baixa um arquivo com uma seção por treinamento e quem fechou cada um (abre no navegador, Ctrl+P salva em PDF)">'
+        +'<button class="fc-mb acao" onclick="fcDossieAbrir()"'
+        +' title="Escolhe os consultores e baixa um arquivo com uma seção por treinamento e quem fechou cada um (Ctrl+P salva em PDF)">'
         +'📄 Dossiê dos treinamentos</button>';
       const cv=document.getElementById('mcCanvas'); cv.parentNode.insertBefore(bar,cv);
     }
@@ -21869,6 +22256,14 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
         todos. Desmarcado: só os leads que passam da média mudam de mão, e quem já está na média
         não é tocado. O equilíbrio final é o mesmo; o que muda é quantos leads são gravados no
         CRM.</small></span></label>
+    <!-- Mesma casca do cruzamento, e pelo mesmo motivo: #eq1cCorpo e reescrito a cada recalculo
+         e a caixa sumiria durante o "montando…" — inclusive quando nao houvesse nada a mover,
+         que e justamente quando o gestor quer alargar ou encolher o recorte. -->
+    <label class="rcc-opt" id="eq1cE2Box"><input type="checkbox" id="eq1cE2" onchange="eq1cE2Tog(this)">
+      <span>Incluir os leads da etapa 2 (Farmer)
+        <small>Marcado: o rateio pega as etapas 1 e 2 e joga tudo na etapa 1 — como o botão
+        sempre funcionou. Desmarcado: só os leads da etapa 1 (Novo Lead) entram, e quem está em
+        Farmer fica intocado, com o dono e a etapa de hoje.</small></span></label>
     <div id="eq1cCorpo"></div>
   </div>
 </div>
