@@ -388,6 +388,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                          url: 'treinamento-ggb/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do GGB —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ GGB Essencial (33 slides)', url: 'treinamento-ggb-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — O Produto: a Trilha GGB',     url: 'treinamento-ggb/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação',   url: 'treinamento-ggb/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',     url: 'treinamento-ggb/modulo-3.html',     tipo: 'modulo' },
@@ -395,6 +398,22 @@
         { titulo: 'SPIN Selling — aplicado ao GGB',         url: 'treinamento-ggb/spin-selling.html', tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts e Roteiros',        url: 'treinamento-ggb/fechamento.html',   tipo: 'final'  },
         { titulo: 'Módulo Especial — A Jornada GGB',        url: 'treinamento-ggb/jornada.html',      tipo: 'extra'  }
+      ]
+    },
+    {
+      id: 'treinamento-ci-essencial',
+      titulo: 'Coaching Individual — CI Essencial',
+      descricao: 'Treinamento comercial enxuto do processo de Coaching Individual (padrão ML5 Essencial, 33 slides): as 3 crenças (identidade, capacidade, merecimento), CI × turma, qualificação, SPIN, proposta personalizada e as 5 objeções. Sem versão completa — duração, sessões e investimento saem da proposta de cada cliente.',
+      produto: 'CI',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 51,
+      url: 'treinamento-ci-essencial/index.html',
+      icone: '🧭',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: '⚡ CI Essencial (33 slides)', url: 'treinamento-ci-essencial/index.html', tipo: 'index' }
       ]
     },
     {
