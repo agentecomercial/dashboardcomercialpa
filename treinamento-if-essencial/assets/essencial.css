@@ -1,0 +1,161 @@
+/* ============================================================
+   TREINAMENTO ESSENCIAL — camada sobre o if.css original.
+   Só o que a versão Essencial acrescenta:
+   blocos, hierarquia 🔴🟡, resumo de impacto, não faça isso,
+   regra de ouro, checklist, teste e o Modo Treinador.
+   Nada aqui sobrescreve o deck original — é aditivo.
+   ============================================================ */
+
+/* ---- Selo do bloco (substitui o eyebrow simples) ---- */
+.blk {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--cis-blue-900);
+  background: var(--cis-yellow);
+  padding: 4px 12px; border-radius: 999px;
+}
+.blk.b1 { background: #d8b65e; }
+.blk.b2 { background: #9bd6a0; }
+.blk.b3 { background: #9bb4ff; }
+.blk.b4 { background: #ffb08b; }
+.blk.b0 { background: #f4f6fb; }
+
+/* ---- Etiqueta de hierarquia do conteúdo ---- */
+.tag {
+  display: inline-block; font-size: 10px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; margin-left: 8px;
+  vertical-align: middle;
+}
+.tag.ess { background: rgba(255,107,107,0.16); color: #ff8b8b; border: 1px solid rgba(255,107,107,0.4); }
+.tag.imp { background: rgba(216, 182, 94,0.16); color: var(--cis-yellow); border: 1px solid var(--cis-card-border-strong); }
+
+/* ---- ⚡ Resumo de impacto ---- */
+.impacto {
+  background: linear-gradient(150deg, rgba(216, 182, 94,0.16), rgba(216, 182, 94,0.05));
+  border: 1px solid var(--cis-card-border-strong);
+  border-radius: 16px; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.impacto > h3 {
+  margin: 0; font-size: 13px; font-weight: 900;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--cis-yellow);
+}
+.impacto ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.impacto ul li {
+  display: block; position: relative; padding-left: 44px !important;  /* bloco: negrito no meio da frase não vira coluna */
+  font-size: 16px; line-height: 1.4; color: var(--cis-text); font-weight: 600;
+}
+.impacto ul li::before {
+  content: "⚡"; flex: 0 0 18px; font-size: 14px; margin-top: 2px;
+}
+
+/* ---- 🚫 Não faça isso ---- */
+.naofaca {
+  background: rgba(255,107,107,0.07);
+  border: 1px solid rgba(255,107,107,0.35);
+  border-radius: 16px; padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.naofaca > h3 {
+  margin: 0; font-size: 13px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase; color: #ff8b8b;
+}
+.naofaca ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.naofaca ul li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 14px; line-height: 1.45; color: var(--cis-text);
+}
+.naofaca ul li::before { content: "✗"; color: #ff6b6b; font-weight: 900; flex: 0 0 14px; }
+.naofaca ul li b { color: #ffb3b3; }
+
+/* ---- 💎 Regra de ouro ---- */
+.regra {
+  border: 1px solid var(--cis-yellow);
+  background: linear-gradient(160deg, rgba(216, 182, 94,0.95), rgba(184, 146, 60,0.92));
+  color: var(--cis-blue-900);
+  border-radius: 16px; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.regra .k {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.2em;
+  text-transform: uppercase; opacity: .72;
+}
+.regra p {
+  margin: 0; font-size: 22px; font-weight: 800; line-height: 1.25;
+  color: var(--cis-blue-900); font-style: italic;
+}
+
+/* ---- 🎯 Aplique agora ---- */
+.aplique {
+  background: rgba(155,214,160,0.07);
+  border: 1px solid rgba(155,214,160,0.38);
+  border-radius: 16px; padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.aplique > h3 {
+  margin: 0; font-size: 13px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase; color: #9bd6a0;
+}
+.aplique ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; }
+.aplique li { font-size: 14px; line-height: 1.45; color: var(--cis-text); }
+.aplique li b { color: #bfe8c3; }
+
+/* ---- ✅ Checklist "eu aprendi?" ---- */
+.check { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; }
+.check .it {
+  display: block; position: relative; padding-left: 44px !important;  /* bloco: negrito no meio da frase não vira coluna */
+  background: var(--cis-card-bg);
+  border: 1px solid var(--cis-card-border);
+  border-radius: 12px; padding: 12px 14px;
+  font-size: 14px; line-height: 1.4;
+}
+.check .it::before {
+  content: ""; position: absolute; left: 14px; top: 13px; width: 18px; height: 18px;
+  border: 2px solid var(--cis-yellow); border-radius: 5px;
+}
+.check .it b { color: var(--cis-yellow); font-weight: 800; }
+
+/* ---- Nota do editor (complemento que não veio da fonte) ---- */
+.nota-editor {
+  font-size: 12px; color: var(--cis-muted); font-style: italic;
+  border-left: 2px dashed rgba(216, 182, 94,0.45); padding-left: 10px;
+}
+
+
+/* ---- Revelação por célula em tabelas (.cis-table.por-celula) ----
+   Em <td>, o translate/scale do efeito padrão briga com o layout do
+   próprio table — o fade puro basta e fica mais limpo.
+   O html:not(.is-console) mantém o console imune: lá o slide aparece
+   sempre inteiro, porque o treinador precisa ver o que vem. */
+html:not(.is-console) .slide.is-active .cis-table.por-celula .cis-step:not(.is-revealed) {
+  opacity: 0;
+  transform: none;
+  filter: blur(2px);
+}
+html:not(.is-console) .slide.is-active .cis-table.por-celula .cis-step.is-revealed {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* ---- Listas: texto corrido com negrito no meio da frase ----
+   O css base faz o li virar flex: cada <b> no meio da frase vira uma
+   coluna separada ("Quem quer | virar coach | e viver..."). Aqui o li
+   volta a ser bloco e o marcador (•, ✓, ✗) fica posicionado à esquerda. */
+ul.dot-list li, ul.tick-list li, ul.x-list li {
+  display: block; position: relative; padding-left: 26px;
+}
+ul.dot-list li::before { position: absolute; left: 4px; top: 0; }
+ul.tick-list li::before, ul.x-list li::before { position: absolute; left: 0; top: 0; }
+
+/* ---- Emoji no título (🎯, ✅) ----
+   Decks com efeito metálico (BHP, FCIS…) pintam o título com gradiente
+   clipado no texto, e o emoji saía como uma mancha da cor do gradiente.
+   O emoji vai num <span class="emo"> que volta a pintar as próprias cores. */
+.slide-title .emo {
+  -webkit-text-fill-color: initial; color: initial;
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  filter: none;
+}

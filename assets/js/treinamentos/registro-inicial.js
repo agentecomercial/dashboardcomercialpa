@@ -52,6 +52,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                       url: 'treinamento-cis/index.html',       tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do CIS —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ CIS Essencial (33 slides)',         url: 'treinamento-cis-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (Método CIS)',     url: 'treinamento-cis/modulo-1.html',    tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-cis/modulo-2.html',    tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',  url: 'treinamento-cis/modulo-3.html',    tipo: 'modulo' },
@@ -74,6 +77,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-fgpc/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do FGPC —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ FGPC Essencial (33 slides)', url: 'treinamento-fgpc-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (FGPC)',            url: 'treinamento-fgpc/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-fgpc/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-fgpc/modulo-3.html',     tipo: 'modulo' },
@@ -143,6 +149,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-if/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do IF —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ IF Essencial (33 slides)', url: 'treinamento-if-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (IF)',              url: 'treinamento-if/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-if/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-if/modulo-3.html',     tipo: 'modulo' },
@@ -165,6 +174,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-bhp/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do BHP —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ BHP Essencial (33 slides)', url: 'treinamento-bhp-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (BHP)',             url: 'treinamento-bhp/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-bhp/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-bhp/modulo-3.html',     tipo: 'modulo' },
@@ -187,6 +199,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-ceop/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do CEOP —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ CEOP Essencial (33 slides)', url: 'treinamento-ceop-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (CEOP)',            url: 'treinamento-ceop/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-ceop/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-ceop/modulo-3.html',     tipo: 'modulo' },
@@ -209,6 +224,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-tav/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do TAV —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ TAV Essencial (33 slides)', url: 'treinamento-tav-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (TAV)',             url: 'treinamento-tav/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-tav/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-tav/modulo-3.html',     tipo: 'modulo' },
@@ -231,6 +249,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                            url: 'treinamento-master-coaching/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do Master Coaching —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ Master Coaching Essencial (33 slides)', url: 'treinamento-master-coaching-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (Master Coaching)',     url: 'treinamento-master-coaching/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação',     url: 'treinamento-master-coaching/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',       url: 'treinamento-master-coaching/modulo-3.html',     tipo: 'modulo' },
@@ -298,6 +319,9 @@
       origem: 'html-existente',
       estrutura: [
         { titulo: 'Capa / Índice',                        url: 'treinamento-fcis/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do FCIS —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ FCIS Essencial (33 slides)', url: 'treinamento-fcis-essencial/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — Produto (FCIS)',            url: 'treinamento-fcis/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-fcis/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-fcis/modulo-3.html',     tipo: 'modulo' },

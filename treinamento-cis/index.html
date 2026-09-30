@@ -559,6 +559,14 @@
         Visão geral
       </button>
 
+      <button class="sidenav-item highlight" data-go="essencial">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+        CIS Essencial
+        <span class="meta">33</span>
+        <span class="chevron" data-toggle-sub="essencial" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="essencial"></ul>
+
       <button class="sidenav-item highlight" data-go="fechamento">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
         Fechamento CIS
@@ -636,6 +644,16 @@
             <div style="margin-top:14px;"><strong>06</strong>Trilhas</div>
           </div>
         </header>
+
+        <!-- Versão Essencial: deck condensado (33 slides), pasta irmã -->
+        <button class="closing-card" data-go="essencial">
+          <div>
+            <span class="tag">⚡ Versão Essencial</span>
+            <h3>Método CIS Essencial</h3>
+            <p>Os 133 slides condensados em 33: o que o consultor precisa saber e fazer, em 4 blocos, com resumos de impacto, scripts prontos, checklist e teste rápido. Para preparar antes, revisar depois e consultar na correria. Tem Modo Treinador (tecla T) com o roteiro de condução.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
 
         <button class="closing-card" data-go="fechamento">
           <div>
@@ -766,6 +784,8 @@
 
   const ROUTES = {
     menu:        { file: null,                title: null },
+    /* Versão Essencial: mora numa pasta irmã, não dentro de treinamento-cis/. */
+    essencial:   { file: '../treinamento-cis-essencial/index.html', title: '<strong>⚡</strong> CIS Essencial' },
     fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Fechamento CIS' },
     spin:        { file: 'spin-closer.html',  title: '<strong>★</strong> SPIN Selling — Closer' },
     '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> Produto' },
@@ -823,6 +843,41 @@
   // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
   // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
   const SLIDE_TITLES = {
+    'essencial': [
+      'CIS Essencial — Capa',
+      'Como usar este material',
+      'B1 · O que é o Método CIS + por que importa',
+      'B1 · Os 5 pilares de transformação',
+      'B1 · O mapa das dores',
+      'B1 · Na prática: a dor → a sua ponte',
+      'B1 · Erros que devem ser evitados',
+      'B1 · Resumo de impacto + Aplique agora',
+      'B2 · Com quem você fala (ICP)',
+      'B2 · As frases que entregam o lead',
+      'B2 · As 5 perguntas de qualificação',
+      'B2 · Mensagens de prospecção prontas',
+      'B2 · Erros que devem ser evitados',
+      'B2 · Resumo de impacto + Aplique agora',
+      'B3 · SPIN Selling: amador × closer',
+      'B3 · As 4 perguntas, com falas prontas',
+      'B3 · As frases-ponte entre as fases',
+      'B3 · O SPIN inteiro em 5 falas',
+      'B3 · A ordem que faz a apresentação vender',
+      'B3 · Ancoragem: o preço vem por último',
+      'B3 · Erros que devem ser evitados',
+      'B3 · Resumo de impacto + Aplique agora',
+      'B4 · Objeção é pedido de segurança',
+      'B4 · O mapa de bolso das 5 objeções',
+      'B4 · Falas decoradas por objeção',
+      'B4 · A escada do sim (Yes Ladder)',
+      'B4 · A pergunta e o silêncio',
+      'B4 · Erros que devem ser evitados',
+      'B4 · Resumo de impacto + Aplique agora',
+      '✅ Eu aprendi? — checklist',
+      'Teste rápido · 1 de 2',
+      'Teste rápido · 2 de 2',
+      'O que você leva daqui'
+    ],
     '1': [
       'Produto (Método CIS)',
       'O que é o Método CIS',
@@ -1189,7 +1244,14 @@
 
   function deckStoreKey(key) {
     const f = ROUTES[key] && ROUTES[key].file;
-    return f ? ('cis-edits:' + (TRILHA_FOLDER ? TRILHA_FOLDER + '/' : '') + f) : null;
+    if (!f) return null;
+    /* Rotas para fora desta pasta (ex.: ../treinamento-cis-essencial/index.html)
+       já carregam a própria pasta no caminho. O deck grava a chave como
+       "pasta/arquivo" (cis.js: últimos 2 segmentos do pathname) — sem esta
+       normalização a barra lateral escreveria numa chave que o deck não lê,
+       e ocultar um slide aqui não sumiria com ele lá. */
+    if (f.slice(0, 3) === '../') return 'cis-edits:' + f.slice(3);
+    return 'cis-edits:' + (TRILHA_FOLDER ? TRILHA_FOLDER + '/' : '') + f;
   }
   function getDeckHidden(key) {
     const k = deckStoreKey(key); if (!k) return [];
