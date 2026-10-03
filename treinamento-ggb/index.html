@@ -574,6 +574,14 @@
       </button>
       <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
 
+      <button class="sidenav-item highlight" data-go="empilhar">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></svg></span>
+        Empilhar 1 por 1
+        <span class="meta">40</span>
+        <span class="chevron" data-toggle-sub="empilhar" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="empilhar"></ul>
+
       <div class="sidenav-label">Trilha completa</div>
 
       <button class="sidenav-item highlight" data-go="jornada">
@@ -665,6 +673,16 @@
             <span class="tag">⚡ Versão Essencial</span>
             <h3>GGB Essencial</h3>
             <p>Os 122 slides condensados em 33: o que o consultor precisa saber e fazer, em 4 blocos, com resumos de impacto, scripts prontos, checklist e teste rápido. Para preparar antes, revisar depois e consultar na correria. Tem Modo Treinador (tecla T) com o roteiro de condução.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <!-- Empilhar 1 por 1: jornada comercial dos 9 treinamentos (40 slides), pasta irmã -->
+        <button class="closing-card" data-go="empilhar">
+          <div>
+            <span class="tag">Na venda · Playbook</span>
+            <h3>Empilhar 1 por 1</h3>
+            <p>“Eu não vendo o próximo treinamento. Eu descubro a próxima dor.” Diagnóstico e ponte de cada um dos 9 treinamentos, perguntas-gatilho, storytelling de transição, playbook “se ele disser isso, eu avanço para aquilo”, modo rápido para a ligação e a matriz com as 81 frases de transição. Tem Modo Treinador (tecla T).</p>
           </div>
           <span class="cta">Abrir agora ▶</span>
         </button>
@@ -801,6 +819,8 @@
     /* Versão Essencial: mora numa pasta irmã, não dentro de treinamento-ggb/. */
     essencial:   { file: '../treinamento-ggb-essencial/index.html', title: '<strong>⚡</strong> GGB Essencial' },
     fechamento:  { file: 'fechamento.html',    title: '<strong>★</strong> Fechamento GGB' },
+    /* Empilhar 1 por 1: também em pasta irmã, no padrão Essencial (Modo Treinador). */
+    empilhar:    { file: '../treinamento-ggb-empilhar/index.html', title: '<strong>≡</strong> Empilhar 1 por 1' },
     spin:        { file: 'spin-selling.html',  title: '<strong>S</strong> SPIN Selling' },
     jornada:     { file: 'jornada.html',       title: '<strong>★</strong> A Jornada GGB' },
     '1':         { file: 'modulo-1.html',      title: '<strong>01</strong> O Produto: a Trilha GGB' },
@@ -858,6 +878,48 @@
   // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
   // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
   const SLIDE_TITLES = {
+    'empilhar': [
+      'Empilhar 1 por 1 — Capa',
+      'A regra de ouro',
+      'B1 · Mapa da jornada comercial',
+      'B2 · Método CIS · diagnóstico',
+      'B2 · Ponte CIS → FCIS',
+      'B2 · FCIS · diagnóstico',
+      'B2 · Ponte FCIS → FGPC',
+      'B2 · FGPC · diagnóstico',
+      'B2 · Ponte FGPC → BHP',
+      'B2 · BHP · diagnóstico',
+      'B2 · Ponte BHP → ML5',
+      'B2 · ML5 · diagnóstico',
+      'B2 · Ponte ML5 → IF',
+      'B2 · IF · diagnóstico',
+      'B2 · Ponte IF → TAV',
+      'B2 · TAV · diagnóstico',
+      'B2 · Ponte TAV → CEOP',
+      'B2 · CEOP · diagnóstico',
+      'B2 · Ponte CEOP → Master',
+      'B2 · Master Coaching · diagnóstico',
+      'B2 · Ponte Master → GGB',
+      'B3 · Playbook 1/2: se ele disser isso, eu avanço para aquilo',
+      'B3 · Playbook 2/2: se ele disser isso, eu avanço para aquilo',
+      'B3 · Modo rápido na ligação',
+      'B3 · Frases de transição',
+      'B3 · Matriz · Saindo do Método CIS',
+      'B3 · Matriz · Saindo do FCIS',
+      'B3 · Matriz · Saindo do FGPC',
+      'B3 · Matriz · Saindo do BHP',
+      'B3 · Matriz · Saindo do ML5',
+      'B3 · Matriz · Saindo do IF',
+      'B3 · Matriz · Saindo do TAV',
+      'B3 · Matriz · Saindo do CEOP',
+      'B3 · Matriz · Saindo do Master Coaching',
+      'B4 · Recapitule as dores e peça o sim',
+      'B4 · Erros que devem ser evitados',
+      'B4 · Resumo de impacto + Aplique agora',
+      '✅ Eu aprendi?',
+      'Teste rápido',
+      'O que você leva daqui'
+    ],
     'essencial': [
       'GGB Essencial — Capa',
       'O que é este material',

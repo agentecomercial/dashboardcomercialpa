@@ -391,6 +391,7 @@
         /* Versão condensada: mora em pasta irmã, mas é parte do GGB —
            não vira card próprio no catálogo, só aparece aqui e no índice. */
         { titulo: '⚡ GGB Essencial (33 slides)', url: 'treinamento-ggb-essencial/index.html', tipo: 'extra' },
+        { titulo: '≡ Empilhar 1 por 1 — os 9 treinamentos na venda (40 slides)', url: 'treinamento-ggb-empilhar/index.html', tipo: 'extra' },
         { titulo: 'Módulo 1 — O Produto: a Trilha GGB',     url: 'treinamento-ggb/modulo-1.html',     tipo: 'modulo' },
         { titulo: 'Módulo 2 — Prospecção e Qualificação',   url: 'treinamento-ggb/modulo-2.html',     tipo: 'modulo' },
         { titulo: 'Módulo 3 — Apresentação e Proposta',     url: 'treinamento-ggb/modulo-3.html',     tipo: 'modulo' },

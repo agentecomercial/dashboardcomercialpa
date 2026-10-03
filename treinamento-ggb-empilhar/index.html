@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Empilhar 1 por 1 | Treinamento Comercial GGB · A jornada comercial dos 9 treinamentos</title>
+<link rel="stylesheet" href="assets/ggb.css?v=20261002-2" />
+<link rel="stylesheet" href="assets/essencial.css?v=20261002-2" />
+<link rel="stylesheet" href="assets/treinador.css?v=20261002-2" />
+<style>
+  /* ===== Pilha: 9 blocos, o 1 embaixo, o 9 em cima ===== */
+  .emp { display: grid; grid-template-columns: 210px 1fr; gap: 26px; flex: 1; min-height: 0; }
+  .pilha { display: flex; flex-direction: column-reverse; gap: 5px; justify-content: flex-start; }
+  .pilha .bl {
+    display: grid; grid-template-columns: 24px 1fr; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 9px; font-size: 14px; font-weight: 700;
+    border: 1px dashed rgba(255,255,255,0.14); color: rgba(242,247,240,0.32);
+    background: transparent;
+  }
+  .pilha .bl b {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 999px; font-size: 12px;
+    background: rgba(255,255,255,0.06); color: inherit;
+  }
+  .pilha .bl.feito { border: 1px solid rgba(230,180,34,0.35); color: var(--cis-yellow-soft); background: rgba(230,180,34,0.08); }
+  .pilha .bl.feito b { background: rgba(230,180,34,0.25); }
+  .pilha .bl.agora {
+    border: 1px solid var(--cis-yellow); color: var(--cis-blue-900);
+    background: linear-gradient(90deg, var(--cis-yellow), var(--cis-yellow-soft));
+    box-shadow: 0 8px 22px -10px rgba(230,180,34,0.8); transform: translateX(8px);
+  }
+  .pilha .bl.agora b { background: var(--cis-blue-900); color: var(--cis-yellow); }
+  .pilha-cap, .gat-cap, .hist-cap { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--cis-muted); font-weight: 800; margin-bottom: 8px; }
+
+  /* Diagnóstico */
+  .dir { display: flex; flex-direction: column; min-width: 0; }
+  .diag { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .diag > div { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.4; }
+  .diag > div:first-child { border-color: rgba(155,180,255,0.45); background: rgba(155,180,255,0.06); }
+  .diag .k { display: block; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; color: var(--cis-yellow); margin-bottom: 2px; }
+  .diag > div:first-child .k { color: #9bb4ff; }
+  .entrega { font-size: 13.5px; color: var(--cis-muted); border-left: 3px solid var(--cis-yellow); padding: 2px 0 2px 10px; margin: 0 0 10px; line-height: 1.4; }
+  .entrega strong { color: var(--cis-yellow); }
+  .gat { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; }
+  .gat .item { padding: 8px 12px; grid-template-columns: 26px 1fr; gap: 8px; align-items: center; }
+  .gat .item .n { width: 22px; height: 22px; font-size: 12px; }
+  .gat .item p { margin: 0; font-size: 14.5px; line-height: 1.35; color: var(--cis-text); }
+  .sinal { margin: 10px 0 0; font-size: 14.5px; line-height: 1.4; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(127,224,164,0.45); background: rgba(127,224,164,0.07); }
+  .sinal b { color: #fff; }
+  .sinal em { color: #7fe0a4; font-style: normal; font-weight: 800; }
+
+  /* Ponte: história em 5 passos */
+  .hist .step { padding: 14px 16px; }
+  .hist .step h4 { color: var(--cis-yellow); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+  .hist .step p { font-size: 18px; line-height: 1.45; color: var(--cis-text); }
+  .hist .step:last-child { border-color: rgba(127,224,164,0.55); background: rgba(127,224,164,0.07); }
+  .hist .step:last-child h4 { color: #7fe0a4; }
+  .seq.hist { margin-bottom: 22px; }
+  .hist .step { min-height: 230px; }
+
+  /* Regra de ouro: cadeia */
+  .cadeia { margin: 16px 0; }
+  .cadeia .step p { font-size: 14px; color: var(--cis-text); }
+  .como-aplica .card { padding: 12px 16px; }
+
+  /* Mapa da jornada */
+  #empMapa .mapa-j { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  #empMapa .no { position: relative; background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 11px; padding: 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+  #empMapa .no b { font-size: 17px; color: var(--cis-yellow); }
+  #empMapa .no .d { font-size: 14.5px; color: var(--cis-muted); line-height: 1.35; }
+  #empMapa .no.ini { border-color: rgba(155,180,255,0.45); background: rgba(155,180,255,0.06); }
+  #empMapa .no.ini b { color: #c9d6ff; }
+  #empMapa .no.fim { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 14px; border-color: var(--cis-yellow); background: linear-gradient(160deg, rgba(230,180,34,0.95), rgba(245,165,0,0.92)); }
+  #empMapa .no.fim b, #empMapa .no.fim .d { color: var(--cis-blue-900); }
+  #empMapa .no.fim b { font-size: 18px; }
+
+  /* Tabelas */
+  .tab-play { font-size: 12.5px; }
+  .tab-play td { padding: 8px 10px; line-height: 1.35; }
+  .tab-play td:first-child { width: 19%; }
+  .tab-play td:nth-child(5) { width: 11%; color: #7fe0a4; }
+  .tab-rapido { font-size: 13.5px; border-spacing: 0 4px; }
+  .tab-rapido td { padding: 6px 12px; }
+  .tab-rapido td:last-child { color: #7fe0a4; white-space: nowrap; }
+
+  /* Frases */
+  [data-frases] .coringas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  [data-frases] .coringas span { font-size: 14px; line-height: 1.4; font-style: italic; color: var(--cis-yellow-soft); background: rgba(230,180,34,0.07); border-left: 3px solid var(--cis-yellow); padding: 8px 12px; border-radius: 0 10px 10px 0; }
+  [data-frases] .frases { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  [data-frases] .frases div { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 10px; padding: 8px 12px; font-size: 13.5px; line-height: 1.4; }
+  [data-frases] .frases .seqp { border-color: rgba(127,224,164,0.55); background: rgba(127,224,164,0.07); }
+  [data-frases] .frases .ggb { border-color: var(--cis-yellow); background: rgba(230,180,34,0.12); }
+  [data-frases] .frases .ggb b { color: var(--cis-yellow); }
+  [data-frases] .frases b { display: block; color: #7fe0a4; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 2px; }
+
+  .recap .item h4 { font-size: 18px; }
+  .recap .item p { font-size: 17px; line-height: 1.5; }
+</style>
+</head>
+<body data-marca="Empilhar 1 por 1">
+
+<div class="progress"><span></span></div>
+<a class="home-button" href="../treinamento-ggb/index.html">📚 Treinamento GGB</a>
+
+<div class="stage">
+  <div class="deck">
+
+    <section class="slide module-cover">
+      <div class="slide-header" style="border:0; justify-content:center;">
+        <span class="module-badge">Treinamento GGB · Na venda</span>
+      </div>
+      <div class="slide-body" style="align-items:center; text-align:center;">
+        <h1 class="slide-title">Empilhar 1 por 1<br><span style="color:#fff; font-size:44px; font-weight:600;">a jornada comercial dos 9 treinamentos</span></h1>
+        <p class="lead" style="max-width:920px;"><b>Eu não vendo o próximo treinamento. Eu descubro a próxima dor.</b><br>
+        Cada dor resolvida revela a seguinte, e o cliente chega sozinho à grade completa.<br>
+        <span style="color: var(--cis-muted); font-size:18px;">Playbook de bolso para ligação e WhatsApp: diagnóstico antes da oferta, sempre.</span></p>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>2 min</span></div>
+        <p>Abra perguntando: <b>“quem aqui já ouviu ‘você só quer me vender outro curso’?”</b> Deixe as mãos subirem. Hoje a gente aprende o contrário: o cliente descobre a próxima dor com as próprias palavras, e o próximo treinamento vira necessidade dele. <b>Tecla T</b> liga e desliga este roteiro.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b0">Como usar</span>
+          <h2 class="slide-title">A regra de ouro</h2>
+          <p class="slide-subtitle">Uma frase para memorizar. O resto do material é aplicação dela.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="regra">
+          <div class="k">💎 Regra de ouro do consultor</div>
+          <p>“Eu não vendo o próximo treinamento. Eu descubro a próxima dor.”</p>
+        </div>
+        <div class="seq cadeia">
+          <div class="step"><span class="n">1</span><h4>Dor</h4><p>O cliente fala o problema com as palavras dele.</p></div>
+          <div class="step"><span class="n">2</span><h4>Consequência</h4><p>Você pergunta o que isso já custou. Ele sente o peso.</p></div>
+          <div class="step"><span class="n">3</span><h4>Treinamento</h4><p>Só agora entra o treinamento que resolve aquela dor.</p></div>
+          <div class="step"><span class="n">4</span><h4>Nova dor</h4><p>Uma pergunta-gatilho mostra o que aparece depois de resolver.</p></div>
+          <div class="step"><span class="n">5</span><h4>Próximo nível</h4><p>Ele mesmo pede o próximo passo. Repita até a grade completa.</p></div>
+        </div>
+        <div class="grid grid-3 como-aplica">
+          <div class="card ghost"><h3>Pergunte antes de oferecer</h3><p class="muted">Sem dor dita por ele, não existe próximo treinamento.</p></div>
+          <div class="card ghost"><h3>Siga a dor, não a ordem</h3><p class="muted">Se ele revelar a dor de outro degrau, vá para ele.</p></div>
+          <div class="card ghost"><h3>Deixe ele concluir</h3><p class="muted">A frase “eu preciso resolver isso” tem que sair da boca dele.</p></div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>4 min</span></div>
+        <p>Faça a sala repetir a regra em voz alta três vezes. Depois revele a cadeia passo a passo e pergunte: <b>“em qual desses passos vocês costumam pular direto para a oferta?”</b> Quase sempre é o 2: ninguém pergunta o que a dor já custou.</p>
+      </div>
+    </section>
+    <section class="slide" id="empMapa">
+      <header class="slide-header">
+        <div>
+          <span class="blk b1">Bloco 1 • O mapa</span>
+          <h2 class="slide-title">Mapa da jornada comercial</h2>
+          <p class="slide-subtitle">Dor → treinamento → nova dor → próximo treinamento → … → grade completa.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="mapa-j">
+          <div class="no ini"><span class="d">Dor de entrada</span><b>“Sei o que fazer e não faço”</b></div>
+          <div class="no"><b>🧠 Método CIS</b><span class="d">→ “Eu mudo, mas não sei manter, nem levar isso para os outros.”</span></div>
+          <div class="no"><b>🎓 FCIS</b><span class="d">→ “Com uma pessoa funciona. Com o time, cada um reage de um jeito.”</span></div>
+          <div class="no"><b>🧩 FGPC</b><span class="d">→ “O time é bom, mas a empresa não tem processo nem número. Vivo apagando incêndio.”</span></div>
+          <div class="no"><b>📈 BHP</b><span class="d">→ “O processo existe, mas não tenho líderes. Tudo volta pra mim.”</span></div>
+          <div class="no"><b>👑 ML5</b><span class="d">→ “Faturo mais, mas o dinheiro não fica comigo.”</span></div>
+          <div class="no"><b>💰 IF</b><span class="d">→ “Para crescer preciso vender mais, e hoje vendo no feeling.”</span></div>
+          <div class="no"><b>🎯 TAV</b><span class="d">→ “No um a um eu vendo. Para um grupo, eu travo.”</span></div>
+          <div class="no"><b>🎤 CEOP</b><span class="d">→ “Eu inspiro, mas quero transformar as pessoas de verdade.”</span></div>
+          <div class="no"><b>🏆 Master Coaching</b><span class="d">→ “Cada degrau depende do anterior. Um curso só não segura.”</span></div>
+          <div class="no fim"><b>🥋 Grade completa · Green Golden Belt</b><span class="d">“Eu preciso da jornada inteira.”</span></div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o mapa como uma conversa: <b>cada seta é uma frase que o cliente diz</b>, não um produto que você oferece. Pergunte à sala qual dessas frases eles mais ouvem. É por ela que costumam entrar, e a pilha se monta a partir dali.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 1 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">1 · Método CIS <span class="emo">🧠</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="1"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Sei o que tenho que fazer, mas não faço. Procrastino, me saboto.”</div>
+              <div><span class="k">🔎 Isso revela</span>Crença limitante e falta de controle emocional. Não é falta de informação.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Há quanto tempo isso se repete?” “O que isso já te custou?”</div>
+              <div><span class="k">💡 Gere consciência</span>O problema não é saber, é o que ele acredita sobre si.</div>
+            </div>
+            <p class="entrega"><strong>Método CIS entrega:</strong> inteligência emocional e reprogramação das crenças que travam.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Quando você muda, quem ao seu redor percebe primeiro?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Já fez um curso que empolgou e depois esfriou?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Como você garante que essa mudança vai durar?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Tem alguém próximo que você tenta ajudar e não consegue?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Eu mudo, mas não sei manter, nem levar isso para os outros.”</b> → avance para <em>FCIS</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para FCIS quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 1 → 2</span>
+          <h2 class="slide-title">CIS → FCIS</h2>
+          <p class="slide-subtitle">Como fazer a transição: valide a mudança dele antes. A próxima dor vem da pergunta "como manter?", não de você.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Uma empresária fez o CIS e saiu outra pessoa.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Três meses depois, a rotina começou a puxá-la de volta.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>Ela viveu a mudança, mas não dominava o método por trás dela.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Cada recaída era recomeçar do zero, e ela não conseguia ajudar a equipe.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Transformar a experiência em método: FCIS.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Mudar você é o primeiro passo. Manter e saber conduzir outras pessoas é outro nível.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 2 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">2 · FCIS <span class="emo">🎓</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="2"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Já mudei muito, mas tenho medo de voltar. E queria ajudar quem está comigo.”</div>
+              <div><span class="k">🔎 Isso revela</span>Mudança sem método e vontade de conduzir outras pessoas.</div>
+              <div><span class="k">❓ Aprofunde com</span>“O que acontece quando a empolgação passa?” “Quem você mais queria ajudar hoje?”</div>
+              <div><span class="k">💡 Gere consciência</span>Sentir a mudança é diferente de dominar o método.</div>
+            </div>
+            <p class="entrega"><strong>FCIS entrega:</strong> o domínio do método, com certificação internacional, para aplicar em si e conduzir pessoas.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“No um a um você consegue ajudar. E com o time inteiro?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Tem alguém na equipe que você não consegue alcançar?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Você conduz todo mundo do mesmo jeito?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Quanto tempo você gasta resolvendo conflito entre pessoas?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Com uma pessoa funciona. Com o time, cada um reage de um jeito.”</b> → avance para <em>FGPC</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para FGPC quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 2 → 3</span>
+          <h2 class="slide-title">FCIS → FGPC</h2>
+          <p class="slide-subtitle">Como fazer a transição: pergunte pelo time, não pelo curso. Quando ele falar de "gente difícil", a ponte está pronta.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um gestor saiu do FCIS e começou a conduzir conversas com o time.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Com dois funcionou. Com outros três, a mesma conversa gerou resistência.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>As pessoas não eram resistentes: tinham perfis diferentes.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Tratando todos igual, ele estava perdendo os melhores.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Ler cada perfil e liderar do jeito certo: FGPC.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Então o método funciona com pessoas. O que trava é ler cada perfil, certo?”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 3 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">3 · FGPC <span class="emo">🧩</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="3"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Meu time não entrega. Cada um puxa pra um lado e eu troco gente toda hora.”</div>
+              <div><span class="k">🔎 Isso revela</span>Lidera todos do mesmo jeito. Contrata e gere sem ler perfil.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quantas pessoas saíram no último ano?” “Quanto te custa cada troca?”</div>
+              <div><span class="k">💡 Gere consciência</span>O problema não é a pessoa, é o encaixe entre perfil, função e liderança.</div>
+            </div>
+            <p class="entrega"><strong>FGPC entrega:</strong> gestão de pessoas pelo perfil comportamental (DISC). Time complementar e que fica.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Se o time estivesse perfeito amanhã, a empresa andaria sem você?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Você tem indicadores claros de cada área?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Quantas decisões por dia passam pela sua mesa?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Você planeja o mês ou reage ao mês?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“O time é bom, mas a empresa não tem processo nem número. Vivo apagando incêndio.”</b> → avance para <em>BHP</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para BHP quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 3 → 4</span>
+          <h2 class="slide-title">FGPC → BHP</h2>
+          <p class="slide-subtitle">Como fazer a transição: elogie a evolução do time e pergunte pelo resultado. A falta de método aparece sozinha.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um empresário montou o time pelos perfis, e o clima melhorou.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Mas o resultado não subiu na mesma proporção.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>Cada um fazia bem a sua parte, sem processo nem meta comum.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Ele continuava no centro de tudo, apagando incêndio.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Organizar a gestão e o resultado: BHP.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Pessoas certas resolvem metade. A outra metade é a máquina: processo e número.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 4 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">4 · BHP <span class="emo">📈</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="4"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Vivo apagando incêndio. Se eu paro, a empresa para.”</div>
+              <div><span class="k">🔎 Isso revela</span>Empresa sem método de gestão. O dono é a operação.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quando foram suas últimas férias sem celular?” “Que número da empresa você acompanha toda semana?”</div>
+              <div><span class="k">💡 Gere consciência</span>Crescimento vem de método, não de esforço.</div>
+            </div>
+            <p class="entrega"><strong>BHP entrega:</strong> gestão de negócios com método e mais de 28 ferramentas. Sair do incêndio e liderar resultado.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Com os processos rodando, quem decide quando você não está?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Você tem alguém pronto para te substituir?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Seus gestores executam ou lideram?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“O que acontece se você ficar 30 dias fora?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“O processo existe, mas não tenho líderes. Tudo volta pra mim.”</b> → avance para <em>ML5</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para ML5 quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 4 → 5</span>
+          <h2 class="slide-title">BHP → ML5</h2>
+          <p class="slide-subtitle">Como fazer a transição: pergunte pelo dia em que ele não estiver. A falta de líderes é a resposta dele, não a sua.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>A dona de uma rede organizou processos e indicadores.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Quando abriu a segunda unidade, os números caíram.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>O processo existia, mas ninguém liderava sem ela.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Ela voltou a se dividir entre duas operações.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Formar líderes que conduzem sem ela: ML5.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Processo sem líder volta para a sua mesa. O próximo passo é formar quem conduz.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 5 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">5 · ML5 <span class="emo">👑</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="5"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Não tenho em quem confiar. Tudo passa por mim.”</div>
+              <div><span class="k">🔎 Isso revela</span>Falta de líderes e centralização.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quem da equipe poderia assumir mais hoje?” “O que te impede de delegar?”</div>
+              <div><span class="k">💡 Gere consciência</span>Liderança é método e mentalidade: dá para formar.</div>
+            </div>
+            <p class="entrega"><strong>ML5 entrega:</strong> liderança de alto impacto: os 13 princípios e os 5 níveis de liderança.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“O faturamento cresceu. Seu patrimônio cresceu junto?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Quanto do que a empresa ganha fica com você?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Suas finanças pessoais e as da empresa estão separadas?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Se a renda parasse hoje, quantos meses você aguenta?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Faturo mais, mas o dinheiro não fica comigo.”</b> → avance para <em>IF</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para IF quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 5 → 6</span>
+          <h2 class="slide-title">ML5 → IF</h2>
+          <p class="slide-subtitle">Como fazer a transição: comemore o crescimento e pergunte o que sobrou. O número dele faz a ponte.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um empresário formou líderes, e o faturamento subiu.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>No fim do ano, a conta pessoal estava igual.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>Ganhava mais e gastava mais: o problema era a relação com o dinheiro.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Trabalhava para a empresa crescer, não para ele prosperar.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Reprogramar a relação com o dinheiro: IF.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Liderança multiplica resultado. A pergunta agora é: esse resultado está virando patrimônio?”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 6 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">6 · IF <span class="emo">💰</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="6"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Eu ganho bem, mas o dinheiro some.”</div>
+              <div><span class="k">🔎 Isso revela</span>Crença financeira e ausência de plano.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Para onde foi o dinheiro do ano passado?” “Você sabe quanto custa o seu mês?”</div>
+              <div><span class="k">💡 Gere consciência</span>Não é quanto ganha, é o que acredita e faz com o dinheiro.</div>
+            </div>
+            <p class="entrega"><strong>IF entrega:</strong> reprogramar as crenças sobre dinheiro: ganhar, multiplicar, usufruir e doar.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Com o dinheiro organizado, de onde vem o próximo salto de renda?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Como estão suas vendas hoje (ou as do seu time)?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Quantas vendas você perde no preço?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Seu time vende com processo ou no feeling?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Para crescer preciso vender mais, e hoje vendo no feeling.”</b> → avance para <em>TAV</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para TAV quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 6 → 7</span>
+          <h2 class="slide-title">IF → TAV</h2>
+          <p class="slide-subtitle">Como fazer a transição: pergunte de onde vem o próximo salto. Quase sempre a resposta é vender.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um profissional liberal organizou as finanças e saiu das dívidas.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Mas a renda ficou travada no mesmo teto.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>Ele perdia cliente na hora do preço e vendia no improviso.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Guardava bem, mas crescia pouco.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Vender com processo: TAV.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Organizar segura o dinheiro. Para ele crescer, precisa entrar mais. E entrar mais é vender melhor.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 7 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">7 · TAV <span class="emo">🎯</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="7"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Vendo no feeling. Quando falam de preço, perco a venda.”</div>
+              <div><span class="k">🔎 Isso revela</span>Sem processo comercial. Objeção sem resposta.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quantas propostas você perdeu este mês?” “O que o cliente disse antes de sumir?”</div>
+              <div><span class="k">💡 Gere consciência</span>Venda é processo, e processo se aprende.</div>
+            </div>
+            <p class="entrega"><strong>TAV entrega:</strong> técnicas avançadas em vendas, da abordagem ao fechamento.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“No um a um você vai bem. E falando para um grupo?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Como você se sai em reunião, palestra ou vídeo?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Já deixou de falar numa reunião por insegurança?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Seu time compra a ideia quando você apresenta?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“No um a um eu vendo. Para um grupo, eu travo.”</b> → avance para <em>CEOP</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para CEOP quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 7 → 8</span>
+          <h2 class="slide-title">TAV → CEOP</h2>
+          <p class="slide-subtitle">Como fazer a transição: pergunte pela última reunião ou apresentação dele. A insegurança aparece no relato.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um consultor dominou o processo de vendas e bateu meta.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Promovido a líder, passou a conduzir a reunião do time.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>A técnica de venda não resolvia a voz trêmula nem a falta de presença.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>O time não comprava as ideias dele.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Comunicar e convencer muitos: CEOP.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Vender para um é técnica. Convencer muitos de uma vez é outro nível: comunicação.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 8 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">8 · CEOP <span class="emo">🎤</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="8"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Travo para falar em público. Sei o que dizer e não convenço.”</div>
+              <div><span class="k">🔎 Isso revela</span>Medo de exposição e falta de técnica de comunicação.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quantas oportunidades passaram por você não falar?” “Como você se sente antes de apresentar?”</div>
+              <div><span class="k">💡 Gere consciência</span>A comunicação define o tamanho da liderança.</div>
+            </div>
+            <p class="entrega"><strong>CEOP entrega:</strong> comunicação eficaz e oratória persuasiva: storytelling, presença e o fim do medo de falar.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Agora que você influencia muita gente, o que quer deixar nelas?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Quer só falar bem ou transformar quem te escuta?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Já pensou em conduzir processos de transformação?”</p></div></div>
+              <div class="item"><span class="n">4</span><div><p>“Qual legado você quer construir?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Eu inspiro, mas quero transformar as pessoas de verdade.”</b> → avance para <em>Master Coaching</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para Master Coaching quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 8 → 9</span>
+          <h2 class="slide-title">CEOP → Master</h2>
+          <p class="slide-subtitle">Como fazer a transição: pergunte pelo impacto que ele quer deixar. O desejo de legado é a ponte.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um líder passou a palestrar com segurança.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>A plateia saía empolgada e, semanas depois, nada mudava.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>Ele inspirava, mas não sabia transformar crenças profundas.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>O impacto dele era passageiro.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>Transformar pessoas em profundidade: Master Coaching.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Falar bem move as pessoas por um dia. Transformar em profundidade é o topo da jornada.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Degrau 9 de 9 · Diagnóstico</span>
+          <h2 class="slide-title">9 · Master Coaching <span class="emo">🏆</span></h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="9"></div></div>
+          <div class="dir">
+            <div class="diag">
+              <div><span class="k">💬 Se ele disser</span>“Quero ir ao nível mais profundo e transformar pessoas de verdade.”</div>
+              <div><span class="k">🔎 Isso revela</span>Busca de domínio e de legado.</div>
+              <div><span class="k">❓ Aprofunde com</span>“Quem você quer transformar?” “O que te falta para chegar lá?”</div>
+              <div><span class="k">💡 Gere consciência</span>O topo integra todas as competências anteriores.</div>
+            </div>
+            <p class="entrega"><strong>Master Coaching entrega:</strong> perícia em coaching e desenvolvimento humano pela reprogramação profunda de crenças.</p>
+            <div class="gat-cap">Perguntas-gatilho · descubra a próxima dor</div>
+            <div class="script-list gat">
+              <div class="item"><span class="n">1</span><div><p>“Do que conversamos, quantas dessas dores você reconheceu em você?”</p></div></div>
+              <div class="item"><span class="n">2</span><div><p>“Se resolver só uma, o que acontece com as outras?”</p></div></div>
+              <div class="item"><span class="n">3</span><div><p>“Faz sentido tratar isso como jornada, e não como cursos soltos?”</p></div></div>
+            </div>
+            <p class="sinal">Se ele responder <b>“Cada degrau depende do anterior. Um curso só não segura.”</b> → avance para <em>Grade completa</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Leia o “Se ele disser” e peça para a sala completar o “Aprofunde com” antes de você mostrar. Depois revele as perguntas-gatilho uma a uma e pergunte: <b>qual delas vocês fariam no WhatsApp?</b> A linha verde é o sinal: só avance para Grade completa quando o cliente disser algo parecido.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b2">Bloco 2 • Ponte 9 → grade</span>
+          <h2 class="slide-title">Master → GGB</h2>
+          <p class="slide-subtitle">Como fazer a transição: recapitule as dores com as palavras dele. A grade completa vira conclusão dele, não oferta sua.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="hist-cap">📖 Storytelling · 30 segundos</div>
+        <div class="seq hist">
+          <div class="step"><span class="n">1</span><h4>Situação</h4><p>Um aluno fez um curso, depois outro, ao longo de anos, sem ordem.</p></div>
+          <div class="step"><span class="n">2</span><h4>Problema</h4><p>Cada um empolgava e depois esfriava.</p></div>
+          <div class="step"><span class="n">3</span><h4>Descoberta</h4><p>As dores estavam ligadas: faltava a base para segurar a próxima.</p></div>
+          <div class="step"><span class="n">4</span><h4>Consequência</h4><p>Foram anos e dinheiro gastos em recomeços.</p></div>
+          <div class="step"><span class="n">5</span><h4>Necessidade</h4><p>A jornada inteira, na ordem: Green Golden Belt.</p></div>
+        </div>
+        <div class="regra">
+          <div class="k">🗣️ Frase de transição</div>
+          <p>“Você viu que cada dor resolvida revelou a próxima. Isso tem nome: Green Golden Belt.”</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Conte a história em voz alta, um passo por vez, em no máximo 40 segundos. Depois peça para um consultor contá-la <b>trocando pelo caso de um cliente real dele</b>. A frase de transição só entra depois que o cliente reconhecer a própria situação na história.</p>
+      </div>
+    </section>
+    <section class="slide" id="tabPlay1">
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Playbook · 1 de 2</span>
+          <h2 class="slide-title">Se ele disser isso, eu avanço para aquilo</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <table class="cis-table tab-play">
+          <thead><tr><th>Se o cliente disser…</th><th>O que revela</th><th>Aprofunde com…</th><th>Gere consciência sobre…</th><th>Treinamento</th><th>Como fazer a transição</th></tr></thead>
+          <tbody>
+            <tr><td>“Sei o que tenho que fazer, mas não faço. Procrastino, me saboto.”</td><td>Crença limitante e falta de controle emocional. Não é falta de informação.</td><td>“Há quanto tempo isso se repete?”</td><td>O problema não é saber, é o que ele acredita sobre si.</td><td><b>🧠 CIS</b></td><td>“Isso não é falta de conhecimento, é crença. É exatamente aí que o CIS trabalha.”</td></tr>
+            <tr><td>“Já mudei muito, mas tenho medo de voltar. E queria ajudar quem está comigo.”</td><td>Mudança sem método e vontade de conduzir outras pessoas.</td><td>“O que acontece quando a empolgação passa?”</td><td>Sentir a mudança é diferente de dominar o método.</td><td><b>🎓 FCIS</b></td><td>“Mudar você é o primeiro passo. Manter e saber conduzir outras pessoas é outro nível.”</td></tr>
+            <tr><td>“Meu time não entrega. Cada um puxa pra um lado e eu troco gente toda hora.”</td><td>Lidera todos do mesmo jeito. Contrata e gere sem ler perfil.</td><td>“Quantas pessoas saíram no último ano?”</td><td>O problema não é a pessoa, é o encaixe entre perfil, função e liderança.</td><td><b>🧩 FGPC</b></td><td>“Então o método funciona com pessoas. O que trava é ler cada perfil, certo?”</td></tr>
+            <tr><td>“Vivo apagando incêndio. Se eu paro, a empresa para.”</td><td>Empresa sem método de gestão. O dono é a operação.</td><td>“Quando foram suas últimas férias sem celular?”</td><td>Crescimento vem de método, não de esforço.</td><td><b>📈 BHP</b></td><td>“Pessoas certas resolvem metade. A outra metade é a máquina: processo e número.”</td></tr>
+            <tr><td>“Não tenho em quem confiar. Tudo passa por mim.”</td><td>Falta de líderes e centralização.</td><td>“Quem da equipe poderia assumir mais hoje?”</td><td>Liderança é método e mentalidade: dá para formar.</td><td><b>👑 ML5</b></td><td>“Processo sem líder volta para a sua mesa. O próximo passo é formar quem conduz.”</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>4 min</span></div>
+        <p>Esta é a tabela de consulta. Não leia linha por linha: escolha <b>uma fala do cliente</b>, peça para alguém dizer qual é o próximo treinamento e a transição, e confira na linha.</p>
+      </div>
+    </section>
+    <section class="slide" id="tabPlay2">
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Playbook · 2 de 2</span>
+          <h2 class="slide-title">Se ele disser isso, eu avanço para aquilo</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <table class="cis-table tab-play">
+          <thead><tr><th>Se o cliente disser…</th><th>O que revela</th><th>Aprofunde com…</th><th>Gere consciência sobre…</th><th>Treinamento</th><th>Como fazer a transição</th></tr></thead>
+          <tbody>
+            <tr><td>“Eu ganho bem, mas o dinheiro some.”</td><td>Crença financeira e ausência de plano.</td><td>“Para onde foi o dinheiro do ano passado?”</td><td>Não é quanto ganha, é o que acredita e faz com o dinheiro.</td><td><b>💰 IF</b></td><td>“Liderança multiplica resultado. A pergunta agora é: esse resultado está virando patrimônio?”</td></tr>
+            <tr><td>“Vendo no feeling. Quando falam de preço, perco a venda.”</td><td>Sem processo comercial. Objeção sem resposta.</td><td>“Quantas propostas você perdeu este mês?”</td><td>Venda é processo, e processo se aprende.</td><td><b>🎯 TAV</b></td><td>“Organizar segura o dinheiro. Para ele crescer, precisa entrar mais. E entrar mais é vender melhor.”</td></tr>
+            <tr><td>“Travo para falar em público. Sei o que dizer e não convenço.”</td><td>Medo de exposição e falta de técnica de comunicação.</td><td>“Quantas oportunidades passaram por você não falar?”</td><td>A comunicação define o tamanho da liderança.</td><td><b>🎤 CEOP</b></td><td>“Vender para um é técnica. Convencer muitos de uma vez é outro nível: comunicação.”</td></tr>
+            <tr><td>“Quero ir ao nível mais profundo e transformar pessoas de verdade.”</td><td>Busca de domínio e de legado.</td><td>“Quem você quer transformar?”</td><td>O topo integra todas as competências anteriores.</td><td><b>🏆 Master</b></td><td>“Falar bem move as pessoas por um dia. Transformar em profundidade é o topo da jornada.”</td></tr>
+            <tr><td>“Cada coisa que eu resolvo abre outra.”</td><td>As dores estão ligadas. Curso solto não segura.</td><td>“Se resolver só uma, o que acontece com as outras?”</td><td>Não são cursos, é uma jornada em ordem.</td><td><b>🥋 GGB</b></td><td>“Você viu que cada dor resolvida revelou a próxima. Isso tem nome: Green Golden Belt.”</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>4 min</span></div>
+        <p>Esta é a tabela de consulta. Não leia linha por linha: escolha <b>uma fala do cliente</b>, peça para alguém dizer qual é o próximo treinamento e a transição, e confira na linha.</p>
+      </div>
+    </section>
+    <section class="slide" id="tabRapido">
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Modo rápido</span>
+          <h2 class="slide-title">Na ligação: fala → pensa → pergunta → dor → próximo</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <table class="cis-table tab-rapido">
+          <thead><tr><th>Cliente fala</th><th>Você pensa</th><th>Pergunta</th><th>Dor</th><th>Treinamento</th></tr></thead>
+          <tbody>
+            <tr><td>“Sei o que tenho que fazer, mas não faço”</td><td>Crença, não informação</td><td>“O que isso já te custou?”</td><td>Autossabotagem</td><td><b>🧠 CIS</b></td></tr>
+            <tr><td>“Já mudei muito, mas tenho medo de voltar”</td><td>Quer conduzir pessoas</td><td>“E com o time inteiro?”</td><td>Mudança sem método</td><td><b>🎓 FCIS</b></td></tr>
+            <tr><td>“Meu time não entrega”</td><td>Lidera todos igual</td><td>“Quanto custa cada troca?”</td><td>Time desalinhado</td><td><b>🧩 FGPC</b></td></tr>
+            <tr><td>“Vivo apagando incêndio”</td><td>Dono é a operação</td><td>“Últimas férias sem celular?”</td><td>Sem método de gestão</td><td><b>📈 BHP</b></td></tr>
+            <tr><td>“Não tenho em quem confiar”</td><td>Centraliza tudo</td><td>“O que te impede de delegar?”</td><td>Falta de líderes</td><td><b>👑 ML5</b></td></tr>
+            <tr><td>“Eu ganho bem, mas o dinheiro some”</td><td>Crença sobre dinheiro</td><td>“Para onde foi o dinheiro?”</td><td>Dinheiro que some</td><td><b>💰 IF</b></td></tr>
+            <tr><td>“Vendo no feeling”</td><td>Sem processo de venda</td><td>“Quantas perdeu este mês?”</td><td>Perde no preço</td><td><b>🎯 TAV</b></td></tr>
+            <tr><td>“Travo para falar em público”</td><td>Medo de exposição</td><td>“O que já passou por não falar?”</td><td>Trava em público</td><td><b>🎤 CEOP</b></td></tr>
+            <tr><td>“Quero ir ao nível mais profundo e transformar pessoas de verdade”</td><td>Busca legado</td><td>“O que te falta para chegar lá?”</td><td>Quer ir ao topo</td><td><b>🏆 Master</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Este slide é para deixar aberto durante a ligação. Treine em dupla: um lê a fala do cliente, o outro responde só com a pergunta, <b>sem dizer o nome do treinamento</b>. O nome só aparece depois da dor confirmada.</p>
+      </div>
+    </section>
+    <section class="slide" id="frasesT" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Frases de transição</span>
+          <h2 class="slide-title">Frases de transição</h2>
+          <p class="slide-subtitle">Curtas, para falar ou mandar no WhatsApp.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Interessante você trazer isso. Normalmente, quando resolvemos esse ponto, aparece outro desafio…”</span>
+          <span>“Então talvez o problema não esteja só em X. O que está acontecendo com Y?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>CIS → FCIS</b>“Mudar você é o primeiro passo. Manter e saber conduzir outras pessoas é outro nível.”</div>
+          <div><b>FCIS → FGPC</b>“Então o método funciona com pessoas. O que trava é ler cada perfil, certo?”</div>
+          <div><b>FGPC → BHP</b>“Pessoas certas resolvem metade. A outra metade é a máquina: processo e número.”</div>
+          <div><b>BHP → ML5</b>“Processo sem líder volta para a sua mesa. O próximo passo é formar quem conduz.”</div>
+          <div><b>ML5 → IF</b>“Liderança multiplica resultado. A pergunta agora é: esse resultado está virando patrimônio?”</div>
+          <div><b>IF → TAV</b>“Organizar segura o dinheiro. Para ele crescer, precisa entrar mais. E entrar mais é vender melhor.”</div>
+          <div><b>TAV → CEOP</b>“Vender para um é técnica. Convencer muitos de uma vez é outro nível: comunicação.”</div>
+          <div><b>CEOP → Master</b>“Falar bem move as pessoas por um dia. Transformar em profundidade é o topo da jornada.”</div>
+          <div><b>Master → GGB</b>“Você viu que cada dor resolvida revelou a próxima. Isso tem nome: Green Golden Belt.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>4 min</span></div>
+        <p>As três coringas de cima servem em qualquer degrau. As 9 de baixo são a sequência padrão; nos próximos 9 slides está a matriz completa, para quando a dor do cliente pular degraus. Peça para cada um escolher <b>as 3 que mais vai usar</b> e reescrever com as próprias palavras.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 1 de 9</span>
+          <h2 class="slide-title">Saindo do Método CIS <span class="emo">🧠</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Agora que você destravou por dentro, o que ainda trava por fora?”</span>
+          <span>“Quando você mudou, qual foi o próximo desafio que apareceu?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div class="seqp"><b>CIS → FCIS · sequência</b>“Mudar você é o primeiro passo. Manter e saber conduzir outras pessoas é outro nível.”</div>
+          <div><b>CIS → FGPC</b>“Você já se entende por dentro. E as pessoas do seu time, você consegue ler cada uma?”</div>
+          <div><b>CIS → BHP</b>“Emoção no lugar ajuda a decidir. Mas a sua empresa cresce por método ou pelo seu esforço?”</div>
+          <div><b>CIS → ML5</b>“Quem se domina está pronto para liderar. Quem toca as coisas quando você não está?”</div>
+          <div><b>CIS → IF</b>“A crença travava a sua ação. Será que ela também trava o seu dinheiro?”</div>
+          <div><b>CIS → TAV</b>“Sem autossabotagem, sobra coragem. Falta a técnica para transformar isso em venda.”</div>
+          <div><b>CIS → CEOP</b>“Você destravou por dentro. Quando precisa falar para um grupo, isso aparece por fora?”</div>
+          <div><b>CIS → Master</b>“Você viveu a transformação. Já pensou em conduzir isso em profundidade nos outros?”</div>
+          <div class="ggb"><b>CIS → 🥋 GGB</b>“O CIS abre a porta. As outras dores que você me contou têm cada uma o seu degrau: essa é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o Método CIS (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 2 de 9</span>
+          <h2 class="slide-title">Saindo do FCIS <span class="emo">🎓</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Você domina o método. Onde ele ainda não chegou na sua vida?”</span>
+          <span>“Com quem fica mais difícil aplicar o que você aprendeu?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>FCIS → CIS</b>“Para dominar o método, você precisa tê-lo vivido por dentro. Isso é o CIS.”</div>
+          <div class="seqp"><b>FCIS → FGPC · sequência</b>“Então o método funciona com pessoas. O que trava é ler cada perfil, certo?”</div>
+          <div><b>FCIS → BHP</b>“Você já sabe conduzir pessoas. A empresa tem processo para elas entregarem resultado?”</div>
+          <div><b>FCIS → ML5</b>“Conduzir uma pessoa é método. Formar líderes que conduzem outras é o próximo nível.”</div>
+          <div><b>FCIS → IF</b>“Você domina o método para a vida. E para o dinheiro, ele já chegou lá?”</div>
+          <div><b>FCIS → TAV</b>“Quem sabe fazer boas perguntas está a um passo de vender bem. Falta o processo comercial.”</div>
+          <div><b>FCIS → CEOP</b>“No um a um você conduz. Para uma sala inteira, a comunicação muda.”</div>
+          <div><b>FCIS → Master</b>“O FCIS forma o coach. O Master leva esse domínio ao nível mais profundo.”</div>
+          <div class="ggb"><b>FCIS → 🥋 GGB</b>“O FCIS te dá o método. As outras dores que você me contou têm cada uma o seu degrau: essa é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o FCIS (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 3 de 9</span>
+          <h2 class="slide-title">Saindo do FGPC <span class="emo">🧩</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Com o time certo, o que ainda depende de você?”</span>
+          <span>“Onde as pessoas ainda emperram o resultado?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>FGPC → CIS</b>“Você aprendeu a ler o perfil dos outros. E o seu, o que ainda te trava?”</div>
+          <div><b>FGPC → FCIS</b>“Ler o perfil é o começo. Conduzir cada pessoa numa mudança real exige método.”</div>
+          <div class="seqp"><b>FGPC → BHP · sequência</b>“Pessoas certas resolvem metade. A outra metade é a máquina: processo e número.”</div>
+          <div><b>FGPC → ML5</b>“Com o time certo, o próximo passo é transformar os melhores em líderes.”</div>
+          <div><b>FGPC → IF</b>“Você reduziu a troca de gente e o custo dela. O que sobra está virando patrimônio?”</div>
+          <div><b>FGPC → TAV</b>“Você lê o perfil do time. Imagine usar isso para ler o perfil do cliente na venda.”</div>
+          <div><b>FGPC → CEOP</b>“Cada perfil ouve de um jeito. Falar para todos ao mesmo tempo é comunicação.”</div>
+          <div><b>FGPC → Master</b>“Entender pessoas é gestão. Transformar pessoas em profundidade é o topo.”</div>
+          <div class="ggb"><b>FGPC → 🥋 GGB</b>“Time certo resolve gente. Empresa, dinheiro e liderança são os próximos degraus: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o FGPC (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 4 de 9</span>
+          <h2 class="slide-title">Saindo do BHP <span class="emo">📈</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Com a empresa organizada, qual é o gargalo agora?”</span>
+          <span>“O que ainda passa pela sua mesa todo dia?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>BHP → CIS</b>“A empresa ganhou método. E você, ainda se sabota quando a pressão aperta?”</div>
+          <div><b>BHP → FCIS</b>“Processo organiza a empresa. Conduzir as pessoas na mudança exige outro método.”</div>
+          <div><b>BHP → FGPC</b>“O processo está pronto. As pessoas certas estão nos lugares certos para rodá-lo?”</div>
+          <div class="seqp"><b>BHP → ML5 · sequência</b>“Processo sem líder volta para a sua mesa. O próximo passo é formar quem conduz.”</div>
+          <div><b>BHP → IF</b>“A empresa ficou previsível. O seu dinheiro pessoal também?”</div>
+          <div><b>BHP → TAV</b>“Com a casa organizada, a alavanca é vender mais. Seu comercial tem processo?”</div>
+          <div><b>BHP → CEOP</b>“Você tem números e estratégia. Consegue apresentar isso e engajar o time?”</div>
+          <div><b>BHP → Master</b>“Você domina a gestão. O próximo nível é transformar as pessoas que fazem ela andar.”</div>
+          <div class="ggb"><b>BHP → 🥋 GGB</b>“Empresa organizada é um degrau. Líderes, dinheiro e vendas completam a jornada: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o BHP (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 5 de 9</span>
+          <h2 class="slide-title">Saindo do ML5 <span class="emo">👑</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Com os líderes formados, o que ainda não cresce?”</span>
+          <span>“O resultado multiplicou. O que ficou para trás?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>ML5 → CIS</b>“Você forma líderes. As suas próprias crenças ainda limitam até onde você vai?”</div>
+          <div><b>ML5 → FCIS</b>“Líder que desenvolve gente precisa de método para conduzir mudança. Isso é o FCIS.”</div>
+          <div><b>ML5 → FGPC</b>“Liderar é método. Liderar cada perfil do jeito certo é o FGPC.”</div>
+          <div><b>ML5 → BHP</b>“Os líderes estão prontos. Eles têm processo e indicador para seguir?”</div>
+          <div class="seqp"><b>ML5 → IF · sequência</b>“Liderança multiplica resultado. A pergunta agora é: esse resultado está virando patrimônio?”</div>
+          <div><b>ML5 → TAV</b>“Seus líderes conduzem o time. O time comercial vende com processo?”</div>
+          <div><b>ML5 → CEOP</b>“Liderança se mede pela forma como você comunica. Sua voz move o time?”</div>
+          <div><b>ML5 → Master</b>“Você forma líderes. O Master te prepara para transformar pessoas em profundidade.”</div>
+          <div class="ggb"><b>ML5 → 🥋 GGB</b>“Liderança multiplica. Dinheiro, vendas e comunicação fazem isso durar: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o ML5 (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 6 de 9</span>
+          <h2 class="slide-title">Saindo do IF <span class="emo">💰</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Com o dinheiro organizado, de onde vem o próximo salto?”</span>
+          <span>“O que falta para esse dinheiro crescer?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>IF → CIS</b>“Você mudou a crença sobre dinheiro. Imagine fazer isso nas outras áreas da vida.”</div>
+          <div><b>IF → FCIS</b>“Você reprogramou uma crença. Dominar o método por trás disso é o FCIS.”</div>
+          <div><b>IF → FGPC</b>“Seu dinheiro está organizado. Na empresa, o maior custo não é a troca de gente?”</div>
+          <div><b>IF → BHP</b>“As finanças pessoais estão em ordem. As da empresa têm a mesma gestão?”</div>
+          <div><b>IF → ML5</b>“Para o patrimônio crescer sem você, alguém precisa liderar no seu lugar.”</div>
+          <div class="seqp"><b>IF → TAV · sequência</b>“Organizar segura o dinheiro. Para ele crescer, precisa entrar mais. E entrar mais é vender melhor.”</div>
+          <div><b>IF → CEOP</b>“Mais renda vem de mais influência. Como você se sai apresentando suas ideias?”</div>
+          <div><b>IF → Master</b>“Você venceu a crença do dinheiro. O Master trabalha as crenças mais profundas.”</div>
+          <div class="ggb"><b>IF → 🥋 GGB</b>“Dinheiro organizado é um degrau. Vender, comunicar e liderar fazem ele crescer: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o IF (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 7 de 9</span>
+          <h2 class="slide-title">Saindo do TAV <span class="emo">🎯</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Vendendo mais, o que começou a pesar?”</span>
+          <span>“Onde a técnica sozinha não resolve?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>TAV → CIS</b>“Você domina a técnica. Mas, na hora do não, o emocional segura?”</div>
+          <div><b>TAV → FCIS</b>“Venda boa é pergunta boa. O FCIS aprofunda a arte de conduzir pela pergunta.”</div>
+          <div><b>TAV → FGPC</b>“Você vende bem. E o seu time, cada perfil vende do jeito certo?”</div>
+          <div><b>TAV → BHP</b>“As vendas subiram. A empresa tem estrutura para entregar esse volume?”</div>
+          <div><b>TAV → ML5</b>“Você vende bem sozinho. Formar líderes que multiplicam isso é o ML5.”</div>
+          <div><b>TAV → IF</b>“Você vende mais. Esse dinheiro está ficando ou indo embora?”</div>
+          <div class="seqp"><b>TAV → CEOP · sequência</b>“Vender para um é técnica. Convencer muitos de uma vez é outro nível: comunicação.”</div>
+          <div><b>TAV → Master</b>“Você persuade. O Master ensina a transformar quem está do outro lado.”</div>
+          <div class="ggb"><b>TAV → 🥋 GGB</b>“Vender bem é um degrau. Comunicar, liderar e prosperar completam a jornada: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o TAV (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 8 de 9</span>
+          <h2 class="slide-title">Saindo do CEOP <span class="emo">🎤</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Falando bem, o que você quer que as pessoas façam depois?”</span>
+          <span>“Onde a sua palavra ainda não chega?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>CEOP → CIS</b>“Sua voz ficou segura. E a voz de dentro, ainda te sabota?”</div>
+          <div><b>CEOP → FCIS</b>“Você inspira um público. Conduzir cada pessoa numa mudança real é o FCIS.”</div>
+          <div><b>CEOP → FGPC</b>“Você fala bem para o grupo. Sabe falar com cada perfil do time?”</div>
+          <div><b>CEOP → BHP</b>“Você apresenta muito bem. A empresa por trás do discurso está organizada?”</div>
+          <div><b>CEOP → ML5</b>“Comunicação é a ferramenta do líder. O ML5 transforma isso em liderança.”</div>
+          <div><b>CEOP → IF</b>“Sua palavra gera oportunidades. O dinheiro delas está ficando com você?”</div>
+          <div><b>CEOP → TAV</b>“Você convence uma sala. Fechar a venda no um a um tem técnica própria.”</div>
+          <div class="seqp"><b>CEOP → Master · sequência</b>“Falar bem move as pessoas por um dia. Transformar em profundidade é o topo da jornada.”</div>
+          <div class="ggb"><b>CEOP → 🥋 GGB</b>“Comunicar bem é um degrau. Com a jornada inteira, sua palavra tem o que sustentar: é a GGB.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o CEOP (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide" data-frases>
+      <header class="slide-header">
+        <div>
+          <span class="blk b3">Bloco 3 • Matriz · 9 de 9</span>
+          <h2 class="slide-title">Saindo do Master Coaching <span class="emo">🏆</span></h2>
+          <p class="slide-subtitle">Para qualquer dor que aparecer depois deste treinamento.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="coringas">
+          <span>“Com o domínio que você tem, que área ainda ficou para trás?”</span>
+          <span>“Onde você ainda não aplicou o que domina?”</span>
+          <span>“É justamente aqui que entra o próximo nível.”</span>
+        </div>
+        <div class="frases">
+          <div><b>Master → CIS</b>“Quem transforma os outros revisita a própria base. O CIS é onde ela está.”</div>
+          <div><b>Master → FCIS</b>“O Master aprofunda. O FCIS certifica o método que sustenta tudo.”</div>
+          <div><b>Master → FGPC</b>“Você transforma pessoas. Aplicar isso no time, perfil por perfil, é o FGPC.”</div>
+          <div><b>Master → BHP</b>“Transformar pessoas gera resultado. A empresa tem método para escalar isso?”</div>
+          <div><b>Master → ML5</b>“Você transforma indivíduos. Formar líderes que transformam outros é o ML5.”</div>
+          <div><b>Master → IF</b>“Você domina crenças profundas. As crenças sobre dinheiro também?”</div>
+          <div><b>Master → TAV</b>“Você transforma pessoas. Transformar isso em vendas é técnica: TAV.”</div>
+          <div><b>Master → CEOP</b>“Você transforma no um a um. Levar isso a plateias é o CEOP.”</div>
+          <div class="ggb"><b>Master → 🥋 GGB</b>“Você viu que cada dor resolvida revelou a próxima. Isso tem nome: Green Golden Belt.”</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Use este slide quando o cliente já tem o Master Coaching (ou acabou de fechar) e revela uma dor fora da sequência. Primeiro a coringa, para abrir a dor; depois a frase do destino que a dor apontou. Peça para a sala achar <b>o destino pela dor</b>, não pela ordem.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b4">Bloco 4 • Fechar a jornada</span>
+          <h2 class="slide-title">Recapitule as dores e peça o sim</h2>
+          <p class="slide-subtitle">As dores que ele confirmou viram o argumento final.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="emp">
+          <div><div class="pilha-cap">A pilha</div><div class="pilha" data-at="10"></div></div>
+          <div class="script-list recap">
+            <div class="item"><span class="n">1</span><div><h4>Recapitule com as palavras dele</h4><p>“Você me disse que trava, que o time não entrega e que vive no incêndio. Cada um desses tem um degrau.”</p></div></div>
+            <div class="item"><span class="n">2</span><div><h4>Mostre a ligação</h4><p>“Percebe que, quando resolve um, aparece o outro? Por isso um curso solto não segura.”</p></div></div>
+            <div class="item"><span class="n">3</span><div><h4>Peça o sim e silencie</h4><p>“Faz sentido a gente começar pela base, já com a jornada inteira garantida?” Depois, silêncio.</p></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>5 min</span></div>
+        <p>Faça em dupla: um é o cliente e diz 3 dores; o outro recapitula <b>usando as palavras exatas</b> e pede o sim. Cronometre: a recapitulação inteira cabe em 40 segundos.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b4">Bloco 4 • Fechar a jornada</span>
+          <h2 class="slide-title">Erros que devem ser evitados</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="naofaca" style="flex:1;">
+          <h3>🚫 Não faça isso</h3>
+          <ul class="x-list">
+            <li><b>Oferecer antes de diagnosticar.</b> Sem a dor dita por ele, o próximo curso parece empurrado.</li>
+            <li><b>Seguir a ordem da grade.</b> O próximo treinamento é o da dor revelada, não o do número seguinte.</li>
+            <li><b>Inventar dor.</b> Se ele não sente aquilo, não force. Faça outra pergunta-gatilho.</li>
+            <li><b>Pular a consequência.</b> Dor sem custo não gera decisão. Pergunte o que aquilo já custou.</li>
+            <li><b>Despejar a grade no começo.</b> O cliente vê custo, não caminho. A grade aparece no fim, como conclusão.</li>
+          </ul>
+        </div>
+        <div class="regra">
+          <div class="k">💎 Regra de ouro</div>
+          <p>Eu não vendo o próximo treinamento. Eu descubro a próxima dor.</p>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>O erro mais comum é o segundo: <b>seguir a grade em vez da dor.</b> Peça um exemplo de venda em que o consultor ofereceu “o próximo da lista” e o cliente esfriou.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b4">Bloco 4 • Fechar a jornada</span>
+          <h2 class="slide-title">Fecho do bloco</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="cols-aside">
+          <div class="impacto">
+            <h3>⚡ Resumo de impacto</h3>
+            <ul class="dot-list">
+              <li>Diagnóstico antes da oferta, sempre.</li>
+              <li>Cada treinamento resolve uma dor e revela a próxima.</li>
+              <li>A pergunta-gatilho faz o cliente dizer a nova dor.</li>
+              <li>A história mostra que outro cliente passou pelo mesmo.</li>
+              <li>A grade completa é a conclusão dele, não a sua oferta.</li>
+            </ul>
+          </div>
+          <div class="aplique">
+            <h3>🎯 Aplique agora</h3>
+            <ol>
+              <li><b>Agora, 10 min:</b> escolha <b>3 pontes</b> e reescreva a história com um caso real seu.</li>
+              <li><b>Critério:</b> cada história tem os 5 passos e cabe em 40 segundos.</li>
+              <li><b>Em 48h:</b> use uma pergunta-gatilho numa conversa real e volte com a resposta do cliente.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>12 min</span></div>
+        <p>As 3 histórias reescritas são o entregável deste módulo. <b>Não deixe ninguém sair sem elas.</b> Recolha, leia depois e devolva com correções na reunião seguinte.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b0">Fecho</span>
+          <h2 class="slide-title"><span class="emo">✅</span> Eu aprendi?</h2>
+          <p class="slide-subtitle">Marque só o que você consegue fazer agora, sem consultar o material.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="check" style="flex:1;">
+          <div class="it">Sei dizer a <b>regra de ouro</b> de cor?</div>
+          <div class="it">Reconheço a <b>fala do cliente</b> que leva a cada treinamento?</div>
+          <div class="it">Pergunto a <b>consequência</b> antes de oferecer?</div>
+          <div class="it">Tenho <b>uma pergunta-gatilho</b> pronta para cada degrau?</div>
+          <div class="it">Conto uma <b>história de transição</b> em até 40 segundos?</div>
+          <div class="it">Sigo a <b>dor revelada</b>, não a ordem da grade?</div>
+          <div class="it">Uso as <b>frases de transição</b> sem parecer script?</div>
+          <div class="it">Recapitulo as dores e <b>sustento o silêncio</b> depois do pedido?</div>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Peça honestidade: <b>“quem marcou menos de 6?”</b> Ninguém precisa levantar a mão. O objetivo é que cada um saiba o próprio gap antes do teste.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b0">Teste rápido</span>
+          <h2 class="slide-title">O cliente diz. Para onde você vai?</h2>
+          <p class="slide-subtitle">Responda antes de revelar. A coluna da direita é o gabarito.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <table class="cis-table por-celula">
+          <thead><tr><th style="width:42%;">O cliente diz</th><th>O que você faz</th></tr></thead>
+          <tbody>
+            <tr><td><b>1.</b> “Depois que organizei a empresa, tudo ainda volta pra minha mesa.”</td><td>Dor de líderes. Aprofunde: “o que acontece se você ficar 30 dias fora?” → <b>ML5</b>.</td></tr>
+            <tr><td><b>2.</b> Ele fez o CIS e você quer oferecer o FCIS porque “é o próximo”.</td><td>Não ofereça ainda. Faça uma pergunta-gatilho e espere a dor dele aparecer.</td></tr>
+            <tr><td><b>3.</b> “Meu faturamento dobrou, mas eu continuo sem reserva.”</td><td>Dor financeira. Pergunte para onde foi o dinheiro → <b>IF</b>.</td></tr>
+            <tr><td><b>4.</b> “No WhatsApp eu vendo bem, mas na reunião com o time eu travo.”</td><td>Dor de comunicação. Conte a história TAV → CEOP e use a frase de transição.</td></tr>
+            <tr><td><b>5.</b> “Você só quer me vender outro curso.”</td><td>Volte ao diagnóstico: “faz sentido. Me conta: o que mudou desde o último treinamento?”</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>6 min</span></div>
+        <p>A situação aparece sozinha: leia em voz alta, <b>deixe dois responderem</b> e só então revele o gabarito. A questão 2 é a que mais separa quem entendeu a regra de ouro.</p>
+      </div>
+    </section>
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="blk b0">Encerramento</span>
+          <h2 class="slide-title">O que você leva daqui</h2>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="grid grid-4">
+          <div class="card"><h3>1 · Diagnóstico</h3><p>Antes de qualquer oferta, a dor dita por ele.</p></div>
+          <div class="card"><h3>2 · Consequência</h3><p>Pergunto o que a dor já custou.</p></div>
+          <div class="card"><h3>3 · Nova dor</h3><p>A pergunta-gatilho revela o próximo degrau.</p></div>
+          <div class="card"><h3>4 · Jornada</h3><p>A grade completa é a conclusão dele.</p></div>
+        </div>
+        <p class="pullquote">“Eu não vendo o próximo treinamento. Eu descubro a próxima dor.”<cite>Regra de ouro do Closer GGB</cite></p>
+        <div class="end-cta">
+          <a class="home-button" href="../treinamento-ggb/index.html" style="position:static;">📚 Voltar ao Treinamento Comercial GGB ▶</a>
+        </div>
+      </div>
+      <div class="tnote">
+        <div class="tk">🎤 Roteiro do treinador <span>3 min</span></div>
+        <p>Feche com o compromisso: <b>cada um diz em voz alta qual pergunta-gatilho vai usar na próxima conversa</b>. Anote e cobre na semana seguinte.</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="hud">
+  <div class="counter" data-counter></div>
+  <div class="nav-buttons">
+    <button class="fs-btn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+      <span class="fs-label">Tela cheia</span>
+    </button>
+    <button data-nav="prev" title="Anterior (←)">◀ Anterior</button>
+    <button data-nav="next" title="Próximo (→ / Espaço)">Próximo ▶</button>
+  </div>
+</div>
+
+<script>
+  /* Monta a pilha de cada slide: data-at = degrau atual (10 = pilha completa) */
+  (function () {
+    var NOMES = ["Método CIS","FCIS","FGPC","BHP","ML5","IF","TAV","CEOP","Master Coaching"];
+    document.querySelectorAll('.pilha[data-at]').forEach(function (p) {
+      var at = Number(p.dataset.at);
+      p.innerHTML = NOMES.map(function (n, i) {
+        var k = i + 1;
+        var cls = k < at ? 'feito' : (k === at ? 'agora' : '');
+        return '<div class="bl ' + cls + '"><b>' + k + '</b>' + n + '</div>';
+      }).join('');
+    });
+  })();
+</script>
+<script src="assets/ggb.js?v=20261002-2"></script>
+<script src="assets/essencial.js?v=20261002-2"></script>
+</body>
+</html>
