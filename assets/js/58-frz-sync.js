@@ -10,7 +10,10 @@
    ─────────────
    O navegador não consegue ler o ZS (exige login e não libera CORS). Então o
    botão chama a rota /api/sync-zs do servidor do Meta Master, que roda neste
-   PC (http://localhost:8765). Ela executa o Sincronizar-ZS.ps1 -Aplicar:
+   PC (http://localhost:8765) — direto por fetch no file:// e no Local; pelo
+   GitHub Pages, por uma janelinha (meta-master/sync-zs.html), porque o Chrome
+   154 proíbe página da internet de chamar o localhost por fetch. A rota
+   executa o Sincronizar-ZS.ps1 -Aplicar:
    lê as vendas ganhas do mês no ZS (Vitória + Teresina) e grava em Firebase
    pipelineSales/<mês>. Como o resultado fica no Firebase, os três endereços
    do dashboard (Local, Desktop e GitHub Pages) passam a mostrar o mesmo.
@@ -34,7 +37,9 @@
   'use strict';
 
   /* Rota do servidor do Meta Master que roda o Sincronizar-ZS.ps1 */
-  var SYNC_ZS_URL = 'http://localhost:8765/api/sync-zs';
+  var SYNC_ZS_ORIGEM = 'http://localhost:8765';
+  var SYNC_ZS_URL    = SYNC_ZS_ORIGEM + '/api/sync-zs';
+  var SYNC_ZS_PAGINA = SYNC_ZS_ORIGEM + '/sync-zs.html';   /* janelinha usada pelo GitHub Pages */
   var SYNC_ZS_TIMEOUT = 200000;   /* a leitura do ZS leva ~40 s; folga para o CRM lento */
 
   /* ── Constantes do HUD: só a aba Turmas ainda usa (window.FRZ, abaixo) ── */
@@ -103,22 +108,56 @@
       return;
     }
 
+    var tmr = null, semServidor = false;
+    var execucao;
+    if(location.protocol === 'https:'){
+      /* GitHub Pages: o Chrome 154 bloqueia fetch de página da internet para o
+         localhost ("access to the loopback address space"), mesmo com permissão.
+         Abrir uma JANELA no localhost é navegação e passa: a página sync-zs.html
+         do Meta Master faz a chamada local e devolve o placar por postMessage.
+         O window.open tem de sair aqui, ainda dentro do clique, senão vira pop-up bloqueado. */
+      var pop = window.open(SYNC_ZS_PAGINA + '?periodo=' + encodeURIComponent(mk), 'syncZs', 'popup,width=440,height=280');
+      if(!pop){
+        _toast('⚠️ O navegador bloqueou a janela do Sincronizar ZS. Libere pop-ups para este site e clique de novo.', 'var(--amber)');
+        return;
+      }
+      execucao = new Promise(function(resolve, reject){
+        var feito = false;
+        function terminar(fn, val){
+          if(feito) return; feito = true;
+          window.removeEventListener('message', onMsg); clearInterval(vigia); clearTimeout(tmr);
+          fn(val);
+        }
+        function onMsg(ev){
+          if(ev.origin !== SYNC_ZS_ORIGEM || !ev.data || ev.data.tipo !== 'sync-zs') return;
+          terminar(resolve, ev.data.resultado);
+        }
+        window.addEventListener('message', onMsg);
+        /* fechou sem responder = Meta Master desligado (página de erro do navegador) */
+        var vigia = setInterval(function(){
+          if(pop.closed){ semServidor = true; terminar(reject, new Error('janela fechada sem resposta')); }
+        }, 800);
+        tmr = setTimeout(function(){ var e = new Error('tempo esgotado'); e.name = 'AbortError'; terminar(reject, e); }, SYNC_ZS_TIMEOUT);
+      });
+    } else {
+      /* Arquivo do disco (file://) e Local (:5500): chamada direta, já liberada no CORS da rota. */
+      var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      tmr = ctrl ? setTimeout(function(){ ctrl.abort(); }, SYNC_ZS_TIMEOUT) : null;
+      execucao = fetch(SYNC_ZS_URL + '?periodo=' + encodeURIComponent(mk), { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+        .catch(function(err){
+          /* rede recusou: servidor desligado ou outro PC */
+          semServidor = !(err && err.name === 'AbortError');
+          throw err;
+        })
+        .then(function(r){
+          return r.json().catch(function(){ throw new Error('resposta inválida do servidor (HTTP ' + r.status + ')'); });
+        });
+    }
+
     _rodando = true;
     _marcarBotao('⟳ Lendo o ZS…', true);
 
-    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
-    var tmr = ctrl ? setTimeout(function(){ ctrl.abort(); }, SYNC_ZS_TIMEOUT) : null;
-    var semServidor = false;
-
-    fetch(SYNC_ZS_URL + '?periodo=' + encodeURIComponent(mk), { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
-      .catch(function(err){
-        /* rede recusou: servidor desligado, outro PC, ou permissão de rede local negada */
-        semServidor = !(err && err.name === 'AbortError');
-        throw err;
-      })
-      .then(function(r){
-        return r.json().catch(function(){ throw new Error('resposta inválida do servidor (HTTP ' + r.status + ')'); });
-      })
+    execucao
       .then(function(j){
         if(!j || !j.ok){
           var det = (j && (j.erro || (j.falhas && j.falhas.join('; ')))) || 'erro desconhecido';
@@ -147,9 +186,7 @@
       .catch(function(err){
         console.error('[ZS] sync falhou', err);
         if(semServidor){
-          /* Pelo GitHub Pages, o Edge/Chrome pede permissão de "rede local" na 1ª vez;
-             recusada (ou sem o servidor no ar), a chamada falha do mesmo jeito. */
-          _toast('⚠️ Não consegui falar com o Meta Master deste PC (localhost:8765). Confira se ele está aberto e, se o navegador perguntar sobre acesso à rede local, clique em Permitir. A leitura do ZS só roda no PC do Pablo.', 'var(--amber)');
+          _toast('⚠️ Não consegui falar com o Meta Master deste PC (localhost:8765). Abra o Meta Master e clique de novo — a leitura do ZS só roda no PC do Pablo.', 'var(--amber)');
         } else if(err && err.name === 'AbortError'){
           _toast('⏱️ O ZS demorou demais para responder. Tente de novo em instantes.', 'var(--amber)');
         } else {
