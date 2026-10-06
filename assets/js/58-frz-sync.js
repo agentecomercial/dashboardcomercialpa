@@ -1,75 +1,55 @@
 /* ══════════════════════════════════════════════════════════════════
-   58-frz-sync.js — Importa os lançamentos do FRZ // PIPELINE HUD
-   (https://frz-pipeline-hud.vercel.app) para as VENDAS AVULSAS da
-   Pipeline Comercial.
+   58-frz-sync.js — botão "⟳ Sincronizar ZS" da Pipeline Comercial.
+
+   Desde 06/10/2026 a fonte é o ZS (Sales Cube), não mais o FRZ // PIPELINE
+   HUD. O HUD dependia de cada consultor lançar à mão; venda que estava no ZS
+   e não foi lançada lá simplesmente não aparecia (caso da Gabriela em
+   outubro/2026: R$ 6.994,96 no ZS, nada na Pipeline).
 
    Como funciona
    ─────────────
-   O HUD grava tudo no Supabase, tabela `pipeline_entries`, filtrando por
-   `consultant` (nome curto: "Gabriela") + `month` ("AAAA-MM"). A leitura é
-   anônima (chave publishable), então dá pra ler direto do navegador — sem
-   servidor no meio.
+   O navegador não consegue ler o ZS (exige login e não libera CORS). Então o
+   botão chama a rota /api/sync-zs do servidor do Meta Master, que roda neste
+   PC (http://localhost:8765). Ela executa o Sincronizar-ZS.ps1 -Aplicar:
+   lê as vendas ganhas do mês no ZS (Vitória + Teresina) e grava em Firebase
+   pipelineSales/<mês>. Como o resultado fica no Firebase, os três endereços
+   do dashboard (Local, Desktop e GitHub Pages) passam a mostrar o mesmo.
 
-   Regras combinadas (03/08/2026)
-   ──────────────────────────────
-   • Só entram os consultores listados em CONSULTORES (hoje: Gabriela).
-     Para incluir outro, basta acrescentar a linha "Nome no HUD": "NOME NO APP".
-   • Status: FECHADO → pago, ABERTO → aberto, PROJEÇÃO → negociação
-     (entra no KPI "Potencial total", que soma só o que está em negociação).
-   • ESPELHO FIEL: o HUD manda. Editou lá → atualiza aqui; apagou lá → some
-     daqui. Mudou de status lá → muda aqui. Vendas importadas ficam com
-     _frz:true e NÃO devem ser editadas no app — a próxima sincronização
-     sobrescreve.
-   • Só roda quando se clica em "⟳ Sincronizar FRZ" (nada automático).
-   • SÓ o mês vigente (hoje = agosto/2026). Com a tela em qualquer outro mês
-     o botão recusa e avisa — julho e anteriores ficam intocados, tanto para
-     importar quanto para remover.
+   Regras (todas no Sincronizar-ZS.ps1)
+   ────────────────────────────────────
+   • Espelho fiel: o ZS manda. Perdeu o "ganho" ou trocou de dono → sai daqui.
+   • Só mexe no que tem _frz:true e é de consultor do escopo. Venda lançada à
+     mão no app nunca é tocada. Os lançamentos antigos do HUD (frz_*) saem.
+   • Valor LÍQUIDO item a item: Coaching Individual pela metade (o outro 50% é
+     do coach). Item de R$ 0,00 (matrícula, bônus, 2ª vaga) não entra.
+   • Só o mês vigente — a mesma trava de antes.
+   • Pablo entra como EXTRACLASSE, pelo mesmo caminho (não precisa mais do
+     Sync-Extraclasse-ZS.ps1 para a Pipeline).
 
-   Detalhes de conversão
-   ─────────────────────
-   • valor: sobe o LÍQUIDO, nunca o bruto (15/08/2026). O líquido é o valor
-     que está lançado no HUD — inclusive no COACHING INDIVIDUAL, onde o
-     lançamento já vem pela metade. O sync espelha, não recalcula.
-     Se um CI estiver no HUD pelo bruto, corrija no HUD.
-   • und > 1: o app não tem campo de quantidade em venda avulsa, então a
-     quantidade entra no nome do produto ("MASTER COACHING ×2").
+   Fora deste PC, ou com o Meta Master desligado, o botão avisa e não mexe em
+   nada. O ⟳ Sincronizar FRZ da aba Turmas (63-turma-frz-sync.js) continua no
+   HUD e usa as constantes publicadas em window.FRZ, no fim deste arquivo.
    ══════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
 
+  /* Rota do servidor do Meta Master que roda o Sincronizar-ZS.ps1 */
+  var SYNC_ZS_URL = 'http://localhost:8765/api/sync-zs';
+  var SYNC_ZS_TIMEOUT = 200000;   /* a leitura do ZS leva ~40 s; folga para o CRM lento */
+
+  /* ── Constantes do HUD: só a aba Turmas ainda usa (window.FRZ, abaixo) ── */
   var SB_URL = 'https://mnfxnepsfdfcmoglmgec.supabase.co/rest/v1/pipeline_entries';
   var SB_KEY = 'sb_publishable_hbmxtsjNBloNR6CYBXZ8Zw_FQeMZXOC';
-
-  /* Nome no HUD  →  nome do consultor no app (Gestão de Usuários)
-     ⚠️ A chave tem que ser IGUALZINHA ao campo `consultant` do Supabase —
-     lá a maioria é só o primeiro nome, mas o Heverton está com nome e
-     sobrenome. Errou a chave, o filtro não casa e o consultor some do
-     sync sem dar erro nenhum. */
+  /* Nome no HUD → nome do consultor no app. ⚠️ A chave tem que ser IGUALZINHA
+     ao campo `consultant` do Supabase, senão o consultor some sem erro. */
   var CONSULTORES = {
     'Gabriela':          'GABRIELA SOUZA',
-    'Karla':             'KARLA FERREIRA',    /* liberada em 03/08/2026 */
-    'Heverton Leonardo': 'HEVERTON LEONARDO', /* liberado em 05/08/2026 */
-    'Natália':           'NATALIA OLIVEIRA'   /* liberada em 15/08/2026 — chave COM acento, igual ao HUD */
+    'Karla':             'KARLA FERREIRA',
+    'Heverton Leonardo': 'HEVERTON LEONARDO',
+    'Natália':           'NATALIA OLIVEIRA'
   };
-
-  /* EXTRACLASSE (Pablo) — NÃO vem do HUD.
-     O Pablo não lança no pipeline_entries: as vendas dele vivem no ZS. Como o
-     ZS exige login e não libera CORS, o navegador nunca conseguiria buscar de
-     lá — então o Sync-Extraclasse-ZS.ps1 gera o arquivo de dados
-     assets/js/59-extraclasse-zs.js (window.EXTRACLASSE_ZS) e o sync lê dali,
-     direto para a Pipeline, sem passar pelo HUD. Rode o .ps1 antes de clicar
-     no botão para atualizar os números. */
   var EXTRACLASSE_NOME = 'EXTRACLASSE';
-
-  /* Status do HUD → status da Pipeline. Ausente = não importa.
-     PROJEÇÃO virou "negociação" em 05/08/2026 — é o status que o app soma
-     no KPI "Potencial total". */
   var STATUS = { 'FECHADO':'pago', 'ABERTO':'aberto', 'PROJEÇÃO':'negociacao' };
-
-  /* A comparação do status é feita sem acento e em maiúsculas, senão um
-     "Projeção" digitado diferente no HUD passa batido sem erro nenhum.
-     NFD separa a letra do acento; o replace tira tudo que não é ASCII,
-     que depois da decomposição é só o acento solto. */
   function _stKey(s){
     return String(s||'').normalize('NFD').replace(/[^\x00-\x7F]/g,'').toUpperCase().trim();
   }
@@ -78,128 +58,12 @@
   function _statusApp(s){ return _STATUS_N[_stKey(s)]; }
 
   var LS_ULTIMA = 'frzSyncUltima';
+  var ROTULO = '⟳ Sincronizar ZS';
   var _rodando = false;
 
   function _toast(msg, cor){
     if(typeof window._showToast === 'function') window._showToast(msg, cor||'var(--accent)');
-    else console.log('[FRZ]', msg);
-  }
-
-  /* Data: o HUD já grava data_iso (AAAA-MM-DD). Sem ela, monta a partir de
-     "dd/mm" + o ano/mês da chave do mês. Lançamento em PROJEÇÃO em geral vem
-     SEM data nenhuma (ainda não tem venda), então cai no created_at — melhor
-     que jogar todo mundo no dia 01. Se o created_at for de outro mês, aí sim
-     usa o dia 01 pra não vazar a venda pra fora do mês sincronizado. */
-  function _data(e, mk){
-    if(e.data_iso && /^\d{4}-\d{2}-\d{2}$/.test(e.data_iso)) return e.data_iso;
-    var m = /^(\d{2})\/(\d{2})$/.exec(String(e.data||''));
-    if(m) return mk.slice(0,4) + '-' + m[2] + '-' + m[1];
-    if(e.created_at){
-      var d = new Date(e.created_at);
-      if(!isNaN(d.getTime())){
-        var iso = d.getFullYear() + '-'
-                + String(d.getMonth()+1).padStart(2,'0') + '-'
-                + String(d.getDate()).padStart(2,'0');
-        if(iso.slice(0,7) === mk) return iso;
-      }
-    }
-    return mk + '-01';
-  }
-
-  /* LÍQUIDO — o que sobe para a Pipeline.
-     O HUD é a fonte do líquido: o valor lançado lá JÁ É o que deve subir.
-     No COACHING INDIVIDUAL isso significa o lançamento com a metade (o outro
-     50% é do coach) — ex.: Thayná Deps, HUD R$ 27.001,77 para uma venda de
-     R$ 54.003,54 no ZS. O sync NÃO divide nada: se dividisse, esse caso
-     viraria metade da metade.
-     ⚠️ Quem lançar o BRUTO no CI sobe errado — a correção é no HUD, não aqui. */
-  function _liquido(curso, valor){
-    return +valor || 0;
-  }
-
-  /* Objeto de venda avulsa no formato que a Pipeline já usa
-     (mesmos campos de npSalvarVenda) */
-  function _venda(e, mk){
-    var und = +(e.und||1);
-    var produto = String(e.curso||'').trim() + (und > 1 ? ' ×'+und : '');
-    return {
-      clienteNome:   String(e.aluno||'').trim(),
-      consultorNome: CONSULTORES[e.consultant],
-      produto:       produto,
-      valor:         _liquido(e.curso, e.valor),
-      status:        _statusApp(e.status),
-      data:          _data(e, mk),
-      origemManual:  'FRZ HUD' + (e.origem ? ' · ' + e.origem : ''),
-      obs:           '',
-      mes:           mk,
-      _src:          'avulso',
-      _frz:          true,
-      frzId:         e.id,
-      ts:            Date.parse(e.created_at) || Date.now()
-    };
-  }
-
-  /* Compara só o que vem do HUD — ignora ts pra não regravar à toa */
-  function _igual(a, b){
-    if(!a || !b) return false;
-    return a.clienteNome === b.clienteNome
-        && a.consultorNome === b.consultorNome
-        && a.produto === b.produto
-        && (+a.valor||0) === (+b.valor||0)
-        && a.status === b.status
-        && a.data === b.data
-        && a.origemManual === b.origemManual;
-  }
-
-  function _buscar(mk){
-    var nomes = Object.keys(CONSULTORES);
-    if(!nomes.length) return Promise.resolve([]);
-    var url = SB_URL
-      + '?select=*'
-      + '&month=eq.' + encodeURIComponent(mk)
-      + '&consultant=in.' + encodeURIComponent('(' + nomes.map(function(n){ return '"'+n+'"'; }).join(',') + ')')
-      + '&status=in.' + encodeURIComponent('(' + Object.keys(STATUS).map(function(s){ return '"'+s+'"'; }).join(',') + ')')
-      + '&limit=2000';
-    return fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } })
-      .then(function(r){
-        if(!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      });
-  }
-
-  /* ── EXTRACLASSE: vendas do ZS do Pablo (arquivo 59-extraclasse-zs.js) ──
-     Formato esperado:
-       window.EXTRACLASSE_ZS = {
-         mes: '2026-08',
-         geradoEm: '15/08/2026 21:40',
-         vendas: [ { id, cliente, produto, valor, data, status } ]
-       }
-     `id` é o id da oportunidade no ZS — vira 'zs_<id>' no app, então
-     regerar o arquivo atualiza a mesma venda em vez de duplicar. */
-  function _extraclasse(mk){
-    var d = window.EXTRACLASSE_ZS;
-    if(!d || !d.vendas || !d.vendas.length) return [];
-    if(d.mes && d.mes !== mk) return [];   /* arquivo de outro mês: ignora */
-    return d.vendas.map(function(v){
-      return {
-        id: 'zs_' + v.id,
-        venda: {
-          clienteNome:   String(v.cliente||'').trim(),
-          consultorNome: EXTRACLASSE_NOME,
-          produto:       String(v.produto||'').trim(),
-          valor:         _liquido(v.produto, v.valor),   /* mesma regra do líquido */
-          status:        _statusApp(v.status || 'FECHADO') || 'pago',
-          data:          v.data || (mk + '-01'),
-          origemManual:  'ZS · Extraclasse',
-          obs:           '',
-          mes:           mk,
-          _src:          'avulso',
-          _frz:          true,
-          frzId:         'zs_' + v.id,
-          ts:            Date.now()
-        }
-      };
-    });
+    else console.log('[ZS]', msg);
   }
 
   function _marcarBotao(txt, disabled){
@@ -215,112 +79,92 @@
     if(!el) return;
     var v = null;
     try{ v = localStorage.getItem(LS_ULTIMA); }catch(e){}
-    el.textContent = v ? ('FRZ: ' + v) : '';
+    el.textContent = v ? ('ZS: ' + v) : '';
   }
 
-  /* ── Sincronização (botão ⟳ Sincronizar FRZ) ───────────────────── */
+  function _brl(n){
+    return 'R$ ' + (+n||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /* ── Sincronização (botão ⟳ Sincronizar ZS) ───────────────────── */
   window.npSyncFrz = function(){
     if(_rodando) return;
-    if(typeof window._fbGet !== 'function' || typeof window._fbSave !== 'function'){
-      _toast('⚠️ Firebase offline — não dá pra gravar a importação.', 'var(--amber)');
+    if(typeof window._fbGet !== 'function'){
+      _toast('⚠️ Firebase offline — não dá pra recarregar a Pipeline.', 'var(--amber)');
       return;
     }
     var mk = (typeof window._mesKey === 'function') ? window._mesKey() : null;
     if(!mk){ _toast('⚠️ Mês não identificado.', 'var(--amber)'); return; }
-    /* Trava: só o mês vigente. Evita mexer no histórico (julho e anteriores). */
+    /* Trava: só o mês vigente. Evita mexer no histórico. */
     var hoje = new Date();
     var mkHoje = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
     if(mk !== mkHoje){
-      _toast('⚠️ A sincronização do FRZ só roda no mês vigente (' + mkHoje + '). Volte para o mês atual.', 'var(--amber)');
+      _toast('⚠️ A sincronização com o ZS só roda no mês vigente (' + mkHoje + '). Volte para o mês atual.', 'var(--amber)');
       return;
     }
 
     _rodando = true;
-    _marcarBotao('⟳ Sincronizando…', true);
+    _marcarBotao('⟳ Lendo o ZS…', true);
 
-    Promise.all([ _buscar(mk), window._fbGet('pipelineSales/' + mk) ])
-      .then(function(res){
-        var remotos = res[0] || [];
-        var locais  = res[1] || {};
-        var novos = 0, atualizados = 0, removidos = 0;
-        var ops = [];
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var tmr = ctrl ? setTimeout(function(){ ctrl.abort(); }, SYNC_ZS_TIMEOUT) : null;
+    var semServidor = false;
 
-        /* Junta as duas fontes num único conjunto {id, venda}:
-           HUD (pipeline_entries) + EXTRACLASSE (ZS do Pablo, arquivo local) */
-        var itens = [];
-        remotos.forEach(function(e){
-          if(!CONSULTORES[e.consultant] || !_statusApp(e.status)) return;
-          itens.push({ id: 'frz_' + e.id, venda: _venda(e, mk) });
-        });
-        var extra = _extraclasse(mk);
-        extra.forEach(function(it){ itens.push(it); });
-
-        /* 1) fonte → app: cria ou atualiza */
-        itens.forEach(function(it){
-          var atual = locais[it.id];
-          if(!atual){ novos++; }
-          else if(_igual(atual, it.venda)){ return; }   /* nada mudou */
-          else { atualizados++; }
-          ops.push(window._fbSave('pipelineSales/' + mk + '/' + it.id, it.venda));
-        });
-
-        /* 2) Apagado na origem (ou com status fora do mapa) → remove aqui.
-              Só mexe no que veio do FRZ/ZS e é de consultor do escopo — venda
-              lançada à mão no app nunca é tocada. */
-        var vivos = {};
-        itens.forEach(function(it){ vivos[it.id] = true; });
-        Object.keys(locais).forEach(function(id){
-          var v = locais[id];
-          if(!v || !v._frz) return;
-          var doEscopo = (v.consultorNome === EXTRACLASSE_NOME)
-            || Object.keys(CONSULTORES).some(function(n){
-                 return CONSULTORES[n] === v.consultorNome;
-               });
-          if(!doEscopo) return;
-          if(vivos[id]) return;
-          removidos++;
-          ops.push(window._fbSave('pipelineSales/' + mk + '/' + id, null));
-        });
-
-        return Promise.all(ops).then(function(){
-          return { novos:novos, atualizados:atualizados, removidos:removidos, total:itens.length };
-        });
+    fetch(SYNC_ZS_URL + '?periodo=' + encodeURIComponent(mk), { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .catch(function(err){
+        /* rede recusou: servidor desligado, outro PC, ou permissão de rede local negada */
+        semServidor = !(err && err.name === 'AbortError');
+        throw err;
       })
       .then(function(r){
+        return r.json().catch(function(){ throw new Error('resposta inválida do servidor (HTTP ' + r.status + ')'); });
+      })
+      .then(function(j){
+        if(!j || !j.ok){
+          var det = (j && (j.erro || (j.falhas && j.falhas.join('; ')))) || 'erro desconhecido';
+          throw new Error(det);
+        }
         /* Recarrega o cache do mês e repinta */
         return window._fbGet('pipelineSales/' + mk).then(function(d){
           window._npVendasAvulso = d || {};
           if(typeof window._npRenderTudo === 'function') window._npRenderTudo();
-          return r;
+          return j;
         });
       })
-      .then(function(r){
+      .then(function(j){
         var quando = new Date().toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
         try{ localStorage.setItem(LS_ULTIMA, quando); }catch(e){}
         _mostrarUltima();
         var partes = [];
-        if(r.novos)       partes.push(r.novos + ' novo' + (r.novos>1?'s':''));
-        if(r.atualizados) partes.push(r.atualizados + ' atualizado' + (r.atualizados>1?'s':''));
-        if(r.removidos)   partes.push(r.removidos + ' removido' + (r.removidos>1?'s':''));
+        if(j.novos)       partes.push(j.novos + ' novo' + (j.novos>1?'s':''));
+        if(j.atualizados) partes.push(j.atualizados + ' atualizado' + (j.atualizados>1?'s':''));
+        if(j.removidos)   partes.push(j.removidos + ' removido' + (j.removidos>1?'s':''));
+        var base = j.vendas + ' venda' + (j.vendas!==1?'s':'') + ' no ZS · ' + _brl(j.totalPago);
         _toast(partes.length
-          ? '✅ FRZ: ' + partes.join(', ') + '.'
-          : '✅ FRZ: já estava tudo em dia (' + r.total + ' lançamento' + (r.total!==1?'s':'') + ').');
+          ? '✅ ZS: ' + partes.join(', ') + ' (' + base + ').'
+          : '✅ ZS: já estava tudo em dia (' + base + ').');
       })
       .catch(function(err){
-        console.error('[FRZ] sync falhou', err);
-        _toast('❌ Não consegui ler o FRZ HUD (' + (err && err.message || 'erro') + ').', 'var(--red)');
+        console.error('[ZS] sync falhou', err);
+        if(semServidor){
+          _toast('⚠️ Não achei o servidor do Meta Master neste PC (localhost:8765). Abra o Meta Master e clique de novo — a leitura do ZS só roda no PC do Pablo.', 'var(--amber)');
+        } else if(err && err.name === 'AbortError'){
+          _toast('⏱️ O ZS demorou demais para responder. Tente de novo em instantes.', 'var(--amber)');
+        } else {
+          _toast('❌ Sincronização com o ZS falhou: ' + (err && err.message || 'erro') + '.', 'var(--red)');
+        }
       })
       .then(function(){
+        if(tmr) clearTimeout(tmr);
         _rodando = false;
-        _marcarBotao('⟳ Sincronizar FRZ', false);
+        _marcarBotao(ROTULO, false);
       });
   };
 
-  /* ── Constantes compartilhadas ───────────────────────────────────
-     O 63-turma-frz-sync.js (⟳ Sincronizar FRZ da aba Turmas) precisa do MESMO
-     mapa de consultores e do MESMO de-para de status. Duplicar lá é justamente
-     o risco que o comentário do CONSULTORES descreve: chave errada = consultor
-     some do sync sem dar erro nenhum. Então a fonte é uma só, publicada aqui. */
+  /* ── Constantes compartilhadas com a aba Turmas ──────────────────
+     O 63-turma-frz-sync.js (⟳ Sincronizar FRZ da aba Turmas) ainda lê o HUD e
+     precisa do MESMO mapa de consultores e de-para de status. A fonte é uma
+     só, publicada aqui. */
   window.FRZ = {
     CONSULTORES: CONSULTORES,
     EXTRACLASSE_NOME: EXTRACLASSE_NOME,

@@ -419,6 +419,42 @@ while ($listener.IsListening) {
   try {
     $path = [System.Uri]::UnescapeDataString($req.Url.AbsolutePath)
 
+    if ($path -eq '/api/sync-zs') {
+      # Botao "Sincronizar ZS" da Pipeline Comercial (dashboard, 58-frz-sync.js): roda o
+      # Sincronizar-ZS.ps1 -Aplicar, que le o ZS e grava em Firebase pipelineSales/<mes>.
+      # Unica rota com CORS para os enderecos do DASHBOARD (Local :5500, GitHub Pages e o
+      # arquivo do disco, origin 'null'), e so a partir DESTE PC: o resultado vai para o
+      # Firebase, entao nao ha dado do ZS saindo pela resposta, so o placar do sync.
+      $origSync = [string]$req.Headers['Origin']
+      $ORIGENS_SYNC = @('null', 'http://127.0.0.1:5500', 'http://localhost:5500', 'https://agentecomercial.github.io')
+      if ($ORIGENS_SYNC -contains $origSync) {
+        $res.Headers['Access-Control-Allow-Origin'] = $origSync
+        $res.Headers['Vary'] = 'Origin'
+        $res.Headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        # pagina https chamando localhost: o Chrome/Edge pedem permissao de rede local
+        $res.Headers['Access-Control-Allow-Private-Network'] = 'true'
+      }
+      if ($req.HttpMethod -eq 'OPTIONS') { $res.StatusCode = 204; $res.Close(); continue }
+      $res.ContentType = 'application/json; charset=utf-8'
+      if ($deFora -or ($origSync -and -not ($ORIGENS_SYNC -contains $origSync))) {
+        $res.StatusCode = 403
+        $b = [Text.Encoding]::UTF8.GetBytes('{"ok":false,"erro":"so a partir deste PC"}')
+        $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue
+      }
+      $perZs = $req.QueryString['periodo']; if ($perZs -notmatch '^\d{4}-\d{2}$') { $perZs = (Get-Date -Format 'yyyy-MM') }
+      $outZs = Exec-Filho (Join-Path (Split-Path $root -Parent) 'Sincronizar-ZS.ps1') @('-Periodo', $perZs, '-Aplicar', '-Json') -TimeoutSeg 180 -SoStdout
+      $linhaJson = @(([string]$outZs) -split "`r?`n" | Where-Object { $_.Trim().StartsWith('{') }) | Select-Object -Last 1
+      if (-not $linhaJson) {
+        $linhaJson = (@{ ok = $false; erro = ('sem resposta do Sincronizar-ZS.ps1. ' + [string]$script:ultimoErr).Trim() } | ConvertTo-Json -Compress)
+        Log-Erro "/api/sync-zs periodo=$perZs" $script:ultimoErr
+      }
+      $res.StatusCode = 200
+      $b = [Text.Encoding]::UTF8.GetBytes($linhaJson)
+      $res.OutputStream.Write($b, 0, $b.Length); $res.Close()
+      Write-Host "[$((Get-Date -Format 'HH:mm:ss'))] /api/sync-zs periodo=$perZs -> $($linhaJson.Substring(0, [Math]::Min(120, $linhaJson.Length)))" -ForegroundColor Cyan
+      continue
+    }
+
     if ($path -eq '/api/leads') {
       # roda o Leads-Vitoria-Campanha.ps1 -Json (consultor x etapa 1-6 + campanhas MCIS/TCE/Outros) e devolve o JSON
       $lde  = $req.QueryString['de'];  if ($lde  -notmatch '^\d{4}-\d{2}-\d{2}$') { $lde = '' }
