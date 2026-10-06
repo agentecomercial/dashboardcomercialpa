@@ -147,7 +147,9 @@
       .catch(function(err){
         console.error('[ZS] sync falhou', err);
         if(semServidor){
-          _toast('⚠️ Não achei o servidor do Meta Master neste PC (localhost:8765). Abra o Meta Master e clique de novo — a leitura do ZS só roda no PC do Pablo.', 'var(--amber)');
+          /* Pelo GitHub Pages, o Edge/Chrome pede permissão de "rede local" na 1ª vez;
+             recusada (ou sem o servidor no ar), a chamada falha do mesmo jeito. */
+          _toast('⚠️ Não consegui falar com o Meta Master deste PC (localhost:8765). Confira se ele está aberto e, se o navegador perguntar sobre acesso à rede local, clique em Permitir. A leitura do ZS só roda no PC do Pablo.', 'var(--amber)');
         } else if(err && err.name === 'AbortError'){
           _toast('⏱️ O ZS demorou demais para responder. Tente de novo em instantes.', 'var(--amber)');
         } else {
