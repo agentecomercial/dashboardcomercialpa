@@ -448,6 +448,31 @@
       estrutura: [
         { titulo: 'Treino com Clientes Difíceis', url: 'ring-treino.html', tipo: 'index' }
       ]
+    },
+    {
+      id: 'treinamento-zsales',
+      titulo: 'Treinamento Comercial ZSales',
+      descricao: 'Vender Tecnologia — formação do time que vende o ZSales CRM para outras empresas (B2B, SaaS). O produto e os 13 módulos, ICP, a demonstração de 30 minutos, planos e negociação, SPIN aplicado à venda de CRM e fechamento, com FAQ do site no Módulo 4. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (123 slides).',
+      produto: 'ZSales',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 3,
+      url: 'treinamento-zsales/index.html',
+      icone: '💻',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                                 url: 'treinamento-zsales/index.html',        tipo: 'index'  },
+        /* Versão condensada: mora em pasta irmã, mas é parte do ZSales —
+           não vira card próprio no catálogo, só aparece aqui e no índice. */
+        { titulo: '⚡ ZSales Essencial (33 slides)', url: 'treinamento-zsales-essencial/index.html', tipo: 'extra' },
+        { titulo: 'Módulo 1 — O Produto',                          url: 'treinamento-zsales/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e ICP',                   url: 'treinamento-zsales/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — A Demonstração',                     url: 'treinamento-zsales/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Planos e Negociação',                url: 'treinamento-zsales/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado à venda de CRM',        url: 'treinamento-zsales/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Proposta, decisão e follow-up',    url: 'treinamento-zsales/fechamento.html',   tipo: 'final'  }
+      ]
     }
   ];
 })();

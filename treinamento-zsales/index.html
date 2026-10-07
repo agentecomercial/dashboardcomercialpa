@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Treinamento Comercial ZSales — Vender Tecnologia</title>
+<link rel="stylesheet" href="assets/zsales.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
+  body { color: var(--cis-text); font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  /* ===== Layout com sidebar ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    position: relative;
+    background: linear-gradient(170deg, #ffffff 0%, #f5f5f7 100%);
+    border-right: 1px solid rgba(0,113,227,0.18);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 14px;
+    overflow-y: auto;
+    z-index: 6;
+  }
+  .sidebar .brand {
+    padding: 4px 12px 18px;
+    border-bottom: 1px solid rgba(0,113,227,0.12);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+  }
+  .sidebar .brand h2 {
+    margin: 4px 0 0;
+    font-size: 22px;
+    color: var(--cis-yellow);
+    letter-spacing: -0.5px;
+    font-weight: 900;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidenav-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+    margin: 14px 12px 6px;
+  }
+  .sidenav-item {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cis-text);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 600 14px/1.2 inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .sidenav-item:hover { background: rgba(0,113,227,0.08); color: var(--cis-yellow); }
+  .sidenav-item.is-active {
+    background: rgba(0,113,227,0.15);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico {
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico svg { width: 16px; height: 16px; }
+  .sidenav-item .num {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(0,113,227,0.15);
+    color: var(--cis-yellow);
+    font-weight: 900;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidenav-item .meta {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--cis-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Chevron para expandir/recolher subtópicos */
+  .sidenav-item .chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: var(--cis-muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: transform .2s ease, background .15s ease, color .15s ease;
+    flex: 0 0 22px;
+    padding: 0;
+  }
+  .sidenav-item .chevron:hover {
+    background: rgba(0,113,227,0.18);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .chevron svg { width: 11px; height: 11px; }
+  .sidenav-item .chevron.is-open { transform: rotate(90deg); color: var(--cis-yellow); }
+  .sidenav-item.highlight .chevron { color: var(--cis-yellow); }
+  .sidenav-item.highlight.is-active .chevron { color: var(--cis-blue-900); }
+
+  .sidenav-item.highlight {
+    background: linear-gradient(135deg, rgba(0,113,227,0.18), rgba(0,113,227,0.10));
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    font-weight: 800;
+    margin-top: 6px;
+  }
+  .sidenav-item.highlight:hover { background: linear-gradient(135deg, rgba(0,113,227,0.28), rgba(0,113,227,0.18)); }
+  .sidenav-item.highlight.is-active { background: var(--cis-yellow); color: var(--cis-blue-900); }
+  .sidenav-item.highlight.is-active .ico { color: var(--cis-blue-900); }
+
+  .sidebar .foot {
+    margin-top: auto;
+    padding: 14px 12px 0;
+    border-top: 1px solid rgba(0,113,227,0.12);
+    font-size: 11px;
+    color: var(--cis-muted);
+    line-height: 1.4;
+  }
+
+  /* Container agrupador (Fechamento CIS contém SPIN aninhado + seus subtópicos) */
+  .sidenav-group {
+    display: none;
+    margin-left: 18px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(0,113,227,0.18);
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .sidenav-group.is-open { display: block; }
+
+  /* Item aninhado (sub-item da seção) */
+  .sidenav-item.nested {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--cis-yellow);
+    background: rgba(0,113,227,0.06);
+    border: 1px solid rgba(0,113,227,0.18);
+    margin-top: 4px;
+  }
+  .sidenav-item.nested:hover {
+    background: rgba(0,113,227,0.14);
+    border-color: var(--cis-card-border-strong);
+  }
+  .sidenav-item.nested.is-active {
+    background: rgba(0,113,227,0.22);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+
+  /* Sublista de slides (subtópicos) por deck */
+  .sidenav-sub {
+    list-style: none;
+    margin: 4px 0 8px;
+    padding: 4px 4px 8px 12px;
+    border-left: 2px solid rgba(0,113,227,0.18);
+    margin-left: 18px;
+    display: none;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sidenav-sub.is-open { display: block; }
+
+  .sidenav-sub li { margin: 0; }
+  .sidenav-sub-item {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--cis-muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font: 500 12px/1.35 inherit;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    transition: background .12s ease, color .12s ease;
+  }
+  .sidenav-sub-item:hover { background: rgba(0,113,227,0.08); color: var(--cis-yellow); }
+  .sidenav-sub-item.is-current {
+    background: rgba(0,113,227,0.18);
+    color: var(--cis-yellow);
+    font-weight: 700;
+  }
+  .sidenav-sub-item .sub-n {
+    flex: 0 0 22px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 10px;
+    color: var(--cis-yellow);
+    opacity: .7;
+    padding-top: 1px;
+  }
+  .sidenav-sub-item.is-current .sub-n { opacity: 1; }
+  .sidenav-sub-item .sub-title { flex: 1; }
+
+  /* ── Olhinhos de ocultar (curadoria da trilha) ── */
+  .eye-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 20px; height: 20px; flex: 0 0 20px; margin-left: 3px;
+    background: none; border: 0; padding: 0; border-radius: 6px;
+    color: var(--cis-muted); cursor: pointer; transition: color .12s, background .12s;
+  }
+  .eye-btn svg { width: 14px; height: 14px; }
+  /* deixa a seta + olhinho caberem lado a lado mesmo em rótulos longos (ex.: Fechamento) */
+  .sidenav-item { gap: 8px; padding-left: 11px; padding-right: 10px; }
+  .sidenav-item .meta { margin-left: auto; margin-right: 0; }
+  .sidenav-item .chevron { margin-left: 3px; }
+  .eye-btn:hover { background: rgba(0,113,227,0.10); color: var(--cis-yellow); }
+  /* aparece ao passar o mouse; e fica sempre visível quando o item está oculto */
+  .sidenav-item:hover .eye-btn,
+  .sidenav-sub-item:hover .eye-btn,
+  .module-card:hover .eye-btn,
+  .sidenav-item.is-oculto .eye-btn,
+  .sidenav-sub-item.is-oculto .eye-btn,
+  .module-card.is-oculto .eye-btn { display: inline-flex; }
+  .eye-btn.is-off { color: #ff6b6b; }
+  .eye-btn.is-off:hover { background: rgba(255,107,107,0.16); color: #ff8a8a; }
+  /* item oculto: esmaecido */
+  .sidenav-item.is-oculto,
+  .sidenav-sub-item.is-oculto,
+  .module-card.is-oculto { opacity: 0.42; }
+  .module-card { position: relative; }
+  .module-card .eye-btn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.9); }
+
+  /* ===== Conteúdo principal (Views) ===== */
+  .main { position: relative; overflow: hidden; }
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* ===== Menu view ===== */
+  #menu-view {
+    height: 100vh; overflow: auto;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(0,113,227,0.08), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(0,113,227,0.10), transparent 55%),
+      linear-gradient(160deg, var(--cis-blue-900) 0%, var(--cis-blue-800) 55%, var(--cis-blue-700) 100%);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 36px 96px; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(0,113,227,0.18);
+    margin-bottom: 40px;
+  }
+  .hero .badge {
+    display: inline-block; background: var(--cis-yellow); color: var(--cis-blue-900);
+    padding: 6px 18px; border-radius: 999px; font-weight: 900;
+    letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 60px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
+    letter-spacing: -1.5px; font-weight: 900;
+  }
+  .hero h1 small { display:block; color: var(--cis-text); font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
+  .hero p.sub { max-width: 720px; font-size: 17px; color: var(--cis-muted); margin: 0; }
+  .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero .stats strong { display:block; font-size: 44px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-bottom: 40px; }
+  .module-card {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(0,113,227,0.10), transparent 50%),
+      #ffffff;
+    border: 1px solid var(--cis-card-border);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 24px 60px -32px rgba(0,0,0,0.18);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(0,113,227,0.25); }
+  .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
+  .module-card h3 { margin: 0; font-size: 28px; color: var(--cis-text); line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 14px; line-height: 1.5; }
+  .module-card .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(0,113,227,0.18);
+    font-size: 13px; color: var(--cis-muted);
+  }
+  .module-card .meta .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 5px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 13px; color: var(--cis-text); }
+  .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
+
+  .section-title { font-size: 13px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 14px; }
+
+  /* Card especial Fechamento */
+  .closing-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(0,113,227,0.25), transparent 50%),
+      linear-gradient(135deg, rgba(0,113,227,0.10), rgba(255,255,255,0.96));
+    border: 1px solid var(--cis-card-border-strong);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 28px 60px -28px rgba(0,113,227,0.3);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .closing-card:hover { transform: translateY(-3px); box-shadow: 0 32px 70px -25px rgba(0,113,227,0.45); }
+  .closing-card .tag { font-size: 11px; letter-spacing: 0.2em; color: var(--cis-blue-900); font-weight: 900; text-transform: uppercase; background: var(--cis-yellow); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .closing-card h3 { margin: 10px 0 6px; font-size: 32px; color: var(--cis-yellow); line-height: 1.05; font-weight: 900; letter-spacing: -1px; }
+  .closing-card p { margin: 0; color: var(--cis-text); font-size: 14px; line-height: 1.5; max-width: 580px; }
+  .closing-card .cta {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px -8px rgba(0,113,227,0.6);
+  }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
+  .info-grid .card {
+    background: #ffffff;
+    border: 1px solid var(--cis-card-border);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+  .info-grid .card h4 { margin: 0 0 6px; color: var(--cis-yellow); font-size: 15px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 13px; line-height: 1.5; }
+  .info-grid .card kbd {
+    display: inline-block; background: rgba(0,113,227,0.18);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
+  }
+
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 20px; border-top: 1px solid rgba(0,113,227,0.12); }
+
+  /* ===== Player view ===== */
+  #player-view { position: absolute; inset: 0; background: #f5f5f7; }
+  #player-view iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0; display: block;
+  }
+  .player-topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(245,245,247,0.92), rgba(245,245,247,0));
+    pointer-events: none;
+    font-family: inherit;
+  }
+  .player-topbar > * { pointer-events: auto; }
+  .player-topbar .spacer { flex: 1; }
+
+  .pbtn {
+    appearance: none;
+    background: #ffffff;
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: 700 13px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+  }
+  .pbtn:hover { background: rgba(0,113,227,0.2); transform: translateY(-1px); }
+  .pbtn:active { transform: translateY(0); }
+  .pbtn svg { width: 14px; height: 14px; }
+  .pbtn.is-on {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    border-color: var(--cis-yellow);
+  }
+
+  .player-topbar .module-label {
+    font: 700 11px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cis-muted);
+    background: #ffffff;
+    border: 1px solid rgba(0,113,227,0.25);
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
+
+
+  /* Em fullscreen, a sidebar some do grid (vira overlay sob demanda) */
+  .is-fullscreen .sidebar { display: none; }
+  .is-fullscreen .app { grid-template-columns: 1fr; }
+
+  /* Puxador da sidebar — visível só em fullscreen */
+  .sidebar-pull {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 40;
+    background: linear-gradient(90deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+    color: var(--cis-blue-900);
+    border: 0;
+    border-radius: 0 14px 14px 0;
+    padding: 22px 10px 22px 6px;
+    cursor: pointer;
+    box-shadow: 6px 0 20px -4px rgba(0,0,0,0.6);
+    transition: padding-right .15s ease, transform .15s ease;
+  }
+  .sidebar-pull:hover { padding-right: 14px; transform: translateY(-50%) translateX(2px); }
+  .sidebar-pull svg { width: 18px; height: 18px; display: block; }
+  .is-fullscreen .sidebar-pull { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Sidebar como overlay quando em fullscreen e ativada via puxador */
+  .is-fullscreen .sidebar.is-overlay {
+    display: flex !important;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px;
+    z-index: 45;
+    animation: sidebarIn .22s ease both;
+    box-shadow: 8px 0 30px -8px rgba(0,0,0,0.6);
+  }
+  .is-fullscreen .sidebar-pull.is-hidden { display: none; }
+
+  /* Backdrop para fechar a sidebar overlay */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 42;
+    animation: fadeIn .2s ease both;
+  }
+  .is-fullscreen .sidebar-backdrop.is-open { display: block; }
+
+  @keyframes sidebarIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Botão "fechar sidebar overlay" — dentro da sidebar quando em overlay */
+  .sidebar-close {
+    display: none;
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease;
+  }
+  .sidebar-close:hover { background: rgba(0,113,227,0.18); }
+  .sidebar-close svg { width: 14px; height: 14px; }
+  .is-fullscreen .sidebar.is-overlay .sidebar-close { display: inline-flex; }
+
+  /* Sidebar toggle (mobile/narrow) */
+  .sidebar-toggle {
+    display: none;
+    position: fixed; top: 14px; left: 14px; z-index: 30;
+  }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+    }
+    .sidebar.is-open { transform: translateX(0); }
+    .sidebar-toggle { display: inline-flex; }
+    .hero { grid-template-columns: 1fr; }
+    .hero .stats { text-align: left; }
+    .hero h1 { font-size: 42px; }
+    .grid-modules { grid-template-columns: 1fr; }
+    .closing-card { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- =========================== SIDEBAR =========================== -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebar-close" title="Fechar (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="brand">
+      <small>Treinamento Comercial</small>
+      <h2>ZSales</h2>
+    </div>
+
+    <nav class="sidenav">
+      <button class="sidenav-item is-active" data-go="menu">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+        Visão geral
+      </button>
+      <button class="sidenav-item highlight" data-go="essencial">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+        ZSales Essencial
+        <span class="meta">33</span>
+        <span class="chevron" data-toggle-sub="essencial" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="essencial"></ul>
+
+      <button class="sidenav-item highlight" data-go="fechamento">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Fechamento
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="fechamento" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
+
+      <div class="sidenav-label">Trilha completa</div>
+
+      <button class="sidenav-item" data-go="1">
+        <span class="num">1</span>
+        O Produto
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="1" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="1"></ul>
+
+      <button class="sidenav-item" data-go="2">
+        <span class="num">2</span>
+        Prospecção
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="2" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="2"></ul>
+
+      <button class="sidenav-item" data-go="3">
+        <span class="num">3</span>
+        A Demonstração
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="3" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="3"></ul>
+
+      <button class="sidenav-item" data-go="4">
+        <span class="num">4</span>
+        Planos
+        <span class="meta">23</span>
+        <span class="chevron" data-toggle-sub="4" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="4"></ul>
+
+      <button class="sidenav-item" data-go="spin">
+        <span class="num">S</span>
+        SPIN Selling
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="spin" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="spin"></ul>
+    </nav>
+
+    <div class="foot">
+      Treinamento Comercial ZSales · Vender Tecnologia · uso interno Grupo FRZ.
+    </div>
+  </aside>
+
+  <!-- =========================== MAIN =========================== -->
+  <main class="main">
+
+    <!-- ====== MENU VIEW ====== -->
+    <section id="menu-view" class="view is-active">
+
+      <div class="wrap">
+
+        <header class="hero">
+          <div>
+            <span class="badge">Treinamento Comercial</span>
+            <h1>ZSales<small>Vender Tecnologia · o CRM que já vende R$ 9 milhões</small></h1>
+            <p class="sub">Formação do time comercial que vende o <strong>ZSales CRM</strong> para outras empresas. Venda B2B de software, do zero: o produto e seus 13 módulos, quem é o cliente certo, a demonstração de 30 minutos, os planos e a negociação, SPIN aplicado à venda de CRM e o fechamento.</p>
+          </div>
+          <div class="stats">
+            <strong>123</strong>
+            Slides 16:9
+            <div style="margin-top:14px;"><strong>06</strong>Trilhas</div>
+          </div>
+        </header>
+        <!-- Versão Essencial: deck condensado (33 slides), pasta irmã -->
+        <button class="closing-card" data-go="essencial">
+          <div>
+            <span class="tag">⚡ Versão Essencial</span>
+            <h3>ZSales Essencial</h3>
+            <p>Os 123 slides condensados em 33: o que o consultor precisa saber e fazer, em 4 blocos, com resumos de impacto, scripts prontos, checklist e teste rápido. Para preparar antes, revisar depois e consultar na correria. Tem Modo Treinador (tecla T) com o roteiro de condução.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="fechamento">
+          <div>
+            <span class="tag">Sessão especial</span>
+            <h3>Fechamento — Proposta, decisão e follow-up</h3>
+            <p>Sinais de compra, a proposta, fechamento por alternativa e pela conta da pilha, próximo passo com data, follow-up em 24h · 72h · 7 dias e o teste final com 7 situações.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="spin">
+          <div>
+            <span class="tag">Módulo • SPIN</span>
+            <h3>SPIN Selling — aplicado à venda de CRM</h3>
+            <p>Situação, Problema, Implicação e Necessidade para quem vende software: perguntas-modelo, SPIN por segmento (WhatsApp, escolas, franquias, IA) e SPIN dentro da demo.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <h2 class="section-title">▸ Trilha do Treinamento</h2>
+        <div class="grid-modules">
+
+          <button class="module-card" data-go="1">
+            <span class="tag">Módulo 1</span>
+            <h3>O Produto<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">os 13 módulos</span></h3>
+            <p>O que é o ZSales, como nasceu dentro da operação do Grupo FRZ e o que cada módulo resolve.</p>
+            <ul>
+              <li>Oportunidade, Contato e Cliente: a espinha dorsal</li>
+              <li>Conversas, automação, IA e MCP</li>
+              <li>A tese: o concorrente é a pilha</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="2">
+            <span class="tag">Módulo 2</span>
+            <h3>Prospecção<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e ICP</span></h3>
+            <p>Quem é o cliente certo do ZS, os sinais de dor e como chegar até a demonstração.</p>
+            <ul>
+              <li>Os 4 segmentos do site</li>
+              <li>Quem decide, quem usa, quem paga</li>
+              <li>Qualificação rápida em 5 perguntas</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="3">
+            <span class="tag">Módulo 3</span>
+            <h3>A Demonstração<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">30 minutos</span></h3>
+            <p>"Com o seu funil e os seus números na tela." O roteiro da demo em 5 atos, por segmento.</p>
+            <ul>
+              <li>Os 5 atos da demo</li>
+              <li>Demo por segmento</li>
+              <li>Sair da demo com o próximo passo</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="4">
+            <span class="tag">Módulo 4</span>
+            <h3>Planos<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Negociação</span></h3>
+            <p>Preço por módulo, não por cabeça. Os 5 planos, a conta da pilha e as objeções.</p>
+            <ul>
+              <li>CRM, Conversação, Marketing, Full, Enterprise</li>
+              <li>A conta: 7 assinaturas viram 1</li>
+              <li>Objeções com resposta factual</li>
+            </ul>
+            <div class="meta"><span>23 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+        </div>
+
+        <h2 class="section-title">▸ Como navegar</h2>
+        <div class="info-grid">
+          <div class="card">
+            <h4>Teclado</h4>
+            <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+          </div>
+          <div class="card">
+            <h4>Touch / Mouse</h4>
+            <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+          </div>
+          <div class="card">
+            <h4>Apresentação</h4>
+            <p>Use a sidebar à esquerda para alternar rapidamente entre trilhas. A tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+          </div>
+        </div>
+
+        <footer>
+          Treinamento Comercial ZSales · Vender Tecnologia · uso interno Grupo FRZ.
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ====== PLAYER VIEW ====== -->
+    <section id="player-view" class="view" aria-hidden="true">
+      <div class="player-topbar">
+        <button class="pbtn" id="back-menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          Menu
+        </button>
+        <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+        <div class="spacer"></div>
+      </div>
+      <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+    </section>
+
+  </main>
+
+  <!-- Puxador da sidebar em fullscreen -->
+  <button class="sidebar-pull" id="sidebar-pull" title="Abrir menu" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <!-- Backdrop para fechar overlay -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+</div>
+
+<script>
+  // ---- Estado e rotas ----
+  const menuView   = document.getElementById('menu-view');
+  const playerView = document.getElementById('player-view');
+  const frame      = document.getElementById('module-frame');
+  const moduleLbl  = document.getElementById('module-label');
+  const backBtn    = document.getElementById('back-menu');
+  const sidebar    = document.getElementById('sidebar');
+
+  const ROUTES = {
+    menu:        { file: null,                title: null },
+    /* Versão Essencial: mora numa pasta irmã, não dentro de treinamento-zsales/. */
+    essencial:   { file: '../treinamento-zsales-essencial/index.html', title: '<strong>⚡</strong> ZSales Essencial' },
+    fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Fechamento' },
+    spin:        { file: 'spin-selling.html',  title: '<strong>S</strong> SPIN Selling' },
+    '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> O Produto' },
+    '2':         { file: 'modulo-2.html',     title: '<strong>02</strong> Prospecção e ICP' },
+    '3':         { file: 'modulo-3.html',     title: '<strong>03</strong> A Demonstração' },
+    '4':         { file: 'modulo-4.html',     title: '<strong>04</strong> Planos e Negociação' },
+  };
+
+  // Sem sub-itens aninhados: SPIN Selling é um módulo próprio da trilha.
+  const NESTED_PARENT = {};
+
+  function setActiveNav(key) {
+    document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+
+    // Abre o grupo pai se a key for um sub-item aninhado
+    const groupKey = NESTED_PARENT[key] || key;
+    document.querySelectorAll('.sidenav-group').forEach(g => {
+      g.classList.toggle('is-open', g.dataset.groupFor === groupKey);
+    });
+
+    // Sublista do deck ativo aberta, demais fechadas
+    document.querySelectorAll('.sidenav-sub').forEach(ul => {
+      ul.classList.toggle('is-open', ul.dataset.subFor === key);
+    });
+    syncChevrons();
+  }
+
+  function syncChevrons() {
+    document.querySelectorAll('.chevron[data-toggle-sub]').forEach(c => {
+      const key = c.dataset.toggleSub;
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+      const isOpen = (group && group.classList.contains('is-open'))
+                  || (sub && sub.classList.contains('is-open'));
+      c.classList.toggle('is-open', isOpen);
+    });
+  }
+
+  function toggleSubFor(key) {
+    // Se o item tem um grupo (Fechamento → grupo com SPIN + subtópicos), alterna o grupo.
+    const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+    if (group) {
+      group.classList.toggle('is-open');
+      // Quando abre o grupo, também abre a sublista do próprio item (subtópicos de Fechamento).
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open', group.classList.contains('is-open'));
+    } else {
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open');
+    }
+    syncChevrons();
+  }
+
+  // ---- Subtópicos: títulos pré-definidos (funciona em file://) ----
+  // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
+  // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
+  const SLIDE_TITLES = {
+    'essencial': [
+      'ZSales Essencial — Capa',
+      'O que é este material',
+      'B1 · O que é o ZSales',
+      'B1 · Os 5 blocos que você precisa saber',
+      'B1 · O concorrente é a pilha',
+      'B1 · Na prática: a dor que ele diz → a sua ponte',
+      'B1 · Erros que devem ser evitados',
+      'B1 · Resumo de impacto + Aplique agora',
+      'B2 · Com quem você fala',
+      'B2 · Na prática: as 5 frases que entregam o lead',
+      'B2 · Como aplicar: as 5 perguntas de qualificação',
+      'B2 · Na prática: mensagens prontas',
+      'B2 · Erros que devem ser evitados',
+      'B2 · Resumo de impacto + Aplique agora',
+      'B3 · SPIN Selling',
+      'B3 · As 4 perguntas, com falas prontas',
+      'B3 · Na prática: as frases-ponte',
+      'B3 · Na prática: o SPIN inteiro em 5 falas',
+      'B3 · A ordem que faz a demonstração vender',
+      'B3 · Ancoragem: o preço vem por último',
+      'B3 · Erros que devem ser evitados',
+      'B3 · Resumo de impacto + Aplique agora',
+      'B4 · Os 5 planos, preço por módulo',
+      'B4 · Na prática: o mapa de bolso das 5 objeções',
+      'B4 · Na prática: falas decoradas',
+      'B4 · Follow-up: 24h · 72h · 7 dias',
+      'B4 · A alternativa e o silêncio',
+      'B4 · Erros que devem ser evitados',
+      'B4 · Resumo de impacto + Aplique agora',
+      '✅ Eu aprendi?',
+      'Teste rápido · 1 de 2',
+      'Teste rápido · 2 de 2',
+      'O que você leva daqui'
+    ],
+    '1': [
+      'O Produto (ZSales)',
+      'O que é o ZSales: CRM Multi-organização',
+      'Nasceu Dentro da Operação',
+      'Os Números da Casa',
+      'A Espinha Dorsal: Oportunidade, Contato, Cliente',
+      'Os 5 Blocos e os 13 Módulos',
+      'Funil de Oportunidades',
+      'Contatos, Clientes e Funis de Pós-venda',
+      'Central de Conversas: WhatsApp e Instagram',
+      '"Um Número por Vendedor. Um Histórico Só."',
+      'Automação: Gatilhos, Lógica e Ações',
+      'Agente de IA e MCP',
+      'Landing Pages Ligadas ao Funil',
+      'Catálogo e Pagamentos',
+      'Turmas, Cursos e Presença',
+      'Relatórios e Dashboards sem BI',
+      'Equipe, Metas, Tarefas e Campanhas',
+      'Segurança: Organizações Isoladas e Permissão por Ação',
+      'A Tese: o Concorrente é a Pilha',
+      'Recap do Módulo'
+    ],
+    '2': [
+      'Prospecção e ICP',
+      'Vender Tecnologia ≠ Vender Treinamento',
+      'ICP: os 4 Segmentos',
+      'Times de WhatsApp',
+      'Escolas e Formações',
+      'Franquias e Redes',
+      'Operações com IA',
+      'Tamanho do Time: 1–5 · 6–10 · 11–30 · 30+',
+      'Quem Decide, Quem Usa, Quem Paga',
+      'Dor: o Vendedor Sai e Leva os Clientes',
+      'Dor: Lead Perdido Entre Ferramentas',
+      'Dor: Meta e Funil na Planilha',
+      'Dor: a Pilha de Assinaturas',
+      'Onde Achar Esses Clientes',
+      'Abordagem por Segmento',
+      'Mensagem de Primeiro Contato',
+      'Qualificação Rápida: 5 Perguntas',
+      'Lead Certo × Lead Errado',
+      'O Objetivo: Agendar a Demonstração',
+      'Checklist + Próximos Passos'
+    ],
+    '3': [
+      'A Demonstração (30 minutos)',
+      'A Promessa: 30 Minutos com o Funil Dele na Tela',
+      'Antes da Demo: o que Coletar',
+      'Estrutura em 5 Atos',
+      'Ato 1: a Dor Dele, na Tela',
+      'Ato 2: Conversas, um Número por Vendedor',
+      'Ato 3: Funil com Regra de Passagem',
+      'Ato 4: Automação e IA (Full)',
+      'Ato 5: "O Funil Vira Dado, Não Opinião"',
+      'Demo para Times de WhatsApp',
+      'Demo para Escolas e Formações',
+      'Demo para Franquias e Redes',
+      'Demo para Operações com IA',
+      'O que Não Mostrar',
+      'Perguntas Durante a Demo',
+      'Erros Clássicos de Demo',
+      'Como Sair da Demo com o Próximo Passo',
+      'Checklist da Demo',
+      'Simulação Comentada',
+      'Recap do Módulo'
+    ],
+    '4': [
+      'Planos e Negociação (preço por módulo)',
+      'Preço por Módulo, Não por Cabeça',
+      'Os 5 Planos Lado a Lado',
+      'CRM: a Base',
+      'Conversação e Marketing Avulsos',
+      'Full: Economia de R$ 194/mês',
+      'O que Só Existe no Full',
+      'Enterprise: Rede, Franquia, Multiunidade',
+      'Qual Plano para Qual Segmento',
+      'A Conta da Pilha: 7 Assinaturas Viram 1',
+      'Montando a Conta com o Cliente',
+      'Migração e Treinamento: Orçados à Parte',
+      'Objeção: "Já Tenho CRM"',
+      'Objeção: "Está Caro"',
+      'Objeção: "Meu Time Não Vai Usar"',
+      'Objeção: "A IA Vai Agir Sozinha?"',
+      'Objeção: "E se a Automação Quebrar?"',
+      'Objeção: "É Só para Vocês?" — a Prova É a Operação',
+      'Do Avulso ao Full: Upgrade',
+      'FAQ 1/3: Produto e Preço',
+      'FAQ 2/3: Automação e IA',
+      'FAQ 3/3: Segurança e WhatsApp Oficial',
+      'Recap do Módulo'
+    ],
+    'spin': [
+      'SPIN Selling aplicado à venda de CRM',
+      'O que é SPIN',
+      'Por que SPIN em venda de software',
+      'S · Situação: como o time vende hoje',
+      'S · perguntas-modelo',
+      'P · Problema: onde a venda vaza',
+      'P · perguntas-modelo',
+      'I · Implicação: quanto custa a pilha e o vazamento',
+      'I · perguntas-modelo',
+      'N · Necessidade: o cliente diz o valor',
+      'N · perguntas-modelo',
+      'SPIN · Times de WhatsApp',
+      'SPIN · Escolas e formações',
+      'SPIN · Franquias e redes',
+      'SPIN · Operações com IA',
+      'SPIN dentro da demo',
+      'Erros comuns',
+      'Roteiro completo em 1 página',
+      'Exercício em dupla',
+      'Recap'
+    ],
+    'fechamento': [
+      'Fechamento — Proposta, decisão e follow-up',
+      'Sinais de Compra',
+      'A Proposta: o que Vai Nela',
+      'Escolha do Plano',
+      'Fechamento por Alternativa (Full × Módulos)',
+      'Fechamento pela Conta da Pilha',
+      'Envolvendo o Decisor',
+      'Próximo Passo com Data',
+      'Follow-up: 24h · 72h · 7 Dias',
+      'Mensagens de Follow-up',
+      'Quando o Lead Esfria',
+      'Depois do "Sim": Implantação',
+      'Registro no ZS (Dogfooding)',
+      'Os 10 Mandamentos de Quem Vende o ZS',
+      'Teste: 7 Situações',
+      'Gabarito Comentado',
+      'Plano de 30 Dias do Vendedor',
+      'Recap Geral',
+      'Compromisso',
+      'Encerramento'
+    ]
+  };
+
+  const slideTitlesByKey = {}; // key -> [titles]
+  function decodeText(s) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+  function extractTitlesFromDoc(doc) {
+    const slides = doc.querySelectorAll('.slide');
+    return Array.from(slides).map((s, i) => {
+      const title = s.querySelector('.slide-title');
+      const badge = s.querySelector('.module-badge');
+      const eyebrow = s.querySelector('.eyebrow');
+      if (title) return decodeText(title.textContent);
+      if (s.classList.contains('module-cover') && badge) return decodeText(badge.textContent) + ' — Capa';
+      if (eyebrow) return decodeText(eyebrow.textContent);
+      return `Slide ${i + 1}`;
+    });
+  }
+
+  function renderSubtopicsPlaceholder(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '<li style="padding:6px 10px;font-size:11px;color:var(--cis-muted);font-style:italic;">carregando…</li>';
+  }
+
+  // Renderiza os subtópicos imediatamente a partir da lista estática.
+  function loadSlideTitles() {
+    Object.keys(SLIDE_TITLES).forEach(key => {
+      slideTitlesByKey[key] = SLIDE_TITLES[key];
+      renderSubtopics(key);
+    });
+  }
+
+  function renderSubtopics(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '';
+    const ocultos = getDeckHidden(key); /* slideIds ocultos (1-indexed, string) */
+    (slideTitlesByKey[key] || []).forEach((title, i) => {
+      const n = i + 1;
+      const oculto = ocultos.includes(String(n));
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'sidenav-sub-item' + (oculto ? ' is-oculto' : '');
+      btn.dataset.deck = key; btn.dataset.slide = String(n);
+      btn.innerHTML = `<span class="sub-n">${String(n).padStart(2, '0')}</span>`
+        + `<span class="sub-title">${title.replace(/</g,'&lt;')}</span>`
+        + `<span class="eye-btn${oculto ? ' is-off' : ''}" data-eye-slide title="${oculto ? 'Mostrar este slide' : 'Ocultar este slide'}">${eyeSvg(oculto)}</span>`;
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('[data-eye-slide]')) { e.preventDefault(); e.stopPropagation(); toggleSlideHidden(key, n); return; }
+        openAtSlide(key, n);
+      });
+      li.appendChild(btn); ul.appendChild(li);
+    });
+  }
+
+  function openAtSlide(key, slideN) {
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      return;
+    }
+    openRoute(key);
+    const onLoad = () => {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      frame.removeEventListener('load', onLoad);
+    };
+    frame.addEventListener('load', onLoad);
+  }
+
+  function markCurrentSubtopic(key, slideN) {
+    document.querySelectorAll('.sidenav-sub-item').forEach(b => {
+      b.classList.toggle('is-current', b.dataset.deck === key && b.dataset.slide === String(slideN));
+    });
+  }
+
+  function showMenu() {
+    playerView.classList.remove('is-active');
+    playerView.setAttribute('aria-hidden', 'true');
+    menuView.classList.add('is-active');
+    menuView.setAttribute('aria-hidden', 'false');
+    frame.src = 'about:blank';
+    history.replaceState(null, '', '#');
+    setActiveNav('menu');
+  }
+  function openRoute(key) {
+    if (key === 'menu') { showMenu(); return; }
+    const route = ROUTES[key];
+    if (!route || !route.file) return;
+    moduleLbl.innerHTML = route.title || ('Módulo ' + key);
+    frame.src = route.file;
+    frame.dataset.currentKey = key;
+    menuView.classList.remove('is-active');
+    menuView.setAttribute('aria-hidden', 'true');
+    playerView.classList.add('is-active');
+    playerView.setAttribute('aria-hidden', 'false');
+    history.replaceState(null, '', `#${key}`);
+    setActiveNav(key);
+    markCurrentSubtopic(key, 1);
+    if (sidebar) sidebar.classList.remove('is-open');
+  }
+
+  // Cliques: sidebar e cards do menu (mesmo data-go)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Se clicou no chevron dentro do item, só alterna subtópicos (sem navegar)
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubFor(chev.dataset.toggleSub);
+        return;
+      }
+      openRoute(btn.dataset.go);
+    });
+  });
+  backBtn.addEventListener('click', showMenu);
+
+  // Mensagens do iframe — só processa as do iframe principal (#module-frame),
+  // ignorando os iframes preloaders ocultos usados para extrair títulos.
+  window.addEventListener('message', (e) => {
+    const fromMain = e.source === (frame && frame.contentWindow);
+    if (!fromMain) return;
+    const msg = e.data || {};
+    if (msg.type === 'cis-nav') {
+      if (msg.target === 'menu') showMenu();
+      else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+      else if (msg.target === 'fullscreen') toggleFullscreen();
+    } else if (msg.type === 'cis-slide-changed' && msg.n) {
+      const key = frame.dataset.currentKey;
+      if (key) markCurrentSubtopic(key, msg.n);
+    }
+  });
+
+  // Enviar estado de fullscreen para o iframe ativo (sincroniza o botão dentro do módulo)
+  function broadcastFsState() {
+    const on = !!document.fullscreenElement;
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-fullscreen-state', on }, '*');
+    }
+  }
+  frame.addEventListener('load', broadcastFsState);
+
+  // Fullscreen
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function syncFs() {
+    const on = !!document.fullscreenElement;
+    document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => {
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const lbl = b.querySelector('.fs-label');
+      if (lbl) lbl.textContent = on ? 'Sair' : 'Tela cheia';
+    });
+  }
+  document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
+  document.addEventListener('fullscreenchange', () => {
+    syncFs();
+    broadcastFsState();
+    const on = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', on);
+    if (!on) closeSidebarOverlay(); // ao sair do fullscreen, garante que o overlay também feche
+  });
+
+  // ---- Sidebar overlay em fullscreen ----
+  const pull = document.getElementById('sidebar-pull');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebarOverlay() {
+    sidebar.classList.add('is-overlay');
+    backdrop.classList.add('is-open');
+    pull.classList.add('is-hidden');
+  }
+  function closeSidebarOverlay() {
+    sidebar.classList.remove('is-overlay');
+    backdrop.classList.remove('is-open');
+    pull.classList.remove('is-hidden');
+  }
+
+  if (pull) pull.addEventListener('click', openSidebarOverlay);
+  if (backdrop) backdrop.addEventListener('click', closeSidebarOverlay);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebarOverlay);
+
+  // Fechar overlay ao clicar em um item da sidebar (navegação)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // só fecha se NÃO foi clique no chevron
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) return;
+      if (sidebar.classList.contains('is-overlay')) closeSidebarOverlay();
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      if (!playerView.classList.contains('is-active')) toggleFullscreen();
+    }
+    if (e.key === 'Escape') {
+      if (sidebar.classList.contains('is-overlay')) { closeSidebarOverlay(); return; }
+      if (playerView.classList.contains('is-active') && !document.fullscreenElement) showMenu();
+    }
+  });
+
+  /* ═══ Curadoria da trilha: ocultar módulos e tópicos (olhinhos) ═══
+     - Slides: gravados no MESMO store do deck (localStorage 'cis-edits:<pasta>/<arquivo>'),
+       campo .hidden — assim a tela cheia do deck já pula os ocultos.
+     - Módulos: store próprio do shell (por treinamento). */
+  const TRILHA_FOLDER = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0] || '';
+  const MOD_OCULTO_KEY = 'trilha-mod-oculto:' + (TRILHA_FOLDER || 'default');
+
+  function eyeSvg(off) {
+    return off
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A9 9 0 0 1 21 12a17.6 17.6 0 0 1-2.16 2.96M6.5 6.6A17.6 17.6 0 0 0 3 12s3.5 7 9 7a9 9 0 0 0 3.35-.64"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+
+  function deckStoreKey(key) {
+    const f = ROUTES[key] && ROUTES[key].file;
+    if (!f) return null;
+    /* Rotas para fora desta pasta (ex.: ../treinamento-zsales-essencial/index.html)
+       já carregam a própria pasta no caminho. O deck grava a chave como
+       "pasta/arquivo" (últimos 2 segmentos do pathname) — sem esta
+       normalização a barra lateral escreveria numa chave que o deck não lê,
+       e ocultar um slide aqui não sumiria com ele lá. */
+    if (f.slice(0, 3) === '../') return 'cis-edits:' + f.slice(3);
+    return 'cis-edits:' + (TRILHA_FOLDER ? TRILHA_FOLDER + '/' : '') + f;  }
+  function getDeckHidden(key) {
+    const k = deckStoreKey(key); if (!k) return [];
+    try { const s = JSON.parse(localStorage.getItem(k) || '{}'); return Array.isArray(s.hidden) ? s.hidden.map(String) : []; }
+    catch (e) { return []; }
+  }
+  function toggleSlideHidden(key, n) {
+    const k = deckStoreKey(key); if (!k) return;
+    let s; try { s = JSON.parse(localStorage.getItem(k) || '{}'); } catch (e) { s = {}; }
+    if (!s.edits) s.edits = {}; if (!Array.isArray(s.hidden)) s.hidden = [];
+    const id = String(n); const i = s.hidden.indexOf(id);
+    if (i >= 0) s.hidden.splice(i, 1); else s.hidden.push(id);
+    localStorage.setItem(k, JSON.stringify(s));
+    /* se o módulo está aberto no iframe, manda recarregar os ocultos */
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-reload-hidden' }, '*');
+    }
+    renderSubtopics(key);
+  }
+
+  function getHiddenModules() { try { return JSON.parse(localStorage.getItem(MOD_OCULTO_KEY) || '[]'); } catch (e) { return []; } }
+  function setHiddenModules(arr) { localStorage.setItem(MOD_OCULTO_KEY, JSON.stringify(arr)); }
+  function isModuleHidden(key) { return getHiddenModules().includes(key); }
+  function toggleModuleHidden(key) {
+    const arr = getHiddenModules(); const i = arr.indexOf(key);
+    if (i >= 0) arr.splice(i, 1); else arr.push(key);
+    setHiddenModules(arr);
+    applyOcultosUI();
+  }
+
+  function injectModuleEyes() {
+    /* olhinho em cada item de módulo/trilha da sidebar (menos "Visão geral") */
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu' || item.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      const chev = item.querySelector('.chevron');
+      if (chev) item.insertBefore(eye, chev); else item.appendChild(eye);
+    });
+    /* olhinho em cada card de módulo do menu */
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const key = card.dataset.go;
+      if (card.querySelector('.eye-mod')) return;
+      const eye = document.createElement('span');
+      eye.className = 'eye-btn eye-mod';
+      eye.setAttribute('data-eye-mod', '');
+      eye.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleModuleHidden(key); });
+      card.appendChild(eye);
+    });
+  }
+
+  function applyOcultosUI() {
+    const hidden = getHiddenModules();
+    document.querySelectorAll('.sidenav-item[data-go]').forEach(item => {
+      const key = item.dataset.go;
+      if (key === 'menu') return;
+      const h = hidden.includes(key);
+      item.classList.toggle('is-oculto', h);
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-oculto', h);
+      const eye = item.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+    document.querySelectorAll('.module-card[data-go]').forEach(card => {
+      const h = hidden.includes(card.dataset.go);
+      card.classList.toggle('is-oculto', h);
+      const eye = card.querySelector('.eye-mod');
+      if (eye) { eye.innerHTML = eyeSvg(h); eye.classList.toggle('is-off', h); eye.title = (h ? 'Mostrar' : 'Ocultar') + ' este módulo'; }
+    });
+  }
+
+  const h = (location.hash || '').replace('#', '');
+  if (h && ROUTES[h]) openRoute(h);
+
+  loadSlideTitles();
+  injectModuleEyes();
+  applyOcultosUI();
+</script>
+
+</body>
+</html>
